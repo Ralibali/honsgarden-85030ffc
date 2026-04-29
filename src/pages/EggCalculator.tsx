@@ -40,45 +40,47 @@ export default function EggCalculator() {
     };
   }, [henCount, eggsPerHenWeek, feedCostMonth, otherCostMonth, eggPricePer]);
 
-  const faqs = [
+  const faqs = useMemo(() => [
     { q: 'Hur många ägg lägger en höna per dag?', a: 'En genomsnittlig värphöna lägger cirka 4–6 ägg per vecka, alltså ungefär ett ägg varannan dag. Rasen, årstiden och hönans ålder påverkar mängden.' },
     { q: 'Vad kostar det att ha höns per månad?', a: 'En flock på 5 höns kostar typiskt 300–500 kr/mån i foder, strö och tillbehör. Med äggförsäljning kan du ofta gå plus.' },
     { q: 'Hur beräknar jag kostnad per ägg?', a: 'Dela din totala månadskostnad (foder + strö + övrigt) med antalet ägg du samlar in per månad. Använd kalkylatorn ovan för en snabb beräkning!' },
     { q: 'Lönar sig det att ha höns?', a: 'Med 5+ höns och bra värpning kan du producera ägg billigare än butikspris. Dessutom får du färskare, godare ägg och en trevlig hobby.' },
-  ];
+  ], []);
+
+  const calculatorJsonLd = useMemo(() => [
+    {
+      '@type': 'WebApplication',
+      name: 'Äggkalkylator – Hönsgården',
+      url: 'https://honsgarden.se/verktyg/aggkalkylator',
+      applicationCategory: 'UtilityApplication',
+      operatingSystem: 'Web',
+      description: 'Räkna ut vad dina ägg kostar per styck och om din hönsgård är lönsam.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'SEK' },
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(f => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    },
+    {
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Hem', item: 'https://honsgarden.se' },
+        { '@type': 'ListItem', position: 2, name: 'Verktyg', item: 'https://honsgarden.se/verktyg/aggkalkylator' },
+        { '@type': 'ListItem', position: 3, name: 'Äggkalkylator', item: 'https://honsgarden.se/verktyg/aggkalkylator' },
+      ],
+    },
+  ], [faqs]);
 
   useSeo({
     title: 'Äggkalkylator – Beräkna kostnad per ägg | Hönsgården',
     description: 'Räkna ut vad dina ägg kostar, hur mycket du producerar och om din hönsgård går plus. Gratis kalkylator för hönsägare.',
     path: '/verktyg/aggkalkylator',
     ogImage: '/blog-images/eggs-basket.jpg',
-    jsonLd: [
-      {
-        '@type': 'WebApplication',
-        name: 'Äggkalkylator – Hönsgården',
-        url: 'https://honsgarden.se/verktyg/aggkalkylator',
-        applicationCategory: 'UtilityApplication',
-        operatingSystem: 'Web',
-        description: 'Räkna ut vad dina ägg kostar per styck och om din hönsgård är lönsam.',
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'SEK' },
-      },
-      {
-        '@type': 'FAQPage',
-        mainEntity: faqs.map(f => ({
-          '@type': 'Question',
-          name: f.q,
-          acceptedAnswer: { '@type': 'Answer', text: f.a },
-        })),
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Hem', item: 'https://honsgarden.se' },
-          { '@type': 'ListItem', position: 2, name: 'Verktyg', item: 'https://honsgarden.se/verktyg/aggkalkylator' },
-          { '@type': 'ListItem', position: 3, name: 'Äggkalkylator', item: 'https://honsgarden.se/verktyg/aggkalkylator' },
-        ],
-      },
-    ],
+    jsonLd: calculatorJsonLd,
   });
 
   return (

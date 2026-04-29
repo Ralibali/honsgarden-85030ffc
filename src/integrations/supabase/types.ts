@@ -386,6 +386,218 @@ export type Database = {
         }
         Relationships: []
       }
+      community_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_moderation_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          moderator_id: string
+          moderator_name: string | null
+          reason: string | null
+          snapshot: Json | null
+          target_id: string
+          target_type: string
+          target_user_id: string | null
+          target_user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          moderator_id: string
+          moderator_name?: string | null
+          reason?: string | null
+          snapshot?: Json | null
+          target_id: string
+          target_type: string
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          moderator_id?: string
+          moderator_name?: string | null
+          reason?: string | null
+          snapshot?: Json | null
+          target_id?: string
+          target_type?: string
+          target_user_id?: string | null
+          target_user_name?: string | null
+        }
+        Relationships: []
+      }
+      community_posts: {
+        Row: {
+          category: string
+          contact_info: string | null
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_pinned: boolean
+          is_sold: boolean
+          location: string | null
+          price: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          contact_info?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          is_sold?: boolean
+          location?: string | null
+          price?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          contact_info?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          is_sold?: boolean
+          location?: string | null
+          price?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_reactions: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reaction_type?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          id: string
+          post_id: string | null
+          reason: string
+          reported_by: string
+          status: string
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason: string
+          reported_by: string
+          status?: string
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          reason?: string
+          reported_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "community_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       coop_settings: {
         Row: {
           coop_name: string | null
@@ -565,6 +777,146 @@ export type Database = {
             columns: ["hen_id"]
             isOneToOne: false
             referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      egg_sale_review_tokens: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          listing_id: string
+          seller_user_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          seller_user_id: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          seller_user_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_review_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "public_egg_sale_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "egg_sale_review_tokens_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      egg_sale_reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          is_published: boolean
+          listing_id: string
+          rating: number
+          seller_user_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          is_published?: boolean
+          listing_id: string
+          rating: number
+          seller_user_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          is_published?: boolean
+          listing_id?: string
+          rating?: number
+          seller_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "public_egg_sale_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "egg_sale_reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      egg_sale_waitlist: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          listing_id: string
+          notified_at: string | null
+          packs_wanted: number
+          seller_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          listing_id: string
+          notified_at?: string | null
+          packs_wanted?: number
+          seller_user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          listing_id?: string
+          notified_at?: string | null
+          packs_wanted?: number
+          seller_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_waitlist_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
             referencedColumns: ["id"]
           },
         ]
@@ -1089,6 +1441,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pitch_leads: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          location: string | null
+          packs: string | null
+          phone: string | null
+          pitch: string | null
+          price: string | null
+          source: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          packs?: string | null
+          phone?: string | null
+          pitch?: string | null
+          price?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          location?: string | null
+          packs?: string | null
+          phone?: string | null
+          pitch?: string | null
+          price?: string | null
+          source?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1140,6 +1531,7 @@ export type Database = {
       public_egg_sale_bookings: {
         Row: {
           created_at: string
+          customer_email: string | null
           customer_message: string | null
           customer_name: string
           customer_phone: string | null
@@ -1152,6 +1544,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_email?: string | null
           customer_message?: string | null
           customer_name: string
           customer_phone?: string | null
@@ -1164,6 +1557,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_email?: string | null
           customer_message?: string | null
           customer_name?: string
           customer_phone?: string | null
@@ -1186,6 +1580,7 @@ export type Database = {
       }
       public_egg_sale_listings: {
         Row: {
+          auto_publish: boolean
           contact_info: string | null
           created_at: string
           description: string
@@ -1200,9 +1595,12 @@ export type Database = {
           packs_available: number
           pickup_info: string | null
           price_per_pack: number
+          regular_customer_threshold: number
           reserved_packs: number
           slug: string
           sold_out_manually: boolean
+          stock_packs: number
+          stock_source: string
           swish_message: string | null
           swish_name: string | null
           swish_number: string | null
@@ -1211,6 +1609,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_publish?: boolean
           contact_info?: string | null
           created_at?: string
           description?: string
@@ -1225,9 +1624,12 @@ export type Database = {
           packs_available?: number
           pickup_info?: string | null
           price_per_pack?: number
+          regular_customer_threshold?: number
           reserved_packs?: number
           slug: string
           sold_out_manually?: boolean
+          stock_packs?: number
+          stock_source?: string
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
@@ -1236,6 +1638,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_publish?: boolean
           contact_info?: string | null
           created_at?: string
           description?: string
@@ -1250,9 +1653,12 @@ export type Database = {
           packs_available?: number
           pickup_info?: string | null
           price_per_pack?: number
+          regular_customer_threshold?: number
           reserved_packs?: number
           slug?: string
           sold_out_manually?: boolean
+          stock_packs?: number
+          stock_source?: string
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
@@ -1954,6 +2360,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          metadata: Json | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1968,6 +2410,141 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weather_advice_cache: {
+        Row: {
+          cache_date: string
+          city_name: string | null
+          created_at: string
+          history_insight: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          model: string | null
+          production_forecast: string | null
+          summary: string | null
+          today_advice: string | null
+          updated_at: string
+          user_id: string
+          weather_snapshot: Json | null
+          week_advice: string | null
+        }
+        Insert: {
+          cache_date?: string
+          city_name?: string | null
+          created_at?: string
+          history_insight?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          model?: string | null
+          production_forecast?: string | null
+          summary?: string | null
+          today_advice?: string | null
+          updated_at?: string
+          user_id: string
+          weather_snapshot?: Json | null
+          week_advice?: string | null
+        }
+        Update: {
+          cache_date?: string
+          city_name?: string | null
+          created_at?: string
+          history_insight?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          model?: string | null
+          production_forecast?: string | null
+          summary?: string | null
+          today_advice?: string | null
+          updated_at?: string
+          user_id?: string
+          weather_snapshot?: Json | null
+          week_advice?: string | null
+        }
+        Relationships: []
+      }
+      weather_alert_preferences: {
+        Row: {
+          city_name: string | null
+          cold_threshold_c: number
+          created_at: string
+          enabled: boolean
+          heat_threshold_c: number
+          id: string
+          latitude: number | null
+          longitude: number | null
+          notify_email: boolean
+          notify_in_app: boolean
+          rain_threshold_mm: number
+          updated_at: string
+          user_id: string
+          wind_threshold_ms: number
+        }
+        Insert: {
+          city_name?: string | null
+          cold_threshold_c?: number
+          created_at?: string
+          enabled?: boolean
+          heat_threshold_c?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          rain_threshold_mm?: number
+          updated_at?: string
+          user_id: string
+          wind_threshold_ms?: number
+        }
+        Update: {
+          city_name?: string | null
+          cold_threshold_c?: number
+          created_at?: string
+          enabled?: boolean
+          heat_threshold_c?: number
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          notify_email?: boolean
+          notify_in_app?: boolean
+          rain_threshold_mm?: number
+          updated_at?: string
+          user_id?: string
+          wind_threshold_ms?: number
+        }
+        Relationships: []
+      }
+      weather_alerts_sent: {
+        Row: {
+          alert_date: string
+          alert_type: string
+          created_at: string
+          details: Json | null
+          forecast_date: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          alert_date: string
+          alert_type: string
+          created_at?: string
+          details?: Json | null
+          forecast_date: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          alert_date?: string
+          alert_type?: string
+          created_at?: string
+          details?: Json | null
+          forecast_date?: string
+          id?: string
           user_id?: string
         }
         Relationships: []

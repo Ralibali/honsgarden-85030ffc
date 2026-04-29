@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Crown, Check, Bell, BarChart3, Download, TrendingUp, Star, Calculator, Camera, ClipboardCheck, Baby, Loader2, Settings, Sparkles, ArrowRight, CalendarDays, Users, HeartHandshake, ShieldCheck, Bot, ReceiptText, HeartPulse, Wheat } from 'lucide-react';
@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'react-router-dom';
+import { useSeo } from '@/hooks/useSeo';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -41,7 +42,7 @@ const premiumFeatures = [
   { text: 'Avvikelsevarningar när något ändras i flocken', icon: '🔎' },
   { text: 'Avancerad statistik, trender och äggmål', icon: '📊' },
   { text: 'Foderspårning och kostnad per ägg', icon: '🌾' },
-  { text: 'Sälj ägg: kunder, betalstatus och intäkter', icon: '🥚' },
+  { text: 'Agdas Bod – din gårdsbutik för äggförsäljning (just nu öppet för alla)', icon: '🥚' },
   { text: 'Ekonomi, intäkter, kostnader och export', icon: '💰' },
   { text: 'Flockhälsa-light och bättre hönsprofiler', icon: '💚' },
   { text: 'Kläckningskalender med milstolpar', icon: '🐣' },
@@ -55,7 +56,7 @@ const freeFeatures = ['Äggloggning', 'Upp till 10 hönor', 'Enkel hälsologg', 
 const highlights = [
   { icon: Bot, title: 'AI-råd som inte känns som en robot', desc: 'Hönsgården tolkar dina siffror och ger korta, snälla och praktiska råd.' },
   { icon: TrendingUp, title: 'Förstå varför siffrorna ändras', desc: 'Se om produktionen är uppåt, nedåt eller stabil – och vad du kan göra.' },
-  { icon: ReceiptText, title: 'Sälj ägg utan att tappa bort betalningar', desc: 'Håll koll på kunder, belopp och vad som är betalt eller obetalt.' },
+  { icon: ReceiptText, title: 'Agdas Bod – sälj ägg utan krångel', desc: 'Skapa säljsidor, ta emot bokningar, håll koll på lager, kunder och Swish-betalningar. Öppet för alla just nu, blir Plus-funktion framöver.' },
   { icon: Wheat, title: 'Räkna på verklig kostnad', desc: 'Se vad fodret kostar och vad varje ägg ungefär landar på.' },
   { icon: HeartPulse, title: 'Håll koll på flockens rytm', desc: 'Flockhälsa-light hjälper dig upptäcka när något är värt att observera.' },
   { icon: Bell, title: 'Få hjälp med rutinerna', desc: 'Påminnelser gör att vatten, foder, rengöring och kontroll inte glöms bort.' },
@@ -77,6 +78,44 @@ export default function Premium() {
   const [searchParams] = useSearchParams();
   const isPremium = user?.subscription_status === 'premium' || user?.is_premium;
 
+  const premiumJsonLd = useMemo(() => ({
+    '@type': 'Product',
+    name: 'Hönsgården Plus',
+    description:
+      'Premiumabonnemang för Hönsgården med AI-coach, veckorapport, ekonomi och avancerade insikter för hönsgårdar.',
+    brand: { '@type': 'Brand', name: 'Hönsgården' },
+    offers: [
+      {
+        '@type': 'Offer',
+        name: 'Hönsgården Plus – månad',
+        price: '19',
+        priceCurrency: 'SEK',
+        availability: 'https://schema.org/InStock',
+        url: 'https://honsgarden.se/app/premium',
+      },
+      {
+        '@type': 'Offer',
+        name: 'Hönsgården Plus – år',
+        price: '149',
+        priceCurrency: 'SEK',
+        availability: 'https://schema.org/InStock',
+        url: 'https://honsgarden.se/app/premium',
+      },
+    ],
+  }), []);
+
+  useSeo({
+    title: 'Hönsgården Plus – AI-coach, ekonomi & insikter för hönsgården',
+    description:
+      'Uppgradera till Hönsgården Plus för AI-coach, veckorapporter, avvikelsevarningar, ekonomiverktyg och kläckningskalender. 19 kr/mån eller 149 kr/år – avsluta när du vill.',
+    path: '/app/premium',
+    ogType: 'website',
+    ogImage: '/og-image.jpg',
+    ogImageAlt: 'Hönsgården Plus – AI och ekonomi för hönsgårdar',
+    noindex: true,
+    jsonLd: premiumJsonLd,
+  });
+
   useEffect(() => {
     if (searchParams.get('success') !== 'true') return;
     let cancelled = false;
@@ -91,7 +130,9 @@ export default function Premium() {
             window.location.replace('/app/premium');
             return;
           }
-        } catch {}
+        } catch (err) {
+          console.warn('[Premium] check-subscription polling fel, försöker igen:', err);
+        }
         if (attempt < 10) await new Promise((r) => setTimeout(r, 2000));
       }
       if (!cancelled) toast({ title: 'Betalningen behandlas', description: 'Det kan ta en liten stund. Tryck på Synka premiumstatus om sidan inte uppdateras.' });

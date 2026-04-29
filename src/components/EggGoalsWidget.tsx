@@ -132,7 +132,6 @@ export default function EggGoalsWidget({ eggs }: EggGoalsWidgetProps) {
               </p>
             </div>
           </div>
-          <InsightSummary />
           <Button size="sm" variant="outline" onClick={handleOpenNew} className="w-full rounded-xl gap-1.5">
             <Plus className="h-3.5 w-3.5" />
             Sätt veckomål

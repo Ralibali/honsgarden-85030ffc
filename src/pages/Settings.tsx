@@ -10,6 +10,7 @@ import {
   Heart, ExternalLink, Info, Trash2, CheckCircle2, Clock, Send, RotateCcw, ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { FamilyMembers } from '@/components/FamilyMembers';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -93,20 +94,15 @@ export default function SettingsPage() {
     setDisplayName(user?.name || '');
   }, [user?.name]);
 
+  // Per-user theme: synced from profile, persisted in DB
+  const { theme, setTheme } = useTheme();
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setDarkMode(isDark);
-  }, []);
+    setDarkMode(theme === 'dark');
+  }, [theme]);
 
   const toggleDarkMode = (enabled: boolean) => {
     setDarkMode(enabled);
-    if (enabled) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    setTheme(enabled ? 'dark' : 'light');
   };
 
   const saveCoopMutation = useMutation({

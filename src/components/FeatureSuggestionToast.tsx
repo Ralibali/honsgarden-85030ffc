@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 interface Suggestion {
   emoji: string;
@@ -44,6 +46,7 @@ interface FeatureSuggestionToastProps {
 
 export function FeatureSuggestionToast({ show, unusedFeatures, onDismiss }: FeatureSuggestionToastProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [visible, setVisible] = useState(false);
 
   // Pick a random unused feature that hasn't been dismissed
@@ -60,7 +63,7 @@ export function FeatureSuggestionToast({ show, unusedFeatures, onDismiss }: Feat
 
     const available = unusedFeatures
       .map(f => featureMap[f])
-      .filter(s => !localStorage.getItem(s.storageKey));
+      .filter(s => !readScoped(user?.id, s.storageKey));
 
     if (available.length === 0) {
       onDismiss();
@@ -75,17 +78,17 @@ export function FeatureSuggestionToast({ show, unusedFeatures, onDismiss }: Feat
     // Auto-dismiss after 8s
     const t2 = setTimeout(() => { setVisible(false); onDismiss(); }, 9500);
     return () => { clearTimeout(t); clearTimeout(t2); };
-  }, [show, unusedFeatures]);
+  }, [show, unusedFeatures, user?.id]);
 
   const dismiss = () => {
-    if (suggestion) localStorage.setItem(suggestion.storageKey, '1');
+    if (suggestion) writeScoped(user?.id, suggestion.storageKey, '1');
     setVisible(false);
     onDismiss();
   };
 
   const goTo = () => {
     if (suggestion) {
-      localStorage.setItem(suggestion.storageKey, '1');
+      writeScoped(user?.id, suggestion.storageKey, '1');
       navigate(suggestion.route);
     }
     setVisible(false);

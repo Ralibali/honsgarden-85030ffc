@@ -9,13 +9,16 @@ import { EggSuccessAnimation } from './EggSuccessAnimation';
 import DashboardFocusPortal from './DashboardFocusPortal';
 import SettingsTrustPortal from './SettingsTrustPortal';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
 export function QuickEggFAB() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [count, setCount] = useState(1);
-  const [selectedHenId, setSelectedHenId] = useState<string>(() => localStorage.getItem(LAST_HEN_KEY) || 'all');
+  const [selectedHenId, setSelectedHenId] = useState<string>(() => readScoped(user?.id, LAST_HEN_KEY) || 'all');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
   const [useYesterday, setUseYesterday] = useState(false);
@@ -73,7 +76,7 @@ export function QuickEggFAB() {
       setOpen(false);
       setCount(1);
       setUseYesterday(false);
-      localStorage.setItem(LAST_HEN_KEY, selectedHenId);
+      writeScoped(user?.id, LAST_HEN_KEY, selectedHenId);
     },
     onError: (err: any, _, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(['eggs'], ctx.prev);

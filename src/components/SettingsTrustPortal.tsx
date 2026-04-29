@@ -208,8 +208,16 @@ export default function SettingsTrustPortal() {
       }
 
       const firstCard = root.querySelector('.card-hover, [class*="border-primary"]');
-      if (firstCard?.parentElement) {
-        firstCard.insertAdjacentElement('afterend', anchor);
+      const isSafeAnchor = firstCard
+        && firstCard !== anchor
+        && !anchor.contains(firstCard)
+        && !firstCard.contains(anchor);
+      if (isSafeAnchor && firstCard.parentElement) {
+        try {
+          firstCard.insertAdjacentElement('afterend', anchor);
+        } catch {
+          if (!anchor.parentElement) root.insertBefore(anchor, root.children[1] ?? null);
+        }
       } else if (!anchor.parentElement) {
         root.insertBefore(anchor, root.children[1] ?? null);
       }

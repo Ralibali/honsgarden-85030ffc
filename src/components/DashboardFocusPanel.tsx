@@ -25,18 +25,34 @@ function sumEggsSince(eggs: any[], start: Date) {
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
 }
 
-function getWeekInsight(eggs: any[]) {
-  const thisWeekStart = daysAgo(7);
-  const lastWeekStart = daysAgo(14);
-  const lastWeekEnd = daysAgo(7);
+function startOfIsoWeek(d: Date) {
+  const date = new Date(d);
+  const day = date.getDay(); // 0 = Sön
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
 
-  const thisWeek = sumEggsSince(eggs, thisWeekStart);
-  const lastWeek = eggs
+function sumEggsBetween(eggs: any[], start: Date, end: Date) {
+  return eggs
     .filter((egg) => {
-      const date = new Date(egg.date);
-      return date >= lastWeekStart && date < lastWeekEnd;
+      const d = new Date(egg.date);
+      return d >= start && d <= end;
     })
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
+}
+
+function getWeekInsight(eggs: any[]) {
+  const thisWeekStart = startOfIsoWeek(new Date());
+  const lastWeekStart = new Date(thisWeekStart);
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+  const lastWeekEnd = new Date(thisWeekStart);
+  lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+  lastWeekEnd.setHours(23, 59, 59, 999);
+
+  const thisWeek = sumEggsSince(eggs, thisWeekStart);
+  const lastWeek = sumEggsBetween(eggs, lastWeekStart, lastWeekEnd);
 
   const diff = thisWeek - lastWeek;
 
@@ -145,7 +161,8 @@ export default function DashboardFocusPanel() {
 
   const weekInsight = getWeekInsight(eggs as any[]);
   const hasLoggedToday = todayEggs > 0;
-  const weekEggs = sumEggsSince(eggs as any[], daysAgo(7));
+  const weekEggs = sumEggsSince(eggs as any[], startOfIsoWeek(new Date()));
+  const hasImportant = importantChores.length > 0;
 
   const openAction = (path: string) => {
     setDetailsOpen(false);
@@ -172,23 +189,25 @@ export default function DashboardFocusPanel() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-4 gap-2 mt-4">
+          <div className={`grid gap-2 mt-4 ${hasImportant ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <div className="rounded-xl bg-background/70 border border-border/40 p-2.5 sm:p-3 text-center sm:text-left">
               <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{todayEggs}</p>
               <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Idag</p>
             </div>
             <div className="rounded-xl bg-background/70 border border-border/40 p-2.5 sm:p-3 text-center sm:text-left">
               <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{weekEggs}</p>
-              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">7 dagar</p>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Vecka</p>
             </div>
             <div className="rounded-xl bg-background/70 border border-border/40 p-2.5 sm:p-3 text-center sm:text-left">
               <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{activeHens.length}</p>
               <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Hönor</p>
             </div>
-            <div className="rounded-xl bg-background/70 border border-border/40 p-2.5 sm:p-3 text-center sm:text-left">
-              <p className="text-base sm:text-lg font-bold text-foreground tabular-nums">{importantChores.length}</p>
-              <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-wide">Viktigt</p>
-            </div>
+            {hasImportant && (
+              <div className="rounded-xl bg-warning/10 border border-warning/30 p-2.5 sm:p-3 text-center sm:text-left">
+                <p className="text-base sm:text-lg font-bold text-warning tabular-nums">{importantChores.length}</p>
+                <p className="text-[9px] sm:text-[10px] text-warning/80 uppercase tracking-wide">Viktigt</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -589,7 +589,7 @@ export type CoachResponse = {
 export async function getDashboardCoach(context: Record<string, unknown>): Promise<CoachResponse> {
   const { data, error } = await supabase.functions.invoke('dashboard-coach', { body: context });
   if (error) throw new Error(error.message);
-  if (!data || !Array.isArray((data as any).advices)) {
+  if (!data || typeof data !== 'object' || !Array.isArray((data as { advices?: unknown }).advices)) {
     throw new Error('Invalid coach response');
   }
   return data as CoachResponse;
@@ -615,7 +615,9 @@ export type DeviationAlertResponse = {
 export async function getDashboardAlerts(context: Record<string, unknown>): Promise<DeviationAlertResponse> {
   const { data, error } = await supabase.functions.invoke('dashboard-alerts', { body: context });
   if (error) throw new Error(error.message);
-  if (!data || !Array.isArray((data as any).alerts)) throw new Error('Invalid alerts response');
+  if (!data || typeof data !== 'object' || !Array.isArray((data as { alerts?: unknown }).alerts)) {
+    throw new Error('Invalid alerts response');
+  }
   return data as DeviationAlertResponse;
 }
 
@@ -640,7 +642,9 @@ export type HealthNoteHelperResponse = {
 export async function getHealthNoteHelp(ctx: HealthNoteHelperContext): Promise<HealthNoteHelperResponse> {
   const { data, error } = await supabase.functions.invoke('health-note-helper', { body: ctx });
   if (error) throw new Error(error.message);
-  if (!data || typeof (data as any).observe_text !== 'string') throw new Error('Invalid helper response');
+  if (!data || typeof data !== 'object' || typeof (data as { observe_text?: unknown }).observe_text !== 'string') {
+    throw new Error('Invalid helper response');
+  }
   return data as HealthNoteHelperResponse;
 }
 
@@ -1017,25 +1021,27 @@ export async function adminAcceptTerms() {
 
 // ==================== EGG GOALS ====================
 
-async function getEggGoals() {
+export type EggGoal = Tables<'egg_goals'>;
+
+async function getEggGoals(): Promise<EggGoal[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
   const { data, error } = await supabase
-    .from('egg_goals' as any)
+    .from('egg_goals')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return data as any[];
+  return data ?? [];
 }
 
-async function upsertEggGoal(goal: { period: string; target_count: number; is_active?: boolean; id?: string }) {
+async function upsertEggGoal(goal: { period: string; target_count: number; is_active?: boolean; id?: string }): Promise<EggGoal> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
   if (goal.id) {
     const { data, error } = await supabase
-      .from('egg_goals' as any)
-      .update({ target_count: goal.target_count, period: goal.period, is_active: goal.is_active ?? true } as any)
+      .from('egg_goals')
+      .update({ target_count: goal.target_count, period: goal.period, is_active: goal.is_active ?? true })
       .eq('id', goal.id)
       .select()
       .single();
@@ -1043,16 +1049,16 @@ async function upsertEggGoal(goal: { period: string; target_count: number; is_ac
     return data;
   }
   const { data, error } = await supabase
-    .from('egg_goals' as any)
-    .insert({ user_id: user.id, period: goal.period, target_count: goal.target_count } as any)
+    .from('egg_goals')
+    .insert({ user_id: user.id, period: goal.period, target_count: goal.target_count })
     .select()
     .single();
   if (error) throw error;
   return data;
 }
 
-async function deleteEggGoal(id: string) {
-  const { error } = await supabase.from('egg_goals' as any).delete().eq('id', id);
+async function deleteEggGoal(id: string): Promise<void> {
+  const { error } = await supabase.from('egg_goals').delete().eq('id', id);
   if (error) throw error;
 }
 

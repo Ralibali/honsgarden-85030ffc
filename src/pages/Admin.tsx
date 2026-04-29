@@ -18,6 +18,8 @@ import UserInsightsDashboard from '@/components/admin/UserInsightsDashboard';
 import UserDetailModal from '@/components/admin/UserDetailModal';
 import RevenueDashboard from '@/components/admin/RevenueDashboard';
 import SeoAdmin from '@/components/admin/SeoAdmin';
+import { MarketingOptInPanel } from '@/components/admin/MarketingOptInPanel';
+import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -248,6 +250,12 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Bell className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Notiser</span><span className="sm:hidden">🔔</span>
+          </TabsTrigger>
+          <TabsTrigger value="marketing" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Mail className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Marknad</span><span className="sm:hidden">📧</span>
+          </TabsTrigger>
+          <TabsTrigger value="moderation" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <MessageSquare className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Moderation</span><span className="sm:hidden">🛡️</span>
           </TabsTrigger>
         </TabsList>
 
@@ -603,6 +611,14 @@ export default function Admin() {
         {/* Notifications tab */}
         <TabsContent value="notifications" className="space-y-3">
           <NotificationSender />
+        </TabsContent>
+
+        <TabsContent value="marketing" className="space-y-3">
+          <MarketingOptInPanel />
+        </TabsContent>
+
+        <TabsContent value="moderation" className="space-y-3">
+          <CommunityModerationLog />
         </TabsContent>
       </Tabs>
 

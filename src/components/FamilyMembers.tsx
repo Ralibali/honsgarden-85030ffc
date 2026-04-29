@@ -88,7 +88,9 @@ export function FamilyMembers() {
             const parsed = JSON.parse(await errorBody.body.text());
             msg = parsed.error || msg;
           }
-        } catch {}
+        } catch (parseErr) {
+          console.warn('[FamilyMembers] Kunde inte tolka felsvar från invite-funktionen:', parseErr);
+        }
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);

@@ -9,6 +9,8 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { api, type DeviationAlert, type DeviationAlertResponse, type DeviationAlertLevel } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 type Signal = { key: string; data?: Record<string, unknown> };
 
@@ -297,9 +299,9 @@ function pickIcon(alert: DeviationAlert) {
 
 const DISMISS_KEY = 'honsgarden-alerts-dismissed';
 
-function getDismissed(): Record<string, string> {
+function getDismissed(userId: string | null | undefined): Record<string, string> {
   try {
-    const raw = localStorage.getItem(DISMISS_KEY);
+    const raw = readScoped(userId, DISMISS_KEY);
     if (!raw) return {};
     return JSON.parse(raw);
   } catch {
@@ -315,12 +317,13 @@ type Variant = 'card' | 'inline';
 
 export default function AIDeviationAlerts({ variant = 'card' }: { variant?: Variant }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState<Record<string, string>>({});
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    setDismissed(getDismissed());
-  }, []);
+    setDismissed(getDismissed(user?.id));
+  }, [user?.id]);
 
   const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs(), staleTime: 60_000 });
   const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens(), staleTime: 60_000 });
@@ -371,7 +374,7 @@ export default function AIDeviationAlerts({ variant = 'card' }: { variant?: Vari
   const dismiss = (key: string) => {
     const next = { ...dismissed, [key]: todayStr() };
     setDismissed(next);
-    try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+    writeScoped(user?.id, DISMISS_KEY, JSON.stringify(next));
   };
 
   if (hidden) return null;

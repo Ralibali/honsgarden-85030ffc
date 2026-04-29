@@ -238,13 +238,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     stopPeriodicSync();
+    const currentId = currentUserRef.current?.id ?? null;
     await supabase.auth.signOut();
     setUser(null);
     try {
+      // Clear Supabase session keys + the global "theme" cache (per-user theme
+      // lives under u:<id>:theme and is kept so it re-applies on next login).
       const keysToRemove = Object.keys(localStorage).filter(k =>
-        k.startsWith('sb-') || k.startsWith('supabase') || k.startsWith('honsgarden-') || k === 'theme' || k === '_track_sid'
+        k.startsWith('sb-') || k.startsWith('supabase') || k === 'theme' || k === '_track_sid'
       );
       keysToRemove.forEach(k => localStorage.removeItem(k));
+      // Clear legacy global honsgarden-* keys (newer code uses u:<id>: prefix)
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('honsgarden-') && !k.startsWith('honsgarden-imported'))
+        .forEach(k => localStorage.removeItem(k));
+      // NOTE: We intentionally keep u:<id>:* keys so the user's preferences
+      // (theme, dismissed nudges, last hen, etc.) survive logout/login on the
+      // same device. Other users on this device have their own prefix.
+      void currentId;
     } catch { /* private browsing */ }
   };
 

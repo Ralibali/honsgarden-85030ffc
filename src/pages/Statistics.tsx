@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,6 +12,10 @@ import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
 
 export default function Statistics() {
+  const [showAllInsights, setShowAllInsights] = useState(false);
+  const [showAllHens, setShowAllHens] = useState(false);
+  const [showAllBreeds, setShowAllBreeds] = useState(false);
+  const [showAllFlocks, setShowAllFlocks] = useState(false);
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ['stats-summary'],
     queryFn: () => api.getSummaryStats().catch(() => null),
@@ -87,6 +92,44 @@ export default function Statistics() {
           <>
             <SmartStatisticsOverview />
 
+            {insights && insights.tips && (() => {
+              const tips = (Array.isArray(insights.tips) ? insights.tips : [insights.tips]).filter(Boolean);
+              const PREVIEW_COUNT = 3;
+              const visible = showAllInsights ? tips : tips.slice(0, PREVIEW_COUNT);
+              const hiddenCount = tips.length - PREVIEW_COUNT;
+              return (
+                <Card className="bg-card border-border shadow-sm">
+                  <CardHeader className="px-4 sm:px-6">
+                    <CardTitle className="font-serif text-base sm:text-lg">📈 Fler insikter</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-4 sm:px-6 pb-4">
+                    <ul className="space-y-2">
+                      {visible.map((tip: string, i: number) => (
+                        <li key={i} className="flex gap-2 items-start text-sm text-foreground">
+                          <span className="text-primary mt-1 shrink-0">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    {hiddenCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowAllInsights((v) => !v)}
+                        className="mt-3 w-full rounded-xl text-primary hover:text-primary"
+                      >
+                        {showAllInsights ? (
+                          <><ChevronUp className="h-4 w-4 mr-1" /> Visa mindre</>
+                        ) : (
+                          <><ChevronDown className="h-4 w-4 mr-1" /> Visa {hiddenCount} till</>
+                        )}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+
             <Card className="bg-gradient-to-br from-primary/10 via-card to-accent/5 border-primary/20 shadow-sm overflow-hidden">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-start gap-3">
@@ -152,7 +195,7 @@ export default function Statistics() {
                 </CardHeader>
                 <CardContent className="px-4 sm:px-6 pb-4">
                   <div className="space-y-4">
-                    {flocks.map((flock: any) => (
+                    {(showAllFlocks ? flocks : flocks.slice(0, 5)).map((flock: any) => (
                       <div key={flock.id} className="space-y-1.5 rounded-2xl border border-border/40 bg-muted/15 p-3 sm:border-0 sm:bg-transparent sm:p-0">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-2">
                           <div className="flex items-center gap-2 min-w-0">
@@ -185,6 +228,14 @@ export default function Statistics() {
                         </div>
                       </div>
                     ))}
+                    {flocks.length > 5 && (
+                      <button
+                        onClick={() => setShowAllFlocks((v) => !v)}
+                        className="w-full text-xs font-medium text-primary hover:text-primary/80 transition-colors py-2 rounded-xl hover:bg-muted/40"
+                      >
+                        {showAllFlocks ? 'Visa mindre' : `Visa ${flocks.length - 5} till`}
+                      </button>
+                    )}
                     {unassignedEggs > 0 && (
                       <div className="flex items-center justify-between text-sm pt-2 border-t border-border">
                         <span className="text-muted-foreground italic">Ej tilldelade</span>
@@ -204,25 +255,32 @@ export default function Statistics() {
                 <CardContent className="px-4 sm:px-6 pb-4">
                   <div className="space-y-3">
                     {rankedHens.length > 0 ? (
-                      rankedHens.slice(0, 6).map((hen: any, i: number) => {
-                        const eggs = hen.total_eggs || 0;
-                        return (
-                          <button key={hen.id} onClick={() => window.location.assign(`/app/hens/${hen.id}`)} className="w-full flex items-center gap-2 sm:gap-3 rounded-xl hover:bg-muted/40 p-1.5 transition-colors text-left">
-                            <span className="stat-number text-base sm:text-lg w-6 text-center text-muted-foreground shrink-0">
-                              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <span className="text-xs sm:text-sm font-medium text-foreground truncate">{hen.name}</span>
-                                <span className="stat-number text-xs sm:text-sm text-primary shrink-0">{eggs} ägg</span>
+                      <>
+                        {(showAllHens ? rankedHens : rankedHens.slice(0, 5)).map((hen: any, i: number) => {
+                          const eggs = hen.total_eggs || 0;
+                          return (
+                            <button key={hen.id} onClick={() => window.location.assign(`/app/hens/${hen.id}`)} className="w-full flex items-center gap-2 sm:gap-3 rounded-xl hover:bg-muted/40 p-1.5 transition-colors text-left">
+                              <span className="stat-number text-base sm:text-lg w-6 text-center text-muted-foreground shrink-0">
+                                {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <span className="text-xs sm:text-sm font-medium text-foreground truncate">{hen.name}</span>
+                                  <span className="stat-number text-xs sm:text-sm text-primary shrink-0">{eggs} ägg</span>
+                                </div>
+                                <div className="w-full bg-secondary rounded-full h-1.5">
+                                  <div className="bg-primary rounded-full h-1.5 transition-all duration-500" style={{ width: `${Math.min(100, (eggs / maxEggs) * 100)}%` }} />
+                                </div>
                               </div>
-                              <div className="w-full bg-secondary rounded-full h-1.5">
-                                <div className="bg-primary rounded-full h-1.5 transition-all duration-500" style={{ width: `${Math.min(100, (eggs / maxEggs) * 100)}%` }} />
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      })
+                            </button>
+                          );
+                        })}
+                        {rankedHens.length > 5 && (
+                          <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setShowAllHens(v => !v)}>
+                            {showAllHens ? 'Visa mindre' : `Visa ${rankedHens.length - 5} till`}
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <EmptyState
                         icon={Bird}
@@ -241,22 +299,31 @@ export default function Statistics() {
                   <CardTitle className="font-serif text-base sm:text-lg">Rasfördelning</CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 sm:px-6 pb-4">
-                  {hensWithEggs.length > 0 ? (
-                    <div className="space-y-2">
-                      {Object.entries(
-                        hensWithEggs.reduce((acc: Record<string, number>, hen: any) => {
-                          const breed = hen.breed || 'Okänd';
-                          acc[breed] = (acc[breed] || 0) + 1;
-                          return acc;
-                        }, {})
-                      ).map(([breed, count]) => (
-                        <div key={breed} className="flex items-center justify-between gap-3 text-sm rounded-xl bg-muted/20 px-3 py-2">
-                          <span className="text-foreground truncate">{breed}</span>
-                          <span className="stat-number text-muted-foreground shrink-0">{count as number} st</span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
+                  {hensWithEggs.length > 0 ? (() => {
+                    const breedEntries = Object.entries(
+                      hensWithEggs.reduce((acc: Record<string, number>, hen: any) => {
+                        const breed = hen.breed || 'Okänd';
+                        acc[breed] = (acc[breed] || 0) + 1;
+                        return acc;
+                      }, {})
+                    ).sort((a, b) => (b[1] as number) - (a[1] as number));
+                    const visibleBreeds = showAllBreeds ? breedEntries : breedEntries.slice(0, 5);
+                    return (
+                      <div className="space-y-2">
+                        {visibleBreeds.map(([breed, count]) => (
+                          <div key={breed} className="flex items-center justify-between gap-3 text-sm rounded-xl bg-muted/20 px-3 py-2">
+                            <span className="text-foreground truncate">{breed}</span>
+                            <span className="stat-number text-muted-foreground shrink-0">{count as number} st</span>
+                          </div>
+                        ))}
+                        {breedEntries.length > 5 && (
+                          <Button variant="ghost" size="sm" className="w-full mt-1" onClick={() => setShowAllBreeds(v => !v)}>
+                            {showAllBreeds ? 'Visa mindre' : `Visa ${breedEntries.length - 5} till`}
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })() : (
                     <EmptyState
                       emoji="🌿"
                       title="Ingen rasdata ännu"
@@ -268,24 +335,6 @@ export default function Statistics() {
                 </CardContent>
               </Card>
             </div>
-
-            {insights && insights.tips && (
-              <Card className="bg-card border-border shadow-sm">
-                <CardHeader className="px-4 sm:px-6">
-                  <CardTitle className="font-serif text-base sm:text-lg">📈 Fler insikter</CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 sm:px-6 pb-4">
-                  <ul className="space-y-2">
-                    {(Array.isArray(insights.tips) ? insights.tips : [insights.tips]).map((tip: string, i: number) => (
-                      <li key={i} className="flex gap-2 items-start text-sm text-foreground">
-                        <span className="text-primary mt-1 shrink-0">•</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
           </>
         )}
       </div>

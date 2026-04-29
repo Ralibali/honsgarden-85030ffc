@@ -33,7 +33,9 @@ export default function AcceptInvite() {
             const body = await ctx.json();
             msg = body?.error || msg;
           }
-        } catch {}
+        } catch (parseErr) {
+          console.warn('[AcceptInvite] Kunde inte tolka felsvar (get-invite):', parseErr);
+        }
         setError(data?.error || msg);
       } else if (data?.error) {
         setError(data.error);
@@ -59,7 +61,9 @@ export default function AcceptInvite() {
             const body = await ctx.json();
             msg = body?.error || msg;
           }
-        } catch {}
+        } catch (parseErr) {
+          console.warn('[AcceptInvite] Kunde inte tolka felsvar (accept-invite):', parseErr);
+        }
         throw new Error(data?.error || msg);
       }
       if (data?.error) throw new Error(data.error);

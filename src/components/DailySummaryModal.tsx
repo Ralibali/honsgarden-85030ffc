@@ -3,11 +3,14 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Egg, Bird, Sun, Loader2, X } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
+import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 
 const STORAGE_KEY = 'daily-summary-date';
 
 export function DailySummaryModal() {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +22,7 @@ export function DailySummaryModal() {
     if (hasChecked.current) return;
     hasChecked.current = true;
 
-    const lastShown = localStorage.getItem(STORAGE_KEY);
+    const lastShown = readScoped(user?.id, STORAGE_KEY);
     const today = new Date().toDateString();
     if (lastShown === today) return; // Already shown today
 
@@ -38,11 +41,11 @@ export function DailySummaryModal() {
         setLoading(false);
         setOpen(true);
         // Mark as shown immediately when opened
-        localStorage.setItem(STORAGE_KEY, today);
+        writeScoped(user?.id, STORAGE_KEY, today);
       }
     }, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [user?.id]);
 
   const handleClose = () => {
     setOpen(false);

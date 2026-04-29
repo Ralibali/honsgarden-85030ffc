@@ -69,7 +69,9 @@ export default function Hens() {
         const allHens = await api.getHens();
         const activeCount = (allHens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
         await api.updateCoopSettings({ hen_count: activeCount });
-      } catch {}
+      } catch (err) {
+        console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter create:', err);
+      }
       toast({ title: henForm.hen_type === 'rooster' ? 'Tupp tillagd! 🐓' : 'Höna tillagd! 🐔' });
       setHenDialogOpen(false);
       setHenForm({ name: '', breed: '', color: '', birth_date: '', notes: '', hen_type: 'hen', flock_id: '' });
@@ -94,7 +96,9 @@ export default function Hens() {
         const allHens = await api.getHens();
         const activeCount = (allHens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
         await api.updateCoopSettings({ hen_count: activeCount });
-      } catch {}
+      } catch (err) {
+        console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter delete:', err);
+      }
       toast({ title: 'Borttagen' });
     },
   });

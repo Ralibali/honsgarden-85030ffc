@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
+import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -26,9 +27,9 @@ const STARTER_SUGGESTIONS = [
   'Tips för att öka äggproduktionen?',
 ];
 
-function loadHistory(): ChatMessage[] {
+function loadHistory(userId: string | null | undefined): ChatMessage[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readScoped(userId, STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.slice(-MAX_STORED_MESSAGES) : [];
@@ -37,9 +38,9 @@ function loadHistory(): ChatMessage[] {
   }
 }
 
-function saveHistory(messages: ChatMessage[]) {
+function saveHistory(userId: string | null | undefined, messages: ChatMessage[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
+    writeScoped(userId, STORAGE_KEY, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
   } catch { /* quota exceeded */ }
 }
 
@@ -87,7 +88,9 @@ async function streamAgda({
       try {
         const errData = await resp.json();
         errMsg = errData.error || errMsg;
-      } catch {}
+      } catch (parseErr) {
+        console.warn('[Agda] Kunde inte tolka felsvar:', parseErr);
+      }
       onError(errMsg);
       return;
     }
@@ -155,12 +158,17 @@ async function streamAgda({
 export default function Agda() {
   const { user } = useAuth();
   const isPremium = user?.subscription_status === 'premium';
-  const [messages, setMessages] = useState<ChatMessage[]>(() => loadHistory());
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadHistory(user?.id));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const assistantContentRef = useRef('');
+
+  // Reload history when user changes
+  useEffect(() => {
+    setMessages(loadHistory(user?.id));
+  }, [user?.id]);
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -173,12 +181,12 @@ export default function Agda() {
 
   // Save history whenever messages change
   useEffect(() => {
-    if (messages.length > 0) saveHistory(messages);
-  }, [messages]);
+    if (messages.length > 0) saveHistory(user?.id, messages);
+  }, [messages, user?.id]);
 
   const clearHistory = () => {
     setMessages([]);
-    localStorage.removeItem(STORAGE_KEY);
+    removeScoped(user?.id, STORAGE_KEY);
     toast({ title: '🗑️ Historik rensad' });
   };
 

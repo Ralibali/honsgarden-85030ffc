@@ -86,7 +86,7 @@ export default function SmartStatisticsOverview() {
     } else if (stats.diff > 0 && period !== 'all') {
       items.push({ title: 'Produktionen är uppåt', text: `Du ligger ${stats.diff} ägg över föregående period. Det är värt att fortsätta med samma rutiner och foder.`, icon: TrendingUp, path: '/app/weekly-report', cta: 'Se veckorapport', tone: 'good' });
     } else if (stats.diff < 0 && period !== 'all') {
-      items.push({ title: 'Produktionen är lägre', text: `Du ligger ${Math.abs(stats.diff)} ägg under föregående period. Det kan vara normalt, men håll koll på ruggning, väder, foderbyte och stress.`, icon: AlertCircle, path: '/app/eggs', cta: 'Lägg notering', tone: 'warn' });
+      items.push({ title: 'Produktionen är lägre', text: `Du ligger ${Math.abs(stats.diff)} ägg under föregående period. Det kan vara normalt, men håll koll på ruggning, väder, foderbyte och stress. Öppna en höna och lägg en hälsonotering så har du historiken kvar.`, icon: AlertCircle, path: '/app/hens', cta: 'Öppna hönor', tone: 'warn' });
     } else if (period !== 'all') {
       items.push({ title: 'Stabil värpning', text: 'Produktionen ligger ungefär på samma nivå som föregående period. Stabilitet är också en bra signal.', icon: Minus, tone: 'info' });
     }
@@ -107,8 +107,11 @@ export default function SmartStatisticsOverview() {
       items.push({ title: `${topHen.name} leder topplistan`, text: `${topHen.name} har ${Number(topHen.total_eggs || 0)} ägg loggade totalt. Det här gör hönsprofilerna mer levande och användbara.`, icon: Target, path: `/app/hens/${topHen.id}`, cta: 'Öppna profil', tone: 'good' });
     }
 
-    return items.slice(0, 4);
+    return items;
   }, [stats, period, activeHens.length, costPerEgg, topHen]);
+
+  const [showAllInsights, setShowAllInsights] = useState(false);
+  const visibleInsights = showAllInsights ? insights : insights.slice(0, 2);
 
   return (
     <section className="space-y-3 sm:space-y-4" aria-label="Smart statistiköversikt">
@@ -165,7 +168,7 @@ export default function SmartStatisticsOverview() {
         </CardHeader>
         <CardContent className="px-4 sm:px-6 pb-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {insights.map((item) => {
+            {visibleInsights.map((item) => {
               const Icon = item.icon;
               return (
                 <div key={item.title} className={`rounded-2xl border p-4 ${item.tone === 'good' ? 'bg-success/5 border-success/20' : item.tone === 'warn' ? 'bg-warning/5 border-warning/20' : 'bg-muted/20 border-border/50'}`}>
@@ -189,6 +192,14 @@ export default function SmartStatisticsOverview() {
               );
             })}
           </div>
+          {insights.length > 2 && (
+            <button
+              onClick={() => setShowAllInsights((v) => !v)}
+              className="w-full mt-3 text-xs font-medium text-primary hover:text-primary/80 transition-colors py-2 rounded-xl hover:bg-muted/40"
+            >
+              {showAllInsights ? 'Visa mindre' : `Visa ${insights.length - 2} insikter till`}
+            </button>
+          )}
         </CardContent>
       </Card>
     </section>

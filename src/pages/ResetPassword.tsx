@@ -48,8 +48,8 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Lösenordet måste vara minst 6 tecken.');
+    if (password.length < 8) {
+      setError('Lösenordet måste vara minst 8 tecken.');
       return;
     }
     if (password !== confirmPassword) {
@@ -103,7 +103,7 @@ export default function ResetPassword() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
-                  placeholder="Minst 6 tecken"
+                  placeholder="Minst 8 tecken"
                   required
                   autoFocus
                 />
