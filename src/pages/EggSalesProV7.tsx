@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { BarChart3, Copy, Crown, PackageCheck, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
 import EggSalesProV6 from './EggSalesProV6';
 import EggSalesOverview from '@/components/EggSalesOverview';
+import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
 
 type Booking = any;
 type Listing = any;
