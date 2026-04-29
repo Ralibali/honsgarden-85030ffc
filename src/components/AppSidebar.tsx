@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText } from 'lucide-react';
+import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 
 const dailyNav = [
   { title: 'Dashboard', url: '/app', icon: Home },
+  { title: 'Smart rapport', url: '/app/smart-report', icon: Sparkles, premium: true },
   { title: 'Logga ägg', url: '/app/eggs', icon: Egg },
   { title: 'Uppgifter', url: '/app/tasks', icon: ClipboardCheck },
   { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
@@ -29,17 +30,19 @@ const flockNav = [
   { title: 'Hönor', url: '/app/hens', icon: Bird },
   { title: 'Kläckning', url: '/app/hatching', icon: Baby, premium: true },
   { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
+  { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },
   { title: 'Översikt', url: '/app/overview', icon: PieChart, premium: true },
 ];
 
 const financeNav = [
   { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
   { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
-  { title: 'Agda sälj', url: '/app/egg-sales', icon: ReceiptText, premium: true },
+  { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
   { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
 ];
 
 const moreNav = [
+  { title: 'Nyheter', url: '/app/news', icon: Newspaper },
   { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
   { title: 'Community', url: '/app/community', icon: Users },
   { title: 'Premium', url: '/app/premium', icon: Crown },

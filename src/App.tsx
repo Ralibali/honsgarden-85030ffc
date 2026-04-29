@@ -9,11 +9,13 @@ import CookieConsent from "./components/CookieConsent";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
 
+const PwaUpdatePrompt = React.lazy(() => import("./components/PwaUpdatePrompt"));
+
 import Index from "./pages/IndexUpdated";
 import Login from "./pages/Login";
 
 const AppLayout = React.lazy(() => import("./components/AppLayout"));
-const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Dashboard = React.lazy(() => import("./pages/DashboardV2"));
 const Eggs = React.lazy(() => import("./pages/Eggs"));
 const Hens = React.lazy(() => import("./pages/Hens"));
 const Finance = React.lazy(() => import("./pages/Finance"));
@@ -23,6 +25,7 @@ const Reminders = React.lazy(() => import("./pages/Reminders"));
 const Hatching = React.lazy(() => import("./pages/Hatching"));
 const DailyTasks = React.lazy(() => import("./pages/DailyTasks"));
 const SettingsPage = React.lazy(() => import("./pages/Settings"));
+const Feedback = React.lazy(() => import("./pages/Feedback"));
 const Premium = React.lazy(() => import("./pages/Premium"));
 const Community = React.lazy(() => import("./pages/Community"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
@@ -30,6 +33,7 @@ const Admin = React.lazy(() => import("./pages/Admin"));
 const Terms = React.lazy(() => import("./pages/Terms"));
 const HenProfile = React.lazy(() => import("./pages/HenProfile"));
 const WeeklyReport = React.lazy(() => import("./pages/WeeklyReport"));
+const SmartFarmReport = React.lazy(() => import("./pages/SmartFarmReport"));
 const Guides = React.lazy(() => import("./pages/Guides"));
 const GuideArticle = React.lazy(() => import("./pages/GuideArticle"));
 const BlogCategory = React.lazy(() => import("./pages/BlogCategory"));
@@ -43,8 +47,14 @@ const Overview = React.lazy(() => import("./pages/Overview"));
 const Import = React.lazy(() => import("./pages/Import"));
 const SeasonalCalendar = React.lazy(() => import("./pages/SeasonalCalendar"));
 const SeoLandingPage = React.lazy(() => import("./pages/SeoLandingPage"));
-const EggSales = React.lazy(() => import("./pages/EggSalesProV5"));
+const EggSales = React.lazy(() => import("./pages/EggSalesProV7"));
 const PublicEggSale = React.lazy(() => import("./pages/PublicEggSaleV3"));
+const PublicReview = React.lazy(() => import("./pages/PublicReview"));
+const News = React.lazy(() => import("./pages/News"));
+const Weather = React.lazy(() => import("./pages/Weather"));
+const WeatherHistoryDetail = React.lazy(() => import("./pages/WeatherHistoryDetail"));
+const SaljaAgg = React.lazy(() => import("./pages/SaljaAgg"));
+const SaljaAggOrt = React.lazy(() => import("./pages/SaljaAggOrt"));
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
@@ -110,8 +120,11 @@ const AppRoutes = () => (
         <Route path="/foderkostnad-hons" element={<SeoLandingPage pageKey="foderkostnad-hons" />} />
         <Route path="/klackningskalender" element={<SeoLandingPage pageKey="klackningskalender" />} />
         <Route path="/borja-med-hons" element={<SeoLandingPage pageKey="borja-med-hons" />} />
+        <Route path="/salja-agg" element={<SaljaAgg />} />
+        <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
+        <Route path="/r/:token" element={<PublicReview />} />
         <Route path="/login" element={<Login />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -126,6 +139,7 @@ const AppRoutes = () => (
         <Route path="/blogg/:slug" element={<GuideArticle />} />
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Navigate to="/app" replace />} />
           <Route path="eggs" element={<Eggs />} />
           <Route path="hens" element={<Hens />} />
           <Route path="feed" element={<Feed />} />
@@ -137,14 +151,19 @@ const AppRoutes = () => (
           <Route path="statistics" element={<Statistics />} />
           <Route path="overview" element={<Overview />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="feedback" element={<Feedback />} />
           <Route path="premium" element={<Premium />} />
           <Route path="community" element={<Community />} />
           <Route path="admin" element={<Admin />} />
           <Route path="hens/:henId" element={<HenProfile />} />
           <Route path="weekly-report" element={<WeeklyReport />} />
+          <Route path="smart-report" element={<SmartFarmReport />} />
           <Route path="agda" element={<Agda />} />
           <Route path="import" element={<Import />} />
           <Route path="calendar" element={<SeasonalCalendar />} />
+          <Route path="news" element={<News />} />
+          <Route path="weather" element={<Weather />} />
+          <Route path="weather/history/:date" element={<WeatherHistoryDetail />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -162,6 +181,9 @@ const App = () => (
           <CacheClearer />
           <AppRoutes />
           <CookieConsent />
+          <Suspense fallback={null}>
+            <PwaUpdatePrompt />
+          </Suspense>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

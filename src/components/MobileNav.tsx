@@ -1,4 +1,28 @@
-import { Home, Egg, Bird, BarChart3, MoreHorizontal, Package, Syringe, Baby, Coins, Settings, Crown, Shield, Bot, PieChart, ClipboardCheck, CalendarDays, Upload, ReceiptText } from 'lucide-react';
+import {
+  Home,
+  Egg,
+  Bird,
+  BarChart3,
+  MoreHorizontal,
+  Package,
+  Syringe,
+  Baby,
+  Coins,
+  Settings,
+  Crown,
+  Shield,
+  Bot,
+  PieChart,
+  ClipboardCheck,
+  CalendarDays,
+  Upload,
+  ReceiptText,
+  Users,
+  Newspaper,
+  CloudSun,
+  MessageCircle,
+  Sparkles,
+} from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,32 +40,41 @@ const moreGroups = [
   {
     label: 'Dagligt',
     items: [
+      { title: 'Dashboard', url: '/app', icon: Home },
+      { title: 'Smart rapport', url: '/app/smart-report', icon: Sparkles, premium: true },
+      { title: 'Logga ägg', url: '/app/eggs', icon: Egg },
       { title: 'Uppgifter', url: '/app/tasks', icon: ClipboardCheck },
       { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
-      { title: 'Agda AI', url: '/app/agda', icon: Bot },
     ],
   },
   {
     label: 'Flocken',
     items: [
-      { title: 'Kläckning', url: '/app/hatching', icon: Baby },
+      { title: 'Hönor', url: '/app/hens', icon: Bird },
+      { title: 'Kläckning', url: '/app/hatching', icon: Baby, premium: true },
       { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
-      { title: 'Översikt', url: '/app/overview', icon: PieChart },
+      { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },
+      { title: 'Översikt', url: '/app/overview', icon: PieChart, premium: true },
     ],
   },
   {
     label: 'Ekonomi',
     items: [
-      { title: 'Foder', url: '/app/feed', icon: Package },
-      { title: 'Ekonomi', url: '/app/finance', icon: Coins },
-      { title: 'Agda sälj', url: '/app/egg-sales', icon: ReceiptText },
+      { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
+      { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
+      { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
+      { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
     ],
   },
   {
     label: 'Mer',
     items: [
+      { title: 'Nyheter', url: '/app/news', icon: Newspaper },
+      { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
+      { title: 'Community', url: '/app/community', icon: Users },
       { title: 'Premium', url: '/app/premium', icon: Crown },
-      { title: 'Import', url: '/app/import', icon: Upload },
+      { title: 'Importera data', url: '/app/import', icon: Upload },
+      { title: 'Feedback', url: '/app/feedback', icon: MessageCircle },
       { title: 'Inställningar', url: '/app/settings', icon: Settings },
     ],
   },
@@ -51,6 +84,7 @@ export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const isPremium = user?.subscription_status === 'premium';
 
   useEffect(() => {
     if (!user?.id) return;
@@ -81,12 +115,14 @@ export function MobileNav() {
                       <NavLink
                         key={item.url}
                         to={item.url}
-                        className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all active:scale-[0.95]"
+                        end={item.url === '/app'}
+                        className="relative flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all active:scale-[0.95]"
                         activeClassName="text-primary bg-primary/8"
                         onClick={() => setShowMore(false)}
                       >
                         <item.icon className="h-5 w-5" />
                         <span className="text-[10px] font-medium text-center leading-tight">{item.title}</span>
+                        {item.premium && !isPremium && <Crown className="absolute top-2 right-2 h-3 w-3 text-warning/70" />}
                       </NavLink>
                     ))}
                   </div>
