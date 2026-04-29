@@ -125,6 +125,8 @@ export default function EggSalesProV7() {
     <div className="max-w-7xl mx-auto space-y-5 pb-8">
       <EggSalesOverview />
 
+      <EggSalesListingsBrowser />
+
       <Card className="border-primary/25 bg-gradient-to-br from-primary/10 via-card to-accent/10 shadow-sm">
         <CardContent className="p-4 sm:p-5 space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
