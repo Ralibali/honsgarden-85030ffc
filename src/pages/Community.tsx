@@ -1,120 +1,172 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Heart, MessageCircle, Send, Share2, Sparkles, Users, Lightbulb } from 'lucide-react';
+import { Heart, MessageCircle, Send, Share2, Users, Lightbulb, Loader2, Flag, Pin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 type CommunityPost = {
   id: string;
-  author: string;
-  avatar: string;
-  time: string;
+  user_id: string;
+  title: string;
   content: string;
+  category: string;
+  created_at: string;
+  is_pinned: boolean;
   likes: number;
   comments: number;
-  tag?: string;
-  liked?: boolean;
+  liked: boolean;
 };
 
-const starterPosts: CommunityPost[] = [
-  {
-    id: 'starter-1',
-    author: 'Anna L.',
-    avatar: '👩‍🌾',
-    time: '2 timmar sedan',
-    tag: 'Äggläggning',
-    content: 'Min Barnevelder la sitt första dubbelgulor idag! 🎉 Har ni varit med om samma sak? Är det något särskilt jag borde hålla koll på?',
-    likes: 12,
-    comments: 5,
-  },
-  {
-    id: 'starter-2',
-    author: 'Karl S.',
-    avatar: '👨‍🌾',
-    time: '5 timmar sedan',
-    tag: 'Foder',
-    content: 'Testar nytt ekologiskt foder den här veckan. Hönorna verkar gilla det mer än det gamla. Ska bli spännande att se om produktionen påverkas.',
-    likes: 8,
-    comments: 3,
-  },
-  {
-    id: 'starter-3',
-    author: 'Maria G.',
-    avatar: '👩‍🌾',
-    time: 'Igår',
-    tag: 'Tips',
-    content: 'Vintertips: häng ett kålhuvud i hönshuset. Mina blir mer aktiva och det verkar minska hackning. 🥬🐔',
-    likes: 24,
-    comments: 7,
-  },
-];
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.floor(diffMs / 60000);
+  if (minutes < 1) return 'Nyss';
+  if (minutes < 60) return `${minutes} min sedan`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} tim sedan`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Igår';
+  if (days < 7) return `${days} dagar sedan`;
+  return date.toLocaleDateString('sv-SE');
+}
 
-const storageKey = 'honsgarden-community-local-posts-v1';
+function makeTitle(content: string) {
+  const firstLine = content.trim().split('\n')[0] || 'Inlägg från communityt';
+  return firstLine.length > 72 ? `${firstLine.slice(0, 69)}...` : firstLine;
+}
 
 export default function Community() {
+  const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
-  const [posts, setPosts] = useState<CommunityPost[]>(starterPosts);
 
   useEffect(() => {
     document.title = 'Community | Hönsgården';
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) setPosts([...parsed, ...starterPosts]);
-      }
-    } catch {
-      // Ignore localStorage issues.
-    }
   }, []);
 
-  const localPosts = useMemo(() => posts.filter((post) => post.id.startsWith('local-')), [posts]);
+  const { data: posts = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['community-posts'],
+    queryFn: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const currentUserId = userData.user?.id ?? null;
 
-  const saveLocalPosts = (nextLocalPosts: CommunityPost[]) => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(nextLocalPosts));
-    } catch {
-      // Ignore localStorage issues.
-    }
-  };
+      const { data: rawPosts, error: postsError } = await (supabase as any)
+        .from('community_posts')
+        .select('id,user_id,title,content,category,created_at,is_pinned')
+        .order('is_pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-  const publishPost = () => {
-    const trimmed = message.trim();
-    if (trimmed.length < 5) return;
+      if (postsError) throw postsError;
 
-    const newPost: CommunityPost = {
-      id: `local-${Date.now()}`,
-      author: 'Du',
-      avatar: '🐔',
-      time: 'Nyss',
-      tag: 'Fråga',
-      content: trimmed,
-      likes: 0,
-      comments: 0,
-    };
+      const ids = (rawPosts ?? []).map((post: any) => post.id);
+      if (!ids.length) return [] as CommunityPost[];
 
-    const nextPosts = [newPost, ...posts];
-    setPosts(nextPosts);
-    saveLocalPosts([newPost, ...localPosts]);
-    setMessage('');
-    toast({ title: 'Inlägget är publicerat i communityt 💚' });
-  };
+      const [{ data: reactions }, { data: comments }] = await Promise.all([
+        (supabase as any)
+          .from('community_reactions')
+          .select('id,post_id,user_id,reaction_type')
+          .in('post_id', ids),
+        (supabase as any)
+          .from('community_comments')
+          .select('id,post_id')
+          .in('post_id', ids),
+      ]);
 
-  const toggleLike = (postId: string) => {
-    const nextPosts = posts.map((post) => {
-      if (post.id !== postId) return post;
-      const liked = !post.liked;
-      return {
-        ...post,
-        liked,
-        likes: liked ? post.likes + 1 : Math.max(0, post.likes - 1),
-      };
-    });
-    setPosts(nextPosts);
-    saveLocalPosts(nextPosts.filter((post) => post.id.startsWith('local-')));
-  };
+      return (rawPosts ?? []).map((post: any) => {
+        const postReactions = (reactions ?? []).filter((reaction: any) => reaction.post_id === post.id && reaction.reaction_type === 'like');
+        return {
+          id: post.id,
+          user_id: post.user_id,
+          title: post.title,
+          content: post.content,
+          category: post.category || 'Fråga',
+          created_at: post.created_at,
+          is_pinned: !!post.is_pinned,
+          likes: postReactions.length,
+          comments: (comments ?? []).filter((comment: any) => comment.post_id === post.id).length,
+          liked: !!currentUserId && postReactions.some((reaction: any) => reaction.user_id === currentUserId),
+        } as CommunityPost;
+      });
+    },
+  });
+
+  const publishPost = useMutation({
+    mutationFn: async () => {
+      const trimmed = message.trim();
+      if (trimmed.length < 5) throw new Error('Skriv minst några ord först.');
+
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error('Du behöver vara inloggad för att skriva i communityt.');
+
+      const { error } = await (supabase as any)
+        .from('community_posts')
+        .insert({
+          user_id: userData.user.id,
+          title: makeTitle(trimmed),
+          content: trimmed,
+          category: 'Fråga',
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setMessage('');
+      queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      toast({ title: 'Inlägget är publicerat i communityt 💚' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Kunde inte publicera', description: error.message, variant: 'destructive' });
+    },
+  });
+
+  const toggleLike = useMutation({
+    mutationFn: async (post: CommunityPost) => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error('Logga in för att gilla inlägg.');
+
+      if (post.liked) {
+        const { error } = await (supabase as any)
+          .from('community_reactions')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_id', userData.user.id)
+          .eq('reaction_type', 'like');
+        if (error) throw error;
+        return;
+      }
+
+      const { error } = await (supabase as any)
+        .from('community_reactions')
+        .insert({ post_id: post.id, user_id: userData.user.id, reaction_type: 'like' });
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['community-posts'] }),
+    onError: (error: any) => toast({ title: 'Kunde inte uppdatera gillning', description: error.message, variant: 'destructive' }),
+  });
+
+  const reportPost = useMutation({
+    mutationFn: async (post: CommunityPost) => {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) throw new Error('Logga in för att rapportera inlägg.');
+
+      const { error } = await (supabase as any)
+        .from('community_reports')
+        .insert({
+          post_id: post.id,
+          reported_by: userData.user.id,
+          reason: 'Rapporterat från communityt',
+          status: 'open',
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => toast({ title: 'Tack, inlägget är rapporterat' }),
+    onError: (error: any) => toast({ title: 'Kunde inte rapportera', description: error.message, variant: 'destructive' }),
+  });
 
   const copyPost = async (post: CommunityPost) => {
     await navigator.clipboard?.writeText(post.content);
@@ -128,7 +180,7 @@ export default function Community() {
           <p className="data-label mb-1">Hönsägare emellan</p>
           <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Community 🤝</h1>
           <p className="text-sm sm:text-base text-muted-foreground mt-1 max-w-2xl leading-relaxed">
-            Dela tips, frågor och erfarenheter med andra hönsägare. Här hör vardagsproblemen, smarta knepen och små segrar hemma.
+            Dela tips, frågor och erfarenheter med andra hönsägare. Inlägg, gillningar och rapporter sparas nu i databasen.
           </p>
         </div>
         <Badge variant="secondary" className="w-fit gap-1.5 rounded-full px-3 py-1">
@@ -158,10 +210,10 @@ export default function Community() {
               />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <p className="text-[11px] text-muted-foreground">
-                  Inlägg sparas lokalt i webbläsaren tills communityt kopplas till databasen.
+                  Inlägget blir synligt för andra när databasen tillåter publicering via RLS.
                 </p>
-                <Button className="rounded-xl gap-2 w-full sm:w-auto" disabled={message.trim().length < 5} onClick={publishPost}>
-                  <Send className="h-4 w-4" />
+                <Button className="rounded-xl gap-2 w-full sm:w-auto" disabled={message.trim().length < 5 || publishPost.isPending} onClick={() => publishPost.mutate()}>
+                  {publishPost.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   Publicera
                 </Button>
               </div>
@@ -176,52 +228,79 @@ export default function Community() {
         <InfoCard icon="🌿" title="Lär av andra" text="Se hur andra löser kyla, värme, kläckning och flockbeteenden." />
       </div>
 
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <Card key={post.id} className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300">
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg shrink-0">
-                    {post.avatar}
+      {isLoading ? (
+        <Card className="border-border/50">
+          <CardContent className="p-8 flex justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      ) : isError ? (
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="p-5 text-center space-y-3">
+            <p className="text-sm text-destructive">Kunde inte läsa community-inlägg från databasen.</p>
+            <Button variant="outline" className="rounded-xl" onClick={() => refetch()}>Försök igen</Button>
+          </CardContent>
+        </Card>
+      ) : posts.length === 0 ? (
+        <Card className="border-dashed border-border/60">
+          <CardContent className="p-8 text-center">
+            <Users className="h-9 w-9 mx-auto text-muted-foreground/50 mb-2" />
+            <h2 className="font-serif text-lg text-foreground">Inga inlägg ännu</h2>
+            <p className="text-sm text-muted-foreground mt-1">Bli först med att skriva något i Hönsgårdens community.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <Card key={post.id} className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg shrink-0">
+                      {post.user_id ? '👤' : '🐔'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">Hönsägare</p>
+                      <p className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{post.author}</p>
-                    <p className="text-xs text-muted-foreground">{post.time}</p>
+                  <div className="flex gap-1.5 items-center shrink-0">
+                    {post.is_pinned && <Badge className="rounded-full gap-1"><Pin className="h-3 w-3" /> Fäst</Badge>}
+                    <Badge variant="secondary" className="rounded-full">{post.category || 'Fråga'}</Badge>
                   </div>
                 </div>
-                {post.tag && (
-                  <Badge variant="secondary" className="shrink-0 rounded-full">
-                    {post.tag}
-                  </Badge>
-                )}
-              </div>
 
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words mb-4">
-                {post.content}
-              </p>
+                <h2 className="font-serif text-base text-foreground mb-2 break-words">{post.title}</h2>
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words mb-4">
+                  {post.content}
+                </p>
 
-              <div className="flex items-center gap-4 pt-3 border-t border-border">
-                <button
-                  className={`flex items-center gap-1.5 text-sm transition-colors ${post.liked ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
-                  onClick={() => toggleLike(post.id)}
-                >
-                  <Heart className={`h-4 w-4 ${post.liked ? 'fill-current' : ''}`} />
-                  {post.likes}
-                </button>
-                <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
-                  <MessageCircle className="h-4 w-4" />
-                  {post.comments}
-                </button>
-                <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors ml-auto" onClick={() => copyPost(post)}>
-                  <Share2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Kopiera</span>
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="flex items-center gap-4 pt-3 border-t border-border">
+                  <button
+                    className={`flex items-center gap-1.5 text-sm transition-colors ${post.liked ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
+                    onClick={() => toggleLike.mutate(post)}
+                  >
+                    <Heart className={`h-4 w-4 ${post.liked ? 'fill-current' : ''}`} />
+                    {post.likes}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors">
+                    <MessageCircle className="h-4 w-4" />
+                    {post.comments}
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors ml-auto" onClick={() => reportPost.mutate(post)}>
+                    <Flag className="h-4 w-4" />
+                    <span className="hidden sm:inline">Rapportera</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors" onClick={() => copyPost(post)}>
+                    <Share2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Kopiera</span>
+                  </button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Card className="border-dashed bg-muted/20">
         <CardContent className="p-4 sm:p-5 flex gap-3">
@@ -229,9 +308,9 @@ export default function Community() {
             <Lightbulb className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-serif text-base text-foreground">Nästa steg för communityt</h2>
+            <h2 className="font-serif text-base text-foreground">Databaskopplat community</h2>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Det här återställer community-känslan med inlägg. När databastabellerna är på plats kan inlägg, kommentarer och gillningar sparas mellan alla användare.
+              Communityt använder nu Supabase-tabellerna för inlägg, gillningar och rapporter. Admin kan moderera via adminpanelen.
             </p>
           </div>
         </CardContent>
