@@ -41,7 +41,7 @@ function startOfMonth() {
 
 export default function EggSalesProV7() {
   useEffect(() => {
-    document.title = 'Agdas Bod | Hönsgården';
+    document.title = 'Agdas äggbod | Hönsgården';
   }, []);
 
   const { data: listings = [] } = useQuery({
@@ -126,12 +126,12 @@ export default function EggSalesProV7() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge className="bg-primary text-primary-foreground">Agda Pro</Badge>
-                <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">Försäljningscenter</Badge>
+                <Badge className="bg-primary text-primary-foreground">Agdas äggbod</Badge>
+                <Badge variant="secondary" className="bg-warning/10 text-warning border-warning/20">Beställningar & kunder</Badge>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Mer SaaS. Mer koll. Mindre Excel.</h1>
+              <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Håll koll på ägg, kunder och veckans försäljning.</h1>
               <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-                Agda samlar nu säljsidor, bokningar, kunder, återköp och rapporter på samma plats.
+                Agda samlar dina säljsidor, bokningar, kunder och enkla rapporter på samma plats – så att du slipper hålla allt i huvudet.
               </p>
             </div>
             <Button variant="outline" className="rounded-xl gap-2" onClick={() => copyText(weeklyReport, 'Veckorapporten')}>
@@ -142,8 +142,8 @@ export default function EggSalesProV7() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KpiCard icon={ShoppingBasket} label="Denna vecka" value={weekBookings.length} sub={`${weekBookings.reduce((s, b) => s + Number(b.packs || 0), 0)} kartor · ${kr(amountFor(weekBookings))}`} />
             <KpiCard icon={Wallet} label="Månadens värde" value={kr(amountFor(monthBookings))} sub={`${monthBookings.length} bokningar`} />
-            <KpiCard icon={Repeat} label="Återkommande kunder" value={regularCustomers.length} sub={`${customerStats.length} kunder totalt`} />
-            <KpiCard icon={PackageCheck} label="Slutförande" value={`${conversionRate}%`} sub={`Snittorder ${kr(avgOrder)}`} />
+            <KpiCard icon={Repeat} label="Stamkunder" value={regularCustomers.length} sub={`${customerStats.length} kunder totalt`} />
+            <KpiCard icon={PackageCheck} label="Hämtade beställningar" value={`${conversionRate}%`} sub={`Snittorder ${kr(avgOrder)}`} />
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
@@ -152,7 +152,7 @@ export default function EggSalesProV7() {
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <h2 className="font-serif text-lg text-foreground flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Kundöversikt</h2>
-                    <p className="text-xs text-muted-foreground">Bygg återkommande försäljning av kunderna som redan bokar.</p>
+                    <p className="text-xs text-muted-foreground">Se vilka som bokar, vilka som återkommer och vilka beställningar som ger mest.</p>
                   </div>
                   <Badge variant="secondary">{customerStats.length} kunder</Badge>
                 </div>
@@ -161,7 +161,7 @@ export default function EggSalesProV7() {
                   <div className="rounded-2xl border border-dashed p-5 text-center">
                     <Users className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <p className="font-medium">Inga kunder ännu</p>
-                    <p className="text-sm text-muted-foreground mt-1">När någon bokar via en säljsida byggs översikten automatiskt.</p>
+                    <p className="text-sm text-muted-foreground mt-1">När någon bokar via en säljsida bygger Agda upp kundöversikten automatiskt.</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -188,10 +188,10 @@ export default function EggSalesProV7() {
 
             <Card className="border-border/60 bg-background/70 shadow-sm">
               <CardContent className="p-4 space-y-3">
-                <h2 className="font-serif text-lg text-foreground flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> SaaS-insikter</h2>
-                <Insight icon={TrendingUp} title="Veckotakt" text={weekBookings.length > 0 ? `Denna vecka ligger på ${kr(amountFor(weekBookings))}. Följ takten och jämför vecka för vecka.` : 'När bokningar kommer in får du veckotakt och värde här.'} />
-                <Insight icon={BarChart3} title="Kundbas" text={regularCustomers.length > 0 ? `Du har ${regularCustomers.length} återkommande kunder. Det är början på en riktig kundbas.` : 'Återkommande kunder markeras automatiskt när de bokar flera gånger.'} />
-                <Insight icon={Sparkles} title="Nästa nivå" text="Nästa steg blir smarta utskick, kundnoteringar och återkommande beställningar." />
+                <h2 className="font-serif text-lg text-foreground flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /> Agdas överblick</h2>
+                <Insight icon={TrendingUp} title="Veckans försäljning" text={weekBookings.length > 0 ? `Denna vecka ligger på ${kr(amountFor(weekBookings))}. Följ takten och jämför vecka för vecka.` : 'När bokningar kommer in visar Agda veckans takt och värde här.'} />
+                <Insight icon={BarChart3} title="Stamkunder" text={regularCustomers.length > 0 ? `Du har ${regularCustomers.length} återkommande kunder. Det är en bra grund för jämnare äggförsäljning.` : 'Kunder som bokar flera gånger markeras automatiskt som stammisar.'} />
+                <Insight icon={Sparkles} title="Nästa hjälp från Agda" text="Nästa steg blir påminnelser, kundnoteringar och återkommande beställningar." />
               </CardContent>
             </Card>
           </div>
