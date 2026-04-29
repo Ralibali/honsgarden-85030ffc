@@ -16,13 +16,15 @@ export default function DashboardV2() {
 
   return (
     <div className="space-y-5 pb-8">
-      <MobileAppDashboardHero />
+      <div className="md:hidden">
+        <MobileAppDashboardHero />
+      </div>
 
       <div className="max-w-2xl mx-auto">
         <ProductOnboardingChecklist />
       </div>
 
-      <Card className="max-w-5xl mx-auto border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm rounded-3xl">
+      <Card className="max-w-4xl mx-auto border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm">
         <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="h-11 w-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -32,7 +34,7 @@ export default function DashboardV2() {
               <p className="font-serif text-lg text-foreground">Smart gårdsrapport</p>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {isPlus
-                  ? 'Din veckorapport binder ihop ägg, hönor, foder, uppgifter, väder och Agdas äggbod.'
+                  ? 'Din veckorapport binder ihop ägg, hönor, foder, uppgifter och Agdas Bod.'
                   : 'Lås upp veckorapporten som visar mönster, ekonomi och nästa bästa steg i hönsgården.'}
               </p>
             </div>
