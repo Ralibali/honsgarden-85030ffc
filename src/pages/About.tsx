@@ -2,29 +2,46 @@ import React from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Egg, Mail, MapPin, Shield, Heart, BookOpen, ArrowRight, Users, Award } from 'lucide-react';
+import { Egg, Mail, MapPin, Shield, Heart, BookOpen, ArrowRight, Users, Award, BarChart3, ReceiptText, Bot, CloudSun } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
 
 const team = [
   {
     name: 'Hönsgården-teamet',
-    role: 'Grundare & redaktion',
-    bio: 'Vi är ett litet team av hönsälskare, tekniknördar och skribenter som brinner för att göra hönslivet enklare för alla – oavsett om du har 3 eller 30 hönor.',
+    role: 'Produkt, teknik & innehåll',
+    bio: 'Vi bygger Hönsgården för svenska hönsägare som vill ha mer koll utan att fastna i kalkylark. Fokus är enkel vardagsloggning, tydlig överblick och praktiska verktyg för ägg, flock, försäljning och rutiner.',
     avatar: '🐔',
   },
 ];
 
 const values = [
-  { icon: Heart, title: 'Av hönsägare, för hönsägare', desc: 'Vi äger själva höns och vet hur det är. Allt vi bygger utgår från verkliga behov.' },
-  { icon: Shield, title: 'Din data är din', desc: 'All data lagras krypterat inom EU. Vi säljer aldrig dina uppgifter. GDPR-kompatibelt.' },
-  { icon: BookOpen, title: 'Kunskap för alla', desc: 'Vår blogg och våra guider är fritt tillgängliga. Vi vill att fler ska lyckas med höns.' },
-  { icon: Users, title: 'Community', desc: 'Vi bygger verktyg som förenar hönsägare i hela Sverige. Tillsammans lär vi oss mer.' },
+  { icon: Heart, title: 'Byggt för riktig hönsvardag', desc: 'Hönsgården ska fungera när du står vid hönshuset, inte bara när du sitter vid datorn.' },
+  { icon: BarChart3, title: 'Från känsla till koll', desc: 'Ägg, foder, väder, hälsa och försäljning blir användbara mönster över tid.' },
+  { icon: ReceiptText, title: 'Mindre Excel', desc: 'Agdas äggbod hjälper dig sälja ägg med länk, Swish, bokningar, kundlista och export.' },
+  { icon: Users, title: 'Community och feedback', desc: 'Hönsägare kan dela inlägg, frågor och tips – och hjälpa oss bygga rätt saker vidare.' },
+  { icon: Bot, title: 'Smart hjälp från Agda', desc: 'AI-stöd, rapporter och förslag ska göra appen mer användbar utan att kännas krånglig.' },
+  { icon: Shield, title: 'Din data är din', desc: 'Du ska känna dig trygg med informationen om din flock, dina rutiner och din försäljning.' },
+];
+
+const offering = [
+  'Ägglogg och historik',
+  'Hönsprofiler och flocköversikt',
+  'Statistik, trender och rapporter',
+  'Foderkostnad och ekonomi',
+  'Kalender, rutiner och påminnelser',
+  'Kläckningskalender',
+  'Väder och påverkan',
+  'Community med inlägg',
+  'Feedback och produktförslag',
+  'Agdas äggbod för lokal äggförsäljning',
+  'Bokningar, kunder, betalstatus och export',
+  'Agda AI och premiuminsikter',
 ];
 
 export default function About() {
   useSeo({
-    title: 'Om Hönsgården – Vilka vi är & varför vi finns',
-    description: 'Hönsgården skapades av hönsälskare för hönsälskare. Lär känna teamet bakom Sveriges digitala äggloggare och hönsverktyg.',
+    title: 'Om Hönsgården – appen för ägg, flock, försäljning och mer koll',
+    description: 'Hönsgården hjälper svenska hönsägare att logga ägg, följa flocken, sälja ägg med Agdas äggbod, få statistik, rapporter, community och AI-stöd.',
     path: '/om-oss',
     ogImage: '/blog-images/hens-garden.jpg',
     jsonLd: [
@@ -32,7 +49,7 @@ export default function About() {
         '@type': 'AboutPage',
         '@id': 'https://honsgarden.se/om-oss',
         name: 'Om Hönsgården',
-        description: 'Hönsgården skapades av hönsälskare för hönsälskare.',
+        description: 'Hönsgården är en svensk app för hönsägare med ägglogg, flock, försäljning, community, statistik och AI-stöd.',
         url: 'https://honsgarden.se/om-oss',
         isPartOf: { '@id': 'https://honsgarden.se/#website' },
         inLanguage: 'sv-SE',
@@ -43,13 +60,10 @@ export default function About() {
         name: 'Hönsgården',
         url: 'https://honsgarden.se',
         logo: { '@type': 'ImageObject', url: 'https://honsgarden.se/favicon.ico', width: 512, height: 512 },
-        description: 'Hönsgården hjälper hobbyuppfödare att hålla koll på ägg, höns, foder och ekonomi – helt digitalt.',
+        description: 'Hönsgården hjälper hobbyhönsägare att hålla koll på ägg, flock, foder, ekonomi, rutiner, community och lokal äggförsäljning.',
         email: 'info@auroramedia.se',
         foundingDate: '2024',
-        address: {
-          '@type': 'PostalAddress',
-          addressCountry: 'SE',
-        },
+        address: { '@type': 'PostalAddress', addressCountry: 'SE' },
         sameAs: [],
       },
       {
@@ -66,7 +80,6 @@ export default function About() {
     <div className="min-h-screen bg-background">
       <VisitorWelcomePopup />
 
-      {/* Header */}
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -74,6 +87,7 @@ export default function About() {
             <span className="font-serif text-lg text-foreground">Hönsgården</span>
           </Link>
           <div className="flex items-center gap-2">
+            <Link to="/salja-agg" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Sälj ägg</Link>
             <Link to="/blogg" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Blogg</Link>
             <Link to="/login">
               <Button size="sm" className="rounded-xl text-xs gap-1">
@@ -84,44 +98,53 @@ export default function About() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-10 sm:py-16">
-        {/* Hero */}
+      <main className="max-w-5xl mx-auto px-4 py-10 sm:py-16">
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-medium mb-4">
-            <Heart className="h-3.5 w-3.5" /> Om oss
+            <Heart className="h-3.5 w-3.5" /> Om Hönsgården
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif text-foreground mb-4">
-            Vi gör hönslivet enklare
+          <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-4 leading-tight">
+            Vi bygger kontrollpanelen för svenska hönsägare
           </h1>
-          <p className="text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Hönsgården skapades 2024 med en enkel vision: att ge svenska hönsägare ett modernt, lättanvänt verktyg för att hålla koll på allt som rör hönsgården – ägg, foder, hälsa och ekonomi.
+          <p className="text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            Hönsgården började som en digital ägglogg, men har vuxit till ett komplett verktyg för dig som vill följa flocken, förstå kostnader, sköta rutiner, sälja ägg, dela erfarenheter och få smartare hjälp i vardagen.
           </p>
         </div>
 
-        {/* Vår historia */}
         <section className="mb-14 sm:mb-20">
-          <div className="bg-card border border-border rounded-2xl p-6 sm:p-10">
+          <div className="bg-card border border-border rounded-3xl p-6 sm:p-10">
             <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-4 flex items-center gap-2">
-              <span className="text-2xl">📖</span> Vår historia
+              <span className="text-2xl">📖</span> Varför Hönsgården finns
             </h2>
             <div className="space-y-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
               <p>
-                Det hela började med en enkel frustration: att logga ägg i ett kalkylark var opraktiskt, och att komma ihåg vilken höna som behövde extra koll var nästan omöjligt.
+                Hönsägande är fullt av små detaljer: dagens ägg, hönornas beteende, foder, väder, rengöring, kvalster, ruggning, kläckningar och ibland lokal äggförsäljning. Mycket hamnar annars i huvudet, i mobilen, på lappar eller i Excel.
               </p>
               <p>
-                Så vi byggde Hönsgården – en digital äggloggare och gårdsverktyg som gör det enkelt att ha full kontroll. Appen är ny, och vi växer snabbt bland svenska hönsägare.
+                Hönsgården samlar allt detta på ett ställe. Du kan logga snabbt, se mönster över tid och få bättre överblick utan att det känns som administration.
               </p>
               <p>
-                Vår blogg delar expertkunskap om hönsraser, foder, hälsa och hönshusbygge – allt baserat på erfarenhet och research. Vi strävar efter att vara den mest trovärdiga källan för hönskunskap i Sverige.
+                Med Agdas äggbod kan du dessutom skapa säljsidor, ta emot bokningar, hålla koll på kunder och följa betalning och hämtning. Det gör Hönsgården till både gårdsdagbok, dashboard och försäljningsstöd.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Våra värderingar */}
+        <section className="mb-14 sm:mb-20">
+          <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-6 text-center">Det Hönsgården erbjuder</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {offering.map((item) => (
+              <div key={item} className="rounded-2xl bg-card border border-border p-4 flex items-center gap-3">
+                <Check className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm text-foreground">{item}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="mb-14 sm:mb-20">
           <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-6 text-center">Vad vi tror på</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {values.map((v) => (
               <div key={v.title} className="p-5 rounded-2xl bg-card border border-border">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
@@ -134,7 +157,6 @@ export default function About() {
           </div>
         </section>
 
-        {/* Teamet */}
         <section className="mb-14 sm:mb-20">
           <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-6 text-center">Teamet</h2>
           <div className="max-w-md mx-auto">
@@ -151,7 +173,6 @@ export default function About() {
           </div>
         </section>
 
-        {/* Kontakt */}
         <section className="mb-14 sm:mb-20">
           <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-6 text-center">Kontakta oss</h2>
           <div className="max-w-md mx-auto bg-card border border-border rounded-2xl p-6">
@@ -187,14 +208,13 @@ export default function About() {
           </div>
         </section>
 
-        {/* CTA */}
-        <div className="text-center bg-gradient-to-br from-primary/5 via-card to-accent/5 rounded-2xl p-8 sm:p-12 border border-border/30">
+        <div className="text-center bg-gradient-to-br from-primary/5 via-card to-accent/5 rounded-3xl p-8 sm:p-12 border border-border/30">
           <span className="text-3xl mb-3 block">🥚</span>
           <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-2">
-            Redo att testa?
+            Vill du få mer koll på din hönsgård?
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
-            Skapa ett konto på 10 sekunder – helt gratis. Ingen kreditkort behövs.
+            Skapa konto gratis och börja med äggloggen, flocken eller din första säljsida i Agdas äggbod.
           </p>
           <Link to="/login?mode=register">
             <Button size="lg" className="rounded-xl gap-2">
@@ -204,12 +224,12 @@ export default function About() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border/50 mt-16 py-8 px-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} Hönsgården</span>
           <div className="flex gap-4">
             <Link to="/" className="hover:text-foreground transition-colors">Startsidan</Link>
+            <Link to="/salja-agg" className="hover:text-foreground transition-colors">Sälj ägg</Link>
             <Link to="/blogg" className="hover:text-foreground transition-colors">Blogg</Link>
             <Link to="/terms" className="hover:text-foreground transition-colors">Villkor</Link>
           </div>
