@@ -2,7 +2,7 @@ import React from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Egg, Mail, MapPin, Shield, Heart, BookOpen, ArrowRight, Users, Award, BarChart3, ReceiptText, Bot, CloudSun } from 'lucide-react';
+import { Egg, Mail, MapPin, Shield, Heart, BookOpen, ArrowRight, Users, Award, BarChart3, ReceiptText, Bot, CloudSun, Check } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
 
 const team = [
