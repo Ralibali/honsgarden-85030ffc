@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
-import MobileAppDashboardHero from '@/components/MobileAppDashboardHero';
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,10 +15,6 @@ export default function DashboardV2() {
 
   return (
     <div className="space-y-5 pb-8">
-      <div className="md:hidden">
-        <MobileAppDashboardHero />
-      </div>
-
       <div className="max-w-2xl mx-auto">
         <ProductOnboardingChecklist />
       </div>
