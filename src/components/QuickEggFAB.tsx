@@ -110,7 +110,7 @@ export function QuickEggFAB() {
       {open && <div className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />}
 
       {open && (
-        <div className="fixed bottom-20 md:bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-80 z-[70] animate-fade-in">
+        <div style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }} className="fixed md:!bottom-6 left-3 right-3 md:left-auto md:right-6 md:w-80 z-[70] animate-fade-in">
           <div className="bg-card border border-border/60 rounded-2xl shadow-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
