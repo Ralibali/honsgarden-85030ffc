@@ -193,7 +193,7 @@ export function QuickEggFAB() {
       )}
 
       {!open && (
-        <button onClick={() => setOpen(true)} className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-[35] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 animate-fade-in" aria-label="Registrera ägg (E)">
+        <button onClick={() => setOpen(true)} style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom))' }} className="fixed right-4 md:!bottom-6 md:right-6 z-[35] w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center transition-all hover:scale-105 active:scale-95 animate-fade-in" aria-label="Registrera ägg (E)">
           <div className="relative"><Egg className="h-6 w-6" /><Plus className="h-3 w-3 absolute -top-1 -right-1.5 bg-primary-foreground text-primary rounded-full" /></div>
         </button>
       )}
