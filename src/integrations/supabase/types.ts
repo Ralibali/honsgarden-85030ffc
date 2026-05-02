@@ -1491,6 +1491,7 @@ export type Database = {
           premium_expires_at: string | null
           referral_code: string | null
           referred_by: string | null
+          stripe_customer_id: string | null
           subscription_status: string
           terms_accepted_at: string | null
           updated_at: string
@@ -1506,6 +1507,7 @@ export type Database = {
           premium_expires_at?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          stripe_customer_id?: string | null
           subscription_status?: string
           terms_accepted_at?: string | null
           updated_at?: string
@@ -1521,6 +1523,7 @@ export type Database = {
           premium_expires_at?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          stripe_customer_id?: string | null
           subscription_status?: string
           terms_accepted_at?: string | null
           updated_at?: string

@@ -57,6 +57,19 @@
     --hero-gradient: linear-gradient(160deg, hsl(142 32% 34%), hsl(26 58% 40%));
     --card-shadow: 0 1px 3px 0 hsl(22 18% 12% / 0.05), 0 1px 2px -1px hsl(22 18% 12% / 0.04);
     --card-shadow-hover: 0 10px 30px -8px hsl(22 18% 12% / 0.10), 0 4px 6px -4px hsl(22 18% 12% / 0.05);
+
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+  }
+
+  html, body {
+    background-color: hsl(var(--background));
+  }
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   .dark {

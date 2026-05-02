@@ -112,8 +112,8 @@ textarea {
   }
 
   main#main-content {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: max(1rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
     padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)) !important;
   }
 
@@ -244,6 +244,12 @@ textarea {
   [role="dialog"] {
     width: calc(100vw - 0.75rem) !important;
   }
+}
+
+/* Sticky bottom-CTA i sheets/dialogs ska inte täckas av home indicator */
+[role="dialog"] [data-sticky-bottom],
+[data-vaul-drawer] [data-sticky-bottom] {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
 }
 
 @supports not (overflow: clip) {

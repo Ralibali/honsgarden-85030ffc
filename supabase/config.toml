@@ -23,3 +23,5 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.egg-sales-marketing]
     verify_jwt = true
+  [functions.stripe-webhook]
+    verify_jwt = false
