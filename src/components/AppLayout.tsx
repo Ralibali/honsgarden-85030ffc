@@ -64,7 +64,7 @@ export default function AppLayout() {
             </div>
           </header>
 
-          <main id="main-content" className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-8 relative z-10">
+          <main id="main-content" className="flex-1 p-4 md:p-6 lg:p-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8 relative z-10">
             <Suspense fallback={
               <div className="flex items-center justify-center py-20">
                 <div className="flex flex-col items-center gap-3">
