@@ -46,7 +46,7 @@ export default function AppLayout() {
           </header>
 
           {/* Mobile header */}
-          <header className="flex md:hidden items-center justify-between border-b border-border/60 px-4 bg-background/70 backdrop-blur-xl sticky top-0 z-30 pt-safe-top h-14">
+          <header className="flex md:hidden items-center justify-between border-b border-border/60 px-4 bg-background/70 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-14 py-2">
             <div className="w-8" />
             <div className="flex items-center gap-2">
               <Feather className="h-4 w-4 text-primary" />
