@@ -28,7 +28,7 @@ export default function AppLayout() {
 
         <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
           {/* Desktop header */}
-          <header className="hidden md:flex items-center justify-between border-b border-border/60 px-5 bg-background/60 backdrop-blur-xl sticky top-0 z-30 pt-safe-top h-12">
+          <header className="hidden md:flex items-center justify-between border-b border-border/60 px-5 bg-background/60 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-12">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
