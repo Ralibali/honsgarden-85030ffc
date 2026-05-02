@@ -120,22 +120,31 @@ export default function Premium() {
     if (searchParams.get('success') !== 'true') return;
     let cancelled = false;
     const pollSubscription = async () => {
-      for (let attempt = 1; attempt <= 10; attempt++) {
+      // 30 försök × 2s = 60 sekunder. Apple Pay tar ofta längre tid än kort.
+      for (let attempt = 1; attempt <= 30; attempt++) {
         if (cancelled) return;
         try {
           const { data, error } = await supabase.functions.invoke('check-subscription');
           if (!error && data?.subscribed) {
             await refreshSubscription();
-            toast({ title: 'Välkommen till Premium! 🎉', description: 'Nu har du AI, insikter och ekonomiverktygen för bättre koll på flocken.' });
+            toast({
+              title: 'Välkommen till Premium! 🎉',
+              description: 'Nu har du AI, insikter och ekonomiverktygen.',
+            });
             window.location.replace('/app/premium');
             return;
           }
         } catch (err) {
           console.warn('[Premium] check-subscription polling fel, försöker igen:', err);
         }
-        if (attempt < 10) await new Promise((r) => setTimeout(r, 2000));
+        if (attempt < 30) await new Promise((r) => setTimeout(r, 2000));
       }
-      if (!cancelled) toast({ title: 'Betalningen behandlas', description: 'Det kan ta en liten stund. Tryck på Synka premiumstatus om sidan inte uppdateras.' });
+      if (!cancelled)
+        toast({
+          title: 'Betalningen behandlas fortfarande',
+          description:
+            'Apple Pay kan ta upp till någon minut. Tryck "Synka premiumstatus" om sidan inte uppdateras automatiskt — eller ladda om appen om en stund.',
+        });
     };
     pollSubscription();
     return () => { cancelled = true; };
