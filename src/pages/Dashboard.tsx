@@ -385,8 +385,8 @@ export default function Dashboard() {
             Logga ägg
           </Button>
 
-          {/* 4 stat-rutor */}
-          <div className="grid grid-cols-4 gap-2">
+          {/* 3 stat-rutor */}
+          <div className="grid grid-cols-3 gap-2">
             {stats.map((s) => (
               <div key={s.label} className="rounded-xl bg-muted/40 border border-border/30 p-2.5 text-center">
                 <p className="text-xl font-bold text-foreground tabular-nums leading-none">{s.value}</p>
