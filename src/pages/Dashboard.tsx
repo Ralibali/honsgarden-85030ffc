@@ -456,12 +456,64 @@ export default function Dashboard() {
               id="weekly"
               icon={TrendingUp}
               title="Veckosammanfattning"
-              preview={`${weekEggs} ägg loggade denna vecka${weekDelta !== 0 ? ` (${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra)` : ''}`}
+              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra` : ''}`}
               openIds={openInsights}
               setOpenIds={setOpenInsights}
             >
-              <EggGoalsWidget eggs={eggs} />
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className="text-lg font-bold text-foreground tabular-nums leading-none">{weekEggs}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Veckan</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className="text-lg font-bold text-foreground tabular-nums leading-none">{eggsPerDay.toFixed(1)}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Ägg/dag</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className={`text-lg font-bold tabular-nums leading-none ${weekDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {weekDelta > 0 ? '+' : ''}{weekDelta}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot förra</p>
+                  </div>
+                </div>
+                <EggGoalsWidget eggs={eggs} />
+              </div>
             </InsightRow>
+
+            {streak > 0 && (
+              <InsightRow
+                id="streak"
+                icon={Flame}
+                title="Loggningsstreak"
+                preview={`${streak} dagar i rad`}
+                openIds={openInsights}
+                setOpenIds={setOpenInsights}
+              >
+                <div className="rounded-xl bg-warning/5 border border-warning/20 p-4 text-center">
+                  <Flame className="h-7 w-7 text-warning mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-warning tabular-nums">{streak}</p>
+                  <p className="text-xs text-muted-foreground mt-1">dagar med loggade ägg i rad</p>
+                </div>
+              </InsightRow>
+            )}
+
+            {topHen && (
+              <InsightRow
+                id="tophen"
+                icon={Award}
+                title="Veckans bästa höna"
+                preview={`${topHen.name} · ${topHen.count} ägg`}
+                openIds={openInsights}
+                setOpenIds={setOpenInsights}
+              >
+                <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 text-center">
+                  <Award className="h-7 w-7 text-primary mx-auto mb-2" />
+                  <p className="font-serif text-lg text-foreground">{topHen.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{topHen.count} ägg denna vecka</p>
+                </div>
+              </InsightRow>
+            )}
 
             <InsightRow
               id="advice"
