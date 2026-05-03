@@ -1,0 +1,2 @@
+Lovable resync marker.
+Startsidan är återställd till versionen innan Lighthouse-experimentet.
