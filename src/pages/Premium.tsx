@@ -10,64 +10,64 @@ import { useSeo } from '@/hooks/useSeo';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
-const PRICES = {
-  monthly: 'price_1T3joGHzffTezY82dRQc7GTO',
-  yearly: 'price_1T3jwRHzffTezY829aWQVXZr',
-};
+const PLANS = {
+  monthly: "monthly",
+  yearly: "yearly",
+} as const;
 
 const valuePillars = [
   {
     icon: Bot,
-    title: 'AI som förstår hönsgården',
-    desc: 'Få råd, veckorapporter och avvikelsevarningar som bygger på dina egna loggar – inte generiska tips.',
-    bullets: ['AI-coach på dashboarden', 'AI-veckorapport', 'Avvikelsevarningar'],
+    title: 'AI som fÃ¶rstÃ¥r hÃ¶nsgÃ¥rden',
+    desc: 'FÃ¥ rÃ¥d, veckorapporter och avvikelsevarningar som bygger pÃ¥ dina egna loggar â€“ inte generiska tips.',
+    bullets: ['AI-coach pÃ¥ dashboarden', 'AI-veckorapport', 'Avvikelsevarningar'],
   },
   {
     icon: Calculator,
-    title: 'Ekonomi som går att använda',
-    desc: 'Se foderkostnad, kostnad per ägg, intäkter och obetalda äggförsäljningar på ett praktiskt sätt.',
-    bullets: ['Foderkostnad per ägg', 'Sälj ägg-modul', 'Export och rapporter'],
+    title: 'Ekonomi som gÃ¥r att anvÃ¤nda',
+    desc: 'Se foderkostnad, kostnad per Ã¤gg, intÃ¤kter och obetalda Ã¤ggfÃ¶rsÃ¤ljningar pÃ¥ ett praktiskt sÃ¤tt.',
+    bullets: ['Foderkostnad per Ã¤gg', 'SÃ¤lj Ã¤gg-modul', 'Export och rapporter'],
   },
   {
     icon: HeartPulse,
     title: 'Tryggare vardag',
-    desc: 'Håll koll på flockens rytm, rutiner, hälsosignaler, kläckning och vad som behöver göras härnäst.',
-    bullets: ['Flockhälsa-light', 'Smarta rutiner', 'Kläckningskalender'],
+    desc: 'HÃ¥ll koll pÃ¥ flockens rytm, rutiner, hÃ¤lsosignaler, klÃ¤ckning och vad som behÃ¶ver gÃ¶ras hÃ¤rnÃ¤st.',
+    bullets: ['FlockhÃ¤lsa-light', 'Smarta rutiner', 'KlÃ¤ckningskalender'],
   },
 ];
 
 const premiumFeatures = [
-  { text: 'AI-hönsgårdscoach med personliga råd', icon: '🤖' },
-  { text: 'AI-veckorapport och tydliga nästa steg', icon: '✨' },
-  { text: 'Avvikelsevarningar när något ändras i flocken', icon: '🔎' },
-  { text: 'Avancerad statistik, trender och äggmål', icon: '📊' },
-  { text: 'Foderspårning och kostnad per ägg', icon: '🌾' },
-  { text: 'Agdas Bod – din gårdsbutik för äggförsäljning (just nu öppet för alla)', icon: '🥚' },
-  { text: 'Ekonomi, intäkter, kostnader och export', icon: '💰' },
-  { text: 'Flockhälsa-light och bättre hönsprofiler', icon: '💚' },
-  { text: 'Kläckningskalender med milstolpar', icon: '🐣' },
-  { text: 'Smarta påminnelser och dagliga uppgifter', icon: '🔔' },
-  { text: 'PDF/CSV-export och rapporter', icon: '📥' },
-  { text: 'Prioriterad support och framtida premiumfunktioner', icon: '⭐' },
+  { text: 'AI-hÃ¶nsgÃ¥rdscoach med personliga rÃ¥d', icon: 'ðŸ¤–' },
+  { text: 'AI-veckorapport och tydliga nÃ¤sta steg', icon: 'âœ¨' },
+  { text: 'Avvikelsevarningar nÃ¤r nÃ¥got Ã¤ndras i flocken', icon: 'ðŸ”Ž' },
+  { text: 'Avancerad statistik, trender och Ã¤ggmÃ¥l', icon: 'ðŸ“Š' },
+  { text: 'FoderspÃ¥rning och kostnad per Ã¤gg', icon: 'ðŸŒ¾' },
+  { text: 'Agdas Bod â€“ din gÃ¥rdsbutik fÃ¶r Ã¤ggfÃ¶rsÃ¤ljning (just nu Ã¶ppet fÃ¶r alla)', icon: 'ðŸ¥š' },
+  { text: 'Ekonomi, intÃ¤kter, kostnader och export', icon: 'ðŸ’°' },
+  { text: 'FlockhÃ¤lsa-light och bÃ¤ttre hÃ¶nsprofiler', icon: 'ðŸ’š' },
+  { text: 'KlÃ¤ckningskalender med milstolpar', icon: 'ðŸ£' },
+  { text: 'Smarta pÃ¥minnelser och dagliga uppgifter', icon: 'ðŸ””' },
+  { text: 'PDF/CSV-export och rapporter', icon: 'ðŸ“¥' },
+  { text: 'Prioriterad support och framtida premiumfunktioner', icon: 'â­' },
 ];
 
-const freeFeatures = ['Äggloggning', 'Upp till 10 hönor', 'Enkel hälsologg', 'Grundstatistik', 'Dagbok', 'Mobilvänlig PWA'];
+const freeFeatures = ['Ã„ggloggning', 'Upp till 10 hÃ¶nor', 'Enkel hÃ¤lsologg', 'Grundstatistik', 'Dagbok', 'MobilvÃ¤nlig PWA'];
 
 const highlights = [
-  { icon: Bot, title: 'AI-råd som inte känns som en robot', desc: 'Hönsgården tolkar dina siffror och ger korta, snälla och praktiska råd.' },
-  { icon: TrendingUp, title: 'Förstå varför siffrorna ändras', desc: 'Se om produktionen är uppåt, nedåt eller stabil – och vad du kan göra.' },
-  { icon: ReceiptText, title: 'Agdas Bod – sälj ägg utan krångel', desc: 'Skapa säljsidor, ta emot bokningar, håll koll på lager, kunder och Swish-betalningar. Öppet för alla just nu, blir Plus-funktion framöver.' },
-  { icon: Wheat, title: 'Räkna på verklig kostnad', desc: 'Se vad fodret kostar och vad varje ägg ungefär landar på.' },
-  { icon: HeartPulse, title: 'Håll koll på flockens rytm', desc: 'Flockhälsa-light hjälper dig upptäcka när något är värt att observera.' },
-  { icon: Bell, title: 'Få hjälp med rutinerna', desc: 'Påminnelser gör att vatten, foder, rengöring och kontroll inte glöms bort.' },
-  { icon: Baby, title: 'Tryggare kläckningar', desc: 'Håll koll på dag 7, dag 14, lockdown och beräknad kläckning.' },
-  { icon: Download, title: 'Ta ut dina data', desc: 'Exportera rapporter när du vill dela, spara eller bokföra.' },
+  { icon: Bot, title: 'AI-rÃ¥d som inte kÃ¤nns som en robot', desc: 'HÃ¶nsgÃ¥rden tolkar dina siffror och ger korta, snÃ¤lla och praktiska rÃ¥d.' },
+  { icon: TrendingUp, title: 'FÃ¶rstÃ¥ varfÃ¶r siffrorna Ã¤ndras', desc: 'Se om produktionen Ã¤r uppÃ¥t, nedÃ¥t eller stabil â€“ och vad du kan gÃ¶ra.' },
+  { icon: ReceiptText, title: 'Agdas Bod â€“ sÃ¤lj Ã¤gg utan krÃ¥ngel', desc: 'Skapa sÃ¤ljsidor, ta emot bokningar, hÃ¥ll koll pÃ¥ lager, kunder och Swish-betalningar. Ã–ppet fÃ¶r alla just nu, blir Plus-funktion framÃ¶ver.' },
+  { icon: Wheat, title: 'RÃ¤kna pÃ¥ verklig kostnad', desc: 'Se vad fodret kostar och vad varje Ã¤gg ungefÃ¤r landar pÃ¥.' },
+  { icon: HeartPulse, title: 'HÃ¥ll koll pÃ¥ flockens rytm', desc: 'FlockhÃ¤lsa-light hjÃ¤lper dig upptÃ¤cka nÃ¤r nÃ¥got Ã¤r vÃ¤rt att observera.' },
+  { icon: Bell, title: 'FÃ¥ hjÃ¤lp med rutinerna', desc: 'PÃ¥minnelser gÃ¶r att vatten, foder, rengÃ¶ring och kontroll inte glÃ¶ms bort.' },
+  { icon: Baby, title: 'Tryggare klÃ¤ckningar', desc: 'HÃ¥ll koll pÃ¥ dag 7, dag 14, lockdown och berÃ¤knad klÃ¤ckning.' },
+  { icon: Download, title: 'Ta ut dina data', desc: 'Exportera rapporter nÃ¤r du vill dela, spara eller bokfÃ¶ra.' },
 ];
 
 const testimonials = [
-  { name: 'Anna-Lena', location: 'Dalarna', text: 'Jag trodde jag hade koll, men först när jag såg kostnad per ägg förstod jag flocken på riktigt.' },
-  { name: 'Per-Olof', location: 'Skåne', text: 'Kläckningskalendern gjorde att jag slapp dubbelkolla datum hela tiden. Det blev lugnare.' },
-  { name: 'Margareta', location: 'Gotland', text: 'Påminnelserna gör störst skillnad. Nu är det inte bara jag som behöver komma ihåg allt.' },
+  { name: 'Anna-Lena', location: 'Dalarna', text: 'Jag trodde jag hade koll, men fÃ¶rst nÃ¤r jag sÃ¥g kostnad per Ã¤gg fÃ¶rstod jag flocken pÃ¥ riktigt.' },
+  { name: 'Per-Olof', location: 'SkÃ¥ne', text: 'KlÃ¤ckningskalendern gjorde att jag slapp dubbelkolla datum hela tiden. Det blev lugnare.' },
+  { name: 'Margareta', location: 'Gotland', text: 'PÃ¥minnelserna gÃ¶r stÃ¶rst skillnad. Nu Ã¤r det inte bara jag som behÃ¶ver komma ihÃ¥g allt.' },
 ];
 
 export default function Premium() {
@@ -80,14 +80,14 @@ export default function Premium() {
 
   const premiumJsonLd = useMemo(() => ({
     '@type': 'Product',
-    name: 'Hönsgården Plus',
+    name: 'HÃ¶nsgÃ¥rden Plus',
     description:
-      'Premiumabonnemang för Hönsgården med AI-coach, veckorapport, ekonomi och avancerade insikter för hönsgårdar.',
-    brand: { '@type': 'Brand', name: 'Hönsgården' },
+      'Premiumabonnemang fÃ¶r HÃ¶nsgÃ¥rden med AI-coach, veckorapport, ekonomi och avancerade insikter fÃ¶r hÃ¶nsgÃ¥rdar.',
+    brand: { '@type': 'Brand', name: 'HÃ¶nsgÃ¥rden' },
     offers: [
       {
         '@type': 'Offer',
-        name: 'Hönsgården Plus – månad',
+        name: 'HÃ¶nsgÃ¥rden Plus â€“ mÃ¥nad',
         price: '19',
         priceCurrency: 'SEK',
         availability: 'https://schema.org/InStock',
@@ -95,7 +95,7 @@ export default function Premium() {
       },
       {
         '@type': 'Offer',
-        name: 'Hönsgården Plus – år',
+        name: 'HÃ¶nsgÃ¥rden Plus â€“ Ã¥r',
         price: '149',
         priceCurrency: 'SEK',
         availability: 'https://schema.org/InStock',
@@ -105,13 +105,13 @@ export default function Premium() {
   }), []);
 
   useSeo({
-    title: 'Hönsgården Plus – AI-coach, ekonomi & insikter för hönsgården',
+    title: 'HÃ¶nsgÃ¥rden Plus â€“ AI-coach, ekonomi & insikter fÃ¶r hÃ¶nsgÃ¥rden',
     description:
-      'Uppgradera till Hönsgården Plus för AI-coach, veckorapporter, avvikelsevarningar, ekonomiverktyg och kläckningskalender. 19 kr/mån eller 149 kr/år – avsluta när du vill.',
+      'Uppgradera till HÃ¶nsgÃ¥rden Plus fÃ¶r AI-coach, veckorapporter, avvikelsevarningar, ekonomiverktyg och klÃ¤ckningskalender. 19 kr/mÃ¥n eller 149 kr/Ã¥r â€“ avsluta nÃ¤r du vill.',
     path: '/app/premium',
     ogType: 'website',
     ogImage: '/og-image.jpg',
-    ogImageAlt: 'Hönsgården Plus – AI och ekonomi för hönsgårdar',
+    ogImageAlt: 'HÃ¶nsgÃ¥rden Plus â€“ AI och ekonomi fÃ¶r hÃ¶nsgÃ¥rdar',
     noindex: true,
     jsonLd: premiumJsonLd,
   });
@@ -120,7 +120,7 @@ export default function Premium() {
     if (searchParams.get('success') !== 'true') return;
     let cancelled = false;
     const pollSubscription = async () => {
-      // 30 försök × 2s = 60 sekunder. Apple Pay tar ofta längre tid än kort.
+      // 30 fÃ¶rsÃ¶k Ã— 2s = 60 sekunder. Apple Pay tar ofta lÃ¤ngre tid Ã¤n kort.
       for (let attempt = 1; attempt <= 30; attempt++) {
         if (cancelled) return;
         try {
@@ -128,14 +128,14 @@ export default function Premium() {
           if (!error && data?.subscribed) {
             await refreshSubscription();
             toast({
-              title: 'Välkommen till Premium! 🎉',
+              title: 'VÃ¤lkommen till Premium! ðŸŽ‰',
               description: 'Nu har du AI, insikter och ekonomiverktygen.',
             });
             window.location.replace('/app/premium');
             return;
           }
         } catch (err) {
-          console.warn('[Premium] check-subscription polling fel, försöker igen:', err);
+          console.warn('[Premium] check-subscription polling fel, fÃ¶rsÃ¶ker igen:', err);
         }
         if (attempt < 30) await new Promise((r) => setTimeout(r, 2000));
       }
@@ -143,7 +143,7 @@ export default function Premium() {
         toast({
           title: 'Betalningen behandlas fortfarande',
           description:
-            'Apple Pay kan ta upp till någon minut. Tryck "Synka premiumstatus" om sidan inte uppdateras automatiskt — eller ladda om appen om en stund.',
+            'Apple Pay kan ta upp till nÃ¥gon minut. Tryck "Synka premiumstatus" om sidan inte uppdateras automatiskt â€” eller ladda om appen om en stund.',
         });
     };
     pollSubscription();
@@ -154,9 +154,9 @@ export default function Premium() {
     setSyncing(true);
     try {
       await refreshSubscription();
-      toast({ title: 'Premiumstatus kontrollerad ✅', description: 'Vi har synkat din prenumeration mot betalningssystemet.' });
+      toast({ title: 'Premiumstatus kontrollerad âœ…', description: 'Vi har synkat din prenumeration mot betalningssystemet.' });
     } catch (err: any) {
-      toast({ title: 'Kunde inte synka just nu', description: err?.message || 'Försök igen om en stund.', variant: 'destructive' });
+      toast({ title: 'Kunde inte synka just nu', description: err?.message || 'FÃ¶rsÃ¶k igen om en stund.', variant: 'destructive' });
     } finally {
       setSyncing(false);
     }
@@ -170,31 +170,49 @@ export default function Premium() {
       if (data?.error) throw new Error(data.error);
       if (data?.url) window.location.href = data.url;
     } catch (err: any) {
-      toast({ title: 'Något gick fel', description: err.message || 'Kunde inte öppna kundportalen.', variant: 'destructive' });
+      toast({ title: 'NÃ¥got gick fel', description: err.message || 'Kunde inte Ã¶ppna kundportalen.', variant: 'destructive' });
     } finally {
       setLoadingPortal(false);
     }
   };
 
-  const handleCheckout = async (priceId: string, planName: string) => {
+  const handleCheckout = async (plan: "monthly" | "yearly") => {
     if (!user) {
-      toast({ title: 'Logga in först', description: 'Du behöver vara inloggad för att uppgradera.', variant: 'destructive' });
+      toast({
+        title: "Logga in fÃ¶rst",
+        description: "Du behÃ¶ver vara inloggad fÃ¶r att uppgradera.",
+        variant: "destructive",
+      });
       return;
     }
-    setLoadingPlan(planName);
+
+    setLoadingPlan(plan);
+
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', { body: { priceId } });
-      if (data?.error === 'already_subscribed' && data?.portal_url) {
-        toast({ title: 'Du har redan en aktiv prenumeration', description: 'Vi öppnar kundportalen där du kan hantera den.' });
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { plan },
+      });
+
+      if (data?.error === "already_subscribed" && data?.portal_url) {
+        toast({
+          title: "Du har redan en aktiv prenumeration",
+          description: "Vi Ã¶ppnar kundportalen dÃ¤r du kan hantera den.",
+        });
         window.location.href = data.portal_url;
         return;
       }
+
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.message || data.error);
-      if (data?.url) window.location.href = data.url;
-      else throw new Error('Ingen checkout-URL returnerades');
+      if (!data?.url) throw new Error("Ingen checkout-URL returnerades");
+
+      window.location.href = data.url;
     } catch (err: any) {
-      toast({ title: 'Kunde inte starta betalning', description: err.message || 'Något gick fel.', variant: 'destructive' });
+      toast({
+        title: "Kunde inte starta betalning",
+        description: err.message || "NÃ¥got gick fel.",
+        variant: "destructive",
+      });
     } finally {
       setLoadingPlan(null);
     }
@@ -210,15 +228,15 @@ export default function Premium() {
             Premium med AI, insikter och ekonomi
           </div>
           <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-3 leading-tight">
-            Gör Hönsgården till din smarta gårdsassistent
+            GÃ¶r HÃ¶nsgÃ¥rden till din smarta gÃ¥rdsassistent
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto mb-5 leading-relaxed">
-            Gratis hjälper dig komma igång. Premium hjälper dig förstå flocken, få AI-råd, hålla koll på foderkostnad, sälja ägg och veta vad som är nästa bästa steg.
+            Gratis hjÃ¤lper dig komma igÃ¥ng. Premium hjÃ¤lper dig fÃ¶rstÃ¥ flocken, fÃ¥ AI-rÃ¥d, hÃ¥lla koll pÃ¥ foderkostnad, sÃ¤lja Ã¤gg och veta vad som Ã¤r nÃ¤sta bÃ¤sta steg.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
             {!isPremium && (
               <div className="inline-flex items-center gap-2 bg-success/15 text-success-foreground border border-success/25 px-4 py-2 rounded-full text-sm font-medium">
-                🎁 Sju dagars gratis provperiod – känn efter i din egen hönsgård
+                Premium hjÃ¤lper dig fÃ¥ mer nytta av dina loggar
               </div>
             )}
             <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={handleSyncPremium} disabled={syncing}>
@@ -234,9 +252,9 @@ export default function Premium() {
           <div className="flex items-start gap-3">
             <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0"><Bot className="h-5 w-5 text-primary" /></div>
             <div>
-              <h2 className="font-serif text-lg text-foreground mb-1">Det här är intäktsmotorn</h2>
+              <h2 className="font-serif text-lg text-foreground mb-1">Det hÃ¤r Ã¤r intÃ¤ktsmotorn</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Gratis ska skapa vanan: logga ägg och lägg till hönor. Premium ska skapa värdet: AI-råd, insikter, ekonomi, foderkostnad, sälj ägg och bättre beslut. Det är där Hönsgården blir svår att vara utan.
+                Gratis ska skapa vanan: logga Ã¤gg och lÃ¤gg till hÃ¶nor. Premium ska skapa vÃ¤rdet: AI-rÃ¥d, insikter, ekonomi, foderkostnad, sÃ¤lj Ã¤gg och bÃ¤ttre beslut. Det Ã¤r dÃ¤r HÃ¶nsgÃ¥rden blir svÃ¥r att vara utan.
               </p>
             </div>
           </div>
@@ -266,9 +284,9 @@ export default function Premium() {
         <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-6">
             <h3 className="font-serif text-lg text-foreground mb-1">Gratis</h3>
-            <p className="text-muted-foreground text-sm mb-5">Bra för att skapa vanan</p>
+            <p className="text-muted-foreground text-sm mb-5">Bra fÃ¶r att skapa vanan</p>
             <div className="mb-2"><span className="text-4xl font-bold text-foreground">0</span><span className="text-lg text-muted-foreground ml-1">kr</span></div>
-            <p className="text-xs text-muted-foreground mb-4">Ingen tidsgräns</p>
+            <p className="text-xs text-muted-foreground mb-4">Ingen tidsgrÃ¤ns</p>
             <ul className="space-y-2.5 mb-6">
               {freeFeatures.map((f) => <li key={f} className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" />{f}</li>)}
             </ul>
@@ -278,42 +296,42 @@ export default function Premium() {
 
         <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-6">
-            <h3 className="font-serif text-lg text-foreground mb-1">Plus – Månad</h3>
-            <p className="text-muted-foreground text-sm mb-5">För dig som vill testa allt</p>
-            <div className="mb-2"><span className="text-4xl font-bold text-foreground">19</span><span className="text-lg text-muted-foreground ml-1">kr/mån</span></div>
-            <p className="text-xs text-primary font-medium mb-4">Sju dagars gratis provperiod</p>
+            <h3 className="font-serif text-lg text-foreground mb-1">Plus â€“ MÃ¥nad</h3>
+            <p className="text-muted-foreground text-sm mb-5">FÃ¶r dig som vill testa allt</p>
+            <div className="mb-2"><span className="text-4xl font-bold text-foreground">19</span><span className="text-lg text-muted-foreground ml-1">kr/mÃ¥n</span></div>
+            <p className="text-xs text-primary font-medium mb-4">Premium hjälper dig få mer nytta av dina loggar</p>
             <ul className="space-y-2.5 mb-6">
               {premiumFeatures.slice(0, 6).map((f) => <li key={f.text} className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" />{f.text}</li>)}
               <li className="text-xs text-muted-foreground pl-6">+ allt i Gratis</li>
             </ul>
-            <Button variant="outline" className="w-full h-11 gap-2 active:scale-95 transition-transform" onClick={() => handleCheckout(PRICES.monthly, 'monthly')} disabled={!!loadingPlan || isPremium}>
+            <Button variant="outline" className="w-full h-11 gap-2 active:scale-95 transition-transform" onClick={() => handleCheckout("monthly")} disabled={!!loadingPlan || isPremium}>
               {loadingPlan === 'monthly' ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-              {isPremium ? 'Du har redan Plus' : 'Prova månadsvis'}
+              {isPremium ? 'Du har redan Plus' : 'Prova mÃ¥nadsvis'}
             </Button>
           </CardContent>
         </Card>
 
         <Card className="bg-card border-2 border-primary shadow-lg relative overflow-hidden hover:shadow-xl transition-shadow">
-          <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-xs font-semibold py-1.5 text-center tracking-wide uppercase">Bäst värde – spara 35%</div>
+          <div className="absolute top-0 left-0 right-0 bg-primary text-primary-foreground text-xs font-semibold py-1.5 text-center tracking-wide uppercase">BÃ¤st vÃ¤rde â€“ spara 35%</div>
           <CardContent className="p-6 pt-10">
-            <h3 className="font-serif text-lg text-foreground mb-1">Plus – År</h3>
-            <p className="text-muted-foreground text-sm mb-5">För dig som vill bygga långsiktig koll</p>
-            <div className="mb-2"><span className="text-4xl font-bold text-foreground">149</span><span className="text-lg text-muted-foreground ml-1">kr/år</span></div>
-            <p className="text-xs text-muted-foreground mb-4"><span className="line-through">228 kr</span> → ungefär 12 kr/mån</p>
+            <h3 className="font-serif text-lg text-foreground mb-1">Plus â€“ Ã…r</h3>
+            <p className="text-muted-foreground text-sm mb-5">FÃ¶r dig som vill bygga lÃ¥ngsiktig koll</p>
+            <div className="mb-2"><span className="text-4xl font-bold text-foreground">149</span><span className="text-lg text-muted-foreground ml-1">kr/Ã¥r</span></div>
+            <p className="text-xs text-muted-foreground mb-4"><span className="line-through">228 kr</span> â†’ ungefÃ¤r 12 kr/mÃ¥n</p>
             <ul className="space-y-2.5 mb-6">
               {premiumFeatures.slice(0, 6).map((f) => <li key={f.text} className="flex items-center gap-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" />{f.text}</li>)}
               <li className="text-xs text-muted-foreground pl-6">+ allt i Gratis</li>
             </ul>
-            <Button className="w-full h-12 gap-2 active:scale-95 transition-transform text-base font-semibold shadow-[0_4px_14px_0_hsl(var(--primary)/0.3)]" onClick={() => handleCheckout(PRICES.yearly, 'yearly')} disabled={!!loadingPlan || isPremium}>
+            <Button className="w-full h-12 gap-2 active:scale-95 transition-transform text-base font-semibold shadow-[0_4px_14px_0_hsl(var(--primary)/0.3)]" onClick={() => handleCheckout("yearly")} disabled={!!loadingPlan || isPremium}>
               {loadingPlan === 'yearly' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-              {isPremium ? 'Du har redan Plus' : 'Välj årsplan – 149 kr'}
+              {isPremium ? 'Du har redan Plus' : 'VÃ¤lj Ã¥rsplan â€“ 149 kr'}
             </Button>
           </CardContent>
         </Card>
       </div>
 
       <div>
-        <h2 className="font-serif text-xl sm:text-2xl text-foreground text-center mb-5">Allt som ingår i Plus</h2>
+        <h2 className="font-serif text-xl sm:text-2xl text-foreground text-center mb-5">Allt som ingÃ¥r i Plus</h2>
         <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-5 sm:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -335,7 +353,7 @@ export default function Premium() {
       </div>
 
       <div>
-        <h2 className="font-serif text-xl text-foreground text-center mb-4">Så beskriver hönsägare värdet</h2>
+        <h2 className="font-serif text-xl text-foreground text-center mb-4">SÃ¥ beskriver hÃ¶nsÃ¤gare vÃ¤rdet</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {testimonials.map((t) => (
             <Card key={t.name} className="bg-card border-border shadow-sm">
@@ -353,7 +371,7 @@ export default function Premium() {
         <CardContent className="p-5 sm:p-6 text-center">
           <HeartHandshake className="h-6 w-6 text-primary mx-auto mb-2" />
           <h3 className="font-serif text-lg text-foreground mb-2">Ingen bindningstid</h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">Avbryt när du vill. Inga dolda avgifter. Dina data finns kvar om du går tillbaka till gratis.</p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">Avbryt nÃ¤r du vill. Inga dolda avgifter. Dina data finns kvar om du gÃ¥r tillbaka till gratis.</p>
         </CardContent>
       </Card>
 
@@ -370,12 +388,13 @@ export default function Premium() {
 
       {!isPremium && (
         <div className="text-center pb-4">
-          <Button size="lg" className="h-12 px-10 text-base gap-2 active:scale-95 transition-transform shadow-[0_4px_14px_0_hsl(var(--primary)/0.3)]" onClick={() => handleCheckout(PRICES.yearly, 'yearly')} disabled={!!loadingPlan}>
-            {loadingPlan === 'yearly' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}Börja med Plus – 149 kr/år
+          <Button size="lg" className="h-12 px-10 text-base gap-2 active:scale-95 transition-transform shadow-[0_4px_14px_0_hsl(var(--primary)/0.3)]" onClick={() => handleCheckout("yearly")} disabled={!!loadingPlan}>
+            {loadingPlan === 'yearly' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}BÃ¶rja med Plus â€“ 149 kr/Ã¥r
           </Button>
-          <p className="text-xs text-muted-foreground mt-3">Frågor? <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a></p>
+          <p className="text-xs text-muted-foreground mt-3">FrÃ¥gor? <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a></p>
         </div>
       )}
     </div>
   );
 }
+
