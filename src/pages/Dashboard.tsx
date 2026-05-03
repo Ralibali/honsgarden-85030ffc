@@ -294,7 +294,6 @@ export default function Dashboard() {
   const stats = [
     { value: todayEggs, label: 'Idag' },
     { value: yesterdayEggs, label: 'Igår' },
-    { value: weekEggs, label: 'Veckan' },
     { value: activeHens, label: 'Hönor' },
   ];
 
