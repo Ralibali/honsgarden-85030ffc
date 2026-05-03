@@ -7,6 +7,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "stripe-signature, content-type",
 };
 
+const PREMIUM_STRIPE_STATUSES = new Set(["active", "trialing", "past_due"]);
+const FREE_STRIPE_STATUSES = new Set(["canceled", "unpaid", "incomplete", "incomplete_expired", "paused"]);
+
+function getStripeEnd(subscription: Stripe.Subscription): string | null {
+  const periodEndTs = (subscription as any).current_period_end as number | undefined;
+  return periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -70,17 +78,23 @@ serve(async (req) => {
         console.warn("[stripe-webhook] could not map subscription", sub.id, "to user");
         return;
       }
-      const periodEndTs = (sub as any).current_period_end as number | undefined;
-      const endsAt = periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null;
-      const isActive = sub.status === "active" || sub.status === "trialing";
+
+      const endsAt = getStripeEnd(sub);
+      const isPremiumStatus = PREMIUM_STRIPE_STATUSES.has(sub.status);
+      const isFreeStatus = FREE_STRIPE_STATUSES.has(sub.status);
+
       const update: Record<string, unknown> = {
         stripe_customer_id: customerId,
-        subscription_status: isActive ? "premium" : "free",
+        subscription_status: isPremiumStatus ? "premium" : "free",
       };
-      if (isActive) update.premium_expires_at = endsAt;
-      else if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+
+      // Vanliga Stripe-abonnemang får aldrig sätta eller härleda lifetime.
+      if (isPremiumStatus) {
+        update.premium_expires_at = endsAt;
+      } else if (isFreeStatus) {
         update.premium_expires_at = null;
       }
+
       const { error } = await supabase
         .from("profiles")
         .update(update)
