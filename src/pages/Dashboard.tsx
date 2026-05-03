@@ -329,7 +329,7 @@ export default function Dashboard() {
   const hasReminders = reminderCount > 0;
 
   // Insights count for header
-  const insightsCount = (hasReminders ? 1 : 0) + 3;
+  const insightsCount = (hasReminders ? 1 : 0) + 2 + (streak > 0 ? 1 : 0) + (topHen ? 1 : 0);
 
   return (
     <motion.div
