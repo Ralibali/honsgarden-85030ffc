@@ -35,6 +35,10 @@ function resolvePlanAndPrice(body: Record<string, unknown>) {
   return { plan, priceId };
 }
 
+function getOrigin(req: Request) {
+  return req.headers.get("origin") || "https://honsgarden.se";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -56,12 +60,12 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
 
     const { plan, priceId } = resolvePlanAndPrice(await req.json());
+    const origin = getOrigin(req);
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
 
-    // 1. Hämta sparad customer_id från profile
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("stripe_customer_id")
@@ -70,7 +74,6 @@ serve(async (req) => {
 
     let customerId: string | null = profile?.stripe_customer_id ?? null;
 
-    // 2. Verifiera att den fortfarande existerar i Stripe
     if (customerId) {
       try {
         const c = await stripe.customers.retrieve(customerId);
@@ -80,13 +83,11 @@ serve(async (req) => {
       }
     }
 
-    // 3. Försök matcha på email om vi inte har sparad id
     if (!customerId) {
       const list = await stripe.customers.list({ email: user.email, limit: 1 });
       if (list.data.length > 0) customerId = list.data[0].id;
     }
 
-    // 4. Om ingen kund finns – skapa en explicit
     if (!customerId) {
       const created = await stripe.customers.create({
         email: user.email,
@@ -95,18 +96,15 @@ serve(async (req) => {
       customerId = created.id;
     }
 
-    // 5. Spara customer_id på profilen
     await supabaseAdmin
       .from("profiles")
       .update({ stripe_customer_id: customerId })
       .eq("user_id", user.id);
 
-    // 6. Säkerställ metadata på customer
     await stripe.customers.update(customerId, {
       metadata: { supabase_user_id: user.id },
     });
 
-    // 7. Blockera duplicerade prenumerationer
     const existing = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
@@ -116,7 +114,6 @@ serve(async (req) => {
       (s) => s.status === "active" || s.status === "trialing" || s.status === "past_due"
     );
     if (blocking) {
-      const origin = req.headers.get("origin") || "";
       const portal = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${origin}/app/premium`,
@@ -132,7 +129,6 @@ serve(async (req) => {
       );
     }
 
-    // 8. Skapa Checkout med backend-valt price ID. Vanliga abonnemang sätter aldrig lifetime.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
@@ -150,8 +146,8 @@ serve(async (req) => {
           premium_type: "subscription",
         },
       },
-      success_url: `${req.headers.get("origin")}/app/premium?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin")}/app/premium?canceled=true`,
+      success_url: `${origin}/app/premium?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/app/premium?canceled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
