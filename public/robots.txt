@@ -1,3 +1,7 @@
+# Hönsgården robots.txt
+# Publika sidor, guider och verktyg får indexeras.
+# Inloggat app-innehåll och privata flöden blockeras.
+
 User-agent: *
 Allow: /
 Disallow: /app
@@ -5,4 +9,31 @@ Disallow: /login
 Disallow: /reset-password
 Disallow: /inbjudan
 
+# AI-sök och AI-crawlers får läsa publikt material.
+# De privata app-sidorna ovan är fortsatt blockerade.
+User-agent: GPTBot
+Allow: /
+Disallow: /app
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /app
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /app
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /app
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /app
+
+User-agent: CCBot
+Allow: /
+Disallow: /app
+
+Host: https://honsgarden.se
 Sitemap: https://honsgarden.se/sitemap.xml
