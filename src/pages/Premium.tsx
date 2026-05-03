@@ -221,13 +221,9 @@ export default function Premium() {
             Premium med AI, insikter och ekonomi
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-3 leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-5 leading-tight">
             Gör Hönsgården till din smarta gårdsassistent
           </h1>
-
-          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto mb-5 leading-relaxed">
-            Gratis hjälper dig komma igång. Plus hjälper dig förstå flocken, få AI-råd, hålla koll på foderkostnad och veta nästa bästa steg.
-          </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
             {!isPremium && (
