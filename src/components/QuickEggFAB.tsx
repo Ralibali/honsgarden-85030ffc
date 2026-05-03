@@ -103,7 +103,6 @@ export function QuickEggFAB() {
 
   return (
     <>
-      <DashboardFocusPortal />
       <SettingsTrustPortal />
 
       {open && <div className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />}
