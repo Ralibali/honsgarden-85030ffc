@@ -2,6 +2,7 @@
  * Export utilities for CSV, Excel and PDF generation
  */
 import * as XLSX from "xlsx";
+import DOMPurify from "dompurify";
 
 export function downloadExcel(rows: Record<string, any>[], filename: string, sheetName = "Data") {
   if (rows.length === 0) return;
@@ -42,18 +43,32 @@ export function downloadCSV(rows: Record<string, any>[], filename: string) {
   triggerDownload(blob, `${filename}.csv`);
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export function downloadPDF(title: string, headers: string[], rows: string[][], filename: string) {
-  // Generate a simple HTML-based printable PDF
+  // Generate a simple HTML-based printable PDF. All user controlled values are escaped
+  // before insertion and the final document is sanitized as an extra defense-in-depth layer.
+  const safeTitle = escapeHtml(title);
   const tableRows = rows.map(row =>
-    `<tr>${row.map(cell => `<td style="border:1px solid #ddd;padding:6px 10px;font-size:11px;">${cell}</td>`).join('')}</tr>`
+    `<tr>${row.map(cell => `<td style="border:1px solid #ddd;padding:6px 10px;font-size:11px;">${escapeHtml(cell)}</td>`).join('')}</tr>`
   ).join('');
 
-  const html = `
+  const safeHeaders = headers.map(h => `<th>${escapeHtml(h)}</th>`).join('');
+  const exportDate = escapeHtml(new Date().toLocaleDateString('sv-SE'));
+
+  const html = DOMPurify.sanitize(`
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>${title}</title>
+      <title>${safeTitle}</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 30px; color: #1a1a1a; }
         h1 { font-size: 20px; margin-bottom: 4px; }
@@ -65,18 +80,19 @@ export function downloadPDF(title: string, headers: string[], rows: string[][], 
       </style>
     </head>
     <body>
-      <h1>${title}</h1>
-      <p class="subtitle">Exporterad ${new Date().toLocaleDateString('sv-SE')} · Hönsgården</p>
+      <h1>${safeTitle}</h1>
+      <p class="subtitle">Exporterad ${exportDate} · Hönsgården</p>
       <table>
-        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <thead><tr>${safeHeaders}</tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
     </body>
     </html>
-  `;
+  `);
 
   const printWindow = window.open('', '_blank');
   if (printWindow) {
+    printWindow.document.open();
     printWindow.document.write(html);
     printWindow.document.close();
     setTimeout(() => printWindow.print(), 300);
