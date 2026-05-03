@@ -528,31 +528,6 @@ export default function Dashboard() {
                 <AIDeviationAlerts variant="card" />
               </div>
             </InsightRow>
-
-            <InsightRow
-              id="tip"
-              icon={Sparkles}
-              title={tipCard.label}
-              preview={tipCard.text.slice(0, 90).replace(/\*\*/g, '') + (tipCard.text.length > 90 ? '…' : '')}
-              openIds={openInsights}
-              setOpenIds={setOpenInsights}
-            >
-              <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">{tipCard.emoji}</span>
-                  <span className="data-label">{tipCard.label}</span>
-                </div>
-                <p
-                  className="text-sm text-foreground leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
-                />
-                {tipCard.text.length > 200 && (
-                  <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
-                    Läs hela tipset <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </InsightRow>
           </div>
         </CardContent>
       </Card>
