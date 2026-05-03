@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
+type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
+
 interface UserProfile {
   id: string;
   email: string;
@@ -9,6 +11,7 @@ interface UserProfile {
   is_premium?: boolean;
   subscription_status?: string;
   subscription_end?: string | null;
+  premium_type?: PremiumType;
 }
 
 interface AuthContextType {
@@ -32,34 +35,36 @@ function toBasicProfile(supaUser: SupabaseUser): UserProfile {
     name: supaUser.user_metadata?.name ?? '',
     is_premium: false,
     subscription_status: 'free',
+    premium_type: 'free',
   };
 }
 
-async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; synced: boolean }> {
+async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; synced: boolean }> {
   try {
     const { data, error } = await supabase.functions.invoke('check-subscription');
     if (error) {
       console.warn('[Auth] check-subscription error:', error.message);
-      return { subscribed: false, subscriptionEnd: null, synced: false };
+      return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
     }
 
     return {
       subscribed: !!data?.subscribed,
       subscriptionEnd: data?.subscription_end ?? data?.subscriptionEnd ?? null,
+      premiumType: data?.premium_type ?? null,
       synced: true,
     };
   } catch (err) {
     console.warn('[Auth] check-subscription failed:', err);
-    return { subscribed: false, subscriptionEnd: null, synced: false };
+    return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
   }
 }
 
 async function buildProfile(supaUser: SupabaseUser): Promise<UserProfile> {
-  const { subscribed, subscriptionEnd, synced } = await syncSubscriptionStatus();
+  const { subscribed, subscriptionEnd, premiumType: syncedPremiumType, synced } = await syncSubscriptionStatus();
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, subscription_status, premium_expires_at')
+    .select('display_name, subscription_status, premium_expires_at, is_lifetime_premium')
     .eq('user_id', supaUser.id)
     .maybeSingle();
 
@@ -68,28 +73,36 @@ async function buildProfile(supaUser: SupabaseUser): Promise<UserProfile> {
   const syncedExpiryDate = subscriptionEnd ? new Date(subscriptionEnd) : null;
   const hasValidProfileExpiry = !!profileExpiryDate && profileExpiryDate > now;
   const hasValidSyncedExpiry = !!syncedExpiryDate && syncedExpiryDate > now;
+  const hasLifetimePremium = profile?.is_lifetime_premium === true;
 
-  let subStatus = profile?.subscription_status ?? 'free';
+  let premiumType: PremiumType = 'free';
 
-  // Stripe/check-subscription ska väga tyngst när den lyckas.
-  // Annars kan en gammal profiles-rad som fortfarande säger "free" göra att en betalande kund låses ute.
-  if (synced && subscribed) {
-    subStatus = 'premium';
-  } else if (hasValidSyncedExpiry || hasValidProfileExpiry) {
-    subStatus = 'premium';
-  } else if (synced && !subscribed) {
-    subStatus = 'free';
+  if (hasLifetimePremium || syncedPremiumType === 'lifetime') {
+    premiumType = 'lifetime';
+  } else if (synced && subscribed && syncedPremiumType === 'paid') {
+    premiumType = 'paid';
+  } else if (synced && subscribed && syncedPremiumType === 'trial') {
+    premiumType = 'trial';
+  } else if (synced && subscribed) {
+    premiumType = hasValidSyncedExpiry ? 'paid' : 'trial';
+  } else if (hasValidProfileExpiry) {
+    // Strikt datumstyrd fallback för den lokala 7-dagarstrialen.
+    premiumType = 'trial';
   }
 
-  const resolvedSubscriptionEnd = subscriptionEnd ?? profile?.premium_expires_at ?? null;
+  const isPremium = premiumType !== 'free';
+  const resolvedSubscriptionEnd = premiumType === 'lifetime'
+    ? null
+    : subscriptionEnd ?? profile?.premium_expires_at ?? null;
 
   return {
     id: supaUser.id,
     email: supaUser.email ?? '',
     name: profile?.display_name ?? supaUser.user_metadata?.name ?? '',
-    is_premium: subStatus === 'premium',
-    subscription_status: subStatus,
+    is_premium: isPremium,
+    subscription_status: isPremium ? 'premium' : 'free',
     subscription_end: resolvedSubscriptionEnd,
+    premium_type: premiumType,
   };
 }
 
