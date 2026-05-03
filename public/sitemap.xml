@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  Statisk fallback. Färsk sitemap genereras dynamiskt via
-  https://honsgarden.se/functions/v1/sitemap (refererad i robots.txt om så önskas).
-  Denna fil byggs om vid varje build av scripts/prerender-blog-posts.mjs.
--->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://honsgarden.se/</loc>
@@ -11,9 +6,44 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://honsgarden.se/om-oss</loc>
+    <loc>https://honsgarden.se/app-for-honsagare</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/agglogg</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/honskalender</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/foderkostnad-hons</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/klackningskalender</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/borja-med-hons</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/salja-agg</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/verktyg/aggkalkylator</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://honsgarden.se/blogg</loc>
@@ -21,8 +51,13 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://honsgarden.se/verktyg/aggkalkylator</loc>
+    <loc>https://honsgarden.se/om-oss</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://honsgarden.se/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
   </url>
 </urlset>
