@@ -294,7 +294,6 @@ export default function Dashboard() {
   const stats = [
     { value: todayEggs, label: 'Idag' },
     { value: yesterdayEggs, label: 'Igår' },
-    { value: weekEggs, label: 'Veckan' },
     { value: activeHens, label: 'Hönor' },
   ];
 
@@ -330,7 +329,7 @@ export default function Dashboard() {
   const hasReminders = reminderCount > 0;
 
   // Insights count for header
-  const insightsCount = (hasReminders ? 1 : 0) + 3;
+  const insightsCount = (hasReminders ? 1 : 0) + 2 + (streak > 0 ? 1 : 0) + (topHen ? 1 : 0);
 
   return (
     <motion.div
@@ -386,8 +385,8 @@ export default function Dashboard() {
             Logga ägg
           </Button>
 
-          {/* 4 stat-rutor */}
-          <div className="grid grid-cols-4 gap-2">
+          {/* 3 stat-rutor */}
+          <div className="grid grid-cols-3 gap-2">
             {stats.map((s) => (
               <div key={s.label} className="rounded-xl bg-muted/40 border border-border/30 p-2.5 text-center">
                 <p className="text-xl font-bold text-foreground tabular-nums leading-none">{s.value}</p>
@@ -457,12 +456,64 @@ export default function Dashboard() {
               id="weekly"
               icon={TrendingUp}
               title="Veckosammanfattning"
-              preview={`${weekEggs} ägg loggade denna vecka${weekDelta !== 0 ? ` (${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra)` : ''}`}
+              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra` : ''}`}
               openIds={openInsights}
               setOpenIds={setOpenInsights}
             >
-              <EggGoalsWidget eggs={eggs} />
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className="text-lg font-bold text-foreground tabular-nums leading-none">{weekEggs}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Veckan</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className="text-lg font-bold text-foreground tabular-nums leading-none">{eggsPerDay.toFixed(1)}</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Ägg/dag</p>
+                  </div>
+                  <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
+                    <p className={`text-lg font-bold tabular-nums leading-none ${weekDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
+                      {weekDelta > 0 ? '+' : ''}{weekDelta}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot förra</p>
+                  </div>
+                </div>
+                <EggGoalsWidget eggs={eggs} />
+              </div>
             </InsightRow>
+
+            {streak > 0 && (
+              <InsightRow
+                id="streak"
+                icon={Flame}
+                title="Loggningsstreak"
+                preview={`${streak} dagar i rad`}
+                openIds={openInsights}
+                setOpenIds={setOpenInsights}
+              >
+                <div className="rounded-xl bg-warning/5 border border-warning/20 p-4 text-center">
+                  <Flame className="h-7 w-7 text-warning mx-auto mb-2" />
+                  <p className="text-3xl font-bold text-warning tabular-nums">{streak}</p>
+                  <p className="text-xs text-muted-foreground mt-1">dagar med loggade ägg i rad</p>
+                </div>
+              </InsightRow>
+            )}
+
+            {topHen && (
+              <InsightRow
+                id="tophen"
+                icon={Award}
+                title="Veckans bästa höna"
+                preview={`${topHen.name} · ${topHen.count} ägg`}
+                openIds={openInsights}
+                setOpenIds={setOpenInsights}
+              >
+                <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 text-center">
+                  <Award className="h-7 w-7 text-primary mx-auto mb-2" />
+                  <p className="font-serif text-lg text-foreground">{topHen.name}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{topHen.count} ägg denna vecka</p>
+                </div>
+              </InsightRow>
+            )}
 
             <InsightRow
               id="advice"
@@ -477,31 +528,6 @@ export default function Dashboard() {
                 <AIDeviationAlerts variant="card" />
               </div>
             </InsightRow>
-
-            <InsightRow
-              id="tip"
-              icon={Sparkles}
-              title={tipCard.label}
-              preview={tipCard.text.slice(0, 90).replace(/\*\*/g, '') + (tipCard.text.length > 90 ? '…' : '')}
-              openIds={openInsights}
-              setOpenIds={setOpenInsights}
-            >
-              <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-base">{tipCard.emoji}</span>
-                  <span className="data-label">{tipCard.label}</span>
-                </div>
-                <p
-                  className="text-sm text-foreground leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
-                />
-                {tipCard.text.length > 200 && (
-                  <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
-                    Läs hela tipset <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
-                )}
-              </div>
-            </InsightRow>
           </div>
         </CardContent>
       </Card>
@@ -509,42 +535,16 @@ export default function Dashboard() {
       {/* ─── 3. Mål & framsteg ─── */}
       <Card className="border-border/50 shadow-sm">
         <CardContent className="p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
-                <Target className="h-4 w-4 text-primary" />
-              </div>
-              <h2 className="font-serif text-sm text-foreground">Mål & framsteg</h2>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
+              <Target className="h-4 w-4 text-primary" />
             </div>
-            {streak > 0 && (
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 220, damping: 18 }}
-                className="flex items-center gap-1.5 bg-warning/10 border border-warning/25 rounded-full px-2.5 py-1"
-              >
-                <Flame className={`h-3.5 w-3.5 ${streak >= 7 ? 'text-warning' : 'text-muted-foreground'}`} />
-                <span className="text-xs font-bold text-warning tabular-nums">{streak} dagar</span>
-              </motion.div>
-            )}
+            <h2 className="font-serif text-sm text-foreground">Mål & framsteg</h2>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
-              <p className="text-xl font-bold text-foreground tabular-nums leading-none">{weekEggs}</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Veckan</p>
-            </div>
-            <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
-              <p className="text-xl font-bold text-foreground tabular-nums leading-none">{eggsPerDay.toFixed(1)}</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Ägg/dag</p>
-            </div>
-            <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
-              <p className={`text-xl font-bold tabular-nums leading-none ${weekDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
-                {weekDelta > 0 ? '+' : ''}{weekDelta}
-              </p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot förra</p>
-            </div>
-          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Sätt ett äggmål för veckan. Följ om produktionen ligger i fas och få en tydligare anledning att komma tillbaka varje dag.
+          </p>
 
           <Button
             variant="outline"
@@ -555,13 +555,20 @@ export default function Dashboard() {
             Sätt veckomål
           </Button>
 
-          <div className="flex items-center gap-2 pt-1">
-            <Award className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-            <p className="text-[11px] text-muted-foreground leading-snug">
-              {topHen
-                ? <>🏆 <strong className="text-foreground">{topHen.name}</strong> – {topHen.count} ägg denna vecka</>
-                : 'Logga ägg per höna för att se veckans bästa'}
-            </p>
+          <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-base">{tipCard.emoji}</span>
+              <span className="data-label">{tipCard.label}</span>
+            </div>
+            <p
+              className="text-sm text-foreground leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
+            />
+            {tipCard.text.length > 200 && (
+              <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
+                Läs hela tipset <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -6,7 +6,6 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EggSuccessAnimation } from './EggSuccessAnimation';
-import DashboardFocusPortal from './DashboardFocusPortal';
 import SettingsTrustPortal from './SettingsTrustPortal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -104,7 +103,6 @@ export function QuickEggFAB() {
 
   return (
     <>
-      <DashboardFocusPortal />
       <SettingsTrustPortal />
 
       {open && <div className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />}
