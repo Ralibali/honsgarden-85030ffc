@@ -7,6 +7,34 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const PLAN_PRICE_ENV: Record<string, string> = {
+  monthly: "STRIPE_PRICE_MONTHLY",
+  yearly: "STRIPE_PRICE_YEARLY",
+};
+
+const LEGACY_PRICE_PLAN: Record<string, "monthly" | "yearly"> = {
+  price_1T3joGHzffTezY82dRQc7GTO: "monthly",
+  price_1T3jwRHzffTezY829aWQVXZr: "yearly",
+};
+
+function resolvePlanAndPrice(body: Record<string, unknown>) {
+  const requestedPlan = typeof body.plan === "string" ? body.plan : null;
+  const legacyPriceId = typeof body.priceId === "string" ? body.priceId : null;
+  const plan = requestedPlan ?? (legacyPriceId ? LEGACY_PRICE_PLAN[legacyPriceId] : null);
+
+  if (plan !== "monthly" && plan !== "yearly") {
+    throw new Error("Invalid plan. Expected monthly or yearly.");
+  }
+
+  const priceId = Deno.env.get(PLAN_PRICE_ENV[plan]);
+
+  if (!priceId) {
+    throw new Error(`Stripe price is not configured for plan: ${plan}`);
+  }
+
+  return { plan, priceId };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -27,8 +55,7 @@ serve(async (req) => {
     const user = data.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { priceId } = await req.json();
-    if (!priceId) throw new Error("priceId is required");
+    const { plan, priceId } = resolvePlanAndPrice(await req.json());
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
@@ -105,14 +132,23 @@ serve(async (req) => {
       );
     }
 
-    // 8. Skapa Checkout med customer (INTE customer_email)
+    // 8. Skapa Checkout med backend-valt price ID. Vanliga abonnemang sätter aldrig lifetime.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       allow_promotion_codes: true,
+      metadata: {
+        supabase_user_id: user.id,
+        plan,
+        premium_type: "subscription",
+      },
       subscription_data: {
-        metadata: { supabase_user_id: user.id },
+        metadata: {
+          supabase_user_id: user.id,
+          plan,
+          premium_type: "subscription",
+        },
       },
       success_url: `${req.headers.get("origin")}/app/premium?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.headers.get("origin")}/app/premium?canceled=true`,
