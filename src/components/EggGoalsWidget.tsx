@@ -11,6 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import { Target, Plus, Pencil, Trash2, Trophy, Flame, TrendingUp, Egg } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays, format } from 'date-fns';
+import { CountUp } from '@/components/CountUp';
+import { RingProgress } from '@/components/RingProgress';
 
 interface EggGoalsWidgetProps {
   eggs: any[];
@@ -101,17 +103,23 @@ export default function EggGoalsWidget({ eggs }: EggGoalsWidgetProps) {
     <div className="grid grid-cols-3 gap-2">
       <div className="rounded-xl bg-primary/5 border border-primary/10 p-3 text-center">
         <Egg className="h-4 w-4 text-primary mx-auto mb-1" />
-        <p className="text-lg font-bold tabular-nums text-foreground leading-none">{weekCount}</p>
+        <p className="text-lg font-bold text-foreground leading-none">
+          <CountUp value={weekCount} duration={750} />
+        </p>
         <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">veckan</p>
       </div>
       <div className="rounded-xl bg-muted/30 border border-border/40 p-3 text-center">
         <TrendingUp className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-        <p className="text-lg font-bold tabular-nums text-foreground leading-none">{avgPerDayThisWeek}</p>
+        <p className="text-lg font-bold text-foreground leading-none">
+          <CountUp value={avgPerDayThisWeek} duration={750} decimals={1} />
+        </p>
         <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">ägg/dag</p>
       </div>
       <div className="rounded-xl bg-accent/5 border border-accent/10 p-3 text-center">
         <Flame className="h-4 w-4 text-accent mx-auto mb-1" />
-        <p className="text-lg font-bold tabular-nums text-foreground leading-none">{weekDiff >= 0 ? '+' : ''}{weekDiff}</p>
+        <p className="text-lg font-bold text-foreground leading-none">
+          {weekDiff >= 0 ? '+' : ''}<CountUp value={weekDiff} duration={750} />
+        </p>
         <p className="text-[9px] uppercase tracking-widest text-muted-foreground mt-1">mot förra</p>
       </div>
     </div>
