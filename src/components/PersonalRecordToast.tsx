@@ -209,7 +209,6 @@ export function PersonalRecordToast({ record, onDone }: Props) {
       });
       const text = `🏆 Nytt personligt rekord! ${record.value} ${record.unit} – ${record.title} 🥚\nLogga dina ägg gratis på honsgarden.se`;
 
-      // @ts-expect-error – navigator.canShare not typed in all envs
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: 'Personligt rekord 🏆', text, files: [file] });
         setShared(true);
