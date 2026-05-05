@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { feedbackTap } from '@/lib/feedback';
 
 interface EggSuccessAnimationProps {
   show: boolean;
@@ -33,6 +34,7 @@ export function EggSuccessAnimation({ show, count, onDone }: EggSuccessAnimation
 
   useEffect(() => {
     if (show) {
+      feedbackTap();
       const t = setTimeout(onDone, 2200);
       return () => clearTimeout(t);
     }
