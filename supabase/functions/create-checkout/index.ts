@@ -12,6 +12,12 @@ const PLAN_PRICE_ENV: Record<string, string> = {
   yearly: "STRIPE_PRICE_YEARLY",
 };
 
+// Fallback Stripe price IDs (live) — used om secrets inte är satta.
+const PLAN_PRICE_FALLBACK: Record<"monthly" | "yearly", string> = {
+  monthly: "price_1T3joGHzffTezY82dRQc7GTO",
+  yearly: "price_1T3jwRHzffTezY829aWQVXZr",
+};
+
 const LEGACY_PRICE_PLAN: Record<string, "monthly" | "yearly"> = {
   price_1T3joGHzffTezY82dRQc7GTO: "monthly",
   price_1T3jwRHzffTezY829aWQVXZr: "yearly",
@@ -26,7 +32,7 @@ function resolvePlanAndPrice(body: Record<string, unknown>) {
     throw new Error("Invalid plan. Expected monthly or yearly.");
   }
 
-  const priceId = Deno.env.get(PLAN_PRICE_ENV[plan]);
+  const priceId = Deno.env.get(PLAN_PRICE_ENV[plan]) || PLAN_PRICE_FALLBACK[plan];
 
   if (!priceId) {
     throw new Error(`Stripe price is not configured for plan: ${plan}`);
