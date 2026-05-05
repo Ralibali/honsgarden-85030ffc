@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Package, TrendingDown, Egg, Calculator, ShoppingCart, Loader2, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
@@ -11,12 +12,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 
+const FEED_CATEGORIES: { value: string; label: string }[] = [
+  { value: 'layer', label: 'Värphönsfoder' },
+  { value: 'starter', label: 'Kycklingfoder (starter)' },
+  { value: 'grower', label: 'Tillväxtfoder (grower)' },
+  { value: 'grain', label: 'Spannmål / korn' },
+  { value: 'scratch', label: 'Pickfoder / scratch' },
+  { value: 'oyster_shell', label: 'Ostronskal / kalcium' },
+  { value: 'grit', label: 'Grit' },
+  { value: 'treats', label: 'Godis / mjölmask' },
+  { value: 'other', label: 'Annat' },
+];
+
 export default function Feed() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [newType, setNewType] = useState('');
   const [newCost, setNewCost] = useState('');
   const [newKg, setNewKg] = useState('');
+  const [newBrand, setNewBrand] = useState('');
+  const [newCategory, setNewCategory] = useState<string>('');
 
   const { data: feedRecords = [], isLoading } = useQuery({
     queryKey: ['feed'],
