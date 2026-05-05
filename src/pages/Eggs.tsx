@@ -11,16 +11,22 @@ import { EggForm } from '@/components/eggs/EggForm';
 import { EggGroupedView } from '@/components/eggs/EggGroupedView';
 import { EggListView } from '@/components/eggs/EggListView';
 import { EggSuccessAnimation } from '@/components/EggSuccessAnimation';
+import { PersonalRecordToast, type PersonalRecordToastData } from '@/components/PersonalRecordToast';
 import { FeatureSuggestionToast } from '@/components/FeatureSuggestionToast';
 import EmptyState from '@/components/EmptyState';
+import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
+import { feedbackCelebrate } from '@/lib/feedback';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Eggs() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const [recordToast, setRecordToast] = useState<PersonalRecordToastData | null>(null);
 
   const { data: eggs = [], isLoading } = useQuery({
     queryKey: ['eggs'],
@@ -68,6 +74,23 @@ export default function Eggs() {
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
+
+      // Personal record check (delight bump)
+      const updatedEggs = [...(eggs as any[]), { date: variables.date, count: variables.count }];
+      const records = checkPersonalRecords(user?.id, updatedEggs, variables.date);
+      if (records.length > 0) {
+        const r = records[0];
+        setTimeout(() => {
+          setRecordToast({
+            id: `${r.type}-${Date.now()}`,
+            title: recordLabel(r.type),
+            subtitle: r.previous > 0 ? `Tidigare: ${r.previous} ägg` : 'Första riktiga toppnoteringen',
+            value: r.value,
+            unit: r.type === 'day' ? 'ägg / dag' : 'ägg / 7 dagar',
+          });
+          feedbackCelebrate();
+        }, 600);
+      }
     },
     onError: (err: any) => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara äggen just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
   });
@@ -242,6 +265,7 @@ export default function Eggs() {
       )}
 
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
+      <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
 
       <FeatureSuggestionToast
         show={showSuggestion}

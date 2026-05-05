@@ -28,6 +28,9 @@ import { buildAchievements } from '@/components/Achievements';
 import EggGoalsWidget from '@/components/EggGoalsWidget';
 import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
+import { StreakFlame } from '@/components/StreakFlame';
+import { CountUp } from '@/components/CountUp';
+import { RingProgress } from '@/components/RingProgress';
 
 function getGreeting() {
   const now = new Date();
@@ -389,11 +392,15 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-2">
             {stats.map((s) => (
               <div key={s.label} className="rounded-xl bg-muted/40 border border-border/30 p-2.5 text-center">
-                <p className="text-xl font-bold text-foreground tabular-nums leading-none">{s.value}</p>
+                <p className="text-xl font-bold text-foreground tabular-nums leading-none">
+                  <CountUp value={s.value} duration={700} />
+                </p>
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">{s.label}</p>
               </div>
             ))}
           </div>
+
+          {streak > 0 && <StreakFlame streak={streak} variant="card" />}
 
           {currentTemp != null && (
             <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 pt-1">
@@ -490,11 +497,7 @@ export default function Dashboard() {
                 openIds={openInsights}
                 setOpenIds={setOpenInsights}
               >
-                <div className="rounded-xl bg-warning/5 border border-warning/20 p-4 text-center">
-                  <Flame className="h-7 w-7 text-warning mx-auto mb-2" />
-                  <p className="text-3xl font-bold text-warning tabular-nums">{streak}</p>
-                  <p className="text-xs text-muted-foreground mt-1">dagar med loggade ägg i rad</p>
-                </div>
+                <StreakFlame streak={streak} variant="card" />
               </InsightRow>
             )}
 

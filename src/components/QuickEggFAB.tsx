@@ -6,10 +6,13 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EggSuccessAnimation } from './EggSuccessAnimation';
+import { PersonalRecordToast, type PersonalRecordToastData } from './PersonalRecordToast';
 import SettingsTrustPortal from './SettingsTrustPortal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
+import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
+import { feedbackCelebrate, hapticTap } from '@/lib/feedback';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
@@ -20,6 +23,7 @@ export function QuickEggFAB() {
   const [selectedHenId, setSelectedHenId] = useState<string>(() => readScoped(user?.id, LAST_HEN_KEY) || 'all');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
+  const [recordToast, setRecordToast] = useState<PersonalRecordToastData | null>(null);
   const [useYesterday, setUseYesterday] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -68,14 +72,35 @@ export function QuickEggFAB() {
       });
       return { prev };
     },
-    onSuccess: () => {
+    onSuccess: (_d, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
+      const savedCount = count;
       setCount(1);
       setUseYesterday(false);
       writeScoped(user?.id, LAST_HEN_KEY, selectedHenId);
+
+      // Personal record check
+      const date = useYesterday
+        ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0];
+      const existing = (queryClient.getQueryData(['eggs']) as any[]) || [];
+      const records = checkPersonalRecords(user?.id, [...existing, { date, count: savedCount }], date);
+      if (records.length > 0) {
+        const r = records[0];
+        setTimeout(() => {
+          setRecordToast({
+            id: `${r.type}-${Date.now()}`,
+            title: recordLabel(r.type),
+            subtitle: r.previous > 0 ? `Tidigare: ${r.previous} ägg` : 'Första riktiga toppnoteringen',
+            value: r.value,
+            unit: r.type === 'day' ? 'ägg / dag' : 'ägg / 7 dagar',
+          });
+          feedbackCelebrate();
+        }, 600);
+      }
     },
     onError: (err: any, _, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(['eggs'], ctx.prev);
@@ -152,14 +177,14 @@ export function QuickEggFAB() {
                 </div>
 
                 <div className="flex items-center justify-center gap-4">
-                  <button onClick={() => setCount(Math.max(1, count - 1))} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Minus className="h-5 w-5 text-muted-foreground" /></button>
+                  <button onClick={() => { setCount(Math.max(1, count - 1)); hapticTap(); }} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Minus className="h-5 w-5 text-muted-foreground" /></button>
                   <div className="text-center min-w-[80px]"><p className="text-4xl font-bold text-foreground tabular-nums">{count}</p><p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">ägg</p></div>
-                  <button onClick={() => setCount(count + 1)} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Plus className="h-5 w-5 text-muted-foreground" /></button>
+                  <button onClick={() => { setCount(count + 1); hapticTap(); }} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Plus className="h-5 w-5 text-muted-foreground" /></button>
                 </div>
 
                 <div className="flex items-center justify-center gap-2">
                   {[1, 2, 3, 5, 8].map((n) => (
-                    <button key={n} onClick={() => setCount(n)} className={`min-w-[44px] min-h-[44px] rounded-full text-xs font-semibold transition-all active:scale-90 ${count === n ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted/60 text-muted-foreground hover:bg-muted'}`}>{n}</button>
+                    <button key={n} onClick={() => { setCount(n); hapticTap(); }} className={`min-w-[44px] min-h-[44px] rounded-full text-xs font-semibold transition-all active:scale-90 ${count === n ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted/60 text-muted-foreground hover:bg-muted'}`}>{n}</button>
                   ))}
                 </div>
 
@@ -197,6 +222,7 @@ export function QuickEggFAB() {
       )}
 
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
+      <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
     </>
   );
 }
