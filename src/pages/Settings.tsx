@@ -37,6 +37,8 @@ export default function SettingsPage() {
   const [coopName, setCoopName] = useState('');
   const [henCount, setHenCount] = useState('');
   const [location, setLocation] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
@@ -66,6 +68,8 @@ export default function SettingsPage() {
       setCoopName(coopSettings.coop_name || '');
       setHenCount(String(coopSettings.hen_count || ''));
       setLocation(coopSettings.location || '');
+      setPostalCode((coopSettings as any).postal_code || '');
+      setCity((coopSettings as any).city || '');
     }
   }, [coopSettings]);
 
