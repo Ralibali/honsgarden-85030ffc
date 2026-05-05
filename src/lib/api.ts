@@ -1100,7 +1100,7 @@ export const api = {
   getHens, createHen, updateHen, deleteHen, getHenProfile, markHenSeen,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
-  getEggs, createEggRecord, deleteEggRecord,
+  getEggs, createEggRecord, deleteEggRecord, fetchEggLogWeatherSnapshot,
   getFeedRecords, createFeedRecord, deleteFeedRecord, getFeedInventory, getFeedStatistics,
   getHatchings, createHatching, updateHatching, deleteHatching, getHatchingAlerts,
   getTransactions, createTransaction, deleteTransaction,
