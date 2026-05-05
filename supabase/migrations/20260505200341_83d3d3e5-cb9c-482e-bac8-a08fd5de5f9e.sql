@@ -1,0 +1,1 @@
+UPDATE public.profiles SET is_lifetime_premium = false WHERE user_id = '24558504-7cc2-4131-b342-3c8b2b4c59bf';
