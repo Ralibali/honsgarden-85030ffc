@@ -90,6 +90,22 @@ serve(async (req) => {
   if (!supabaseUrl || !serviceRole) return jsonResponse({ ok: false, error: 'Backend är inte konfigurerat' }, 500);
 
   const supabase = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false, autoRefreshToken: false } });
+
+  // Require authenticated admin user
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !userData.user) {
+    return jsonResponse({ ok: false, error: 'Unauthorized' }, 401);
+  }
+  const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: userData.user.id, _role: 'admin' });
+  if (!isAdmin) {
+    return jsonResponse({ ok: false, error: 'Forbidden' }, 403);
+  }
+
   const body = await req.json().catch(() => ({}));
 
   try {

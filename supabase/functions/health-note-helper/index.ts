@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,10 +98,31 @@ function buildUserPrompt(ctx: HelperContext): string {
   return lines.join("\n");
 }
 
+async function requireAuthenticatedUser(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { error: jsonResponse({ error: "Unauthorized" }, 401) };
+  }
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    { auth: { persistSession: false } },
+  );
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) {
+    return { error: jsonResponse({ error: "Unauthorized" }, 401) };
+  }
+  return { error: null };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const auth = await requireAuthenticatedUser(req);
+  if (auth.error) return auth.error;
 
   try {
     const ctx = (await req.json().catch(() => ({}))) as HelperContext;
