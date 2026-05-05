@@ -6,10 +6,13 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EggSuccessAnimation } from './EggSuccessAnimation';
+import { PersonalRecordToast, type PersonalRecordToastData } from './PersonalRecordToast';
 import SettingsTrustPortal from './SettingsTrustPortal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
+import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
+import { feedbackCelebrate } from '@/lib/feedback';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
@@ -20,6 +23,7 @@ export function QuickEggFAB() {
   const [selectedHenId, setSelectedHenId] = useState<string>(() => readScoped(user?.id, LAST_HEN_KEY) || 'all');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
+  const [recordToast, setRecordToast] = useState<PersonalRecordToastData | null>(null);
   const [useYesterday, setUseYesterday] = useState(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -68,14 +72,35 @@ export function QuickEggFAB() {
       });
       return { prev };
     },
-    onSuccess: () => {
+    onSuccess: (_d, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
+      const savedCount = count;
       setCount(1);
       setUseYesterday(false);
       writeScoped(user?.id, LAST_HEN_KEY, selectedHenId);
+
+      // Personal record check
+      const date = useYesterday
+        ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        : new Date().toISOString().split('T')[0];
+      const existing = (queryClient.getQueryData(['eggs']) as any[]) || [];
+      const records = checkPersonalRecords(user?.id, [...existing, { date, count: savedCount }], date);
+      if (records.length > 0) {
+        const r = records[0];
+        setTimeout(() => {
+          setRecordToast({
+            id: `${r.type}-${Date.now()}`,
+            title: recordLabel(r.type),
+            subtitle: r.previous > 0 ? `Tidigare: ${r.previous} ägg` : 'Första riktiga toppnoteringen',
+            value: r.value,
+            unit: r.type === 'day' ? 'ägg / dag' : 'ägg / 7 dagar',
+          });
+          feedbackCelebrate();
+        }, 600);
+      }
     },
     onError: (err: any, _, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(['eggs'], ctx.prev);
@@ -197,6 +222,7 @@ export function QuickEggFAB() {
       )}
 
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
+      <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
     </>
   );
 }
