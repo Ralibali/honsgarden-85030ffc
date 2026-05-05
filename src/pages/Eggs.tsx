@@ -265,6 +265,7 @@ export default function Eggs() {
       )}
 
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
+      <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
 
       <FeatureSuggestionToast
         show={showSuggestion}
