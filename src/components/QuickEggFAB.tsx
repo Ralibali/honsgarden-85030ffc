@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
-import { feedbackCelebrate } from '@/lib/feedback';
+import { feedbackCelebrate, hapticTap } from '@/lib/feedback';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
@@ -177,14 +177,14 @@ export function QuickEggFAB() {
                 </div>
 
                 <div className="flex items-center justify-center gap-4">
-                  <button onClick={() => setCount(Math.max(1, count - 1))} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Minus className="h-5 w-5 text-muted-foreground" /></button>
+                  <button onClick={() => { setCount(Math.max(1, count - 1)); hapticTap(); }} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Minus className="h-5 w-5 text-muted-foreground" /></button>
                   <div className="text-center min-w-[80px]"><p className="text-4xl font-bold text-foreground tabular-nums">{count}</p><p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">ägg</p></div>
-                  <button onClick={() => setCount(count + 1)} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Plus className="h-5 w-5 text-muted-foreground" /></button>
+                  <button onClick={() => { setCount(count + 1); hapticTap(); }} className="w-12 h-12 rounded-full border-2 border-border hover:border-primary flex items-center justify-center transition-colors active:scale-95"><Plus className="h-5 w-5 text-muted-foreground" /></button>
                 </div>
 
                 <div className="flex items-center justify-center gap-2">
                   {[1, 2, 3, 5, 8].map((n) => (
-                    <button key={n} onClick={() => setCount(n)} className={`min-w-[44px] min-h-[44px] rounded-full text-xs font-semibold transition-all active:scale-90 ${count === n ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted/60 text-muted-foreground hover:bg-muted'}`}>{n}</button>
+                    <button key={n} onClick={() => { setCount(n); hapticTap(); }} className={`min-w-[44px] min-h-[44px] rounded-full text-xs font-semibold transition-all active:scale-90 ${count === n ? 'bg-primary text-primary-foreground shadow-md' : 'bg-muted/60 text-muted-foreground hover:bg-muted'}`}>{n}</button>
                   ))}
                 </div>
 
