@@ -607,31 +607,46 @@ export type Database = {
       }
       coop_settings: {
         Row: {
+          city: string | null
           coop_name: string | null
           created_at: string
           hen_count: number | null
           id: string
+          latitude: number | null
           location: string | null
+          longitude: number | null
+          postal_code: string | null
+          region: string | null
           settings: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          city?: string | null
           coop_name?: string | null
           created_at?: string
           hen_count?: number | null
           id?: string
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
+          postal_code?: string | null
+          region?: string | null
           settings?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          city?: string | null
           coop_name?: string | null
           created_at?: string
           hen_count?: number | null
           id?: string
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
+          postal_code?: string | null
+          region?: string | null
           settings?: Json | null
           updated_at?: string
           user_id?: string
@@ -750,6 +765,7 @@ export type Database = {
           id: string
           notes: string | null
           user_id: string
+          weather: Json | null
         }
         Insert: {
           count?: number
@@ -760,6 +776,7 @@ export type Database = {
           id?: string
           notes?: string | null
           user_id: string
+          weather?: Json | null
         }
         Update: {
           count?: number
@@ -770,6 +787,7 @@ export type Database = {
           id?: string
           notes?: string | null
           user_id?: string
+          weather?: Json | null
         }
         Relationships: [
           {
@@ -1090,30 +1108,39 @@ export type Database = {
       }
       feed_records: {
         Row: {
+          affiliate_product_id: string | null
           amount_kg: number | null
+          brand: string | null
           cost: number | null
           created_at: string
           date: string
+          feed_category: string | null
           feed_type: string | null
           id: string
           notes: string | null
           user_id: string
         }
         Insert: {
+          affiliate_product_id?: string | null
           amount_kg?: number | null
+          brand?: string | null
           cost?: number | null
           created_at?: string
           date: string
+          feed_category?: string | null
           feed_type?: string | null
           id?: string
           notes?: string | null
           user_id: string
         }
         Update: {
+          affiliate_product_id?: string | null
           amount_kg?: number | null
+          brand?: string | null
           cost?: number | null
           created_at?: string
           date?: string
+          feed_category?: string | null
           feed_type?: string | null
           id?: string
           notes?: string | null
