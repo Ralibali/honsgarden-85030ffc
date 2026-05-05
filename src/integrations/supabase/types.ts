@@ -209,6 +209,13 @@ export type Database = {
             referencedRelation: "affiliate_advertisers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "affiliate_products_advertiser_id_fkey"
+            columns: ["advertiser_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_advertisers_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       blog_comments: {
@@ -2590,6 +2597,48 @@ export type Database = {
           partner_id?: never
           pin_domain?: string | null
           slug?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_advertisers_public: {
+        Row: {
+          adtraction_advertiser_id: string | null
+          base_url: string | null
+          commission_rate: number | null
+          cookie_days: number | null
+          created_at: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          pin_domain: string | null
+          slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adtraction_advertiser_id?: string | null
+          base_url?: string | null
+          commission_rate?: number | null
+          cookie_days?: number | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          pin_domain?: string | null
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adtraction_advertiser_id?: string | null
+          base_url?: string | null
+          commission_rate?: number | null
+          cookie_days?: number | null
+          created_at?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          pin_domain?: string | null
+          slug?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
