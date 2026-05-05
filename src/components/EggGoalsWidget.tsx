@@ -185,14 +185,21 @@ export default function EggGoalsWidget({ eggs }: EggGoalsWidgetProps) {
                   key={goal.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-2 rounded-2xl border border-border/40 bg-muted/20 p-3"
+                  className={`relative overflow-hidden rounded-2xl border p-3 ${isComplete ? 'border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-accent/10' : 'border-border/40 bg-muted/20'}`}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-background">
                         {goal.period === 'weekly' ? 'Vecka' : 'Månad'}
                       </Badge>
-                      {isComplete && <Trophy className="h-3.5 w-3.5 text-warning animate-pulse" />}
+                      {isComplete && (
+                        <motion.div
+                          animate={{ rotate: [0, -10, 10, -6, 6, 0], scale: [1, 1.15, 1] }}
+                          transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 1.2 }}
+                        >
+                          <Trophy className="h-4 w-4 text-amber-500" />
+                        </motion.div>
+                      )}
                     </div>
                     <div className="flex items-center gap-1">
                       <button onClick={() => handleEdit(goal)} className="p-1 rounded hover:bg-muted/70 text-muted-foreground">
@@ -204,27 +211,38 @@ export default function EggGoalsWidget({ eggs }: EggGoalsWidgetProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-end justify-between mb-1">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-bold tabular-nums text-foreground">{count}</span>
-                      <span className="text-sm text-muted-foreground">/ {goal.target_count}</span>
+                  <div className="flex items-center gap-4">
+                    <RingProgress
+                      value={pct}
+                      size={88}
+                      stroke={9}
+                      progressClassName={isComplete ? 'text-primary' : 'text-primary'}
+                      label={`${pct}% av ${goal.period === 'weekly' ? 'veckomålet' : 'månadsmålet'}`}
+                    >
+                      <div className="text-center">
+                        <p className={`text-lg font-bold leading-none ${isComplete ? 'text-primary' : 'text-foreground'}`}>
+                          <CountUp value={pct} duration={900} suffix="%" />
+                        </p>
+                      </div>
+                    </RingProgress>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-bold text-foreground leading-none">
+                          <CountUp value={count} duration={800} />
+                        </span>
+                        <span className="text-sm text-muted-foreground">/ {goal.target_count} ägg</span>
+                      </div>
+                      {isComplete ? (
+                        <p className="text-xs text-primary flex items-center gap-1 mt-2 font-medium">
+                          <Flame className="h-3.5 w-3.5" /> Mål uppnått – fantastiskt jobbat!
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {goal.target_count - count} ägg kvar till {goal.period === 'weekly' ? 'veckomålet' : 'månadsmålet'}
+                        </p>
+                      )}
                     </div>
-                    <span className={`text-xs font-semibold tabular-nums ${isComplete ? 'text-primary' : 'text-muted-foreground'}`}>
-                      {pct}%
-                    </span>
                   </div>
-
-                  <Progress value={pct} className="h-2.5 rounded-full" />
-
-                  {isComplete ? (
-                    <p className="text-xs text-primary flex items-center gap-1">
-                      <Flame className="h-3 w-3" /> Mål uppnått – fantastiskt jobbat! 🎉
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {goal.target_count - count} ägg kvar till {goal.period === 'weekly' ? 'veckomålet' : 'månadsmålet'}
-                    </p>
-                  )}
                 </motion.div>
               );
             })}
