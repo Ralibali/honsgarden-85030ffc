@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Egg, ArrowRight, Calculator, TrendingUp, Coins } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
+import NewsletterSignup from '@/components/NewsletterSignup';
 
 export default function EggCalculator() {
   const [henCount, setHenCount] = useState(5);
@@ -248,6 +249,10 @@ export default function EggCalculator() {
             <span className="text-muted-foreground">·</span>
             <Link to="/blogg/kategori/halsa" className="text-sm text-primary hover:underline">Hönshälsa</Link>
           </div>
+        </section>
+
+        <section className="mt-12 max-w-2xl mx-auto">
+          <NewsletterSignup />
         </section>
       </main>
 

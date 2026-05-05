@@ -37,6 +37,8 @@ export default function SettingsPage() {
   const [coopName, setCoopName] = useState('');
   const [henCount, setHenCount] = useState('');
   const [location, setLocation] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
@@ -66,6 +68,8 @@ export default function SettingsPage() {
       setCoopName(coopSettings.coop_name || '');
       setHenCount(String(coopSettings.hen_count || ''));
       setLocation(coopSettings.location || '');
+      setPostalCode((coopSettings as any).postal_code || '');
+      setCity((coopSettings as any).city || '');
     }
   }, [coopSettings]);
 
@@ -357,7 +361,18 @@ export default function SettingsPage() {
               <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="T.ex. Linköping" className="mt-1.5 h-11 rounded-xl" />
             </div>
           </div>
-          <Button onClick={() => saveCoopMutation.mutate({ coop_name: coopName, hen_count: Number(henCount) || 0, location: location || null })} disabled={saveCoopMutation.isPending} className="rounded-xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-muted-foreground">Postnummer <span className="text-xs">(valfritt)</span></Label>
+              <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\s/g, '').slice(0, 5))} placeholder="58220" className="mt-1.5 h-11 rounded-xl" />
+              <p className="text-[11px] text-muted-foreground mt-1">Används endast för regionala snittpriser och väderprognos – aldrig publikt.</p>
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Ort <span className="text-xs">(valfritt)</span></Label>
+              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="T.ex. Linköping" className="mt-1.5 h-11 rounded-xl" />
+            </div>
+          </div>
+          <Button onClick={() => saveCoopMutation.mutate({ coop_name: coopName, hen_count: Number(henCount) || 0, location: location || null, postal_code: postalCode || null, city: city || null } as any)} disabled={saveCoopMutation.isPending} className="rounded-xl">
             {saveCoopMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Spara gårdsinställningar
           </Button>

@@ -59,7 +59,10 @@ export default function Eggs() {
   }, [animCount, unusedFeatures.length]);
 
   const createMutation = useMutation({
-    mutationFn: (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => api.createEggRecord(data),
+    mutationFn: async (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => {
+      const weather = await api.fetchEggLogWeatherSnapshot(data.date);
+      return api.createEggRecord({ ...data, weather });
+    },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       setAnimCount(variables.count);
