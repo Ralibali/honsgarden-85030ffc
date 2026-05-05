@@ -56,7 +56,7 @@ export default function Feed() {
       queryClient.invalidateQueries({ queryKey: ['feed-inventory'] });
       toast({ title: 'Foderinköpet är sparat! 🥣' });
       setOpen(false);
-      setNewType(''); setNewCost(''); setNewKg('');
+      setNewType(''); setNewCost(''); setNewKg(''); setNewBrand(''); setNewCategory('');
     },
     onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara foderinköpet just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
   });
@@ -77,7 +77,9 @@ export default function Feed() {
       cost: Number(newCost),
       amount_kg: Number(newKg) || 0,
       date: new Date().toISOString().split('T')[0],
-    });
+      brand: newBrand || null,
+      feed_category: newCategory || null,
+    } as any);
   };
 
   const totalCost = feedStats?.total_cost || feedRecords.reduce((s: number, p: any) => s + (p.cost || 0), 0);
@@ -108,11 +110,21 @@ export default function Feed() {
           <DialogContent className="rounded-2xl">
             <DialogHeader><DialogTitle className="font-serif">Registrera foderinköp</DialogTitle></DialogHeader>
             <div className="space-y-3 pt-2">
-              <Input className="rounded-xl" placeholder="Typ (t.ex. Hönsfoder 25 kg)" value={newType} onChange={(e) => setNewType(e.target.value)} />
+              <Input className="rounded-xl" placeholder="Beskrivning (t.ex. Hönsfoder 25 kg)" value={newType} onChange={(e) => setNewType(e.target.value)} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input className="rounded-xl" placeholder="Märke (t.ex. Granngården)" value={newBrand} onChange={(e) => setNewBrand(e.target.value)} />
+                <Select value={newCategory} onValueChange={setNewCategory}>
+                  <SelectTrigger className="rounded-xl h-10"><SelectValue placeholder="Fodertyp (valfritt)" /></SelectTrigger>
+                  <SelectContent>
+                    {FEED_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input className="rounded-xl" placeholder="Kostnad (kr)" type="number" value={newCost} onChange={(e) => setNewCost(e.target.value)} />
                 <Input className="rounded-xl" placeholder="Vikt (kg)" type="number" value={newKg} onChange={(e) => setNewKg(e.target.value)} />
               </div>
+              <p className="text-[11px] text-muted-foreground">Märke + fodertyp gör det möjligt att jämföra kostnader och få bättre köprekommendationer.</p>
               <Button className="w-full rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newType || !newCost}>
                 {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Spara inköp
