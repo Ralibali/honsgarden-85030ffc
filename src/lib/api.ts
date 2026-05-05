@@ -135,15 +135,48 @@ export async function getEggs(): Promise<EggLog[]> {
   return data ?? [];
 }
 
-export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string }): Promise<EggLog> {
+export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null }): Promise<EggLog> {
   const userId = await getUserId();
   const insertData: TablesInsert<'egg_logs'> = { date: record.date, count: record.count, user_id: userId };
   if (record.notes) insertData.notes = record.notes;
   if (record.hen_id) insertData.hen_id = record.hen_id;
   if (record.flock_id) insertData.flock_id = record.flock_id;
+  if (record.weather) (insertData as any).weather = record.weather;
   const { data, error } = await supabase.from('egg_logs').insert(insertData).select().single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+// Snapshot today's weather (current temp + weathercode) for an egg log.
+// Returns null silently on any failure – this is "best effort" enrichment.
+export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<string, unknown> | null> {
+  try {
+    const coop = await supabase.from('coop_settings').select('latitude, longitude').limit(1).maybeSingle();
+    let lat = (coop.data as any)?.latitude;
+    let lon = (coop.data as any)?.longitude;
+    if ((!lat || !lon) && typeof navigator !== 'undefined' && navigator.geolocation) {
+      const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+        navigator.geolocation.getCurrentPosition((p) => resolve(p), () => resolve(null), { timeout: 3000, maximumAge: 60 * 60 * 1000 });
+      });
+      if (pos) { lat = pos.coords.latitude; lon = pos.coords.longitude; }
+    }
+    if (!lat || !lon) return null;
+    const isToday = date === new Date().toISOString().split('T')[0];
+    const url = isToday
+      ? `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&forecast_days=1`
+      : `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,wind_speed_10m_max&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    return {
+      lat, lon,
+      current: json.current ?? null,
+      daily: json.daily ?? null,
+      captured_at: new Date().toISOString(),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function deleteEggRecord(id: string): Promise<void> {
