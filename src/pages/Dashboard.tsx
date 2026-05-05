@@ -28,6 +28,9 @@ import { buildAchievements } from '@/components/Achievements';
 import EggGoalsWidget from '@/components/EggGoalsWidget';
 import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
+import { StreakFlame } from '@/components/StreakFlame';
+import { CountUp } from '@/components/CountUp';
+import { RingProgress } from '@/components/RingProgress';
 
 function getGreeting() {
   const now = new Date();
