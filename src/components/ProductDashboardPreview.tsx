@@ -26,7 +26,7 @@ export default function ProductDashboardPreview() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Hönsgården</p>
-                <h3 className="font-serif text-xl text-foreground">Din överblick</h3>
+                <p className="font-serif text-xl text-foreground" aria-hidden="true">Din överblick</p>
               </div>
               <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-xl">🐔</div>
             </div>

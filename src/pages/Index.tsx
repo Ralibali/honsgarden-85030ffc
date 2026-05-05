@@ -205,6 +205,7 @@ export default function Index() {
                     className="w-full"
                     loading="eager"
                     decoding="async"
+                    fetchPriority="high"
                   />
                 </div>
               </div>

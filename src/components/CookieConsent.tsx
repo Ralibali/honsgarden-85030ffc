@@ -39,7 +39,7 @@ export default function CookieConsent() {
             <p className="text-xs sm:text-sm font-medium text-foreground">Cookies och statistik 🍪</p>
             <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug sm:leading-relaxed mt-0.5">
               Hönsgården fungerar med nödvändiga cookies. Om du accepterar hjälper du oss även förstå vilka funktioner som används, så appen kan bli bättre.{' '}
-              <a href="/terms" className="text-primary hover:underline">Läs mer</a>
+              <a href="/terms" className="text-primary hover:underline">Läs mer om hur vi använder cookies</a>
             </p>
           </div>
         </div>

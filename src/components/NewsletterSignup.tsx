@@ -55,13 +55,14 @@ export default function NewsletterSignup({ variant = 'card' }: NewsletterSignupP
 
   if (variant === 'inline') {
     return (
-      <form onSubmit={handleSubmit} className="flex gap-2 max-w-md">
+      <form onSubmit={handleSubmit} className="flex gap-2 max-w-md" aria-label="Prenumerera på nyhetsbrev">
         <Input
           type="email"
           placeholder="din@epost.se"
+          aria-label="E-postadress"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1"
+          className="flex-1 bg-white text-neutral-900 placeholder:text-neutral-500 border-white/30"
           required
         />
         <Button type="submit" disabled={loading} className="shrink-0">
