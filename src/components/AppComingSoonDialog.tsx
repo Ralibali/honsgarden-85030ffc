@@ -48,26 +48,26 @@ export default function AppComingSoonDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md rounded-2xl">
-        <DialogHeader>
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-2">
-            <Smartphone className="h-7 w-7 text-primary" />
+      <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md rounded-2xl p-5 sm:p-6 max-h-[92dvh] overflow-y-auto gap-3 sm:gap-4">
+        <DialogHeader className="space-y-1.5">
+          <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-1">
+            <Smartphone className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
           </div>
-          <DialogTitle className="font-serif text-2xl text-center leading-snug">
+          <DialogTitle className="font-serif text-xl sm:text-2xl text-center leading-snug px-2">
             Hönsgården kommer snart som app! 📱
           </DialogTitle>
-          <DialogDescription className="text-center text-sm leading-relaxed pt-1">
+          <DialogDescription className="text-center text-[13px] sm:text-sm leading-relaxed pt-0.5">
             Vi jobbar på en riktig app för App Store och Google Play. Under tiden kan du installera Hönsgården direkt på hemskärmen – det fungerar precis som en vanlig app.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-xl bg-muted/40 border border-border/60 p-4 space-y-3 mt-2">
-          <div className="flex items-center justify-between gap-2">
+        <div className="rounded-xl bg-muted/40 border border-border/60 p-3 sm:p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
               <span>Så installerar du nu</span>
             </div>
-            <div className="flex items-center gap-1 bg-background/60 rounded-full p-0.5 border border-border/60">
+            <div className="flex items-center gap-1 bg-background/60 rounded-full p-0.5 border border-border/60 self-start sm:self-auto">
               <PlatformChip
                 active={platform === 'ios'}
                 onClick={() => setPlatform('ios')}
