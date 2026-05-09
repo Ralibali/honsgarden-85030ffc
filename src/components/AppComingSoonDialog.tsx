@@ -181,7 +181,7 @@ function PlatformChip({ active, onClick, label }: { active: boolean; onClick: ()
     <button
       type="button"
       onClick={onClick}
-      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+      className={`px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full text-xs sm:text-[11px] font-medium transition-colors min-h-[32px] sm:min-h-0 ${
         active
           ? 'bg-primary text-primary-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground'
