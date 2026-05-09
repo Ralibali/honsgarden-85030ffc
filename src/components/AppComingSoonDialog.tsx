@@ -162,12 +162,12 @@ export default function AppComingSoonDialog() {
           </AnimatePresence>
         </div>
 
-        <p className="text-xs text-muted-foreground text-center mt-2">
+        <p className="text-[11px] sm:text-xs text-muted-foreground text-center">
           Du kan alltid installera senare via menyn i webbläsaren.
         </p>
 
-        <div className="flex justify-center pt-2">
-          <Button onClick={dismiss} className="rounded-xl px-6">
+        <div className="flex justify-center pt-1">
+          <Button onClick={dismiss} className="rounded-xl px-6 w-full sm:w-auto h-11">
             Tack, jag förstår
           </Button>
         </div>
