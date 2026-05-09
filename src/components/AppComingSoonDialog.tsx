@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Share, MoreVertical, Sparkles } from 'lucide-react';
+import { Smartphone, Share, MoreVertical, Sparkles, Check, Apple, Smartphone as Android } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 
