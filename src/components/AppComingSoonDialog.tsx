@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Share, MoreVertical, Sparkles } from 'lucide-react';
+import { Smartphone, Share, MoreVertical, Sparkles, Check, Apple, Smartphone as Android } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 
@@ -18,7 +20,7 @@ function detectPlatform(): Platform {
 export default function AppComingSoonDialog() {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>('other');
-
+  const [showSteps, setShowSteps] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -60,42 +62,104 @@ export default function AppComingSoonDialog() {
         </DialogHeader>
 
         <div className="rounded-xl bg-muted/40 border border-border/60 p-4 space-y-3 mt-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span>Så installerar du nu</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span>Så installerar du nu</span>
+            </div>
+            <div className="flex items-center gap-1 bg-background/60 rounded-full p-0.5 border border-border/60">
+              <PlatformChip
+                active={platform === 'ios'}
+                onClick={() => setPlatform('ios')}
+                label="iPhone"
+              />
+              <PlatformChip
+                active={platform === 'android'}
+                onClick={() => setPlatform('android')}
+                label="Android"
+              />
+            </div>
           </div>
 
-          {platform === 'ios' && (
-            <div className="space-y-2">
-              <Step n={1}>
-                Tryck på <Share className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>Dela</strong> i Safari.
-              </Step>
-              <Step n={2}>
-                Välj <strong>"Lägg till på hemskärmen"</strong>.
-              </Step>
-              <Step n={3}>Tryck <strong>Lägg till</strong> – klart! 🎉</Step>
-            </div>
-          )}
+          <AnimatePresence initial={false} mode="wait">
+            {!showSteps ? (
+              <motion.div
+                key="cta"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18 }}
+                className="pt-1"
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl gap-2"
+                  onClick={() => {
+                    setShowSteps(true);
+                    toast.success(
+                      platform === 'ios'
+                        ? 'Visar steg för iPhone'
+                        : platform === 'android'
+                        ? 'Visar steg för Android'
+                        : 'Visar installationsguide',
+                      { duration: 1800 },
+                    );
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Visa mig hur
+                </Button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={`steps-${platform}`}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.22 }}
+                className="space-y-2"
+              >
+                <div className="flex items-center gap-1.5 text-[11px] text-primary font-medium">
+                  <Check className="h-3 w-3" />
+                  Visar steg för{' '}
+                  {platform === 'ios' ? 'iPhone' : platform === 'android' ? 'Android' : 'din enhet'}
+                </div>
 
-          {platform === 'android' && (
-            <div className="space-y-2">
-              <Step n={1}>
-                Tryck på <MoreVertical className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>menyn</strong> i Chrome.
-              </Step>
-              <Step n={2}>
-                Välj <strong>"Installera app"</strong> eller <strong>"Lägg till på startskärm"</strong>.
-              </Step>
-              <Step n={3}>Klart – ikonen finns nu på din hemskärm! 🎉</Step>
-            </div>
-          )}
+                {platform === 'ios' && (
+                  <>
+                    <Step n={1}>
+                      Tryck på <Share className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>Dela</strong> i Safari.
+                    </Step>
+                    <Step n={2}>
+                      Välj <strong>"Lägg till på hemskärmen"</strong>.
+                    </Step>
+                    <Step n={3}>Tryck <strong>Lägg till</strong> – klart! 🎉</Step>
+                  </>
+                )}
 
-          {platform === 'other' && (
-            <div className="space-y-2">
-              <Step n={1}>Öppna sidan i mobilens webbläsare (Safari på iPhone, Chrome på Android).</Step>
-              <Step n={2}>Tryck på meny / dela-knappen.</Step>
-              <Step n={3}>Välj <strong>"Lägg till på hemskärmen"</strong> / <strong>"Installera app"</strong>.</Step>
-            </div>
-          )}
+                {platform === 'android' && (
+                  <>
+                    <Step n={1}>
+                      Tryck på <MoreVertical className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>menyn</strong> i Chrome.
+                    </Step>
+                    <Step n={2}>
+                      Välj <strong>"Installera app"</strong> eller <strong>"Lägg till på startskärm"</strong>.
+                    </Step>
+                    <Step n={3}>Klart – ikonen finns nu på din hemskärm! 🎉</Step>
+                  </>
+                )}
+
+                {platform === 'other' && (
+                  <>
+                    <Step n={1}>Öppna sidan i mobilens webbläsare (Safari på iPhone, Chrome på Android).</Step>
+                    <Step n={2}>Tryck på meny / dela-knappen.</Step>
+                    <Step n={3}>Välj <strong>"Lägg till på hemskärmen"</strong> / <strong>"Installera app"</strong>.</Step>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-2">
@@ -109,6 +173,22 @@ export default function AppComingSoonDialog() {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PlatformChip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+        active
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
