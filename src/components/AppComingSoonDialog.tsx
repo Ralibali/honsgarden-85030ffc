@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Smartphone, Share, MoreVertical, Sparkles, Check, Apple, Smartphone as Android } from 'lucide-react';
+import { Smartphone, Share, MoreVertical, Sparkles, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { trackClick } from '@/hooks/useTracking';
@@ -9,6 +9,54 @@ import { trackClick } from '@/hooks/useTracking';
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 
 type Platform = 'ios' | 'android' | 'other';
+
+const PLATFORM_LABELS: Record<Platform, string> = {
+  ios: 'iPhone',
+  android: 'Android',
+  other: 'din enhet',
+};
+
+type Step = { content: ReactNode };
+
+const INSTRUCTIONS: Record<Platform, Step[]> = {
+  ios: [
+    {
+      content: (
+        <>
+          Tryck på <Share className="h-3.5 w-3.5 inline -mt-0.5 text-primary" />{' '}
+          <strong>Dela</strong> i Safari.
+        </>
+      ),
+    },
+    { content: <>Välj <strong>”Lägg till på hemskärmen”</strong>.</> },
+    { content: <>Tryck <strong>Lägg till</strong> – klart!</> },
+  ],
+  android: [
+    {
+      content: (
+        <>
+          Tryck på <MoreVertical className="h-3.5 w-3.5 inline -mt-0.5 text-primary" />{' '}
+          <strong>menyn</strong> i Chrome.
+        </>
+      ),
+    },
+    {
+      content: (
+        <>Välj <strong>”Installera app”</strong> eller <strong>”Lägg till på startskärm”</strong>.</>
+      ),
+    },
+    { content: <>Ikonen finns nu på din hemskärm – klart!</> },
+  ],
+  other: [
+    { content: <>Öppna sidan i mobilens webbläsare (Safari på iPhone, Chrome på Android).</> },
+    { content: <>Tryck på meny- eller delningsknappen.</> },
+    {
+      content: (
+        <>Välj <strong>”Lägg till på hemskärmen”</strong> eller <strong>”Installera app”</strong>.</>
+      ),
+    },
+  ],
+};
 
 function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'other';
@@ -22,6 +70,7 @@ export default function AppComingSoonDialog() {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>('other');
   const [showSteps, setShowSteps] = useState(false);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -38,11 +87,12 @@ export default function AppComingSoonDialog() {
     return () => clearTimeout(t);
   }, []);
 
+  const steps = useMemo(() => INSTRUCTIONS[platform] ?? [], [platform]);
+  const hasSteps = steps.length > 0;
+
   const handleClose = (o: boolean) => {
     setOpen(o);
-    if (!o) {
-      localStorage.setItem(STORAGE_KEY, '1');
-    }
+    if (!o) localStorage.setItem(STORAGE_KEY, '1');
   };
 
   const dismiss = () => {
@@ -57,6 +107,17 @@ export default function AppComingSoonDialog() {
     handleClose(false);
   };
 
+  const handleShowSteps = () => {
+    if (!hasSteps) {
+      toast.error('Vi kunde inte hitta installationsinstruktioner för din enhet just nu.', {
+        description: 'Prova att öppna sidan i Safari eller Chrome på din mobil.',
+      });
+      return;
+    }
+    setShowSteps(true);
+    toast.success(`Visar steg för ${PLATFORM_LABELS[platform]}.`, { duration: 1800 });
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md rounded-2xl p-5 sm:p-6 max-h-[92dvh] overflow-y-auto gap-3 sm:gap-4">
@@ -64,31 +125,23 @@ export default function AppComingSoonDialog() {
           <div className="mx-auto w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-1">
             <Smartphone className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
           </div>
-          <DialogTitle className="font-serif text-xl sm:text-2xl text-center leading-snug px-2">
-            Hönsgården kommer snart som app! 📱
+          <DialogTitle className="font-serif text-xl sm:text-2xl text-center leading-snug px-2 text-foreground">
+            Hönsgården kommer snart som app
           </DialogTitle>
-          <DialogDescription className="text-center text-[13px] sm:text-sm leading-relaxed pt-0.5">
-            Vi jobbar på en riktig app för App Store och Google Play. Under tiden kan du installera Hönsgården direkt på hemskärmen – det fungerar precis som en vanlig app.
+          <DialogDescription className="text-center text-[13px] sm:text-sm leading-relaxed pt-0.5 text-muted-foreground">
+            Vi förbereder en riktig app för App Store och Google Play. Under tiden kan du installera Hönsgården direkt på hemskärmen – det fungerar precis som en vanlig app.
           </DialogDescription>
         </DialogHeader>
 
         <div className="rounded-xl bg-muted/40 border border-border/60 p-3 sm:p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Sparkles className="h-4 w-4 text-primary" />
+              <Sparkles className="h-4 w-4 text-primary" aria-hidden />
               <span>Så installerar du nu</span>
             </div>
             <div className="flex items-center gap-1 bg-background/60 rounded-full p-0.5 border border-border/60 self-start sm:self-auto">
-              <PlatformChip
-                active={platform === 'ios'}
-                onClick={() => setPlatform('ios')}
-                label="iPhone"
-              />
-              <PlatformChip
-                active={platform === 'android'}
-                onClick={() => setPlatform('android')}
-                label="Android"
-              />
+              <PlatformChip active={platform === 'ios'} onClick={() => setPlatform('ios')} label="iPhone" />
+              <PlatformChip active={platform === 'android'} onClick={() => setPlatform('android')} label="Android" />
             </div>
           </div>
 
@@ -105,18 +158,8 @@ export default function AppComingSoonDialog() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full rounded-xl gap-2"
-                  onClick={() => {
-                    setShowSteps(true);
-                    toast.success(
-                      platform === 'ios'
-                        ? 'Visar steg för iPhone'
-                        : platform === 'android'
-                        ? 'Visar steg för Android'
-                        : 'Visar installationsguide',
-                      { duration: 1800 },
-                    );
-                  }}
+                  className="w-full rounded-xl gap-2 h-10"
+                  onClick={handleShowSteps}
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   Visa mig hur
@@ -131,42 +174,28 @@ export default function AppComingSoonDialog() {
                 transition={{ duration: 0.22 }}
                 className="space-y-2"
               >
-                <div className="flex items-center gap-1.5 text-[11px] text-primary font-medium">
-                  <Check className="h-3 w-3" />
-                  Visar steg för{' '}
-                  {platform === 'ios' ? 'iPhone' : platform === 'android' ? 'Android' : 'din enhet'}
-                </div>
-
-                {platform === 'ios' && (
+                {hasSteps ? (
                   <>
-                    <Step n={1}>
-                      Tryck på <Share className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>Dela</strong> i Safari.
-                    </Step>
-                    <Step n={2}>
-                      Välj <strong>"Lägg till på hemskärmen"</strong>.
-                    </Step>
-                    <Step n={3}>Tryck <strong>Lägg till</strong> – klart! 🎉</Step>
+                    <div className="flex items-center gap-1.5 text-[11px] text-primary font-medium">
+                      <Check className="h-3 w-3" aria-hidden />
+                      Visar steg för {PLATFORM_LABELS[platform]}
+                    </div>
+                    {steps.map((step, i) => (
+                      <StepRow key={i} n={i + 1}>
+                        {step.content}
+                      </StepRow>
+                    ))}
                   </>
-                )}
-
-                {platform === 'android' && (
-                  <>
-                    <Step n={1}>
-                      Tryck på <MoreVertical className="h-3.5 w-3.5 inline -mt-0.5 text-primary" /> <strong>menyn</strong> i Chrome.
-                    </Step>
-                    <Step n={2}>
-                      Välj <strong>"Installera app"</strong> eller <strong>"Lägg till på startskärm"</strong>.
-                    </Step>
-                    <Step n={3}>Klart – ikonen finns nu på din hemskärm! 🎉</Step>
-                  </>
-                )}
-
-                {platform === 'other' && (
-                  <>
-                    <Step n={1}>Öppna sidan i mobilens webbläsare (Safari på iPhone, Chrome på Android).</Step>
-                    <Step n={2}>Tryck på meny / dela-knappen.</Step>
-                    <Step n={3}>Välj <strong>"Lägg till på hemskärmen"</strong> / <strong>"Installera app"</strong>.</Step>
-                  </>
+                ) : (
+                  <div
+                    role="alert"
+                    className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-foreground"
+                  >
+                    <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" aria-hidden />
+                    <span className="leading-relaxed">
+                      Inga installationsinstruktioner är tillgängliga för din enhet just nu. Öppna gärna Hönsgården i Safari eller Chrome på din mobil.
+                    </span>
+                  </div>
                 )}
               </motion.div>
             )}
@@ -192,6 +221,7 @@ function PlatformChip({ active, onClick, label }: { active: boolean; onClick: ()
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={`px-3 py-1.5 sm:px-2.5 sm:py-1 rounded-full text-xs sm:text-[11px] font-medium transition-colors min-h-[32px] sm:min-h-0 ${
         active
           ? 'bg-primary text-primary-foreground shadow-sm'
@@ -203,7 +233,7 @@ function PlatformChip({ active, onClick, label }: { active: boolean; onClick: ()
   );
 }
 
-function Step({ n, children }: { n: number; children: React.ReactNode }) {
+function StepRow({ n, children }: { n: number; children: ReactNode }) {
   return (
     <div className="flex items-start gap-2.5 text-xs text-foreground">
       <span className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center text-[10px] font-bold text-primary shrink-0 mt-0.5">
