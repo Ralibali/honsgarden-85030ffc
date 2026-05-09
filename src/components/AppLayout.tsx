@@ -85,6 +85,7 @@ export default function AppLayout() {
         <MobileNav />
         <QuickEggFAB />
         <CommandPalette />
+        <AppComingSoonDialog />
       </div>
     </SidebarProvider>
   );
