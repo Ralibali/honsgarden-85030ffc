@@ -100,7 +100,25 @@ export function DataCompletionNudges() {
     return null;
   }, [hens, eggs, coop]);
 
+  const queryClient = useQueryClient();
+  const [postalCode, setPostalCode] = useState('');
+
+  const saveRegion = useMutation({
+    mutationFn: async (code: string) => {
+      await api.updateCoopSettings({ postal_code: code } as any);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
+      toast.success('Postnummer sparat – regionala insikter aktiverade ✨');
+      dismissNudge('farm-region', 365);
+      force((n) => n + 1);
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Kunde inte spara'),
+  });
+
   if (!nudge) return null;
+
+  const isRegion = nudge.key === 'farm-region';
 
   return (
     <Card className="border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm">
@@ -114,12 +132,45 @@ export function DataCompletionNudges() {
           {nudge.unlocks && (
             <p className="text-[11px] text-primary mt-1.5 font-medium">✨ {nudge.unlocks}</p>
           )}
-          <div className="flex gap-2 mt-3">
-            <Button size="sm" className="rounded-xl" onClick={() => navigate(nudge.to)}>{nudge.cta}</Button>
-            <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { dismissNudge(nudge.key); force((n) => n + 1); }}>
-              Inte nu
-            </Button>
-          </div>
+          {isRegion ? (
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
+              <Input
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="58220"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                className="h-10 rounded-xl sm:max-w-[140px]"
+                disabled={saveRegion.isPending}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  className="rounded-xl"
+                  disabled={postalCode.length < 4 || saveRegion.isPending}
+                  onClick={() => saveRegion.mutate(postalCode)}
+                >
+                  {saveRegion.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+                  Spara
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-xl"
+                  onClick={() => { dismissNudge(nudge.key); force((n) => n + 1); }}
+                >
+                  Inte nu
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2 mt-3">
+              <Button size="sm" className="rounded-xl" onClick={() => navigate(nudge.to)}>{nudge.cta}</Button>
+              <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { dismissNudge(nudge.key); force((n) => n + 1); }}>
+                Inte nu
+              </Button>
+            </div>
+          )}
         </div>
         <button
           aria-label="Stäng"
