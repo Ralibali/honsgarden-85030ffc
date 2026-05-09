@@ -639,7 +639,10 @@ export default function AnalyticsDashboard() {
 
         {/* PWA tab */}
         <TabsContent value="pwa">
-          <PwaInstallsCard period={period} />
+          <div className="space-y-4">
+            <PwaInstallsCard period={period} />
+            <AppComingSoonStatsCard period={period} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
