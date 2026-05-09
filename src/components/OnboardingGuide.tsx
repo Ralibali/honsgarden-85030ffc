@@ -259,13 +259,6 @@ export default function OnboardingGuide() {
               <>
                 <div className="relative h-28 bg-gradient-to-br from-primary/10 to-success/10 flex items-center justify-center">
                   <Bird className="h-12 w-12 text-primary/60" />
-                  <button
-                    onClick={softClose}
-                    className="absolute top-3 right-3 p-1.5 rounded-full bg-foreground/10 text-foreground/50 hover:bg-foreground/15 transition-colors"
-                    aria-label="Stäng onboarding"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
                 <div className="px-6 pt-4 pb-6">
                   <h2 className="font-serif text-xl text-foreground mb-1">Lägg till din första höna</h2>
@@ -329,9 +322,6 @@ export default function OnboardingGuide() {
                       </Button>
                     </div>
                   </div>
-                  <button onClick={softClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors">
-                    Hoppa över för nu
-                  </button>
                 </div>
               </>
             )}
