@@ -121,9 +121,10 @@ export default function OnboardingGuide() {
     void markDone();
   };
 
-  const skipAndClose = () => {
+  // Soft close — only allowed once a hen exists (or via demo). When 0 hens we keep
+  // the dialog mandatory to fix the 50% onboarding leak.
+  const softClose = () => {
     setOpen(false);
-    void markDone();
   };
 
   const addHen = async () => {
