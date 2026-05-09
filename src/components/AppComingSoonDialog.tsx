@@ -81,9 +81,20 @@ export default function AppComingSoonDialog() {
 
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    setPlatform(detectPlatform());
+    const detected = detectPlatform();
+    setPlatform(detected);
 
-    const t = setTimeout(() => setOpen(true), 3000);
+    const t = setTimeout(() => {
+      setOpen(true);
+      trackClick('app_coming_soon_shown', {
+        elementText: 'AppComingSoonDialog',
+        metadata: {
+          platform: detected,
+          path: window.location.pathname,
+          source: 'app_coming_soon_dialog',
+        },
+      });
+    }, 3000);
     return () => clearTimeout(t);
   }, []);
 
@@ -101,6 +112,7 @@ export default function AppComingSoonDialog() {
       metadata: {
         platform,
         viewed_steps: showSteps,
+        path: typeof window !== 'undefined' ? window.location.pathname : null,
         source: 'app_coming_soon_dialog',
       },
     });
