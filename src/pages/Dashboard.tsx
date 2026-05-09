@@ -31,6 +31,8 @@ import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
 import { CountUp } from '@/components/CountUp';
 import { RingProgress } from '@/components/RingProgress';
+import FirstEggActivationCard from '@/components/FirstEggActivationCard';
+import SinceLastVisitCard from '@/components/SinceLastVisitCard';
 
 function getGreeting() {
   const now = new Date();
@@ -352,6 +354,16 @@ export default function Dashboard() {
           {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
         </h1>
       </div>
+
+      {/* Activation: get first egg logged */}
+      {(hens as any[]).length > 0 && eggs.length === 0 && (
+        <FirstEggActivationCard henName={(hens as any[])[0]?.name} />
+      )}
+
+      {/* Recap of activity since last visit */}
+      {eggs.length > 0 && (
+        <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
+      )}
 
       {/* ─── 1. Dagens hönsgård ─── */}
       <Card className="border-border/50 shadow-sm overflow-hidden">
