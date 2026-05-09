@@ -20,7 +20,7 @@ function detectPlatform(): Platform {
 export default function AppComingSoonDialog() {
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>('other');
-
+  const [showSteps, setShowSteps] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
