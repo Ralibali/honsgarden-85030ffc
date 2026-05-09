@@ -193,7 +193,7 @@ export default function OnboardingGuide() {
   const confettiEmojis = ['🎉', '🥚', '🐔', '✨', '💚', '🌟'];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) skipAndClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) softClose(); }}>
       <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0 [&>button]:hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -215,7 +215,7 @@ export default function OnboardingGuide() {
                     🐔
                   </motion.span>
                   <button
-                    onClick={skipAndClose}
+                    onClick={softClose}
                     className="absolute top-3 right-3 p-1.5 rounded-full bg-foreground/10 text-foreground/50 hover:bg-foreground/15 transition-colors"
                     aria-label="Stäng onboarding"
                   >
@@ -251,7 +251,7 @@ export default function OnboardingGuide() {
                       {loadingDemo ? 'Skapar exempeldata...' : 'Testa med exempeldata istället'}
                     </button>
                   </div>
-                  <button onClick={skipAndClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-2 hover:text-muted-foreground transition-colors">
+                  <button onClick={softClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-2 hover:text-muted-foreground transition-colors">
                     Hoppa över för nu
                   </button>
                 </div>
@@ -263,7 +263,7 @@ export default function OnboardingGuide() {
                 <div className="relative h-28 bg-gradient-to-br from-primary/10 to-success/10 flex items-center justify-center">
                   <Bird className="h-12 w-12 text-primary/60" />
                   <button
-                    onClick={skipAndClose}
+                    onClick={softClose}
                     className="absolute top-3 right-3 p-1.5 rounded-full bg-foreground/10 text-foreground/50 hover:bg-foreground/15 transition-colors"
                     aria-label="Stäng onboarding"
                   >
@@ -332,7 +332,7 @@ export default function OnboardingGuide() {
                       </Button>
                     </div>
                   </div>
-                  <button onClick={skipAndClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors">
+                  <button onClick={softClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors">
                     Hoppa över för nu
                   </button>
                 </div>
