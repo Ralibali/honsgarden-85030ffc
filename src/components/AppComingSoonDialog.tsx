@@ -45,7 +45,17 @@ export default function AppComingSoonDialog() {
     }
   };
 
-  const dismiss = () => handleClose(false);
+  const dismiss = () => {
+    trackClick('app_coming_soon_dismissed', {
+      elementText: 'Tack, jag förstår',
+      metadata: {
+        platform,
+        viewed_steps: showSteps,
+        source: 'app_coming_soon_dialog',
+      },
+    });
+    handleClose(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
