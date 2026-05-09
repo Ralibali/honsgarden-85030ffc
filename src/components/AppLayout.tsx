@@ -8,8 +8,10 @@ import CommandPalette from './CommandPalette';
 import AppComingSoonDialog from './AppComingSoonDialog';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
+import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
 
 export default function AppLayout() {
+  usePwaInstallTracking();
   // Ensure app routes are not indexed by search engines.
   // Inget cleanup – nästa publika sida uppdaterar robots via useSeo.
   useEffect(() => {
