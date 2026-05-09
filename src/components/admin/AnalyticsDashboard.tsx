@@ -398,6 +398,7 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="cta" className="text-xs rounded-lg">CTA</TabsTrigger>
           <TabsTrigger value="sources" className="text-xs rounded-lg">Källor</TabsTrigger>
           <TabsTrigger value="devices" className="text-xs rounded-lg">Enheter</TabsTrigger>
+          <TabsTrigger value="pwa" className="text-xs rounded-lg">PWA</TabsTrigger>
         </TabsList>
 
         {/* Pages tab */}
