@@ -193,8 +193,12 @@ export default function OnboardingGuide() {
   const confettiEmojis = ['🎉', '🥚', '🐔', '✨', '💚', '🌟'];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) softClose(); }}>
-      <DialogContent className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0 [&>button]:hidden">
+    <Dialog open={open} onOpenChange={(v) => { if (!v && step === 2) softClose(); }}>
+      <DialogContent
+        className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0 [&>button]:hidden"
+        onPointerDownOutside={(e) => { if (step !== 2) e.preventDefault(); }}
+        onEscapeKeyDown={(e) => { if (step !== 2) e.preventDefault(); }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -214,13 +218,6 @@ export default function OnboardingGuide() {
                   >
                     🐔
                   </motion.span>
-                  <button
-                    onClick={softClose}
-                    className="absolute top-3 right-3 p-1.5 rounded-full bg-foreground/10 text-foreground/50 hover:bg-foreground/15 transition-colors"
-                    aria-label="Stäng onboarding"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
                 <div className="px-6 pt-4 pb-6">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary mb-2">Kom igång på under en minut</p>
@@ -251,9 +248,9 @@ export default function OnboardingGuide() {
                       {loadingDemo ? 'Skapar exempeldata...' : 'Testa med exempeldata istället'}
                     </button>
                   </div>
-                  <button onClick={softClose} className="w-full text-center text-[11px] text-muted-foreground/60 mt-2 hover:text-muted-foreground transition-colors">
-                    Hoppa över för nu
-                  </button>
+                  <p className="w-full text-center text-[10px] text-muted-foreground/50 mt-3">
+                    Du kan börja med exempeldata och byta ut den senare.
+                  </p>
                 </div>
               </>
             )}
