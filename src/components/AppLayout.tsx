@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { MobileNav } from './MobileNav';
 import { QuickEggFAB } from './QuickEggFAB';
 import CommandPalette from './CommandPalette';
+import AppComingSoonDialog from './AppComingSoonDialog';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 
