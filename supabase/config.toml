@@ -27,3 +27,5 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.daily-egg-reminder]
     verify_jwt = false
+  [functions.day-2-activation-email]
+    verify_jwt = false
