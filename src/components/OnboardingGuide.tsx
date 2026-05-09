@@ -193,11 +193,9 @@ export default function OnboardingGuide() {
   const confettiEmojis = ['🎉', '🥚', '🐔', '✨', '💚', '🌟'];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && step === 2) softClose(); }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { softClose(); void markDone(); } }}>
       <DialogContent
-        className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0 [&>button]:hidden"
-        onPointerDownOutside={(e) => { if (step !== 2) e.preventDefault(); }}
-        onEscapeKeyDown={(e) => { if (step !== 2) e.preventDefault(); }}
+        className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0"
       >
         <AnimatePresence mode="wait">
           <motion.div
