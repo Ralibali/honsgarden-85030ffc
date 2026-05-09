@@ -14,6 +14,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
+import PwaInstallsCard from './PwaInstallsCard';
 
 type Period = '24h' | '7d' | '30d' | '90d';
 
@@ -397,6 +398,7 @@ export default function AnalyticsDashboard() {
           <TabsTrigger value="cta" className="text-xs rounded-lg">CTA</TabsTrigger>
           <TabsTrigger value="sources" className="text-xs rounded-lg">Källor</TabsTrigger>
           <TabsTrigger value="devices" className="text-xs rounded-lg">Enheter</TabsTrigger>
+          <TabsTrigger value="pwa" className="text-xs rounded-lg">PWA</TabsTrigger>
         </TabsList>
 
         {/* Pages tab */}
@@ -632,6 +634,11 @@ export default function AnalyticsDashboard() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* PWA tab */}
+        <TabsContent value="pwa">
+          <PwaInstallsCard period={period} />
         </TabsContent>
       </Tabs>
     </div>
