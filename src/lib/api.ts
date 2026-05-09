@@ -419,11 +419,37 @@ export async function getCoopSettings(): Promise<CoopSettings> {
 }
 
 export async function updateCoopSettings(settings: CoopSettingsUpdate): Promise<CoopSettings> {
-  await getUserId();
-  const { data: coop } = await supabase.from('coop_settings').select('id').limit(1).maybeSingle();
-  if (!coop) throw new Error('Ingen gård hittades');
-  const { data, error } = await supabase.from('coop_settings').update(settings).eq('id', coop.id).select().single();
+  const userId = await getUserId();
+
+  // Hitta befintlig rad för aktuell användare (RLS gör att vi bara ser egna/gårdens rader)
+  const { data: existing, error: selectError } = await supabase
+    .from('coop_settings')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1)
+    .maybeSingle();
+  if (selectError) throw new Error(selectError.message);
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('coop_settings')
+      .update(settings)
+      .eq('id', existing.id)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Kunde inte uppdatera inställningarna. Försök igen.');
+    return data;
+  }
+
+  // Ingen rad än – skapa en ny för användaren
+  const { data, error } = await supabase
+    .from('coop_settings')
+    .insert({ ...settings, user_id: userId })
+    .select()
+    .maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error('Kunde inte spara inställningarna. Försök igen.');
   return data;
 }
 
