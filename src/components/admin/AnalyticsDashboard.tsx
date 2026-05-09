@@ -14,6 +14,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
+import PwaInstallsCard from './PwaInstallsCard';
 
 type Period = '24h' | '7d' | '30d' | '90d';
 
