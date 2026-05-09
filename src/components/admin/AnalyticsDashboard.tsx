@@ -635,6 +635,11 @@ export default function AnalyticsDashboard() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* PWA tab */}
+        <TabsContent value="pwa">
+          <PwaInstallsCard period={period} />
+        </TabsContent>
       </Tabs>
     </div>
   );
