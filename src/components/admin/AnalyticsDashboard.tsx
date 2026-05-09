@@ -15,6 +15,7 @@ import {
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
 import PwaInstallsCard from './PwaInstallsCard';
+import AppComingSoonStatsCard from './AppComingSoonStatsCard';
 
 type Period = '24h' | '7d' | '30d' | '90d';
 
@@ -638,7 +639,10 @@ export default function AnalyticsDashboard() {
 
         {/* PWA tab */}
         <TabsContent value="pwa">
-          <PwaInstallsCard period={period} />
+          <div className="space-y-4">
+            <PwaInstallsCard period={period} />
+            <AppComingSoonStatsCard period={period} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
