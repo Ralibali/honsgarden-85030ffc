@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Smartphone, Share, MoreVertical, Sparkles, Check, Apple, Smartphone as Android } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { trackClick } from '@/hooks/useTracking';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 
@@ -44,7 +45,17 @@ export default function AppComingSoonDialog() {
     }
   };
 
-  const dismiss = () => handleClose(false);
+  const dismiss = () => {
+    trackClick('app_coming_soon_dismissed', {
+      elementText: 'Tack, jag förstår',
+      metadata: {
+        platform,
+        viewed_steps: showSteps,
+        source: 'app_coming_soon_dialog',
+      },
+    });
+    handleClose(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
