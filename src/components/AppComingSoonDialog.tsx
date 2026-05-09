@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Smartphone, Share, MoreVertical, Sparkles, Check, Apple, Smartphone as Android } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { trackClick } from '@/hooks/useTracking';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 
