@@ -5,7 +5,8 @@ import heroFarm from '@/assets/hero-farm.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift } from 'lucide-react';
+import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift, MapPin } from 'lucide-react';
+import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +33,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [postalCode, setPostalCode] = useState('');
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,6 +49,14 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
+      // Apply postal code captured at registration, if any
+      try {
+        const pending = localStorage.getItem('pending_postal_code');
+        if (pending && /^\d{4,5}$/.test(pending)) {
+          await api.updateCoopSettings({ postal_code: pending } as any);
+          localStorage.removeItem('pending_postal_code');
+        }
+      } catch { /* non-blocking */ }
       navigate('/app', { replace: true });
     } catch (err: any) {
       toast({ title: 'Inloggning misslyckades', description: err.message || 'Kontrollera e-post och lösenord.', variant: 'destructive' });
@@ -67,6 +77,10 @@ export default function Login() {
         } catch {
           // Non-blocking – referral is a bonus
         }
+      }
+      // Stash postal code so it gets saved on first login
+      if (postalCode && /^\d{4,5}$/.test(postalCode)) {
+        try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
       }
       toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har fått 14 dagars gratis Premium! 🎉 (sju dagar provperiod + sju dagar värvningsbonus)' : 'Du har fått sju dagars gratis Premium! 🎉' });
       setAuthMode('login');
@@ -209,6 +223,24 @@ export default function Login() {
                     <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} className="pl-10 h-11 uppercase" maxLength={6} />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Ni får båda sju dagars Premium!</p>
+                </div>
+                <div>
+                  <Label htmlFor="postal" className="text-muted-foreground">Postnummer (valfritt)</Label>
+                  <div className="relative mt-1.5">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="postal"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="58220"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      className="pl-10 h-11"
+                      maxLength={5}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Låser upp regionala snittpriser och väderpåverkan på din gård.</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <input
