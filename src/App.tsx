@@ -8,6 +8,7 @@ import React, { Suspense } from "react";
 import CookieConsent from "./components/CookieConsent";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
+import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
 
 const PwaUpdatePrompt = React.lazy(() => import("./components/PwaUpdatePrompt"));
 
@@ -105,6 +106,7 @@ function CacheClearer() {
 function PageTracker() {
   usePageTracking();
   useAutoClickTracking();
+  usePwaInstallTracking();
   return null;
 }
 
