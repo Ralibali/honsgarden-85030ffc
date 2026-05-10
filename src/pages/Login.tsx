@@ -224,6 +224,24 @@ export default function Login() {
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Ni får båda sju dagars Premium!</p>
                 </div>
+                <div>
+                  <Label htmlFor="postal" className="text-muted-foreground">Postnummer (valfritt)</Label>
+                  <div className="relative mt-1.5">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="postal"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="58220"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      className="pl-10 h-11"
+                      maxLength={5}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Låser upp regionala snittpriser och väderpåverkan på din gård.</p>
+                </div>
                 <div className="flex items-start gap-2">
                   <input
                     type="checkbox"
