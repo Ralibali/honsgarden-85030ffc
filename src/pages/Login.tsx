@@ -78,6 +78,10 @@ export default function Login() {
           // Non-blocking – referral is a bonus
         }
       }
+      // Stash postal code so it gets saved on first login
+      if (postalCode && /^\d{4,5}$/.test(postalCode)) {
+        try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
+      }
       toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har fått 14 dagars gratis Premium! 🎉 (sju dagar provperiod + sju dagar värvningsbonus)' : 'Du har fått sju dagars gratis Premium! 🎉' });
       setAuthMode('login');
     } catch (err: any) {
