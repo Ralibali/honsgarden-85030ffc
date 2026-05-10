@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
-  Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw
+  Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone
 } from 'lucide-react';
 import { DollarSign } from 'lucide-react';
 import BlogEditor from '@/components/admin/BlogEditor';
@@ -20,6 +20,7 @@ import RevenueDashboard from '@/components/admin/RevenueDashboard';
 import SeoAdmin from '@/components/admin/SeoAdmin';
 import { MarketingOptInPanel } from '@/components/admin/MarketingOptInPanel';
 import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
+import PwaDashboard from '@/components/admin/PwaDashboard';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -230,6 +231,9 @@ export default function Admin() {
           <TabsTrigger value="analytics" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Analys</span><span className="sm:hidden">📊</span>
           </TabsTrigger>
+          <TabsTrigger value="pwa" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Smartphone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">PWA</span><span className="sm:hidden">📱</span>
+          </TabsTrigger>
           <TabsTrigger value="users" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Users className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Användare</span><span className="sm:hidden">Users</span>
           </TabsTrigger>
@@ -271,6 +275,11 @@ export default function Admin() {
         {/* Analytics tab */}
         <TabsContent value="analytics" className="space-y-3">
           <AnalyticsDashboard />
+        </TabsContent>
+
+        {/* PWA tab */}
+        <TabsContent value="pwa" className="space-y-3">
+          <PwaDashboard />
         </TabsContent>
 
         {/* Users tab */}
