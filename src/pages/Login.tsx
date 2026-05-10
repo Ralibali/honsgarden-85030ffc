@@ -49,6 +49,14 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
+      // Apply postal code captured at registration, if any
+      try {
+        const pending = localStorage.getItem('pending_postal_code');
+        if (pending && /^\d{4,5}$/.test(pending)) {
+          await api.updateCoopSettings({ postal_code: pending } as any);
+          localStorage.removeItem('pending_postal_code');
+        }
+      } catch { /* non-blocking */ }
       navigate('/app', { replace: true });
     } catch (err: any) {
       toast({ title: 'Inloggning misslyckades', description: err.message || 'Kontrollera e-post och lösenord.', variant: 'destructive' });
