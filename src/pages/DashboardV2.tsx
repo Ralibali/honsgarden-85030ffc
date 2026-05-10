@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
 import DataCompletionNudges from '@/components/DataCompletionNudges';
+import InstallAppCard from '@/components/InstallAppCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,10 @@ export default function DashboardV2() {
 
   return (
     <div className="space-y-5 pb-8">
+      <div className="max-w-4xl mx-auto">
+        <InstallAppCard />
+      </div>
+
       <div className="max-w-2xl mx-auto">
         <ProductOnboardingChecklist />
       </div>

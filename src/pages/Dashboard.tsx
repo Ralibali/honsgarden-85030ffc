@@ -689,9 +689,7 @@ export default function Dashboard() {
 
       {showMoreSection && (
         <div className="space-y-5 animate-fade-in">
-          <div className="block md:hidden">
-            <InstallAppCard />
-          </div>
+          {/* InstallAppCard flyttad till toppen av DashboardV2 för bättre synlighet */}
           <AchievementNudge achievements={achievements} />
           {showImportCard && (
             <Card className="border-border/50 shadow-sm card-hover cursor-pointer active:scale-[0.98] transition-transform" onClick={() => navigate('/app/import')}>
