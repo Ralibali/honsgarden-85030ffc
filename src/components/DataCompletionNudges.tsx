@@ -54,20 +54,6 @@ export function DataCompletionNudges() {
     const activeHens = (hens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster');
     const eggCount = (eggs as any[]).length;
 
-    // Breed nudge: hens without breed after first egg log
-    const henMissingBreed = activeHens.find((h: any) => !h.breed);
-    if (eggCount >= 3 && henMissingBreed && !isDismissed('hen-breed')) {
-      return {
-        key: 'hen-breed',
-        icon: <Sparkles className="h-5 w-5 text-primary" />,
-        title: `Vad är ${henMissingBreed.name} för ras?`,
-        body: 'När du fyller i ras kan vi jämföra din värpning med andra av samma sort.',
-        cta: 'Lägg till ras',
-        to: `/app/hens`,
-        unlocks: 'Låser upp ras-benchmark',
-      };
-    }
-
     // Image nudge: hens without image after 10 egg logs
     const henMissingImage = activeHens.find((h: any) => !h.image_url);
     if (eggCount >= 10 && henMissingImage && !isDismissed('hen-image')) {
