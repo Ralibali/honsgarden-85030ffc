@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { deleteUserCompletely } from "../_shared/delete-user-data.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,9 +7,7 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -19,13 +18,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create client with user's token to verify identity
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: authHeader } } },
     );
-
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid session" }), {
@@ -34,63 +31,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userId = user.id;
-
-    // Use service role for privileged operations
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } }
-    );
-
-    // Rate limit: max 1 delete-account per 10 minutes per user
-    const { data: allowed } = await supabaseAdmin.rpc('check_rate_limit', {
-      _user_id: userId,
-      _function_name: 'delete-account',
-      _max_requests: 1,
-      _window_minutes: 10,
-    });
-
-    if (allowed === false) {
-      return new Response(JSON.stringify({ error: "Du har redan begärt kontoborttagning nyligen. Vänta några minuter." }), {
-        status: 429,
-        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "600" },
-      });
-    }
-
-    // Delete all user data from all tables (order matters for FK constraints)
-    const tables = [
-      "chore_completions",
-      "achievement_rewards",
-      "health_logs",
-      "egg_logs",
-      "feed_records",
-      "transactions",
-      "hatchings",
-      "daily_chores",
-      "feedback",
-      "referrals",
-      "reminder_settings",
-      "coop_settings",
-      "hens",
-      "flocks",
-      "user_roles",
-      "profiles",
-    ];
-
-    for (const table of tables) {
-      if (table === "referrals") {
-        await supabaseAdmin.from(table).delete().or(`referrer_user_id.eq.${userId},referred_user_id.eq.${userId}`);
-      } else {
-        await supabaseAdmin.from(table).delete().eq("user_id", userId);
-      }
-    }
-
-    // Delete the auth user
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (deleteError) {
-      console.error("Error deleting auth user:", deleteError);
-      return new Response(JSON.stringify({ error: "Failed to delete auth user" }), {
+    const result = await deleteUserCompletely(user.id);
+    if (!result.ok) {
+      return new Response(JSON.stringify({ error: result.error || "Delete failed" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -101,7 +44,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Delete account error:", err);
-    return new Response(JSON.stringify({ error: "Internal error" }), {
+    return new Response(JSON.stringify({ error: (err as Error).message || "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
