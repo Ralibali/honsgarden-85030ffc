@@ -1037,9 +1037,12 @@ export async function adminSubscriptions(): Promise<Profile[]> {
 }
 
 export async function adminDeleteUser(userId: string) {
-  const { error } = await supabase.from('profiles').delete().eq('user_id', userId);
+  const { data, error } = await supabase.functions.invoke('admin-delete-user', {
+    body: { user_id: userId },
+  });
   if (error) throw new Error(error.message);
-  return {};
+  if (data?.error) throw new Error(data.error);
+  return data ?? {};
 }
 
 export async function adminUpdateSubscription(userId: string, data: { is_premium: boolean; days?: string }) {
