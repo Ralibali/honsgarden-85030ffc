@@ -31,7 +31,47 @@ Deno.serve(async (req) => {
       });
     }
 
-    const result = await deleteUserCompletely(user.id);
+    // Verify caller is admin
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } },
+    );
+    const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
+      _user_id: user.id,
+      _role: "admin",
+    });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let body: { user_id?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const targetId = body?.user_id;
+    if (!targetId || typeof targetId !== "string") {
+      return new Response(JSON.stringify({ error: "user_id required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (targetId === user.id) {
+      return new Response(JSON.stringify({ error: "Använd 'Radera mitt konto' i Inställningar för att ta bort dig själv." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const result = await deleteUserCompletely(targetId);
     if (!result.ok) {
       return new Response(JSON.stringify({ error: result.error || "Delete failed" }), {
         status: 500,
@@ -43,7 +83,7 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("Delete account error:", err);
+    console.error("admin-delete-user error:", err);
     return new Response(JSON.stringify({ error: (err as Error).message || "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
