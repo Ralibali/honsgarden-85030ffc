@@ -47,12 +47,81 @@ const SPECIAL_TABLES: Array<{ table: string; filter: (uid: string) => string }> 
   { table: "farm_invitations", filter: (uid) => `invited_by.eq.${uid}` },
 ];
 
+const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
+
+async function sendGoodbyeEmail(
+  supabaseAdmin: SupabaseClient,
+  userId: string,
+): Promise<void> {
+  try {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const email = authUser?.user?.email;
+    if (!email) return;
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    const displayName = escapeHtml(profile?.display_name || email.split("@")[0]);
+
+    const html = `
+<div style="font-family: 'Inter', Arial, sans-serif; max-width: 540px; padding: 36px 28px; background: #ffffff;">
+  <img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin: 0 0 28px;" />
+  <h1 style="font-family: 'Young Serif', Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 20px;">
+    Ditt konto är raderat
+  </h1>
+  <p style="font-size: 15px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
+    Hej <strong>${displayName}</strong>,
+  </p>
+  <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
+    Vi bekräftar att ditt Hönsgården-konto och all tillhörande data nu är permanent borttaget från våra system.
+  </p>
+  <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
+    Detta inkluderar dina hönor, äggloggar, hälsonoteringar, transaktioner, inställningar och övriga uppgifter kopplade till din profil.
+  </p>
+  <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 24px;">
+    Tack för tiden du var med oss. Du är alltid välkommen tillbaka 🐔
+  </p>
+  <p style="font-size: 12px; color: #999; margin: 32px 0 0; line-height: 1.5;">
+    Har du frågor? Svara på detta mejl eller kontakta oss på info@auroramedia.se.
+  </p>
+</div>`;
+
+    await supabaseAdmin.rpc("enqueue_email", {
+      queue_name: "transactional_emails",
+      payload: {
+        run_id: crypto.randomUUID(),
+        to: email,
+        from: "Hönsgården <noreply@notify.honsgarden.se>",
+        sender_domain: "notify.honsgarden.se",
+        subject: "Ditt Hönsgården-konto är raderat",
+        html,
+        text: `Hej ${displayName}, vi bekräftar att ditt Hönsgården-konto och all tillhörande data är permanent borttaget. Tack för tiden du var med oss.`,
+        purpose: "transactional",
+        label: "account-deleted",
+        message_id: `account-deleted-${userId}-${Date.now()}`,
+        queued_at: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error("[delete-user] sendGoodbyeEmail failed:", err);
+  }
+}
+
 export async function deleteUserCompletely(userId: string): Promise<{ ok: boolean; error?: string }> {
   const supabaseAdmin: SupabaseClient = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     { auth: { persistSession: false } },
   );
+
+  // Skicka bekräftelsemejl INNAN vi raderar (vi behöver email-adressen)
+  await sendGoodbyeEmail(supabaseAdmin, userId);
 
   const deleteErrors: string[] = [];
 
