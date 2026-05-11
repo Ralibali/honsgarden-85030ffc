@@ -63,8 +63,12 @@ async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscrip
   }
 }
 
-async function buildProfile(supaUser: SupabaseUser): Promise<UserProfile> {
-  const { subscribed, subscriptionEnd, premiumType: syncedPremiumType, synced } = await syncSubscriptionStatus();
+async function buildProfile(supaUser: SupabaseUser): Promise<UserProfile | null> {
+  const { subscribed, subscriptionEnd, premiumType: syncedPremiumType, synced, userMissing } = await syncSubscriptionStatus();
+  if (userMissing) {
+    try { await supabase.auth.signOut(); } catch { /* ignore */ }
+    return null;
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
