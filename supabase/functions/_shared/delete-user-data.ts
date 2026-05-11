@@ -54,14 +54,26 @@ export async function deleteUserCompletely(userId: string): Promise<{ ok: boolea
     { auth: { persistSession: false } },
   );
 
+  const deleteErrors: string[] = [];
+
   for (const table of USER_ID_TABLES) {
     const { error } = await supabaseAdmin.from(table).delete().eq("user_id", userId);
-    if (error) console.warn(`[delete-user] ${table} user_id:`, error.message);
+    if (error) {
+      console.error(`[delete-user] ${table} user_id:`, error.message);
+      deleteErrors.push(`${table}: ${error.message}`);
+    }
   }
 
   for (const { table, filter } of SPECIAL_TABLES) {
     const { error } = await supabaseAdmin.from(table).delete().or(filter(userId));
-    if (error) console.warn(`[delete-user] ${table} or:`, error.message);
+    if (error) {
+      console.error(`[delete-user] ${table} or:`, error.message);
+      deleteErrors.push(`${table}: ${error.message}`);
+    }
+  }
+
+  if (deleteErrors.length > 0) {
+    return { ok: false, error: deleteErrors.slice(0, 3).join("; ") };
   }
 
   const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
