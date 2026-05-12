@@ -57,7 +57,6 @@ const productModules = [
   { icon: Bot, title: 'Agda AI', desc: 'Få råd, säljtexter, veckorapporter och nästa steg baserat på din egen hönsgård.', href: '/login?mode=register', badge: 'Plus' },
   { icon: MessageCircle, title: 'Community', desc: 'Skriv inlägg, dela frågor, tips och erfarenheter med andra hönsägare.', href: '/login?mode=register' },
   { icon: ClipboardCheck, title: 'Rapporter & export', desc: 'Kopiera rapporter, exportera CSV och samla underlag för uppföljning.', href: '/login?mode=register' },
-  { icon: ShieldCheck, title: 'Admin & moderering', desc: 'Hantera rapporterade communityinlägg och håll ordning på innehållet.', href: '/login?mode=register' },
 ];
 
 const agdaFeatures = [
