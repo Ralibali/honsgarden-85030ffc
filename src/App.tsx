@@ -116,6 +116,8 @@ const AppRoutes = () => (
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="/" element={<Index />} />
+        <Route path="/index" element={<Navigate to="/" replace />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="/app-for-honsagare" element={<SeoLandingPage pageKey="app-for-honsagare" />} />
         <Route path="/agglogg" element={<SeoLandingPage pageKey="agglogg" />} />
         <Route path="/honskalender" element={<SeoLandingPage pageKey="honskalender" />} />
