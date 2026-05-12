@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { useSeo } from '@/hooks/useSeo';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,22 +36,25 @@ const ActivityPulse = lazy(() => import('@/components/ActivityPulse'));
 
 import appMockup from '@/assets/app-mockup-hero.png';
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 14 } as const,
-  whileInView: { opacity: 1, y: 0 } as const,
-  viewport: { once: true, margin: '-80px' },
-  transition: { duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
-});
+const makeFadeUp = (prefersReduced: boolean) => (delay = 0) => prefersReduced
+  ? {}
+  : ({
+    initial: { opacity: 0, y: 14 } as const,
+    whileInView: { opacity: 1, y: 0 } as const,
+    viewport: { once: true, margin: '-80px' },
+    transition: { duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
+  });
 
-const staggerContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
+const makeStaggerContainer = (prefersReduced: boolean) => prefersReduced
+  ? {}
+  : { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 
-const staggerItem = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
-};
+const makeStaggerItem = (prefersReduced: boolean) => prefersReduced
+  ? {}
+  : {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } },
+  };
 
 const features = [
   { icon: Egg, title: 'Äggloggning', desc: 'Logga dagens ägg på några sekunder och se hur värpningen förändras över tid.', href: '/agglogg' },
@@ -105,6 +109,11 @@ const freeFeatures = ['Äggloggning', 'Upp till 10 hönor', 'Hälsologg', 'Grund
 const plusFeatures = ['Allt i Gratis', 'Obegränsat antal hönor', 'Agda AI', 'Agda-säljgenerator', 'Bokningsförfrågningar', 'Foder och ekonomi', 'Smarta påminnelser', 'Kläckningsstöd'];
 
 export default function Index() {
+  const prefersReduced = useReducedMotion();
+  const fadeUp = makeFadeUp(prefersReduced);
+  const staggerContainer = makeStaggerContainer(prefersReduced);
+  const staggerItem = makeStaggerItem(prefersReduced);
+
   useSeo({
     title: 'Hönsgården – ägglogg, hönskalender och Agda-säljgenerator',
     description: 'Hönsgården är en svensk app för hönsägare. Logga ägg, följ flocken, räkna foderkostnad, skapa påminnelser och sälj ägg med Agda-säljgeneratorn.',
@@ -227,7 +236,7 @@ export default function Index() {
             {problems.map((problem) => (
               <Card key={problem} className="border-border shadow-sm bg-card">
                 <CardContent className="p-5 flex gap-3 items-start">
-                  <span className="text-xl">🤔</span>
+                  <span className="text-xl" aria-hidden="true">🤔</span>
                   <p className="text-sm sm:text-base text-foreground leading-relaxed">{problem}</p>
                 </CardContent>
               </Card>
@@ -305,12 +314,12 @@ export default function Index() {
             className="grid grid-cols-1 sm:grid-cols-3 gap-5"
           >
             {[
-              { step: '1', emoji: '🐔', title: 'Lägg till hönor', desc: 'Börja med namn. Ras, bild och anteckningar kan du fylla i senare.' },
-              { step: '2', emoji: '🥚', title: 'Logga eller sälj ägg', desc: 'Logga dagens ägg eller skapa en säljsida när du har överskott.' },
-              { step: '3', emoji: '📊', title: 'Se mönster och följ upp', desc: 'Följ statistik, kostnader, bokningar, rutiner och vad som händer i flocken.' },
+              { step: '1', emoji: '🐔', title: 'Lägg till hönor', desc: 'Börja med namn. Ras, bild och anteckningar kan du fylla i senare.', emojiLabel: 'Höna' },
+              { step: '2', emoji: '🥚', title: 'Logga eller sälj ägg', desc: 'Logga dagens ägg eller skapa en säljsida när du har överskott.', emojiLabel: 'Ägg' },
+              { step: '3', emoji: '📊', title: 'Se mönster och följ upp', desc: 'Följ statistik, kostnader, bokningar, rutiner och vad som händer i flocken.', emojiLabel: 'Graf' },
             ].map((s) => (
               <motion.div key={s.step} variants={staggerItem} className="text-center p-6 rounded-2xl bg-background border border-border shadow-sm">
-                <span className="text-3xl mb-3 block">{s.emoji}</span>
+                <span className="text-3xl mb-3 block" role="img" aria-label={s.emojiLabel}>{s.emoji}</span>
                 <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-bold mb-2">{s.step}</span>
                 <h3 className="font-serif text-base text-foreground mb-1">{s.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p>
@@ -452,7 +461,7 @@ export default function Index() {
       <section className="relative z-10 pb-10 sm:pb-16">
         <div className="container max-w-3xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center">
-            <div className="text-5xl mb-4">🐔</div>
+            <div className="text-5xl mb-4" role="img" aria-label="Höna">🐔</div>
             <h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2>
             <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">
               När du loggar ägg, foder, hälsa, försäljning och rutiner får du till slut något mycket bättre än magkänsla: du får riktig erfarenhet sparad över tid.

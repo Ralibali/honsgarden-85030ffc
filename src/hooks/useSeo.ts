@@ -94,6 +94,9 @@ export function useSeo({
       const imgUrl = ogImage.startsWith('http') ? ogImage : `${BASE}${ogImage}`;
       upsertMeta('property', 'og:image', imgUrl);
       upsertMeta('property', 'og:image:alt', ogImageAlt || title);
+      upsertMeta('property', 'og:image:type', 'image/jpeg');
+      upsertMeta('property', 'og:image:width', '1200');
+      upsertMeta('property', 'og:image:height', '630');
       upsertMeta('name', 'twitter:image', imgUrl);
       upsertMeta('name', 'twitter:image:alt', ogImageAlt || title);
     }

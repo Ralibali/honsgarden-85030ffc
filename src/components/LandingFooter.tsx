@@ -57,7 +57,7 @@ const columns: { title: string; links: FooterLink[] }[] = [
 
 export default function LandingFooter() {
   return (
-    <footer className="relative z-10 bg-[#1c2e1a] text-white/80">
+    <footer className="relative z-10 bg-[#1c2e1a] text-[#d4e8ce]">
       <div className="container max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
           <div>
@@ -65,21 +65,21 @@ export default function LandingFooter() {
               <Bird className="h-5 w-5 text-[#7cb36b]" aria-hidden="true" />
               <span className="font-serif text-lg text-white">Hönsgården</span>
             </div>
-            <p className="text-sm text-white/60 leading-relaxed mb-4">
+            <p className="text-sm text-[#a8c9a0] leading-relaxed mb-4">
               Svensk app för hönsägare som samlar ägglogg, flock, statistik, foderkostnad, kalender, väder, community, AI-stöd och Agdas äggbod för lokal äggförsäljning.
             </p>
-            <p className="text-xs text-white/60">© {new Date().getFullYear()} Hönsgården</p>
+            <p className="text-xs text-[#a8c9a0]">© {new Date().getFullYear()} Hönsgården</p>
           </div>
 
           {columns.map((col) => (
             <div key={col.title}>
-              <h3 className="font-serif text-sm text-white mb-3">{col.title}</h3>
-              <nav className="space-y-2">
+              <h3 className="font-serif text-sm text-[#e8f5e4] mb-3">{col.title}</h3>
+              <nav className="space-y-2" aria-label={col.title}>
                 {col.links.map((link) => (
                   <a
                     key={link.label}
                     href={link.href}
-                    className="block text-sm text-white/60 hover:text-white transition-colors"
+                    className="block text-sm text-[#a8c9a0] hover:text-white transition-colors"
                     {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   >
                     {link.label}

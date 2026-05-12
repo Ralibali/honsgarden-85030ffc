@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,9 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  ArrowRight, Check, MapPin, ShoppingBag, Megaphone, CalendarClock, CreditCard, Egg, HelpCircle,
-} from 'lucide-react';
+import { ArrowRight, Check, MapPin, ShoppingBag, Megaphone, CalendarClock, CreditCard, Egg, CircleHelp as HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ORTER, getOrt } from '@/data/saljaAggOrter';
 import { buildOrtContent, buildOrtFaq, buildOrtMeta, buildOrtImages, buildOrtHenImage } from '@/data/saljaAggOrtContent';
@@ -28,12 +27,14 @@ const ASSET_BY_KEY: Record<'coop' | 'farm' | 'eggs' | 'hen', string> = {
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-80px' },
-  transition: { duration: 0.5, delay, ease: 'easeOut' as const },
-});
+const makeFadeUp = (prefersReduced: boolean) => (delay = 0): object => prefersReduced
+  ? {}
+  : ({
+    initial: { opacity: 0, y: 18 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, margin: '-80px' },
+    transition: { duration: 0.5, delay, ease: 'easeOut' as const },
+  });
 
 const steps = [
   { icon: ShoppingBag, title: 'Skapa din säljsida', body: 'Lägg upp pris, antal kartor och hämtadress.' },
@@ -45,6 +46,8 @@ const steps = [
 export default function SaljaAggOrt() {
   const { ort: ortSlug } = useParams<{ ort: string }>();
   const ort = ortSlug ? getOrt(ortSlug) : undefined;
+  const prefersReduced = useReducedMotion();
+  const fadeUp = makeFadeUp(prefersReduced);
 
   const meta = ort ? buildOrtMeta(ort) : null;
   const title = meta?.title ?? 'Sälja ägg lokalt i Sverige | Hönsgården';
@@ -78,6 +81,28 @@ export default function SaljaAggOrt() {
           name: f.question,
           acceptedAnswer: { '@type': 'Answer', text: f.answer },
         })),
+      },
+      {
+        '@type': 'LocalBusiness',
+        name: 'Hönsgården',
+        url: 'https://honsgarden.se',
+        description: `Plattform för lokal äggförsäljning i ${ort.name}`,
+        areaServed: {
+          '@type': 'City',
+          name: ort.name,
+          address: { '@type': 'PostalAddress', addressRegion: ort.lan, addressCountry: 'SE' },
+        },
+        priceRange: 'Gratis',
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: `Äggförsäljning i ${ort.name}`,
+          itemListElement: [{
+            '@type': 'Offer',
+            itemOffered: { '@type': 'Service', name: `Säljsida för ägg i ${ort.name}` },
+            price: '0',
+            priceCurrency: 'SEK',
+          }],
+        },
       },
       {
         '@type': 'SiteNavigationElement',
@@ -139,10 +164,10 @@ export default function SaljaAggOrt() {
         <nav aria-label="Brödsmulor" className="container max-w-6xl mx-auto px-5 sm:px-6 pt-6 text-xs text-muted-foreground">
           <ol className="flex items-center gap-1.5 flex-wrap">
             <li><Link to="/" className="hover:text-foreground">Hönsgården</Link></li>
-            <li>/</li>
+            <li aria-hidden="true">/</li>
             <li><Link to="/salja-agg" className="hover:text-foreground">Sälja ägg</Link></li>
-            <li>/</li>
-            <li className="text-foreground">{ort.name}</li>
+            <li aria-hidden="true">/</li>
+            <li className="text-foreground" aria-current="page">{ort.name}</li>
           </ol>
         </nav>
 
