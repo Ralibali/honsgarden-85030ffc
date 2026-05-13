@@ -56,6 +56,9 @@ const Weather = React.lazy(() => import("./pages/Weather"));
 const WeatherHistoryDetail = React.lazy(() => import("./pages/WeatherHistoryDetail"));
 const SaljaAgg = React.lazy(() => import("./pages/SaljaAgg"));
 const SaljaAggOrt = React.lazy(() => import("./pages/SaljaAggOrt"));
+const Health = React.lazy(() => import("./pages/Health"));
+const Breeding = React.lazy(() => import("./pages/Breeding"));
+const Inventory = React.lazy(() => import("./pages/Inventory"));
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
