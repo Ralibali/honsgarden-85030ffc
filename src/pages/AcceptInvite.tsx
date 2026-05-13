@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle2, XCircle, Feather, LogIn } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Feather, LogIn, Pencil, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+type InviteRole = 'editor' | 'viewer';
+
+const ROLE_LABEL: Record<InviteRole, string> = {
+  editor: 'Redigerare',
+  viewer: 'Tittare',
+};
+
 export default function AcceptInvite() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const roleParam = (searchParams.get('role') || 'editor').toLowerCase();
+  const role: InviteRole = roleParam === 'viewer' ? 'viewer' : 'editor';
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string } | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string; inviter_name?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
