@@ -111,6 +111,8 @@ export default function HenProfile() {
   const [healthNoteOpen, setHealthNoteOpen] = useState(false);
   const [healthNoteText, setHealthNoteText] = useState('');
   const [healthNoteType, setHealthNoteType] = useState<string>('observation');
+  const [parentsOpen, setParentsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
