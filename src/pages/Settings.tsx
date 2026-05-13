@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
+import { MyDataSection } from '@/components/settings/MyDataSection';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -47,22 +48,6 @@ export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('delete-account');
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-    },
-    onSuccess: async () => {
-      toast({ title: 'Konto raderat 👋', description: 'All din data har tagits bort.' });
-      await logout();
-      navigate('/login');
-    },
-    onError: (err: any) => toast({ title: 'Fel vid radering', description: err.message, variant: 'destructive' }),
-  });
 
   useEffect(() => {
     if (coopSettings) {
@@ -193,43 +178,6 @@ export default function SettingsPage() {
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
 
-  const handleExportData = async () => {
-    setExportLoading(true);
-    try {
-      const [eggs, hens, transactions] = await Promise.all([
-        api.getEggs(),
-        api.getHens(),
-        api.getTransactions(),
-      ]);
-
-      // Build CSV for eggs
-      let csv = 'Typ,Datum,Antal,Höna,Anteckningar\n';
-      (eggs as any[]).forEach((e: any) => {
-        csv += `Ägg,${e.date},${e.count},"${e.hen_id || ''}","${(e.notes || '').replace(/"/g, '""')}"\n`;
-      });
-      csv += '\nTyp,Namn,Ras,Färg,Födelsedatum,Aktiv,Typ\n';
-      (hens as any[]).forEach((h: any) => {
-        csv += `Höna,"${h.name}","${h.breed || ''}","${h.color || ''}",${h.birth_date || ''},${h.is_active},${h.hen_type}\n`;
-      });
-      csv += '\nTyp,Datum,Belopp,Kategori,Beskrivning\n';
-      (transactions as any[]).forEach((t: any) => {
-        csv += `Transaktion,${t.date},${t.amount},"${t.category || ''}","${(t.description || '').replace(/"/g, '""')}"\n`;
-      });
-
-      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `honsgarden-export-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast({ title: 'Data exporterad! 📥' });
-    } catch (err: any) {
-      toast({ title: 'Fel vid export', description: err.message, variant: 'destructive' });
-    } finally {
-      setExportLoading(false);
-    }
-  };
 
   const replayOnboarding = async () => {
     if (!user?.id) return;
@@ -449,24 +397,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Data export */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-serif text-lg flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
-            Exportera data
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Ladda ner all din data (ägg, hönor, transaktioner) som en CSV-fil för bokföring eller backup.
-          </p>
-          <Button variant="outline" className="rounded-xl gap-2" onClick={handleExportData} disabled={exportLoading}>
-            {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Exportera som CSV
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Min data: CSV-export, komplett backup & radera konto */}
+      <MyDataSection />
 
       {/* Import data */}
       <Card className="border-border/50 shadow-sm card-hover cursor-pointer" onClick={() => navigate('/app/import')}>
@@ -599,42 +531,6 @@ export default function SettingsPage() {
             <LogOut className="h-4 w-4" />
             Logga ut
           </Button>
-
-          <div className="border-t border-border/50 pt-4">
-            <p className="text-xs text-muted-foreground mb-3">
-              Genom att radera ditt konto tas all din data bort permanent. Detta kan inte ångras.
-            </p>
-            {!showDeleteConfirm ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl text-xs"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Radera mitt konto
-              </Button>
-            ) : (
-              <div className="space-y-2 p-3 bg-destructive/5 rounded-xl border border-destructive/20">
-                <p className="text-sm font-medium text-destructive">Är du säker? All data raderas permanent.</p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-2 rounded-xl"
-                    disabled={deleteAccountMutation.isPending}
-                    onClick={() => deleteAccountMutation.mutate()}
-                  >
-                    {deleteAccountMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                    Ja, radera allt
-                  </Button>
-                  <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setShowDeleteConfirm(false)}>
-                    Avbryt
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
 

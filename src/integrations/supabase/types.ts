@@ -218,6 +218,48 @@ export type Database = {
           },
         ]
       }
+      backup_exports: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          expires_at: string | null
+          file_path: string | null
+          file_size_bytes: number | null
+          generated_at: string | null
+          id: string
+          includes_photos: boolean
+          includes_reports: boolean
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          expires_at?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          generated_at?: string | null
+          id?: string
+          includes_photos?: boolean
+          includes_reports?: boolean
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          expires_at?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          generated_at?: string | null
+          id?: string
+          includes_photos?: boolean
+          includes_reports?: boolean
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -3110,6 +3152,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
