@@ -450,24 +450,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Data export */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-serif text-lg flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
-            Exportera data
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Ladda ner all din data (ägg, hönor, transaktioner) som en CSV-fil för bokföring eller backup.
-          </p>
-          <Button variant="outline" className="rounded-xl gap-2" onClick={handleExportData} disabled={exportLoading}>
-            {exportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            Exportera som CSV
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Min data: CSV-export, komplett backup & radera konto */}
+      <MyDataSection />
 
       {/* Import data */}
       <Card className="border-border/50 shadow-sm card-hover cursor-pointer" onClick={() => navigate('/app/import')}>
