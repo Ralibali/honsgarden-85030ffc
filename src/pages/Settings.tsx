@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
+import { MyDataSection } from '@/components/settings/MyDataSection';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
