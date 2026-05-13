@@ -56,8 +56,6 @@ Deno.serve(async (req) => {
     .createSignedUrl(report.file_path, 60 * 60); // 1h
   if (error || !signed) return json({ error: "Kunde inte skapa nedladdningslänk" }, 500);
 
-  // Best-effort: increment download_count
-  await admin.rpc("noop").catch(() => {}); // ignore
   await admin
     .from("generated_reports")
     .update({ download_count: ((report as any).download_count ?? 0) + 1 })
