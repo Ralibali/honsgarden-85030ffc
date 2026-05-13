@@ -28,6 +28,8 @@ const dailyNav = [
 
 const flockNav = [
   { title: 'Hönor', url: '/app/hens', icon: Bird },
+  { title: 'Hälsologg', url: '/app/halsa', icon: Stethoscope },
+  { title: 'Avel & kläckning', url: '/app/avel', icon: Heart, premium: true },
   { title: 'Kläckning', url: '/app/hatching', icon: Baby, premium: true },
   { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
   { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },
@@ -36,6 +38,7 @@ const flockNav = [
 
 const financeNav = [
   { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
+  { title: 'Lager', url: '/app/lager', icon: Boxes, premium: true },
   { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
   { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
   { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
