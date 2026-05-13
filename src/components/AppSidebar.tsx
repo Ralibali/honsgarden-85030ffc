@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes } from 'lucide-react';
+import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes, FileText } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
