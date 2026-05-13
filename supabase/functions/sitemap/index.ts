@@ -52,6 +52,18 @@ Deno.serve(async (req) => {
     .limit(1)
     .maybeSingle();
 
+  // Active public egg-sale listings (drives /s/:slug)
+  const { data: eggSaleListings } = await supabase
+    .from("public_egg_sale_listings")
+    .select("slug, updated_at")
+    .eq("is_active", true);
+
+  // Static list of localities for /salja-agg/:ort (mirrors src/data/saljaAggOrter.ts)
+  const SALJA_AGG_ORTER = [
+    "goteborg","malmo","lund","helsingborg","angelholm","bastad","kristianstad","ystad","simrishamn","trelleborg","eslov","hassleholm","landskrona","lomma","staffanstorp","laholm","halmstad","varberg","falkenberg","kungsbacka","boras","molndal","kungalv","partille","lerum","alingsas","trollhattan","vanersborg","uddevalla","stenungsund","skovde","mariestad","lidkoping","jonkoping","huskvarna","nassjo","varnamo","vetlanda","tranas","vaxjo","ljungby","alvesta","kalmar","oskarshamn","vastervik","nybro","karlskrona","ronneby","karlshamn","solvesborg","linkoping","norrkoping","motala","mjolby","finspang","soderkoping","valdemarsvik","stockholm","sodertalje","nacka","huddinge","tyreso","taby","sollentuna","upplands-vasby","jarfalla","sigtuna","nykoping","trosa","oxelosund","strangnas","eskilstuna","vasteras","koping","sala","arboga","fagersta","uppsala","enkoping","tierp","osthammar","orebro","karlskoga","kumla","lindesberg","hallsberg","karlstad","kristinehamn","arvika","saffle","filipstad","falun","borlange","leksand","mora","rattvik","gavle","sandviken","hudiksvall","soderhamn","ovanaker","sundsvall","ornskoldsvik","timra","ange","ostersund","krokom","stromsund","strangnas-region","umea","skelleftea","lulea","piteå","boden","kiruna","gallivare","visby"
+  ];
+
+
   // Collect unique tags
   const allTags = new Set<string>();
   if (posts) {
@@ -68,6 +80,14 @@ Deno.serve(async (req) => {
     { loc: "/blogg", priority: "0.9", changefreq: "daily" },
     { loc: "/om-oss", priority: "0.7", changefreq: "monthly" },
     { loc: "/verktyg/aggkalkylator", priority: "0.8", changefreq: "monthly" },
+    { loc: "/app-for-honsagare", priority: "0.8", changefreq: "monthly" },
+    { loc: "/agglogg", priority: "0.8", changefreq: "monthly" },
+    { loc: "/honskalender", priority: "0.7", changefreq: "monthly" },
+    { loc: "/foderkostnad-hons", priority: "0.7", changefreq: "monthly" },
+    { loc: "/klackningskalender", priority: "0.7", changefreq: "monthly" },
+    { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
+    { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
+    { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
   ];
 
   const now = new Date().toISOString().split("T")[0];
