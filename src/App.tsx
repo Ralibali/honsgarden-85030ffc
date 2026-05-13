@@ -59,6 +59,7 @@ const SaljaAggOrt = React.lazy(() => import("./pages/SaljaAggOrt"));
 const Health = React.lazy(() => import("./pages/Health"));
 const Breeding = React.lazy(() => import("./pages/Breeding"));
 const Inventory = React.lazy(() => import("./pages/Inventory"));
+const Reports = React.lazy(() => import("./pages/Reports"));
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
