@@ -42,3 +42,20 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+
+  rls:
+    name: RLS manual tests (test DB)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.run_rls == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run RLS SQL script
+        env:
+          TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
+        run: |
+          if [ -z "$TEST_DB_URL" ]; then
+            echo "TEST_DB_URL secret saknas — hoppar över."; exit 0
+          fi
+          psql "$TEST_DB_URL" -v ON_ERROR_STOP=1 -f tests/rls/manual-rls-test.sql
