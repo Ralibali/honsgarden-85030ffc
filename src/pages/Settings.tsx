@@ -584,42 +584,6 @@ export default function SettingsPage() {
             <LogOut className="h-4 w-4" />
             Logga ut
           </Button>
-
-          <div className="border-t border-border/50 pt-4">
-            <p className="text-xs text-muted-foreground mb-3">
-              Genom att radera ditt konto tas all din data bort permanent. Detta kan inte ångras.
-            </p>
-            {!showDeleteConfirm ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl text-xs"
-                onClick={() => setShowDeleteConfirm(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Radera mitt konto
-              </Button>
-            ) : (
-              <div className="space-y-2 p-3 bg-destructive/5 rounded-xl border border-destructive/20">
-                <p className="text-sm font-medium text-destructive">Är du säker? All data raderas permanent.</p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-2 rounded-xl"
-                    disabled={deleteAccountMutation.isPending}
-                    onClick={() => deleteAccountMutation.mutate()}
-                  >
-                    {deleteAccountMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                    Ja, radera allt
-                  </Button>
-                  <Button variant="outline" size="sm" className="rounded-xl" onClick={() => setShowDeleteConfirm(false)}>
-                    Avbryt
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
         </CardContent>
       </Card>
 
