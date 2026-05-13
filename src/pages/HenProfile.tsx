@@ -22,6 +22,12 @@ import { motion } from 'framer-motion';
 import HenAvatar from '@/components/HenAvatar';
 import EmptyState from '@/components/EmptyState';
 import AIHealthNoteHelper from '@/components/AIHealthNoteHelper';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { PremiumGate } from '@/components/PremiumGate';
+import HenPedigree from '@/components/hen/HenPedigree';
+import HenPhotoTimeline from '@/components/hen/HenPhotoTimeline';
+import SetParentsDialog from '@/components/hen/SetParentsDialog';
+import { GitBranch, Camera, Users } from 'lucide-react';
 
 function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
   const [count, setCount] = useState('1');
