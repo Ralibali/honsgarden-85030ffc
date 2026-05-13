@@ -458,7 +458,7 @@ function ReportsInner() {
         </div>
       ) : reports.length === 0 ? (
         <EmptyState
-          icon={<FileText className="h-10 w-10" />}
+          icon={FileText}
           title="Inga rapporter ännu"
           description="Skapa din första rapport för att få en sammanställning av månaden, kvartalet eller året."
         />
