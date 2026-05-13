@@ -178,43 +178,6 @@ export default function SettingsPage() {
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
 
-  const handleExportData = async () => {
-    setExportLoading(true);
-    try {
-      const [eggs, hens, transactions] = await Promise.all([
-        api.getEggs(),
-        api.getHens(),
-        api.getTransactions(),
-      ]);
-
-      // Build CSV for eggs
-      let csv = 'Typ,Datum,Antal,Höna,Anteckningar\n';
-      (eggs as any[]).forEach((e: any) => {
-        csv += `Ägg,${e.date},${e.count},"${e.hen_id || ''}","${(e.notes || '').replace(/"/g, '""')}"\n`;
-      });
-      csv += '\nTyp,Namn,Ras,Färg,Födelsedatum,Aktiv,Typ\n';
-      (hens as any[]).forEach((h: any) => {
-        csv += `Höna,"${h.name}","${h.breed || ''}","${h.color || ''}",${h.birth_date || ''},${h.is_active},${h.hen_type}\n`;
-      });
-      csv += '\nTyp,Datum,Belopp,Kategori,Beskrivning\n';
-      (transactions as any[]).forEach((t: any) => {
-        csv += `Transaktion,${t.date},${t.amount},"${t.category || ''}","${(t.description || '').replace(/"/g, '""')}"\n`;
-      });
-
-      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `honsgarden-export-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast({ title: 'Data exporterad! 📥' });
-    } catch (err: any) {
-      toast({ title: 'Fel vid export', description: err.message, variant: 'destructive' });
-    } finally {
-      setExportLoading(false);
-    }
-  };
 
   const replayOnboarding = async () => {
     if (!user?.id) return;
