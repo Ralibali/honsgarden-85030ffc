@@ -175,6 +175,7 @@ const AppRoutes = () => (
           <Route path="halsa" element={<Health />} />
           <Route path="avel" element={<Breeding />} />
           <Route path="lager" element={<Inventory />} />
+          <Route path="rapporter" element={<Reports />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
