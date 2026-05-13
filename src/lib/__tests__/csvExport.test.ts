@@ -65,7 +65,7 @@ describe("toSwedishCsv (rapporter)", () => {
 
   it("null blir tomt fält", () => {
     const csv = toSwedishCsv([{ a: null, b: 1 }], { a: "A", b: "B" });
-    const dataLine = csv.replace(CSV_BOM, "").split("\n")[1];
+    const dataLine = csv.replace(CSV_BOM, "").split(/\r?\n/)[1];
     expect(dataLine).toBe(";1");
   });
 
