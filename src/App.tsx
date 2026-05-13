@@ -59,6 +59,7 @@ const SaljaAggOrt = React.lazy(() => import("./pages/SaljaAggOrt"));
 const Health = React.lazy(() => import("./pages/Health"));
 const Breeding = React.lazy(() => import("./pages/Breeding"));
 const Inventory = React.lazy(() => import("./pages/Inventory"));
+const Reports = React.lazy(() => import("./pages/Reports"));
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
@@ -174,6 +175,7 @@ const AppRoutes = () => (
           <Route path="halsa" element={<Health />} />
           <Route path="avel" element={<Breeding />} />
           <Route path="lager" element={<Inventory />} />
+          <Route path="rapporter" element={<Reports />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

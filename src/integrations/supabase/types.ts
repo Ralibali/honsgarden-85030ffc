@@ -1265,6 +1265,65 @@ export type Database = {
         }
         Relationships: []
       }
+      generated_reports: {
+        Row: {
+          created_at: string
+          download_count: number
+          error_message: string | null
+          farm_id: string
+          file_path: string | null
+          file_size_bytes: number | null
+          generated_at: string | null
+          id: string
+          period_end: string
+          period_start: string
+          report_type: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number
+          error_message?: string | null
+          farm_id: string
+          file_path?: string | null
+          file_size_bytes?: number | null
+          generated_at?: string | null
+          id?: string
+          period_end: string
+          period_start: string
+          report_type: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number
+          error_message?: string | null
+          farm_id?: string
+          file_path?: string | null
+          file_size_bytes?: number | null
+          generated_at?: string | null
+          id?: string
+          period_end?: string
+          period_start?: string
+          report_type?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_reports_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "coop_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hatch_sessions: {
         Row: {
           actual_hatch_date: string | null
@@ -3051,6 +3110,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      count_user_reports_today: { Args: { _uid: string }; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

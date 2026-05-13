@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes } from 'lucide-react';
+import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes, FileText } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,6 +42,7 @@ const financeNav = [
   { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
   { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
   { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
+  { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
 ];
 
 const moreNav = [
