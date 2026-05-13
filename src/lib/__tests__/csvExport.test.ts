@@ -47,7 +47,7 @@ describe("toSwedishCsv (rapporter)", () => {
       [{ name: "Agda", breed: "Skånsk", birth_date: "2024-03-01" }],
       { name: "Namn", breed: "Ras", birth_date: "Födelsedatum" }
     );
-    const headerLine = csv.replace(CSV_BOM, "").split("\n")[0];
+    const headerLine = csv.replace(CSV_BOM, "").split(/\r?\n/)[0];
     expect(headerLine).toBe("Namn;Ras;Födelsedatum");
   });
 
