@@ -136,6 +136,37 @@ Deno.serve(async (req) => {
 `;
   }
 
+  // Locality pages /salja-agg/:ort
+  for (const ort of SALJA_AGG_ORTER) {
+    xml += `  <url>
+    <loc>${BASE_URL}/salja-agg/${ort}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/salja-agg/${ort}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/salja-agg/${ort}" />
+  </url>
+`;
+  }
+
+  // Active public egg-sale listings /s/:slug
+  if (eggSaleListings) {
+    for (const listing of eggSaleListings) {
+      if (!listing.slug) continue;
+      const lastmod = (listing.updated_at || now).split("T")[0];
+      xml += `  <url>
+    <loc>${BASE_URL}/s/${listing.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/s/${listing.slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/s/${listing.slug}" />
+  </url>
+`;
+    }
+  }
+
+
   // Blog posts (both /blogg/ canonical and /guider/ alternate)
   if (posts) {
     for (const post of posts) {
