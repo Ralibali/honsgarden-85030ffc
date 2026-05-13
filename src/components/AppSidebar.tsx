@@ -42,6 +42,7 @@ const financeNav = [
   { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
   { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
   { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
+  { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
 ];
 
 const moreNav = [
