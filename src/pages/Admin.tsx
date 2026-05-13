@@ -18,6 +18,7 @@ import UserInsightsDashboard from '@/components/admin/UserInsightsDashboard';
 import UserDetailModal from '@/components/admin/UserDetailModal';
 import RevenueDashboard from '@/components/admin/RevenueDashboard';
 import SeoAdmin from '@/components/admin/SeoAdmin';
+import SearchConsoleReports from '@/components/admin/SearchConsoleReports';
 import { MarketingOptInPanel } from '@/components/admin/MarketingOptInPanel';
 import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import PwaDashboard from '@/components/admin/PwaDashboard';
