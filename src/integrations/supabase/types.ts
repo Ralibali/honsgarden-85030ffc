@@ -3067,6 +3067,22 @@ export type Database = {
         }[]
       }
       get_farm_user_ids: { Args: { _uid: string }; Returns: string[] }
+      get_hen_ancestors: {
+        Args: { _generations?: number; _hen_id: string }
+        Returns: {
+          birth_date: string
+          breed: string
+          color: string
+          depth: number
+          father_id: string
+          hen_type: string
+          id: string
+          image_url: string
+          mother_id: string
+          name: string
+          relation: string
+        }[]
+      }
       get_public_egg_sale_reserved_packs: {
         Args: { p_listing_id: string }
         Returns: number
