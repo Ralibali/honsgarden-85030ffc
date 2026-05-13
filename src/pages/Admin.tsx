@@ -513,6 +513,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="seo" className="space-y-3">
+          <SearchConsoleReports />
           <SeoAdmin />
         </TabsContent>
 
