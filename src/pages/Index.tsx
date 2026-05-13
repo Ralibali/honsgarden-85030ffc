@@ -34,7 +34,7 @@ const StickyMobileCTA = lazy(() => import('@/components/StickyMobileCTA'));
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 const ActivityPulse = lazy(() => import('@/components/ActivityPulse'));
 
-import appMockup from '@/assets/app-mockup-hero.png';
+import appMockup from '@/assets/app-mockup-hero.webp';
 
 const makeFadeUp = (prefersReduced: boolean) => (delay = 0) => prefersReduced
   ? {}
