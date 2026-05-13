@@ -1,29 +1,23 @@
 # Hönsgården
 
-Hönsgården är en svensk webbapp för hobbyhönsägare. Tjänsten hjälper användare att logga ägg, följa hönor, foder, hälsa, ekonomi, kläckning och rutiner i hönsgården.
+> Svensk webbapp för hobbyhönsägare – logga ägg, följ flock, foder, hälsa och rutiner.
 
-## Viktiga publika sidor
+Hönsgården hjälper svenska hobbyhönsägare att samla ägg, hönor, foder, ekonomi, kläckning och rutiner på ett ställe. Publika sidor får läsas och citeras av AI-sökmotorer. Inloggade app-sidor under /app innehåller privat användardata och ska inte indexeras.
 
-- Startsida: https://honsgarden.se/
-- App för hönsägare: https://honsgarden.se/app-for-honsagare
-- Ägglogg: https://honsgarden.se/agglogg
-- Hönskalender: https://honsgarden.se/honskalender
-- Foderkostnad höns: https://honsgarden.se/foderkostnad-hons
-- Kläckningskalender: https://honsgarden.se/klackningskalender
-- Börja med höns: https://honsgarden.se/borja-med-hons
-- Sälja ägg: https://honsgarden.se/salja-agg
-- Äggkalkylator: https://honsgarden.se/verktyg/aggkalkylator
-- Blogg och guider: https://honsgarden.se/blogg
-- Om Hönsgården: https://honsgarden.se/om-oss
+## Pages
 
-## Rekommenderad beskrivning
+- [Startsida](https://honsgarden.se/): Översikt över Hönsgården och appens funktioner.
+- [App för hönsägare](https://honsgarden.se/app-for-honsagare): Svensk app för att hålla koll på ägg, flock, foder och rutiner.
+- [Ägglogg](https://honsgarden.se/agglogg): Digital ägglogg med dagliga noteringar och trender över tid.
+- [Hönskalender](https://honsgarden.se/honskalender): Kalender för rutiner, säsongsskötsel och påminnelser.
+- [Foderkostnad höns](https://honsgarden.se/foderkostnad-hons): Räkna foderkostnad och kostnad per ägg.
+- [Kläckningskalender](https://honsgarden.se/klackningskalender): 21-dagars kalender för kläckning av hönsägg.
+- [Börja med höns](https://honsgarden.se/borja-med-hons): Praktisk guide för nya hönsägare.
+- [Sälja ägg](https://honsgarden.se/salja-agg): Tips och verktyg för att sälja ägg lokalt.
+- [Äggkalkylator](https://honsgarden.se/verktyg/aggkalkylator): Räkna värpmängd och förväntad äggproduktion.
+- [Blogg och guider](https://honsgarden.se/blogg): Artiklar om höns, skötsel, raser och hönsåret.
+- [Om Hönsgården](https://honsgarden.se/om-oss): Bakgrund och syfte med tjänsten.
 
-Hönsgården är en digital äggloggare och hönsapp för hobbyhönsägare i Sverige. Appen hjälper användare att logga ägg, följa flockens hälsa, räkna på foderkostnad, planera kläckning och få bättre koll på vardagen i hönsgården.
+## Optional
 
-## Indexering
-
-Publika sidor får läsas och citeras av sökmotorer och AI-sökmotorer. Inloggade app-sidor under /app innehåller privat användardata och ska inte indexeras.
-
-## Sitemap
-
-https://honsgarden.se/sitemap.xml
+- [Sitemap](https://honsgarden.se/sitemap.xml): Komplett lista över publika sidor.

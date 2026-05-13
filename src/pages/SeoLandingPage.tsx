@@ -31,7 +31,7 @@ interface LandingPageData {
 const pages: Record<PageKey, LandingPageData> = {
   'app-for-honsagare': {
     path: '/app-for-honsagare',
-    title: 'App för hönsägare – håll koll på ägg, flock, foder och rutiner | Hönsgården',
+    title: 'App för hönsägare – ägg, flock & foder | Hönsgården',
     description: 'Hönsgården är en svensk app för hobbyhönsägare. Logga ägg, följ flocken, räkna foderkostnad och skapa vardagsrutiner direkt i mobilen.',
     eyebrow: 'Svensk app för hobbyhönsägare',
     h1: 'En app för dig som vill ha riktig koll på hönsgården',
@@ -54,7 +54,7 @@ const pages: Record<PageKey, LandingPageData> = {
   },
   agglogg: {
     path: '/agglogg',
-    title: 'Ägglogg – logga ägg och följ värpningen över tid | Hönsgården',
+    title: 'Ägglogg – logga ägg och följ värpning | Hönsgården',
     description: 'Digital ägglogg för hönsägare. Logga dagens ägg snabbt, se veckotrender, jämför perioder och förstå hur flocken värper.',
     eyebrow: 'Digital ägglogg',
     h1: 'Logga ägg snabbt – och förstå vad siffrorna betyder',
@@ -77,7 +77,7 @@ const pages: Record<PageKey, LandingPageData> = {
   },
   honskalender: {
     path: '/honskalender',
-    title: 'Hönskalender – planera skötsel, rutiner och hönsåret | Hönsgården',
+    title: 'Hönskalender – skötsel och rutiner | Hönsgården',
     description: 'Hönskalender för svenska hönsägare. Håll koll på rengöring, foder, vatten, kvalster, ruggning, kläckning och säsongsrutiner.',
     eyebrow: 'Kalender för hönshuset',
     h1: 'En hönskalender som hjälper dig ligga steget före',
@@ -123,7 +123,7 @@ const pages: Record<PageKey, LandingPageData> = {
   },
   klackningskalender: {
     path: '/klackningskalender',
-    title: 'Kläckningskalender för hönsägg – följ dag 1 till 21 | Hönsgården',
+    title: 'Kläckningskalender för hönsägg – dag 1–21 | Hönsgården',
     description: 'Digital kläckningskalender för hönsägg. Håll koll på startdatum, lysning, vändning, luftfuktighet och beräknad kläckdag.',
     eyebrow: 'Kläckningskalender',
     h1: 'Följ kläckningen dag för dag – från ägg till kyckling',
@@ -146,7 +146,7 @@ const pages: Record<PageKey, LandingPageData> = {
   },
   'borja-med-hons': {
     path: '/borja-med-hons',
-    title: 'Börja med höns – praktisk guide för nya hönsägare | Hönsgården',
+    title: 'Börja med höns – guide för nybörjare | Hönsgården',
     description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.',
     eyebrow: 'För nya hönsägare',
     h1: 'Börja med höns utan att tappa kontrollen första veckan',
