@@ -128,33 +128,79 @@ export default function PublicEggSaleV3() {
     ? `${seoDescriptionRaw} Hämtas i ${sale.location}. ${sale.size} ägg per karta för ${sale.price} kr.`
     : seoDescriptionRaw
   ).slice(0, 158);
-  const seoOgImage = sale.imageUrl || undefined;
-  const seoUrl = typeof window !== 'undefined' ? window.location.href : `https://honsgarden.se${seoPath}`;
+
+  // Ensure absolute URLs (Schema.org requires absolute URIs for image / url)
+  const toAbsolute = (u?: string | null) => {
+    if (!u) return undefined;
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u.startsWith('//')) return `https:${u}`;
+    return `https://honsgarden.se${u.startsWith('/') ? '' : '/'}${u}`;
+  };
+  const seoOgImage = toAbsolute(sale.imageUrl) || 'https://honsgarden.se/og-image.jpg';
+  const seoUrl = `https://honsgarden.se${seoPath}`;
+  const sellerId = `${seoUrl}#seller`;
+  const productId = `${seoUrl}#product`;
+  const offerId = `${seoUrl}#offer`;
+
+  // priceValidUntil — recommended for Offer; default 60 days out
+  const priceValidUntil = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 60);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const priceNumber = Math.max(0, Math.round(Number(sale.price) || 0));
+  const safePrice = String(priceNumber);
+
   const seoJsonLd = listing
     ? [
         {
           '@type': 'Product',
+          '@id': productId,
           name: sale.title,
           description: seoDescriptionRaw,
-          image: seoOgImage ? [seoOgImage] : undefined,
-          category: 'Färska ägg',
+          image: [seoOgImage],
+          category: 'Mat & dryck > Ägg',
+          sku: slug || listing.id,
+          productID: slug || listing.id,
+          brand: { '@type': 'Brand', name: 'Hönsgården' },
           offers: {
             '@type': 'Offer',
+            '@id': offerId,
             url: seoUrl,
             priceCurrency: 'SEK',
-            price: String(Math.round(Number(sale.price) || 0)),
+            price: safePrice,
+            priceValidUntil,
             availability: isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
             itemCondition: 'https://schema.org/NewCondition',
-            areaServed: sale.location,
+            areaServed: { '@type': 'Place', name: sale.location },
+            seller: { '@id': sellerId },
+            eligibleQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'karta' },
           },
         },
         {
           '@type': 'LocalBusiness',
+          '@id': sellerId,
           name: sale.title,
-          description: `Lokal äggförsäljning från ${sale.location}.`,
-          image: seoOgImage ? [seoOgImage] : undefined,
-          address: { '@type': 'PostalAddress', addressLocality: sale.location, addressCountry: 'SE' },
+          description: `Lokal äggförsäljning i ${sale.location} via Hönsgården.`,
+          image: [seoOgImage],
           url: seoUrl,
+          priceRange: `${safePrice} SEK`,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: sale.location,
+            addressCountry: 'SE',
+          },
+          areaServed: { '@type': 'Place', name: sale.location },
+          makesOffer: { '@id': offerId },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Hönsgården', item: 'https://honsgarden.se/' },
+            { '@type': 'ListItem', position: 2, name: 'Äggförsäljning', item: 'https://honsgarden.se/salja-agg' },
+            { '@type': 'ListItem', position: 3, name: sale.title, item: seoUrl },
+          ],
         },
       ]
     : undefined;
