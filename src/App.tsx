@@ -171,6 +171,9 @@ const AppRoutes = () => (
           <Route path="news" element={<News />} />
           <Route path="weather" element={<Weather />} />
           <Route path="weather/history/:date" element={<WeatherHistoryDetail />} />
+          <Route path="halsa" element={<Health />} />
+          <Route path="avel" element={<Breeding />} />
+          <Route path="lager" element={<Inventory />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
