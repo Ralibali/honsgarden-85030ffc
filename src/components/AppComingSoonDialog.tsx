@@ -5,8 +5,11 @@ import { Smartphone, Share, MoreVertical, Sparkles, Check, AlertCircle } from 'l
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { trackClick } from '@/hooks/useTracking';
+import { useAuth } from '@/hooks/useAuth';
+import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
+export const SHOW_APP_INSTALL_POPUP_EVENT = 'show-app-install-popup';
 
 type Platform = 'ios' | 'android' | 'other';
 
@@ -67,6 +70,8 @@ function detectPlatform(): Platform {
 }
 
 export default function AppComingSoonDialog() {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [open, setOpen] = useState(false);
   const [platform, setPlatform] = useState<Platform>('other');
   const [showSteps, setShowSteps] = useState(false);
@@ -74,36 +79,50 @@ export default function AppComingSoonDialog() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as any).standalone === true;
-    if (standalone) return;
-
-    if (localStorage.getItem(STORAGE_KEY)) return;
-
     const detected = detectPlatform();
     setPlatform(detected);
 
-    const t = setTimeout(() => {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as any).standalone === true;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (!standalone && !readScoped(userId, STORAGE_KEY)) {
+      timer = setTimeout(() => {
+        setOpen(true);
+        trackClick('app_coming_soon_shown', {
+          elementText: 'AppComingSoonDialog',
+          metadata: {
+            platform: detected,
+            path: window.location.pathname,
+            source: 'app_coming_soon_dialog',
+          },
+        });
+      }, 3000);
+    }
+
+    const handleManualOpen = () => {
+      setShowSteps(false);
       setOpen(true);
       trackClick('app_coming_soon_shown', {
         elementText: 'AppComingSoonDialog',
-        metadata: {
-          platform: detected,
-          path: window.location.pathname,
-          source: 'app_coming_soon_dialog',
-        },
+        metadata: { platform: detected, source: 'manual_settings' },
       });
-    }, 3000);
-    return () => clearTimeout(t);
-  }, []);
+    };
+    window.addEventListener(SHOW_APP_INSTALL_POPUP_EVENT, handleManualOpen);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener(SHOW_APP_INSTALL_POPUP_EVENT, handleManualOpen);
+    };
+  }, [userId]);
 
   const steps = useMemo(() => INSTRUCTIONS[platform] ?? [], [platform]);
   const hasSteps = steps.length > 0;
 
   const handleClose = (o: boolean) => {
     setOpen(o);
-    if (!o) localStorage.setItem(STORAGE_KEY, '1');
+    if (!o) writeScoped(userId, STORAGE_KEY, '1');
   };
 
   const dismiss = () => {
