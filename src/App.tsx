@@ -56,6 +56,9 @@ const Weather = React.lazy(() => import("./pages/Weather"));
 const WeatherHistoryDetail = React.lazy(() => import("./pages/WeatherHistoryDetail"));
 const SaljaAgg = React.lazy(() => import("./pages/SaljaAgg"));
 const SaljaAggOrt = React.lazy(() => import("./pages/SaljaAggOrt"));
+const Health = React.lazy(() => import("./pages/Health"));
+const Breeding = React.lazy(() => import("./pages/Breeding"));
+const Inventory = React.lazy(() => import("./pages/Inventory"));
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
@@ -168,6 +171,9 @@ const AppRoutes = () => (
           <Route path="news" element={<News />} />
           <Route path="weather" element={<Weather />} />
           <Route path="weather/history/:date" element={<WeatherHistoryDetail />} />
+          <Route path="halsa" element={<Health />} />
+          <Route path="avel" element={<Breeding />} />
+          <Route path="lager" element={<Inventory />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
