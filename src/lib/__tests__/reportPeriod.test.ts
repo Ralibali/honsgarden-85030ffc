@@ -130,7 +130,7 @@ describe("parseAndValidate (zod + affärsregler)", () => {
   it("ogiltig datumsträng: fel med tydligt meddelande", () => {
     const r = parseAndValidate({ ...base, period_start: "inte-ett-datum" }, NOW);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.error).toMatch(/datum/i);
+    if (r.ok === false) expect(r.error).toMatch(/datum/i);
   });
 
   it("ogiltigt UUID för farm_id: fel", () => {
