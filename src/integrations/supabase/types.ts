@@ -325,6 +325,66 @@ export type Database = {
         }
         Relationships: []
       }
+      breeding_pairs: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          flock_id: string | null
+          goal: string | null
+          hen_ids: string[]
+          id: string
+          name: string
+          notes: string | null
+          rooster_id: string | null
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          flock_id?: string | null
+          goal?: string | null
+          hen_ids?: string[]
+          id?: string
+          name: string
+          notes?: string | null
+          rooster_id?: string | null
+          start_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          flock_id?: string | null
+          goal?: string | null
+          hen_ids?: string[]
+          id?: string
+          name?: string
+          notes?: string | null
+          rooster_id?: string | null
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breeding_pairs_flock_id_fkey"
+            columns: ["flock_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "breeding_pairs_rooster_id_fkey"
+            columns: ["rooster_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chore_completions: {
         Row: {
           chore_id: string
@@ -1205,6 +1265,87 @@ export type Database = {
         }
         Relationships: []
       }
+      hatch_sessions: {
+        Row: {
+          actual_hatch_date: string | null
+          breeding_pair_id: string | null
+          chicks_survived_7d: number | null
+          created_at: string
+          eggs_fertile: number | null
+          eggs_hatched: number | null
+          eggs_set: number
+          expected_hatch_date: string | null
+          flock_id: string | null
+          humidity_avg: number | null
+          id: string
+          incubator_type: string | null
+          name: string
+          notes: string | null
+          set_date: string
+          status: string
+          temperature_avg: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          actual_hatch_date?: string | null
+          breeding_pair_id?: string | null
+          chicks_survived_7d?: number | null
+          created_at?: string
+          eggs_fertile?: number | null
+          eggs_hatched?: number | null
+          eggs_set: number
+          expected_hatch_date?: string | null
+          flock_id?: string | null
+          humidity_avg?: number | null
+          id?: string
+          incubator_type?: string | null
+          name: string
+          notes?: string | null
+          set_date: string
+          status?: string
+          temperature_avg?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          actual_hatch_date?: string | null
+          breeding_pair_id?: string | null
+          chicks_survived_7d?: number | null
+          created_at?: string
+          eggs_fertile?: number | null
+          eggs_hatched?: number | null
+          eggs_set?: number
+          expected_hatch_date?: string | null
+          flock_id?: string | null
+          humidity_avg?: number | null
+          id?: string
+          incubator_type?: string | null
+          name?: string
+          notes?: string | null
+          set_date?: string
+          status?: string
+          temperature_avg?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hatch_sessions_breeding_pair_id_fkey"
+            columns: ["breeding_pair_id"]
+            isOneToOne: false
+            referencedRelation: "breeding_pairs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hatch_sessions_flock_id_fkey"
+            columns: ["flock_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hatchings: {
         Row: {
           created_at: string
@@ -1244,6 +1385,72 @@ export type Database = {
         }
         Relationships: []
       }
+      health_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_date: string
+          event_type: string
+          flock_id: string | null
+          hen_id: string | null
+          id: string
+          photo_url: string | null
+          resolved: boolean
+          resolved_at: string | null
+          title: string
+          treatment: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type: string
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          photo_url?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          title: string
+          treatment?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          photo_url?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          title?: string
+          treatment?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_events_flock_id_fkey"
+            columns: ["flock_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_events_hen_id_fkey"
+            columns: ["hen_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_logs: {
         Row: {
           created_at: string
@@ -1282,17 +1489,61 @@ export type Database = {
           },
         ]
       }
+      hen_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          hen_id: string
+          id: string
+          photo_url: string
+          taken_at: string
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          hen_id: string
+          id?: string
+          photo_url: string
+          taken_at?: string
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          hen_id?: string
+          id?: string
+          photo_url?: string
+          taken_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hen_photos_hen_id_fkey"
+            columns: ["hen_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hens: {
         Row: {
           birth_date: string | null
+          bloodline: string | null
           breed: string | null
           color: string | null
           created_at: string
+          death_cause: string | null
+          death_date: string | null
+          father_id: string | null
           flock_id: string | null
+          hatch_session_id: string | null
           hen_type: string
           id: string
           image_url: string | null
           is_active: boolean
+          mother_id: string | null
           name: string
           notes: string | null
           updated_at: string
@@ -1300,14 +1551,20 @@ export type Database = {
         }
         Insert: {
           birth_date?: string | null
+          bloodline?: string | null
           breed?: string | null
           color?: string | null
           created_at?: string
+          death_cause?: string | null
+          death_date?: string | null
+          father_id?: string | null
           flock_id?: string | null
+          hatch_session_id?: string | null
           hen_type?: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          mother_id?: string | null
           name: string
           notes?: string | null
           updated_at?: string
@@ -1315,14 +1572,20 @@ export type Database = {
         }
         Update: {
           birth_date?: string | null
+          bloodline?: string | null
           breed?: string | null
           color?: string | null
           created_at?: string
+          death_cause?: string | null
+          death_date?: string | null
+          father_id?: string | null
           flock_id?: string | null
+          hatch_session_id?: string | null
           hen_type?: string
           id?: string
           image_url?: string | null
           is_active?: boolean
+          mother_id?: string | null
           name?: string
           notes?: string | null
           updated_at?: string
@@ -1330,10 +1593,114 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_hens_hatch_session"
+            columns: ["hatch_session_id"]
+            isOneToOne: false
+            referencedRelation: "hatch_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hens_father_id_fkey"
+            columns: ["father_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "hens_flock_id_fkey"
             columns: ["flock_id"]
             isOneToOne: false
             referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hens_mother_id_fkey"
+            columns: ["mother_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inventory_items: {
+        Row: {
+          category: string
+          created_at: string
+          current_quantity: number
+          id: string
+          low_threshold: number | null
+          name: string
+          notes: string | null
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          current_quantity?: number
+          id?: string
+          low_threshold?: number | null
+          name: string
+          notes?: string | null
+          unit: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          current_quantity?: number
+          id?: string
+          low_threshold?: number | null
+          name?: string
+          notes?: string | null
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inventory_transactions: {
+        Row: {
+          cost: number | null
+          created_at: string
+          id: string
+          inventory_item_id: string
+          notes: string | null
+          quantity: number
+          transaction_date: string
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          inventory_item_id: string
+          notes?: string | null
+          quantity: number
+          transaction_date?: string
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          id?: string
+          inventory_item_id?: string
+          notes?: string | null
+          quantity?: number
+          transaction_date?: string
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
             referencedColumns: ["id"]
           },
         ]
