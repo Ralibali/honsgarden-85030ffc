@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
   const { data: report } = await admin
     .from("generated_reports")
-    .select("id, file_path, farm_id, status")
+    .select("id, file_path, farm_id, status, download_count")
     .eq("id", body.report_id)
     .single();
 
