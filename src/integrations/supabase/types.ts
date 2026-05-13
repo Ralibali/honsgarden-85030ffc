@@ -3195,6 +3195,10 @@ export type Database = {
         Args: { _days: number; _user_id: string }
         Returns: undefined
       }
+      has_farm_role_for_owner: {
+        Args: { _owner_uid: string; _required_role?: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
