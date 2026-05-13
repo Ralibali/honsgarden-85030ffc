@@ -52,6 +52,16 @@ Deno.serve(async (req) => {
     .limit(1)
     .maybeSingle();
 
+  // Active public egg-sale listings (drives /s/:slug)
+  const { data: eggSaleListings } = await supabase
+    .from("public_egg_sale_listings")
+    .select("slug, updated_at")
+    .eq("is_active", true);
+
+  // Static list of localities for /salja-agg/:ort (mirrors src/data/saljaAggOrter.ts)
+  const SALJA_AGG_ORTER = ["goteborg","malmo","lund","helsingborg","angelholm","bastad","kristianstad","ystad","simrishamn","trelleborg","eslov","hassleholm","landskrona","lomma","staffanstorp","laholm","halmstad","falkenberg","varberg","kungsbacka","molndal","partille","lerum","alingsas","kungalv","stenungsund","uddevalla","trollhattan","vanersborg","boras","ulricehamn","vargarda","skovde","mariestad","lidkoping","jonkoping","huskvarna","vetlanda","eksjo","nassjo","varnamo","vaxjo","alvesta","kalmar","nybro","oskarshamn","vastervik","visby","karlskrona","ronneby","karlshamn","linkoping","norrkoping","motala","mjolby","soderkoping","finspang","vadstena","stockholm","solna","sundbyberg","jarfalla","taby","vallentuna","osteraker","norrtalje","nacka","varmdo","tyreso","haninge","nynashamn","huddinge","botkyrka","sodertalje","nykvarn","uppsala","enkoping","knivsta","tierp","vasteras","koping","eskilstuna","strangnas","nykoping","katrineholm","orebro","kumla","lindesberg","karlskoga","karlstad","kristinehamn","arvika","forshaga","falun","borlange","leksand","mora","gavle","sandviken","soderhamn","hudiksvall","sundsvall","harnosand","ornskoldsvik","ostersund","umea","skelleftea","pitea","lulea","boden","kiruna"];
+
+
   // Collect unique tags
   const allTags = new Set<string>();
   if (posts) {
@@ -68,6 +78,14 @@ Deno.serve(async (req) => {
     { loc: "/blogg", priority: "0.9", changefreq: "daily" },
     { loc: "/om-oss", priority: "0.7", changefreq: "monthly" },
     { loc: "/verktyg/aggkalkylator", priority: "0.8", changefreq: "monthly" },
+    { loc: "/app-for-honsagare", priority: "0.8", changefreq: "monthly" },
+    { loc: "/agglogg", priority: "0.8", changefreq: "monthly" },
+    { loc: "/honskalender", priority: "0.7", changefreq: "monthly" },
+    { loc: "/foderkostnad-hons", priority: "0.7", changefreq: "monthly" },
+    { loc: "/klackningskalender", priority: "0.7", changefreq: "monthly" },
+    { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
+    { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
+    { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
   ];
 
   const now = new Date().toISOString().split("T")[0];
@@ -117,6 +135,37 @@ Deno.serve(async (req) => {
   </url>
 `;
   }
+
+  // Locality pages /salja-agg/:ort
+  for (const ort of SALJA_AGG_ORTER) {
+    xml += `  <url>
+    <loc>${BASE_URL}/salja-agg/${ort}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/salja-agg/${ort}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/salja-agg/${ort}" />
+  </url>
+`;
+  }
+
+  // Active public egg-sale listings /s/:slug
+  if (eggSaleListings) {
+    for (const listing of eggSaleListings) {
+      if (!listing.slug) continue;
+      const lastmod = (listing.updated_at || now).split("T")[0];
+      xml += `  <url>
+    <loc>${BASE_URL}/s/${listing.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/s/${listing.slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/s/${listing.slug}" />
+  </url>
+`;
+    }
+  }
+
 
   // Blog posts (both /blogg/ canonical and /guider/ alternate)
   if (posts) {

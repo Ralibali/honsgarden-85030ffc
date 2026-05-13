@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useSeo } from '@/hooks/useSeo';
 import { BellRing, CheckCircle2, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
@@ -117,6 +118,57 @@ export default function PublicEggSaleV3() {
   });
 
   const share = async () => { if (navigator.share) await navigator.share({ title: sale.title, text: shareText, url: window.location.href }).catch(() => undefined); else copy(`${shareText}\n\n${window.location.href}`); };
+
+  // Per-page SEO + structured data for indexable listings
+  const seoPath = slug ? `/s/${slug}` : '/s/agg';
+  const seoTitleBase = slug ? `${sale.title} – Köp färska ägg i ${sale.location}` : 'Färska ägg till salu';
+  const seoTitle = `${seoTitleBase.length > 50 ? seoTitleBase.slice(0, 50) : seoTitleBase} | Hönsgården`.slice(0, 70);
+  const seoDescriptionRaw = sale.description?.replace(/\s+/g, ' ').trim() || 'Färska ägg från lokal hönsgård. Boka, hämta och betala enkelt via Hönsgården.';
+  const seoDescription = (seoDescriptionRaw.length < 60
+    ? `${seoDescriptionRaw} Hämtas i ${sale.location}. ${sale.size} ägg per karta för ${sale.price} kr.`
+    : seoDescriptionRaw
+  ).slice(0, 158);
+  const seoOgImage = sale.imageUrl || undefined;
+  const seoUrl = typeof window !== 'undefined' ? window.location.href : `https://honsgarden.se${seoPath}`;
+  const seoJsonLd = listing
+    ? [
+        {
+          '@type': 'Product',
+          name: sale.title,
+          description: seoDescriptionRaw,
+          image: seoOgImage ? [seoOgImage] : undefined,
+          category: 'Färska ägg',
+          offers: {
+            '@type': 'Offer',
+            url: seoUrl,
+            priceCurrency: 'SEK',
+            price: String(Math.round(Number(sale.price) || 0)),
+            availability: isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
+            areaServed: sale.location,
+          },
+        },
+        {
+          '@type': 'LocalBusiness',
+          name: sale.title,
+          description: `Lokal äggförsäljning från ${sale.location}.`,
+          image: seoOgImage ? [seoOgImage] : undefined,
+          address: { '@type': 'PostalAddress', addressLocality: sale.location, addressCountry: 'SE' },
+          url: seoUrl,
+        },
+      ]
+    : undefined;
+
+  useSeo({
+    title: seoTitle,
+    description: seoDescription,
+    path: seoPath,
+    ogType: 'product',
+    ogImage: seoOgImage,
+    ogImageAlt: sale.title,
+    noindex: !listing, // hide query-string preview pages from indexing
+    jsonLd: seoJsonLd,
+  });
 
   if (isLoading) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
   if (shouldLoadSlug && !listing) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
