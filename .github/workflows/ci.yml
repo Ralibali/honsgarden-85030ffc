@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      run_rls:
+        description: "Kör manuella RLS-tester mot TEST_DB_URL"
+        required: false
+        default: "false"
 
 jobs:
   quality:
