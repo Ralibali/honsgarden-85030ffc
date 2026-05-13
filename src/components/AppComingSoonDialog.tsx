@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { trackClick } from '@/hooks/useTracking';
 import { useAuth } from '@/hooks/useAuth';
-import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
+import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
 export const SHOW_APP_INSTALL_POPUP_EVENT = 'show-app-install-popup';
