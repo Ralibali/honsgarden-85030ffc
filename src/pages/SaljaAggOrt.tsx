@@ -13,8 +13,8 @@ import { ArrowRight, Check, MapPin, ShoppingBag, Megaphone, CalendarClock, Credi
 import { motion } from 'framer-motion';
 import { ORTER, getOrt } from '@/data/saljaAggOrter';
 import { buildOrtContent, buildOrtFaq, buildOrtMeta, buildOrtImages, buildOrtHenImage } from '@/data/saljaAggOrtContent';
-import heroCoop from '@/assets/hero-coop.jpg';
-import heroFarm from '@/assets/hero-farm.jpg';
+import heroCoop from '@/assets/hero-coop.webp';
+import heroFarm from '@/assets/hero-farm.webp';
 import eggsBasket from '@/assets/eggs-basket.jpg';
 import henPortrait from '@/assets/hen-portrait.jpg';
 

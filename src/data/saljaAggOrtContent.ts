@@ -382,8 +382,8 @@ const HEN_CAP = [
 ];
 
 const ASSET_PATHS: Record<OrtImage['assetKey'], string> = {
-  coop: '/src/assets/hero-coop.jpg',
-  farm: '/src/assets/hero-farm.jpg',
+  coop: '/src/assets/hero-coop.webp',
+  farm: '/src/assets/hero-farm.webp',
   eggs: '/src/assets/eggs-basket.jpg',
   hen: '/src/assets/hen-portrait.jpg',
 };
