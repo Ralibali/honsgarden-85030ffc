@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle2, XCircle, Feather, LogIn } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, Feather, LogIn, Pencil, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
+type InviteRole = 'editor' | 'viewer';
+
+const ROLE_LABEL: Record<InviteRole, string> = {
+  editor: 'Redigerare',
+  viewer: 'Tittare',
+};
+
 export default function AcceptInvite() {
   const { token } = useParams<{ token: string }>();
+  const [searchParams] = useSearchParams();
+  const roleParam = (searchParams.get('role') || 'editor').toLowerCase();
+  const role: InviteRole = roleParam === 'viewer' ? 'viewer' : 'editor';
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string } | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string; inviter_name?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
@@ -51,7 +61,7 @@ export default function AcceptInvite() {
     setAccepting(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-farm', {
-        body: { action: 'accept-invite', token },
+        body: { action: 'accept-invite', token, role },
       });
       if (error) {
         let msg = error.message;
@@ -118,9 +128,14 @@ export default function AcceptInvite() {
             <>
               <h1 className="text-2xl font-serif text-foreground">Du har blivit inbjuden!</h1>
               <p className="text-sm text-muted-foreground">
-                Du har blivit inbjuden att gå med i gården{' '}
+                <strong className="text-foreground">{inviteInfo.inviter_name || 'Ägaren'}</strong> har bjudit in dig som{' '}
+                <strong className="text-foreground">{ROLE_LABEL[role]}</strong> till{' '}
                 <strong className="text-foreground">{inviteInfo.farm_name}</strong>.
               </p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                {role === 'editor' ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {ROLE_LABEL[role]}
+              </div>
 
               {isAuthenticated ? (
                 <div className="space-y-3">
