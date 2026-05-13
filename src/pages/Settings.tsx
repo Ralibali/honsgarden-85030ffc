@@ -48,22 +48,9 @@ export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const deleteAccountMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('delete-account');
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-    },
-    onSuccess: async () => {
-      toast({ title: 'Konto raderat 👋', description: 'All din data har tagits bort.' });
-      await logout();
-      navigate('/login');
-    },
-    onError: (err: any) => toast({ title: 'Fel vid radering', description: err.message, variant: 'destructive' }),
-  });
+  const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [supportMsg, setSupportMsg] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (coopSettings) {
