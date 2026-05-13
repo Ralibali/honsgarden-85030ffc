@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import PremiumStatusCard from '@/components/PremiumStatusCard';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -296,26 +297,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Subscription status */}
-      {!isPremium && (
-        <Card className="shadow-sm overflow-hidden border-warning/20 bg-warning/3">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-warning/10">
-                <Crown className="h-5 w-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-foreground">Gratisplan</p>
-                <p className="text-[11px] text-muted-foreground">Uppgradera för full funktionalitet</p>
-              </div>
-            </div>
-            <Button size="sm" className="rounded-xl gap-1.5 text-xs" onClick={() => navigate('/app/premium')}>
-              <Crown className="h-3.5 w-3.5" />
-              Uppgradera
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+      {/* Premium status */}
+      <PremiumStatusCard />
+
 
       {/* Profile */}
       <Card className="border-border/50 shadow-sm">
