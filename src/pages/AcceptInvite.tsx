@@ -128,9 +128,14 @@ export default function AcceptInvite() {
             <>
               <h1 className="text-2xl font-serif text-foreground">Du har blivit inbjuden!</h1>
               <p className="text-sm text-muted-foreground">
-                Du har blivit inbjuden att gå med i gården{' '}
+                <strong className="text-foreground">{inviteInfo.inviter_name || 'Ägaren'}</strong> har bjudit in dig som{' '}
+                <strong className="text-foreground">{ROLE_LABEL[role]}</strong> till{' '}
                 <strong className="text-foreground">{inviteInfo.farm_name}</strong>.
               </p>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                {role === 'editor' ? <Pencil className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                {ROLE_LABEL[role]}
+              </div>
 
               {isAuthenticated ? (
                 <div className="space-y-3">
