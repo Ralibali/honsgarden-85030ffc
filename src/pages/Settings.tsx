@@ -48,9 +48,6 @@ export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-  const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [supportMsg, setSupportMsg] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (coopSettings) {
