@@ -22,6 +22,12 @@ import { motion } from 'framer-motion';
 import HenAvatar from '@/components/HenAvatar';
 import EmptyState from '@/components/EmptyState';
 import AIHealthNoteHelper from '@/components/AIHealthNoteHelper';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { PremiumGate } from '@/components/PremiumGate';
+import HenPedigree from '@/components/hen/HenPedigree';
+import HenPhotoTimeline from '@/components/hen/HenPhotoTimeline';
+import SetParentsDialog from '@/components/hen/SetParentsDialog';
+import { GitBranch, Camera, Users } from 'lucide-react';
 
 function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
   const [count, setCount] = useState('1');
@@ -105,6 +111,8 @@ export default function HenProfile() {
   const [healthNoteOpen, setHealthNoteOpen] = useState(false);
   const [healthNoteText, setHealthNoteText] = useState('');
   const [healthNoteType, setHealthNoteType] = useState<string>('observation');
+  const [parentsOpen, setParentsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -385,168 +393,217 @@ export default function HenProfile() {
       </Card>
 
       {!editing && (
-        <Card className="border-border/50 shadow-sm bg-card/70">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <Heart className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-serif text-base text-foreground">Om {hen.name}</p>
-                <p className="text-sm text-muted-foreground leading-relaxed mt-1">
-                  {latestNote || `Här kan du samla personlighet, hälsa, ägghistorik och viktiga händelser för ${hen.name}. Lägg gärna till en anteckning för att göra profilen mer levande.`}
-                </p>
-                {latestEgg && !isRooster && (
-                  <p className="text-xs text-muted-foreground mt-2">Senaste äggnotering: {latestEgg.count} ägg den {new Date(latestEgg.date).toLocaleDateString('sv-SE')}.</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full rounded-xl">
+            <TabsTrigger value="overview" className="rounded-lg text-xs gap-1.5">
+              <Heart className="h-3.5 w-3.5" /> Översikt
+            </TabsTrigger>
+            <TabsTrigger value="pedigree" className="rounded-lg text-xs gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" /> Stamtavla
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="rounded-lg text-xs gap-1.5">
+              <Camera className="h-3.5 w-3.5" /> Bilder
+            </TabsTrigger>
+          </TabsList>
 
-      {!isRooster && !editing && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          {[
-            { icon: Egg, value: totalEggs, label: 'Totalt', color: 'text-primary', bg: 'bg-primary/8' },
-            { icon: TrendingUp, value: weekEggs, label: 'Veckan', color: 'text-accent', bg: 'bg-accent/8' },
-            { icon: Calendar, value: monthEggs, label: '30 dagar', color: 'text-muted-foreground', bg: 'bg-muted/60' },
-            { icon: TrendingUp, value: avgPerWeek, label: 'Ägg/vecka', color: 'text-success', bg: 'bg-success/8' },
-          ].map(({ icon: Icon, value, label, color, bg }, i) => (
-            <Card key={i} className="border-border/50 shadow-sm">
-              <CardContent className="p-3 text-center">
-                <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-1.5`}>
-                  <Icon className={`h-4 w-4 ${color}`} />
-                </div>
-                <p className="text-lg font-bold text-foreground tabular-nums">{value}</p>
-                <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{label}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {!isRooster && !editing && <QuickEggLog henId={henId!} henName={hen.name} />}
-
-      {!isRooster && !editing && henEggs.length === 0 && (
-        <EmptyState
-          icon={Egg}
-          title={`Ingen ägghistorik för ${hen.name} ännu`}
-          description="När du loggar ägg direkt på den här hönan kan Hönsgården visa personlig statistik, bästa värpdag och utveckling över tid."
-          actionLabel="Logga ägg för hönan"
-          onAction={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        />
-      )}
-
-      {!isRooster && !editing && henEggs.length > 0 && (
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="h-4 w-4 text-primary/60" />
-              <span className="font-serif text-sm text-foreground">Ägghistorik – senaste 14 dagarna</span>
-            </div>
-            <div className="flex items-end gap-1 h-16">
-              {Array.from({ length: 14 }).map((_, i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - (13 - i));
-                const dateStr = d.toISOString().split('T')[0];
-                const count = dailyCounts[dateStr] || 0;
-                const maxCount = Math.max(...Object.values(dailyCounts), 1);
-                const h = count > 0 ? Math.max(15, (count / maxCount) * 100) : 5;
-                return (
-                  <motion.div
-                    key={i}
-                    className="flex-1 flex flex-col items-center gap-0.5"
-                    initial={{ height: 0 }}
-                    animate={{ height: 'auto' }}
-                  >
-                    <motion.div
-                      className={`w-full rounded-t-md ${count > 0 ? 'bg-primary/30' : 'bg-muted/40'}`}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ duration: 0.4, delay: i * 0.03 }}
-                      style={{ minHeight: count > 0 ? 8 : 3 }}
-                    />
-                    {i % 2 === 0 && (
-                      <span className="text-[8px] text-muted-foreground">{d.getDate()}</span>
+          <TabsContent value="overview" className="space-y-5 mt-5">
+            <Card className="border-border/50 shadow-sm bg-card/70">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Heart className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-serif text-base text-foreground">Om {hen.name}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">
+                      {latestNote || `Här kan du samla personlighet, hälsa, ägghistorik och viktiga händelser för ${hen.name}. Lägg gärna till en anteckning för att göra profilen mer levande.`}
+                    </p>
+                    {latestEgg && !isRooster && (
+                      <p className="text-xs text-muted-foreground mt-2">Senaste äggnotering: {latestEgg.count} ägg den {new Date(latestEgg.date).toLocaleDateString('sv-SE')}.</p>
                     )}
-                  </motion.div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {bestDay && !editing && (
-        <Card className="border-warning/15 shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <span className="text-2xl">🏆</span>
-            <div>
-              <p className="text-sm font-medium text-foreground">Bästa värpdag</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(bestDay[0]).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })} – {bestDay[1]} ägg
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {healthLogs.length > 0 && !editing ? (
-        <Card className="border-border/50 shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5">
-                <Heart className="h-4 w-4 text-destructive/60" />
-                <h3 className="font-serif text-sm text-foreground">Hälsa och anteckningar</h3>
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-xl h-8 text-xs gap-1.5"
-                onClick={() => setHealthNoteOpen(true)}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Ny notering
-              </Button>
-            </div>
-            <div className="space-y-2">
-              {healthLogs.map((log: any, i: number) => (
-                <div key={i} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20">
-                  <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium bg-muted/60 px-2 py-0.5 rounded-md">
-                    {new Date(log.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
-                  </span>
-                  <div>
-                    {log.type && <span className="text-[10px] text-primary font-medium uppercase">{log.type}</span>}
-                    <p className="text-xs text-foreground">{log.description || '–'}</p>
                   </div>
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+
+            <Button
+              variant="outline"
+              className="w-full rounded-xl h-10 gap-2 text-sm"
+              onClick={() => setParentsOpen(true)}
+            >
+              <Users className="h-4 w-4" />
+              {hen.mother_id || hen.father_id ? 'Uppdatera föräldrar' : 'Sätt föräldrar'}
+            </Button>
+
+            {!isRooster && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {[
+                  { icon: Egg, value: totalEggs, label: 'Totalt', color: 'text-primary', bg: 'bg-primary/8' },
+                  { icon: TrendingUp, value: weekEggs, label: 'Veckan', color: 'text-accent', bg: 'bg-accent/8' },
+                  { icon: Calendar, value: monthEggs, label: '30 dagar', color: 'text-muted-foreground', bg: 'bg-muted/60' },
+                  { icon: TrendingUp, value: avgPerWeek, label: 'Ägg/vecka', color: 'text-success', bg: 'bg-success/8' },
+                ].map(({ icon: Icon, value, label, color, bg }, i) => (
+                  <Card key={i} className="border-border/50 shadow-sm">
+                    <CardContent className="p-3 text-center">
+                      <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center mx-auto mb-1.5`}>
+                        <Icon className={`h-4 w-4 ${color}`} />
+                      </div>
+                      <p className="text-lg font-bold text-foreground tabular-nums">{value}</p>
+                      <p className="text-[9px] text-muted-foreground uppercase tracking-widest">{label}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {!isRooster && <QuickEggLog henId={henId!} henName={hen.name} />}
+
+            {!isRooster && henEggs.length === 0 && (
+              <EmptyState
+                icon={Egg}
+                title={`Ingen ägghistorik för ${hen.name} ännu`}
+                description="När du loggar ägg direkt på den här hönan kan Hönsgården visa personlig statistik, bästa värpdag och utveckling över tid."
+                actionLabel="Logga ägg för hönan"
+                onAction={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              />
+            )}
+
+            {!isRooster && henEggs.length > 0 && (
+              <Card className="border-border/50 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BarChart3 className="h-4 w-4 text-primary/60" />
+                    <span className="font-serif text-sm text-foreground">Ägghistorik – senaste 14 dagarna</span>
+                  </div>
+                  <div className="flex items-end gap-1 h-16">
+                    {Array.from({ length: 14 }).map((_, i) => {
+                      const d = new Date();
+                      d.setDate(d.getDate() - (13 - i));
+                      const dateStr = d.toISOString().split('T')[0];
+                      const count = dailyCounts[dateStr] || 0;
+                      const maxCount = Math.max(...Object.values(dailyCounts), 1);
+                      const h = count > 0 ? Math.max(15, (count / maxCount) * 100) : 5;
+                      return (
+                        <motion.div
+                          key={i}
+                          className="flex-1 flex flex-col items-center gap-0.5"
+                          initial={{ height: 0 }}
+                          animate={{ height: 'auto' }}
+                        >
+                          <motion.div
+                            className={`w-full rounded-t-md ${count > 0 ? 'bg-primary/30' : 'bg-muted/40'}`}
+                            initial={{ height: 0 }}
+                            animate={{ height: `${h}%` }}
+                            transition={{ duration: 0.4, delay: i * 0.03 }}
+                            style={{ minHeight: count > 0 ? 8 : 3 }}
+                          />
+                          {i % 2 === 0 && (
+                            <span className="text-[8px] text-muted-foreground">{d.getDate()}</span>
+                          )}
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {bestDay && (
+              <Card className="border-warning/15 shadow-sm">
+                <CardContent className="p-4 flex items-center gap-3">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Bästa värpdag</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(bestDay[0]).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })} – {bestDay[1]} ägg
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {healthLogs.length > 0 ? (
+              <Card className="border-border/50 shadow-sm">
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <Heart className="h-4 w-4 text-destructive/60" />
+                      <h3 className="font-serif text-sm text-foreground">Hälsa och anteckningar</h3>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl h-8 text-xs gap-1.5"
+                      onClick={() => setHealthNoteOpen(true)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Ny notering
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {healthLogs.map((log: any, i: number) => (
+                      <div key={i} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20">
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium bg-muted/60 px-2 py-0.5 rounded-md">
+                          {new Date(log.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                        </span>
+                        <div>
+                          {log.type && <span className="text-[10px] text-primary font-medium uppercase">{log.type}</span>}
+                          <p className="text-xs text-foreground">{log.description || '–'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <EmptyState
+                icon={Heart}
+                title="Inga hälsonoteringar ännu"
+                description={`När något händer med ${hen.name} kan du samla anteckningar här – till exempel ruggningsperiod, sjukdom, veterinärbesök eller personliga observationer. Hönsgården hjälper dig formulera och påminner om vad du kan hålla koll på.`}
+                actionLabel="Lägg till hälsonotering"
+                onAction={() => setHealthNoteOpen(true)}
+              />
+            )}
+
+            <div className="flex gap-2">
+              <Button className="flex-1 rounded-xl h-11 gap-2" onClick={() => setShareOpen(true)}>
+                <Share2 className="h-4 w-4" />
+                Dela {hen.name}
+              </Button>
+              <Button variant="outline" className="rounded-xl h-11 gap-2" onClick={startEditing}>
+                <Edit2 className="h-4 w-4" />
+                Redigera
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      ) : !editing && (
-        <EmptyState
-          icon={Heart}
-          title="Inga hälsonoteringar ännu"
-          description={`När något händer med ${hen.name} kan du samla anteckningar här – till exempel ruggningsperiod, sjukdom, veterinärbesök eller personliga observationer. Hönsgården hjälper dig formulera och påminner om vad du kan hålla koll på.`}
-          actionLabel="Lägg till hälsonotering"
-          onAction={() => setHealthNoteOpen(true)}
-        />
+          </TabsContent>
+
+          <TabsContent value="pedigree" className="mt-5">
+            <PremiumGate feature="Stamtavla" blur>
+              <HenPedigree
+                henId={henId!}
+                henName={hen.name}
+                henBirthDate={hen.birth_date}
+                motherId={hen.mother_id ?? null}
+                fatherId={hen.father_id ?? null}
+              />
+            </PremiumGate>
+          </TabsContent>
+
+          <TabsContent value="photos" className="mt-5">
+            <HenPhotoTimeline henId={henId!} henName={hen.name} />
+          </TabsContent>
+        </Tabs>
       )}
 
-      {!editing && (
-        <div className="flex gap-2">
-          <Button className="flex-1 rounded-xl h-11 gap-2" onClick={() => setShareOpen(true)}>
-            <Share2 className="h-4 w-4" />
-            Dela {hen.name}
-          </Button>
-          <Button variant="outline" className="rounded-xl h-11 gap-2" onClick={startEditing}>
-            <Edit2 className="h-4 w-4" />
-            Redigera
-          </Button>
-        </div>
-      )}
+      <SetParentsDialog
+        open={parentsOpen}
+        onOpenChange={setParentsOpen}
+        henId={henId!}
+        currentMotherId={hen.mother_id ?? null}
+        currentFatherId={hen.father_id ?? null}
+        henBirthDate={hen.birth_date ?? null}
+      />
+
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-sm rounded-2xl">
