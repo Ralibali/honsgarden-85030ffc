@@ -61,7 +61,7 @@ export default function AcceptInvite() {
     setAccepting(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-farm', {
-        body: { action: 'accept-invite', token },
+        body: { action: 'accept-invite', token, role },
       });
       if (error) {
         let msg = error.message;
