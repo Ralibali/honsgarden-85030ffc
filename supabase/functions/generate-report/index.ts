@@ -3,20 +3,13 @@
 // builds a PDF with pdf-lib, uploads it to a private bucket.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { parseAndValidate, type ReportPeriodInputType } from "../_shared/reportPeriod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const InputSchema = z.object({
-  farm_id: z.string().uuid(),
-  report_type: z.enum(["manad", "kvartal", "ar", "avel"]),
-  period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
 
 const SV_DATE = (d: string | Date) =>
   new Date(d).toLocaleDateString("sv-SE", {
