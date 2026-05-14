@@ -62,19 +62,18 @@ Deno.serve(async (req) => {
   } = await userClient.auth.getUser();
   if (!user) return json({ error: "Ej inloggad" }, 401);
 
-  // Validate input
-  let input: z.infer<typeof InputSchema>;
+  // Validate input (zod + affärsregler: ordning, framtid, max-dagar, 5 år)
+  let input: ReportPeriodInputType;
   try {
-    input = InputSchema.parse(await req.json());
+    const raw = await req.json();
+    const result = parseAndValidate(raw);
+    if (!result.ok) {
+      return json({ error: result.error }, 400);
+    }
+    input = result.value;
   } catch (e) {
+    console.error("input parse failed", e);
     return json({ error: "Ogiltig indata", details: (e as Error).message }, 400);
-  }
-
-  if (new Date(input.period_end) < new Date(input.period_start)) {
-    return json({ error: "Slutdatum måste vara efter startdatum" }, 400);
-  }
-  if (new Date(input.period_start) > new Date()) {
-    return json({ error: "Perioden kan inte vara i framtiden" }, 400);
   }
 
   // Premium check
