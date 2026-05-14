@@ -3,20 +3,13 @@
 // builds a PDF with pdf-lib, uploads it to a private bucket.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { parseAndValidate, type ReportPeriodInputType } from "../_shared/reportPeriod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
-
-const InputSchema = z.object({
-  farm_id: z.string().uuid(),
-  report_type: z.enum(["manad", "kvartal", "ar", "avel"]),
-  period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-});
 
 const SV_DATE = (d: string | Date) =>
   new Date(d).toLocaleDateString("sv-SE", {
@@ -69,19 +62,18 @@ Deno.serve(async (req) => {
   } = await userClient.auth.getUser();
   if (!user) return json({ error: "Ej inloggad" }, 401);
 
-  // Validate input
-  let input: z.infer<typeof InputSchema>;
+  // Validate input (zod + affärsregler: ordning, framtid, max-dagar, 5 år)
+  let input: ReportPeriodInputType;
   try {
-    input = InputSchema.parse(await req.json());
+    const raw = await req.json();
+    const result = parseAndValidate(raw);
+    if (!result.ok) {
+      return json({ error: result.error }, 400);
+    }
+    input = result.value;
   } catch (e) {
+    console.error("input parse failed", e);
     return json({ error: "Ogiltig indata", details: (e as Error).message }, 400);
-  }
-
-  if (new Date(input.period_end) < new Date(input.period_start)) {
-    return json({ error: "Slutdatum måste vara efter startdatum" }, 400);
-  }
-  if (new Date(input.period_start) > new Date()) {
-    return json({ error: "Perioden kan inte vara i framtiden" }, 400);
   }
 
   // Premium check

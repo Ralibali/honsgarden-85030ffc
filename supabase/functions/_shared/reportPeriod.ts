@@ -1,12 +1,7 @@
-/**
- * Period-validering för rapportgenerering.
- * Delas mellan klient (förhandskontroll) och edge function (säkerhet).
- *
- * HÅLLS SYNKAD MED supabase/functions/_shared/reportPeriod.ts.
- * Ändringar måste appliceras på båda filerna (Deno-runtime kan inte
- * importera direkt från src/, därav duplicering).
- */
-import { z } from "zod";
+// HÅLLS SYNKAD MED src/lib/reportPeriod.ts.
+// Ändringar måste appliceras på båda filerna (Deno-runtime kan inte
+// importera direkt från src/, därav duplicering).
+import { z } from "https://esm.sh/zod@3.23.8";
 
 export const REPORT_TYPES = ["manad", "kvartal", "ar", "avel"] as const;
 export type ReportType = (typeof REPORT_TYPES)[number];
@@ -34,25 +29,19 @@ export const ReportPeriodInput = z.object({
 
 export type ReportPeriodInputType = z.infer<typeof ReportPeriodInput>;
 
-export interface PeriodValidationResult {
-  ok: boolean;
-  error?: string;
-}
-
 const MS_PER_DAY = 86_400_000;
 
-/** Antal dagar i perioden (inklusive både start och end). */
 export function daysInPeriod(start: string, end: string): number {
   const s = new Date(start + "T00:00:00Z").getTime();
   const e = new Date(end + "T00:00:00Z").getTime();
   return Math.round((e - s) / MS_PER_DAY) + 1;
 }
 
-/**
- * Affärsregler ovanpå zod: ordning, framtid, övre gränser.
- * Returnerar { ok:false, error } istället för att kasta — lättare att testa
- * och att returnera som 400 i edge function.
- */
+export interface PeriodValidationResult {
+  ok: boolean;
+  error?: string;
+}
+
 export function validateReportPeriod(
   input: ReportPeriodInputType,
   now: Date = new Date()
@@ -63,13 +52,9 @@ export function validateReportPeriod(
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     return { ok: false, error: "Ogiltiga datumsträngar" };
   }
-
   if (end < start) {
     return { ok: false, error: "Slutdatum måste vara efter startdatum" };
   }
-
-  // En-dags-rapport (start = end) är OK.
-
   if (start > now) {
     return { ok: false, error: "Perioden kan inte vara i framtiden" };
   }
@@ -94,7 +79,6 @@ export function validateReportPeriod(
   return { ok: true };
 }
 
-/** Bekvämlighet: parse + validate i ett. */
 export function parseAndValidate(
   raw: unknown,
   now: Date = new Date()
