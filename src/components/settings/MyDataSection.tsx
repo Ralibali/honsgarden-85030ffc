@@ -12,30 +12,29 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import Papa from "papaparse";
+import { toSwedishCsv, SWEDISH_HEADER_MAPS } from "@/lib/csvExport";
 
 type Category = {
   key: string;
   label: string;
   table: string;
   premiumOnly?: boolean;
-  headerMap?: Record<string, string>;
+  headerMapKey?: string;
 };
 
 const CATEGORIES: Category[] = [
-  { key: "hens", label: "Hönor", table: "hens" },
-  { key: "egg_logs", label: "Ägg", table: "egg_logs" },
-  { key: "health_events", label: "Hälsohändelser", table: "health_events" },
-  { key: "breeding_pairs", label: "Avelspar", table: "breeding_pairs", premiumOnly: true },
-  { key: "hatch_sessions", label: "Kläckningar", table: "hatch_sessions", premiumOnly: true },
-  { key: "feed_records", label: "Foderloggar", table: "feed_records" },
-  { key: "transactions", label: "Ekonomi", table: "transactions" },
-  { key: "inventory_items", label: "Lager", table: "inventory_items", premiumOnly: true },
+  { key: "hens", label: "Hönor", table: "hens", headerMapKey: "hens" },
+  { key: "egg_logs", label: "Ägg", table: "egg_logs", headerMapKey: "egg_logs" },
+  { key: "health_events", label: "Hälsohändelser", table: "health_events", headerMapKey: "health_events" },
+  { key: "breeding_pairs", label: "Avelspar", table: "breeding_pairs", premiumOnly: true, headerMapKey: "breeding_pairs" },
+  { key: "hatch_sessions", label: "Kläckningar", table: "hatch_sessions", premiumOnly: true, headerMapKey: "hatch_sessions" },
+  { key: "feed_records", label: "Foderloggar", table: "feed_records", headerMapKey: "feed_records" },
+  { key: "transactions", label: "Ekonomi", table: "transactions", headerMapKey: "transactions" },
+  { key: "inventory_items", label: "Lager", table: "inventory_items", premiumOnly: true, headerMapKey: "inventory_items" },
 ];
 
-function downloadCsv(rows: any[], filename: string) {
-  const csv = Papa.unparse(rows ?? [], { delimiter: ";", header: true });
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+function downloadCsv(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
