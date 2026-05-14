@@ -2,9 +2,9 @@
  * Period-validering för rapportgenerering.
  * Delas mellan klient (förhandskontroll) och edge function (säkerhet).
  *
- * Edge function (Deno) kan inte importera detta direkt — håll filen ren
- * från React/DOM-beroenden så att en motsvarande kopia kan ligga i
- * supabase/functions/_shared/reportPeriodSchema.ts utan ändringar.
+ * HÅLLS SYNKAD MED supabase/functions/_shared/reportPeriod.ts.
+ * Ändringar måste appliceras på båda filerna (Deno-runtime kan inte
+ * importera direkt från src/, därav duplicering).
  */
 import { z } from "zod";
 
