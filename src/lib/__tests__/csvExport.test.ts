@@ -1,5 +1,49 @@
 import { describe, it, expect } from "vitest";
-import { toCsv, toSwedishCsv, CSV_BOM } from "../csvExport";
+import { toCsv, toSwedishCsv, CSV_BOM, SWEDISH_HEADER_MAPS } from "../csvExport";
+
+describe("MyDataSection-regressioner (FIX 1+2)", () => {
+  it("Hönor-CSV har header 'Namn' inte 'name'", () => {
+    const csv = toSwedishCsv(
+      [{ id: "abc", name: "Agda", breed: "Skånsk" }],
+      SWEDISH_HEADER_MAPS.hens
+    );
+    const headerLine = csv.replace(CSV_BOM, "").split(/\r?\n/)[0];
+    expect(headerLine).toContain("Namn");
+    expect(headerLine).toContain("Ras");
+    expect(headerLine).not.toMatch(/(^|;)name(;|$)/);
+    expect(headerLine).not.toMatch(/(^|;)breed(;|$)/);
+  });
+
+  it("Numeriskt värde 12.5 serialiseras som '12,5'", () => {
+    const csv = toSwedishCsv([{ amount_kg: 12.5 }], SWEDISH_HEADER_MAPS.feed_records);
+    expect(csv).toContain("12,5");
+    expect(csv).not.toContain("12.5");
+  });
+
+  it("Heltal förblir heltal (5 → '5', inte '5,0')", () => {
+    const csv = toSwedishCsv([{ count: 5 }], SWEDISH_HEADER_MAPS.egg_logs);
+    const dataLine = csv.replace(CSV_BOM, "").split(/\r?\n/)[1];
+    expect(dataLine).toMatch(/(^|;)5(;|$)/);
+    expect(dataLine).not.toContain("5,0");
+  });
+
+  it("Tomt rad-värde blir tomt fält, inte 'null'", () => {
+    const csv = toSwedishCsv(
+      [{ name: "Agda", breed: null, notes: undefined }],
+      SWEDISH_HEADER_MAPS.hens
+    );
+    expect(csv).not.toContain("null");
+    expect(csv).not.toContain("undefined");
+  });
+
+  it("Anteckningar med punkt i text konverteras INTE till komma", () => {
+    const csv = toSwedishCsv(
+      [{ notes: "Frisk. Lägger 1.a klassens ägg." }],
+      SWEDISH_HEADER_MAPS.hens
+    );
+    expect(csv).toContain("Frisk. Lägger 1.a klassens ägg.");
+  });
+});
 
 describe("toCsv (matchar MyDataSection)", () => {
   it("börjar med UTF-8 BOM", () => {
