@@ -107,7 +107,9 @@ export function MyDataSection() {
     try {
       const rows = await fetchAll(cat.table, user.id);
       const today = new Date().toISOString().split("T")[0];
-      downloadCsv(rows, `honsgarden-${cat.key}-${today}.csv`);
+      const headerMap = SWEDISH_HEADER_MAPS[cat.headerMapKey ?? cat.key] ?? {};
+      const csv = toSwedishCsv(rows, headerMap);
+      downloadCsv(csv, `honsgarden-${cat.key}-${today}.csv`);
       toast({ title: `${cat.label} exporterad`, description: `${rows.length} rader.` });
     } catch (err: any) {
       toast({ title: "Export misslyckades", description: err.message, variant: "destructive" });
