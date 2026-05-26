@@ -224,6 +224,23 @@ export default function SettingsPage() {
 
   const isPremium = user?.subscription_status === 'premium';
 
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    toast({ title: 'Söker efter uppdatering…', description: 'Detta tar några sekunder.' });
+    try {
+      const result = await checkForPwaUpdate();
+      if (result.error) {
+        toast({ title: 'Kunde inte söka', description: result.error, variant: 'destructive' });
+      } else if (!result.hasUpdate) {
+        toast({ title: 'Ingen ny version', description: 'Du har redan den senaste versionen installerad.' });
+      }
+      // Om hasUpdate === true triggar onNeedRefresh i PwaUpdatePrompt automatiskt
+      // och sidan laddas om inom kort — ingen toast behövs.
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-8">
       <div>
