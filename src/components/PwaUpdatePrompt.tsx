@@ -23,6 +23,7 @@ export default function PwaUpdatePrompt() {
   const { updateServiceWorker } = useRegisterSW({
     immediate: true,
     onRegistered(registration) {
+      setSwRegistration(registration ?? null);
       if (!registration) return;
 
       const check = () => {
