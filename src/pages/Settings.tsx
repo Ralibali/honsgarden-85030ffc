@@ -521,6 +521,29 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* App-version / Uppdatering */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader>
+          <CardTitle className="font-serif text-lg flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-primary" />
+            App-version
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Hönsgården uppdateras automatiskt i bakgrunden. Om något verkar konstigt kan du tvinga fram en kontroll manuellt.
+          </p>
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl"
+            onClick={handleCheckUpdate}
+            disabled={checkingUpdate}
+          >
+            {checkingUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {checkingUpdate ? 'Söker…' : 'Kontrollera efter uppdatering'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
