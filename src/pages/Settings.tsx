@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   User, Bell, Shield, LogOut, Loader2, MessageSquare, Mail,
   FileText, HelpCircle, Crown, Download, Upload, Palette, Moon, Sun,
-  Heart, ExternalLink, Info, Trash2, CheckCircle2, Clock, Send, RotateCcw, ArrowRight,
+  Heart, ExternalLink, Info, Trash2, CheckCircle2, Clock, Send, RotateCcw, ArrowRight, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
+import { checkForPwaUpdate } from '@/lib/pwaUpdate';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -48,6 +49,7 @@ export default function SettingsPage() {
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   useEffect(() => {
     if (coopSettings) {
@@ -221,6 +223,23 @@ export default function SettingsPage() {
   };
 
   const isPremium = user?.subscription_status === 'premium';
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    toast({ title: 'Söker efter uppdatering…', description: 'Detta tar några sekunder.' });
+    try {
+      const result = await checkForPwaUpdate();
+      if (result.error) {
+        toast({ title: 'Kunde inte söka', description: result.error, variant: 'destructive' });
+      } else if (!result.hasUpdate) {
+        toast({ title: 'Ingen ny version', description: 'Du har redan den senaste versionen installerad.' });
+      }
+      // Om hasUpdate === true triggar onNeedRefresh i PwaUpdatePrompt automatiskt
+      // och sidan laddas om inom kort — ingen toast behövs.
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-8">
@@ -502,6 +521,29 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* App-version / Uppdatering */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader>
+          <CardTitle className="font-serif text-lg flex items-center gap-2">
+            <RefreshCw className="h-5 w-5 text-primary" />
+            App-version
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Hönsgården uppdateras automatiskt i bakgrunden. Om något verkar konstigt kan du tvinga fram en kontroll manuellt.
+          </p>
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl"
+            onClick={handleCheckUpdate}
+            disabled={checkingUpdate}
+          >
+            {checkingUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {checkingUpdate ? 'Söker…' : 'Kontrollera efter uppdatering'}
+          </Button>
+        </CardContent>
+      </Card>
 
       <Card className="border-border/50 shadow-sm">
         <CardHeader>
