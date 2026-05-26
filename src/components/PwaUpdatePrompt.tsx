@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { setSwRegistration } from '@/lib/pwaUpdate';
 
 /**
  * Tvingad auto-uppdatering: så fort en ny service worker-version är
