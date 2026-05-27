@@ -175,11 +175,8 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
 
   const remove = useMutation({
     mutationFn: async (photo: Photo) => {
-      // Extract storage path from URL
-      const marker = `/object/public/${BUCKET}/`;
-      const idx = photo.photo_url.indexOf(marker);
-      if (idx >= 0) {
-        const path = photo.photo_url.substring(idx + marker.length);
+      const path = getStoragePath(photo);
+      if (path) {
         await supabase.storage.from(BUCKET).remove([path]);
       }
       const { error } = await supabase.from('hen_photos').delete().eq('id', photo.id);
