@@ -24,6 +24,7 @@ interface Photo {
   id: string;
   hen_id: string;
   photo_url: string;
+  file_path: string | null;
   caption: string | null;
   taken_at: string;
   created_at: string;
@@ -31,6 +32,19 @@ interface Photo {
 
 const FREE_LIMIT = 5;
 const BUCKET = 'hen-photos';
+const SIGNED_URL_TTL = 60 * 60; // 1 hour
+
+/** Extract storage path from a row, preferring file_path; falls back to parsing legacy public URLs. */
+function getStoragePath(p: Pick<Photo, 'file_path' | 'photo_url'>): string | null {
+  if (p.file_path) return p.file_path;
+  if (!p.photo_url) return null;
+  const marker = `/object/public/${BUCKET}/`;
+  const idx = p.photo_url.indexOf(marker);
+  if (idx >= 0) return p.photo_url.substring(idx + marker.length);
+  // If photo_url is already a bare path (no http), treat as path
+  if (!/^https?:\/\//i.test(p.photo_url)) return p.photo_url;
+  return null;
+}
 
 export default function HenPhotoTimeline({ henId, henName }: { henId: string; henName: string }) {
   const qc = useQueryClient();
