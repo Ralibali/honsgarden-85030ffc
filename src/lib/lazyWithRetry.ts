@@ -1,4 +1,5 @@
 import React from 'react';
+import { isStandalonePwa, recoverStalePwaShell } from '@/lib/pwaUpdate';
 
 export function lazyWithRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
@@ -14,7 +15,11 @@ export function lazyWithRetry<T extends React.ComponentType<any>>(
 
       if (isChunkError && !alreadyReloaded) {
         sessionStorage.setItem(key, Date.now().toString());
-        window.location.reload();
+        if (isStandalonePwa()) {
+          void recoverStalePwaShell('chunk-load-error');
+        } else {
+          window.location.reload();
+        }
         // Returnera en aldrig-resolvad promise så Suspense fortsätter visa
         // fallback tills reloaden faktiskt sker
         return new Promise<{ default: T }>(() => {});
