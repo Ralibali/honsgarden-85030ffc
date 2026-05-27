@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { setSwRegistration } from '@/lib/pwaUpdate';
+import { forceFreshAppReload } from '@/lib/cacheRefresh';
 
 /**
  * Tvingad auto-uppdatering: så fort en ny service worker-version är
@@ -17,7 +18,7 @@ export default function PwaUpdatePrompt() {
   const triggerReload = () => {
     if (reloadedRef.current) return;
     reloadedRef.current = true;
-    window.location.reload();
+    void forceFreshAppReload('service-worker-update');
   };
 
   const { updateServiceWorker } = useRegisterSW({
