@@ -2,6 +2,13 @@ let swRegistration: ServiceWorkerRegistration | null = null;
 let onUpdateFoundCb: (() => void) | null = null;
 let updateFoundListenersAttached = new WeakSet<ServiceWorkerRegistration>();
 
+export function isStandalonePwa(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia('(display-mode: standalone)').matches || navigatorWithStandalone.standalone === true;
+}
+
 export function isPwaRegistrationDisabled(): boolean {
   if (typeof window === 'undefined') return true;
 
@@ -25,6 +32,27 @@ export async function cleanupPreviewServiceWorkers() {
 
   const registrations = await navigator.serviceWorker.getRegistrations();
   await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+}
+
+export async function recoverStalePwaShell(reason = 'stale-pwa-shell') {
+  if (typeof window === 'undefined') return;
+
+  try {
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.allSettled(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+    }
+  } finally {
+    const url = new URL(window.location.href);
+    url.searchParams.set('app-refresh', Date.now().toString());
+    url.searchParams.set('reason', reason);
+    window.location.replace(url.toString());
+  }
 }
 
 export function setSwRegistration(reg: ServiceWorkerRegistration | null) {
