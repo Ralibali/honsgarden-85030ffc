@@ -9,6 +9,7 @@ import CookieConsent from "./components/CookieConsent";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
 import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
+import { SuspenseFallback } from "./components/SuspenseFallback";
 
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import SettingsPage from "./pages/Settings";
@@ -80,14 +81,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const LoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="flex flex-col items-center gap-3">
-      <span className="text-2xl">🥚</span>
-      <span className="text-sm text-muted-foreground">Laddar...</span>
-    </div>
-  </div>
-);
+const LoadingFallback = () => <SuspenseFallback fullScreen />;
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();

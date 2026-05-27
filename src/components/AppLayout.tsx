@@ -6,6 +6,7 @@ import { MobileNav } from './MobileNav';
 import { QuickEggFAB } from './QuickEggFAB';
 import CommandPalette from './CommandPalette';
 import AppComingSoonDialog from './AppComingSoonDialog';
+import { SuspenseFallback } from '@/components/SuspenseFallback';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
@@ -71,14 +72,7 @@ export default function AppLayout() {
             id="main-content"
             className="flex-1 px-4 md:px-6 lg:px-8 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-8 relative z-10"
           >
-            <Suspense fallback={
-              <div className="flex items-center justify-center py-20">
-                <div className="flex flex-col items-center gap-3">
-                  <span className="text-2xl">🥚</span>
-                  <span className="text-sm text-muted-foreground">Laddar din hönsgård...</span>
-                </div>
-              </div>
-            }>
+            <Suspense fallback={<SuspenseFallback />}>
               <Outlet />
             </Suspense>
           </main>
