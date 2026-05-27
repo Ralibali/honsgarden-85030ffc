@@ -68,13 +68,36 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hen_photos')
-        .select('*')
+        .select('id, hen_id, photo_url, file_path, caption, taken_at, created_at')
         .eq('hen_id', henId)
         .order('taken_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Photo[];
     },
     staleTime: 5 * 60_000,
+  });
+
+  // Sign URLs for private bucket. Re-signs every ~50 minutes.
+  const { data: signedMap = {} } = useQuery({
+    queryKey: ['hen-photos-signed', henId, photos.map((p) => p.id).join(',')],
+    enabled: photos.length > 0,
+    staleTime: 50 * 60_000,
+    refetchInterval: 50 * 60_000,
+    queryFn: async () => {
+      const paths = photos
+        .map((p) => ({ id: p.id, path: getStoragePath(p) }))
+        .filter((x): x is { id: string; path: string } => !!x.path);
+      if (paths.length === 0) return {};
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrls(paths.map((p) => p.path), SIGNED_URL_TTL);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((entry, i) => {
+        if (entry?.signedUrl) map[paths[i].id] = entry.signedUrl;
+      });
+      return map;
+    },
   });
 
   // Group by month
