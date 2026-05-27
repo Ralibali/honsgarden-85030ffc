@@ -10,6 +10,21 @@ if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark');
 }
 
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault();
+  const key = 'chunk_reload_attempted_v1';
+  if (!sessionStorage.getItem(key)) {
+    sessionStorage.setItem(key, Date.now().toString());
+    window.location.reload();
+  }
+});
+
+// Rensa flaggan efter lyckad mount så nästa session inte tror att
+// det redan reloadats
+window.addEventListener('load', () => {
+  setTimeout(() => sessionStorage.removeItem('chunk_reload_attempted_v1'), 5000);
+});
+
 // Fånga oinfångade fel och unhandled promise-rejections innan render
 installGlobalErrorHandlers();
 
