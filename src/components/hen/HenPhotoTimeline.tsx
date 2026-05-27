@@ -370,7 +370,7 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
           {lightboxIndex !== null && photos[lightboxIndex] && (
             <div className="relative">
               <img
-                src={photos[lightboxIndex].photo_url}
+                src={signedMap[photos[lightboxIndex].id] || ''}
                 alt={photos[lightboxIndex].caption || ''}
                 className="w-full max-h-[80vh] object-contain bg-black"
               />
