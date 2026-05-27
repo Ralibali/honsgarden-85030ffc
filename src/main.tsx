@@ -3,6 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import "./mobile.css";
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
+import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
 
 // Restore theme preference before render to avoid flash
 const savedTheme = localStorage.getItem('theme');
@@ -15,7 +16,11 @@ window.addEventListener('vite:preloadError', (event) => {
   const key = 'chunk_reload_attempted_v1';
   if (!sessionStorage.getItem(key)) {
     sessionStorage.setItem(key, Date.now().toString());
-    window.location.reload();
+    if (isStandalonePwa()) {
+      void recoverStalePwaShell('preload-error');
+    } else {
+      window.location.reload();
+    }
   }
 });
 
