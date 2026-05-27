@@ -24,6 +24,7 @@ interface Photo {
   id: string;
   hen_id: string;
   photo_url: string;
+  file_path: string | null;
   caption: string | null;
   taken_at: string;
   created_at: string;
@@ -31,6 +32,19 @@ interface Photo {
 
 const FREE_LIMIT = 5;
 const BUCKET = 'hen-photos';
+const SIGNED_URL_TTL = 60 * 60; // 1 hour
+
+/** Extract storage path from a row, preferring file_path; falls back to parsing legacy public URLs. */
+function getStoragePath(p: Pick<Photo, 'file_path' | 'photo_url'>): string | null {
+  if (p.file_path) return p.file_path;
+  if (!p.photo_url) return null;
+  const marker = `/object/public/${BUCKET}/`;
+  const idx = p.photo_url.indexOf(marker);
+  if (idx >= 0) return p.photo_url.substring(idx + marker.length);
+  // If photo_url is already a bare path (no http), treat as path
+  if (!/^https?:\/\//i.test(p.photo_url)) return p.photo_url;
+  return null;
+}
 
 export default function HenPhotoTimeline({ henId, henName }: { henId: string; henName: string }) {
   const qc = useQueryClient();
@@ -54,13 +68,36 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hen_photos')
-        .select('*')
+        .select('id, hen_id, photo_url, file_path, caption, taken_at, created_at')
         .eq('hen_id', henId)
         .order('taken_at', { ascending: false });
       if (error) throw error;
       return (data || []) as Photo[];
     },
     staleTime: 5 * 60_000,
+  });
+
+  // Sign URLs for private bucket. Re-signs every ~50 minutes.
+  const { data: signedMap = {} } = useQuery({
+    queryKey: ['hen-photos-signed', henId, photos.map((p) => p.id).join(',')],
+    enabled: photos.length > 0,
+    staleTime: 50 * 60_000,
+    refetchInterval: 50 * 60_000,
+    queryFn: async () => {
+      const paths = photos
+        .map((p) => ({ id: p.id, path: getStoragePath(p) }))
+        .filter((x): x is { id: string; path: string } => !!x.path);
+      if (paths.length === 0) return {};
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrls(paths.map((p) => p.path), SIGNED_URL_TTL);
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      (data || []).forEach((entry, i) => {
+        if (entry?.signedUrl) map[paths[i].id] = entry.signedUrl;
+      });
+      return map;
+    },
   });
 
   // Group by month
@@ -106,11 +143,11 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
         upsert: false,
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { error: insErr } = await supabase.from('hen_photos').insert({
         hen_id: henId,
         user_id: user.id,
-        photo_url: pub.publicUrl,
+        photo_url: path, // bucket is now private; store path (not public URL)
+        file_path: path,
         caption: caption.trim() || null,
         taken_at: takenAt,
       });
@@ -138,11 +175,8 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
 
   const remove = useMutation({
     mutationFn: async (photo: Photo) => {
-      // Extract storage path from URL
-      const marker = `/object/public/${BUCKET}/`;
-      const idx = photo.photo_url.indexOf(marker);
-      if (idx >= 0) {
-        const path = photo.photo_url.substring(idx + marker.length);
+      const path = getStoragePath(photo);
+      if (path) {
         await supabase.storage.from(BUCKET).remove([path]);
       }
       const { error } = await supabase.from('hen_photos').delete().eq('id', photo.id);
@@ -248,10 +282,10 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
                             className="block rounded-xl overflow-hidden border border-border/50 hover:border-primary/40 transition-all"
                           >
                             <img
-                              src={p.photo_url}
+                              src={signedMap[p.id] || ''}
                               alt={p.caption || `Bild av ${henName}`}
                               loading="lazy"
-                              className="h-32 w-32 object-cover"
+                              className="h-32 w-32 object-cover bg-muted"
                             />
                           </button>
                           <button
@@ -336,7 +370,7 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
           {lightboxIndex !== null && photos[lightboxIndex] && (
             <div className="relative">
               <img
-                src={photos[lightboxIndex].photo_url}
+                src={signedMap[photos[lightboxIndex].id] || ''}
                 alt={photos[lightboxIndex].caption || ''}
                 className="w-full max-h-[80vh] object-contain bg-black"
               />
