@@ -143,11 +143,11 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
         upsert: false,
       });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { error: insErr } = await supabase.from('hen_photos').insert({
         hen_id: henId,
         user_id: user.id,
-        photo_url: pub.publicUrl,
+        photo_url: path, // bucket is now private; store path (not public URL)
+        file_path: path,
         caption: caption.trim() || null,
         taken_at: takenAt,
       });
