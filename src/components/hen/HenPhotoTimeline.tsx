@@ -282,10 +282,10 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
                             className="block rounded-xl overflow-hidden border border-border/50 hover:border-primary/40 transition-all"
                           >
                             <img
-                              src={p.photo_url}
+                              src={signedMap[p.id] || ''}
                               alt={p.caption || `Bild av ${henName}`}
                               loading="lazy"
-                              className="h-32 w-32 object-cover"
+                              className="h-32 w-32 object-cover bg-muted"
                             />
                           </button>
                           <button
