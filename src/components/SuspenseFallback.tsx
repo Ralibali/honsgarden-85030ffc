@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
+import { isStandalonePwa, recoverStalePwaShell } from '@/lib/pwaUpdate';
 
 interface Props {
   /** Visa watchdog-knapp efter X ms. Default 8000. */
@@ -18,14 +19,32 @@ export function SuspenseFallback({ timeoutMs = 8000, fullScreen = false }: Props
     return () => clearTimeout(t);
   }, [timeoutMs]);
 
+  useEffect(() => {
+    if (!tookTooLong || !isStandalonePwa()) return;
+
+    const key = 'pwa_stale_shell_recovered_v1';
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, Date.now().toString());
+      void recoverStalePwaShell('automatic-suspense-timeout');
+    } catch {
+      void recoverStalePwaShell('automatic-suspense-timeout');
+    }
+  }, [tookTooLong]);
+
   const handleReload = () => {
     // Rensa retry-flaggan så lazyWithRetry/preloadError-handler kan reagera igen
     try {
       sessionStorage.removeItem('chunk_reload_attempted_v1');
+      sessionStorage.removeItem('pwa_stale_shell_recovered_v1');
     } catch {
       // ignore
     }
-    window.location.reload();
+    if (isStandalonePwa()) {
+      void recoverStalePwaShell('suspense-timeout');
+    } else {
+      window.location.reload();
+    }
   };
 
   const wrapper = fullScreen
