@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { setSwRegistration } from '@/lib/pwaUpdate';
-import { forceFreshAppReload } from '@/lib/cacheRefresh';
+import { cleanupPreviewServiceWorkers, isPwaRegistrationDisabled, setSwRegistration } from '@/lib/pwaUpdate';
 
 /**
  * Tvingad auto-uppdatering: så fort en ny service worker-version är
@@ -13,17 +12,18 @@ import { forceFreshAppReload } from '@/lib/cacheRefresh';
  *   triggar uppdateringen först.
  */
 export default function PwaUpdatePrompt() {
-  const reloadedRef = useRef(false);
-
-  const triggerReload = () => {
-    if (reloadedRef.current) return;
-    reloadedRef.current = true;
-    void forceFreshAppReload('service-worker-update');
-  };
+  const updateTriggeredRef = useRef(false);
+  const disabled = isPwaRegistrationDisabled();
 
   const { updateServiceWorker } = useRegisterSW({
-    immediate: true,
+    immediate: !disabled,
     onRegistered(registration) {
+      if (disabled) {
+        setSwRegistration(null);
+        void cleanupPreviewServiceWorkers();
+        return;
+      }
+
       setSwRegistration(registration ?? null);
       if (!registration) return;
 
@@ -46,6 +46,8 @@ export default function PwaUpdatePrompt() {
     },
     onNeedRefresh() {
       // Auto-aktivera ny SW och ladda om utan att fråga användaren.
+      if (updateTriggeredRef.current) return;
+      updateTriggeredRef.current = true;
       void updateServiceWorker(true);
     },
     onRegisterError(err) {
@@ -54,13 +56,8 @@ export default function PwaUpdatePrompt() {
   });
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
-    const handler = () => triggerReload();
-    navigator.serviceWorker.addEventListener('controllerchange', handler);
-    return () => {
-      navigator.serviceWorker.removeEventListener('controllerchange', handler);
-    };
-  }, []);
+    if (disabled) void cleanupPreviewServiceWorkers();
+  }, [disabled]);
 
   return null;
 }
