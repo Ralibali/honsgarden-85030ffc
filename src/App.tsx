@@ -9,6 +9,7 @@ import CookieConsent from "./components/CookieConsent";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
 import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
+import { SuspenseFallback } from "./components/SuspenseFallback";
 
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import SettingsPage from "./pages/Settings";
