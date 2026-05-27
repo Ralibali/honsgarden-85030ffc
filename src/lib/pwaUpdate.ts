@@ -1,9 +1,11 @@
 let swRegistration: ServiceWorkerRegistration | null = null;
 let onUpdateFoundCb: (() => void) | null = null;
+let updateFoundListenersAttached = new WeakSet<ServiceWorkerRegistration>();
 
 export function setSwRegistration(reg: ServiceWorkerRegistration | null) {
   swRegistration = reg;
-  if (reg) {
+  if (reg && !updateFoundListenersAttached.has(reg)) {
+    updateFoundListenersAttached.add(reg);
     reg.addEventListener('updatefound', () => {
       onUpdateFoundCb?.();
     });
