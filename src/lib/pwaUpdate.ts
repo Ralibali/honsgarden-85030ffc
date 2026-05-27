@@ -1,6 +1,6 @@
 let swRegistration: ServiceWorkerRegistration | null = null;
 let onUpdateFoundCb: (() => void) | null = null;
-let updateFoundListenersAttached = new WeakSet<ServiceWorkerRegistration>();
+const updateFoundListenersAttached = new WeakSet<ServiceWorkerRegistration>();
 
 export function isStandalonePwa(): boolean {
   if (typeof window === 'undefined') return false;
