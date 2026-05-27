@@ -1,4 +1,5 @@
 import { lazy, type ComponentType } from "react";
+import { forceFreshAppReload } from "@/lib/cacheRefresh";
 
 /**
  * Wrapper kring React.lazy som hanterar fallet då en gammal flik försöker
@@ -29,7 +30,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
         const alreadyReloaded = sessionStorage.getItem(RELOAD_KEY);
         if (!alreadyReloaded) {
           sessionStorage.setItem(RELOAD_KEY, "1");
-          window.location.reload();
+          void forceFreshAppReload("chunk-load-error");
           // Returnera en pending promise så Suspense fortsätter visa loader
           // tills reloaden slår igenom.
           return await new Promise<{ default: T }>(() => {});
