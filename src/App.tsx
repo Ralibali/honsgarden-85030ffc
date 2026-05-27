@@ -11,6 +11,7 @@ import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
 import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
 
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import SettingsPage from "./pages/Settings";
 
 const PwaUpdatePrompt = lazyWithRetry(() => import("./components/PwaUpdatePrompt"));
 
@@ -27,7 +28,6 @@ const Feed = lazyWithRetry(() => import("./pages/Feed"));
 const Reminders = lazyWithRetry(() => import("./pages/Reminders"));
 const Hatching = lazyWithRetry(() => import("./pages/Hatching"));
 const DailyTasks = lazyWithRetry(() => import("./pages/DailyTasks"));
-const SettingsPage = lazyWithRetry(() => import("./pages/Settings"));
 const Feedback = lazyWithRetry(() => import("./pages/Feedback"));
 const Premium = lazyWithRetry(() => import("./pages/Premium"));
 const Community = lazyWithRetry(() => import("./pages/Community"));
