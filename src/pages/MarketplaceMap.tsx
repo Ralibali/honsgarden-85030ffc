@@ -44,6 +44,11 @@ export default function MarketplaceMap() {
   const [zoom, setZoom] = useState<number>(5);
 
   useEffect(() => {
+    document.title = "Köp färska ägg nära dig – karta | Hönsgården";
+    setMeta(
+      "description",
+      "Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige.",
+    );
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
