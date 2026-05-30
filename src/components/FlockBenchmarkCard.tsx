@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Flag, Egg, TrendingUp, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { PremiumGate } from '@/components/PremiumGate';
+import { useAuth } from '@/hooks/useAuth';
 
 type BenchmarkRow = {
   user_eggs_per_hen: number | null;
@@ -154,11 +154,9 @@ function BenchmarkPreviewLocked() {
 }
 
 export default function FlockBenchmarkCard() {
-  return (
-    <PremiumGate feature="Sverige-benchmark" blur={false}>
-      <BenchmarkInner />
-    </PremiumGate>
-  );
+  const { user } = useAuth();
+  const isPremium = user?.subscription_status === 'premium';
+  if (!isPremium) return <BenchmarkPreviewLocked />;
+  return <BenchmarkInner />;
 }
 
-export { BenchmarkPreviewLocked };
