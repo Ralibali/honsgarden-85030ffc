@@ -81,9 +81,10 @@ interface AdminFeedbackItem extends Feedback {
 
 // Helper to get current user id
 async function getUserId(): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-  return user.id;
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error('Not authenticated');
+  return userId;
 }
 
 // ==================== HENS ====================
