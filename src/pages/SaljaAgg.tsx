@@ -492,6 +492,14 @@ export default function SaljaAgg() {
             <p className="text-center text-xs text-muted-foreground mt-6">
               Är din ort inte med? Det funkar lika bra ändå – skapa kontot så syns du på lokala sökningar i din kommun.
             </p>
+            <div className="mt-6 flex justify-center">
+              <Link
+                to="/karta"
+                className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-medium hover:opacity-90 transition"
+              >
+                <MapPin className="h-4 w-4" /> Se alla säljare på kartan
+              </Link>
+            </div>
           </div>
         </section>
 
