@@ -21,6 +21,60 @@ import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
 import { checkForPwaUpdate } from '@/lib/pwaUpdate';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+
+function PushNotificationsRow() {
+  const { supported, enabled, busy, enable, disable, sendTest } = usePushNotifications();
+
+  if (!supported) {
+    return (
+      <div className="py-2">
+        <p className="text-sm font-medium text-foreground">Push-notiser på den här enheten</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Push stöds inte i den här webbläsaren. På iPhone: öppna appen, tryck Dela →
+          Lägg till på hemskärmen, och slå sedan på push därifrån.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between py-2">
+        <div>
+          <p className="text-sm font-medium text-foreground">Push-notiser på den här enheten</p>
+          <p className="text-xs text-muted-foreground">Få påminnelser även när appen är stängd.</p>
+        </div>
+        <Switch
+          checked={enabled}
+          disabled={busy}
+          onCheckedChange={async (checked) => {
+            if (checked) {
+              const ok = await enable();
+              if (!ok) toast({ title: 'Push aktiverades inte', description: 'Behörighet nekades eller är inte tillgänglig.' });
+            } else {
+              await disable();
+            }
+          }}
+        />
+      </div>
+      {enabled && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+          disabled={busy}
+          onClick={async () => {
+            await sendTest();
+            toast({ title: 'Testnotis skickad 📲' });
+          }}
+        >
+          Skicka testnotis
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -408,6 +462,10 @@ export default function SettingsPage() {
                 }}
               />
             </div>
+          </div>
+          </div>
+          <div className="border-t border-border/30 pt-4 mt-2">
+            <PushNotificationsRow />
           </div>
           <Button variant="outline" onClick={() => saveReminderMutation.mutate({ morning_reminder: morningReminder, evening_reminder: eveningReminder })} disabled={saveReminderMutation.isPending} className="rounded-xl">
             {saveReminderMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
