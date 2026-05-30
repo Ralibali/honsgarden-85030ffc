@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
-import { checkForPwaUpdate } from '@/lib/pwaUpdate';
+import { checkForPwaUpdate, isStandalonePwa } from '@/lib/pwaUpdate';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 function PushNotificationsRow() {
