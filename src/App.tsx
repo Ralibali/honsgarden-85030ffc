@@ -130,6 +130,7 @@ const AppRoutes = () => (
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/karta" element={<MarketplaceMap />} />
+        <Route path="/demo" element={<DemoApp />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<PublicReview />} />
