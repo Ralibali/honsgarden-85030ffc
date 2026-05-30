@@ -13,7 +13,8 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
   const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
-  const vapidSubject = Deno.env.get("VAPID_SUBJECT") ?? "mailto:info@auroramedia.se";
+  const rawSubject = Deno.env.get("VAPID_SUBJECT") ?? "";
+  const vapidSubject = /^(mailto:|https?:\/\/)/i.test(rawSubject) ? rawSubject : "mailto:info@auroramedia.se";
   if (!serviceKey || !vapidPublic || !vapidPrivate) {
     return new Response(JSON.stringify({ error: "config" }), { status: 500, headers: corsHeaders });
   }
