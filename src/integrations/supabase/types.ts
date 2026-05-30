@@ -3173,6 +3173,15 @@ export type Database = {
         }[]
       }
       get_farm_user_ids: { Args: { _uid: string }; Returns: string[] }
+      get_flock_benchmark: {
+        Args: never
+        Returns: {
+          national_avg_eggs_per_hen: number
+          sample_flocks: number
+          user_eggs_per_hen: number
+          user_percentile: number
+        }[]
+      }
       get_hen_ancestors: {
         Args: { _generations?: number; _hen_id: string }
         Returns: {

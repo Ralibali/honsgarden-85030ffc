@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import Dashboard from './Dashboard';
+
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
 import DataCompletionNudges from '@/components/DataCompletionNudges';
 import InstallAppCard from '@/components/InstallAppCard';
@@ -50,7 +50,7 @@ export default function DashboardV2() {
         </CardContent>
       </Card>
 
-      <Dashboard />
+      
     </div>
   );
 }

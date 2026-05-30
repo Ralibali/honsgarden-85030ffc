@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { BarChart3, Copy, Crown, PackageCheck, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
-import EggSalesProV6 from './EggSalesProV6';
+
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
 
@@ -204,7 +204,7 @@ export default function EggSalesProV7() {
         </CardContent>
       </Card>
 
-      <EggSalesProV6 />
+      
     </div>
   );
 }

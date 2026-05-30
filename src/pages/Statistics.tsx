@@ -10,6 +10,7 @@ import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
+import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 
 export default function Statistics() {
   const [showAllInsights, setShowAllInsights] = useState(false);
@@ -91,6 +92,8 @@ export default function Statistics() {
         ) : (
           <>
             <SmartStatisticsOverview />
+
+            <FlockBenchmarkCard />
 
             {insights && insights.tips && (() => {
               const tips = (Array.isArray(insights.tips) ? insights.tips : [insights.tips]).filter(Boolean);
