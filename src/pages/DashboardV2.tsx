@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 
+import Dashboard from './Dashboard';
+import MobileAppDashboardHero from '@/components/MobileAppDashboardHero';
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
 import DataCompletionNudges from '@/components/DataCompletionNudges';
 import InstallAppCard from '@/components/InstallAppCard';
@@ -17,6 +19,10 @@ export default function DashboardV2() {
 
   return (
     <div className="space-y-5 pb-8">
+      <div className="md:hidden">
+        <MobileAppDashboardHero />
+      </div>
+
       <div className="max-w-4xl mx-auto">
         <InstallAppCard />
       </div>
@@ -50,7 +56,7 @@ export default function DashboardV2() {
         </CardContent>
       </Card>
 
-      
+      <Dashboard />
     </div>
   );
 }
