@@ -61,6 +61,14 @@ export default function EggSalesProV7() {
     refetchInterval: 60_000,
   });
 
+  // Geokoda annonser som saknar koordinater – fire-and-forget.
+  useEffect(() => {
+    const missing = (listings as any[]).filter((l) => l?.id && (l.latitude == null || l.longitude == null));
+    missing.forEach((l) => {
+      supabase.functions.invoke('geocode-egg-listings', { body: { listing_id: l.id } }).catch(() => {});
+    });
+  }, [listings]);
+
   const { data: bookings = [] } = useQuery({
     queryKey: ['agda-pro-bookings'],
     queryFn: async () => {

@@ -63,6 +63,7 @@ const Health = lazyWithRetry(() => import("./pages/Health"));
 const Breeding = lazyWithRetry(() => import("./pages/Breeding"));
 const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
 const Reports = lazyWithRetry(() => import("./pages/Reports"));
+const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
 
 
 const GuiderRedirect = () => {
@@ -127,6 +128,7 @@ const AppRoutes = () => (
         <Route path="/borja-med-hons" element={<SeoLandingPage pageKey="borja-med-hons" />} />
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
+        <Route path="/karta" element={<MarketplaceMap />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<PublicReview />} />
