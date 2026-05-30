@@ -106,16 +106,24 @@ serve(async (req) => {
       const subscriptionEnd = getStripeEnd(stripeSubscription);
       const productId = getStripeProductId(stripeSubscription);
 
-      const { error: updateError } = await supabaseClient
-        .from("profiles")
-        .update({
-          stripe_customer_id: customerId,
-          subscription_status: "premium",
-          premium_expires_at: subscriptionEnd,
-        })
-        .eq("user_id", user.id);
+      const desiredExpiry = hasLifetimePremium ? null : subscriptionEnd;
+      const needsUpdate =
+        profile?.stripe_customer_id !== customerId ||
+        profile?.subscription_status !== "premium" ||
+        (profile?.premium_expires_at ?? null) !== desiredExpiry;
 
-      if (updateError) throw new Error(`Profile update error: ${updateError.message}`);
+      if (needsUpdate) {
+        const { error: updateError } = await supabaseClient
+          .from("profiles")
+          .update({
+            stripe_customer_id: customerId,
+            subscription_status: "premium",
+            premium_expires_at: desiredExpiry,
+          })
+          .eq("user_id", user.id);
+
+        if (updateError) throw new Error(`Profile update error: ${updateError.message}`);
+      }
 
       return new Response(JSON.stringify({
         subscribed: true,
