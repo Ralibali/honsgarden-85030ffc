@@ -213,6 +213,19 @@ export default function SaljaAggOrt() {
                     <Link to="/salja-agg#ai-pitch">Testa AI-säljtext först</Link>
                   </Button>
                 </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Button asChild size="lg" variant="secondary" className="gap-2">
+                    <Link to={`/karta?ort=${ort.slug}`}>
+                      <MapPin className="h-4 w-4" />
+                      Se säljare i {ort.name} på kartan
+                    </Link>
+                  </Button>
+                  {sellerCount > 0 && (
+                    <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+                      {sellerCount} säljare i {ort.name} just nu
+                    </Badge>
+                  )}
+                </div>
               </motion.div>
 
               <motion.figure {...fadeUp(0.1)} className="hidden lg:block">
