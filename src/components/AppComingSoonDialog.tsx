@@ -87,7 +87,8 @@ export default function AppComingSoonDialog() {
       (navigator as any).standalone === true;
 
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (!standalone && !readScoped(userId, STORAGE_KEY)) {
+    const onSettings = window.location.pathname.startsWith('/app/settings');
+    if (!standalone && !onSettings && !readScoped(userId, STORAGE_KEY)) {
       timer = setTimeout(() => {
         setOpen(true);
         trackClick('app_coming_soon_shown', {
