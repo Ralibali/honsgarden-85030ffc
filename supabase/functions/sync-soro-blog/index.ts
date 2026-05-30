@@ -29,6 +29,16 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (!["GET", "POST"].includes(req.method)) return jsonResponse({ error: "Method not allowed" }, 405);
 
+  const auth = req.headers.get("Authorization") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const provided = auth.replace("Bearer ", "").trim();
+  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  if (provided !== serviceKeyAuth && !okSecret) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
