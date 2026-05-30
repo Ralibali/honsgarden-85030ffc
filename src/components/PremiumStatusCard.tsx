@@ -18,7 +18,7 @@ function formatDate(d: Date): string {
 
 export default function PremiumStatusCard() {
   const navigate = useNavigate();
-  const { user, refreshSubscription } = useAuth();
+  const { user, refreshSubscription, reloadProfile } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
   const isLifetime = user?.premium_type === 'lifetime';
@@ -47,12 +47,12 @@ export default function PremiumStatusCard() {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          void refreshSubscription();
+          void reloadProfile();
         },
       )
       .subscribe();
 
-    const onFocus = () => { void refreshSubscription(); };
+    const onFocus = () => { void reloadProfile(); };
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onFocus);
 
@@ -61,7 +61,7 @@ export default function PremiumStatusCard() {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onFocus);
     };
-  }, [user?.id, refreshSubscription]);
+  }, [user?.id, reloadProfile]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
