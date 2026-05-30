@@ -51,6 +51,19 @@ export default function SaljaAggOrt() {
   const prefersReduced = useReducedMotion();
   const fadeUp = makeFadeUp(prefersReduced);
 
+  const { data: sellerCount = 0 } = useQuery({
+    queryKey: ['ort-seller-count', ort?.name],
+    enabled: !!ort,
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from('public_egg_sale_listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .ilike('location', `%${ort!.name}%`);
+      return count ?? 0;
+    },
+  });
+
   const meta = ort ? buildOrtMeta(ort) : null;
   const title = meta?.title ?? 'Sälja ägg lokalt i Sverige | Hönsgården';
   const description = meta?.description ?? '';
