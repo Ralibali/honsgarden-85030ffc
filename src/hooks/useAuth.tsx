@@ -172,6 +172,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const reloadProfile = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const profile = await buildProfile(session.user, { sync: false });
+      if (profile) setUser(profile);
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
