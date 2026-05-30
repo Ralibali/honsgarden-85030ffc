@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { Button } from "@/components/ui/button";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { getOrt } from "@/data/saljaAggOrter";
 
 function setMeta(name: string, content: string) {
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -39,16 +41,34 @@ const eggIcon = L.divIcon({
 
 const SWEDEN_CENTER: [number, number] = [62.0, 15.0];
 
+function FitToMarkers({ points }: { points: [number, number][] }) {
+  const map = useMap();
+  React.useEffect(() => {
+    if (points.length > 0) {
+      map.fitBounds(points as any, { padding: [40, 40], maxZoom: 12 });
+    }
+  }, [points, map]);
+  return null;
+}
+
 export default function MarketplaceMap() {
+  const [params] = useSearchParams();
+  const ortSlug = params.get("ort");
+  const ort = ortSlug ? getOrt(ortSlug) : undefined;
+
   const [center, setCenter] = useState<[number, number]>(SWEDEN_CENTER);
   const [zoom, setZoom] = useState<number>(5);
 
   useEffect(() => {
-    document.title = "Köp färska ägg nära dig – karta | Hönsgården";
-    setMeta(
-      "description",
-      "Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige.",
-    );
+    const title = ort
+      ? `Köp färska ägg i ${ort.name} – karta | Hönsgården`
+      : "Köp färska ägg nära dig – karta | Hönsgården";
+    const desc = ort
+      ? `Hitta lokala hönsgårdar som säljer färska ägg i ${ort.name}. Se alla aktiva säljare på en karta.`
+      : "Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige.";
+    document.title = title;
+    setMeta("description", desc);
+    if (ort) return; // hoppa över geolocation när vi har en vald ort
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -58,7 +78,7 @@ export default function MarketplaceMap() {
       () => {},
       { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 * 30 },
     );
-  }, []);
+  }, [ort]);
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["marketplace-map-listings"],
@@ -75,20 +95,60 @@ export default function MarketplaceMap() {
     },
   });
 
+  const displayed = useMemo(() => {
+    if (!ort) return listings;
+    const needle = ort.name.toLowerCase();
+    return listings.filter((l) => (l.location ?? "").toLowerCase().includes(needle));
+  }, [listings, ort]);
+
+  const markerPoints = useMemo<[number, number][]>(
+    () =>
+      displayed
+        .filter((l) => l.latitude != null && l.longitude != null)
+        .map((l) => [l.latitude as number, l.longitude as number]),
+    [displayed],
+  );
+
+  const heading = ort ? `Ägg till salu i ${ort.name}` : "Ägg till salu nära dig";
+  const subheading = ort
+    ? `Lokala hönsgårdar i ${ort.name} med färska ägg.`
+    : "Upptäck lokala hönsgårdar som säljer färska ägg i hela Sverige. Klicka på en markör för att se annonsen och boka.";
+
+  const ortEmpty = !!ort && displayed.length === 0;
+
   return (
     <div className="min-h-screen bg-background">
-
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="mb-6 sm:mb-8 text-center">
-          <h1 className="font-serif text-3xl sm:text-4xl text-foreground mb-3">
-            Ägg till salu nära dig
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Upptäck lokala hönsgårdar som säljer färska ägg i hela Sverige. Klicka på en
-            markör för att se annonsen och boka.
-          </p>
+          <h1 className="font-serif text-3xl sm:text-4xl text-foreground mb-3">{heading}</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">{subheading}</p>
+          {ort && (
+            <div className="mt-3">
+              <Link
+                to="/karta"
+                className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+              >
+                ← Visa hela Sverige
+              </Link>
+            </div>
+          )}
         </header>
+
+        {ortEmpty && (
+          <div className="mb-5 rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-serif text-lg text-foreground">
+                Inga säljare i {ort!.name} än
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Bli först! Sälj dina egna ägg och dyk upp här direkt.
+              </p>
+            </div>
+            <Button asChild size="lg" className="shrink-0">
+              <Link to="/login">Sälj dina egna ägg här →</Link>
+            </Button>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="h-[70vh] w-full rounded-2xl border bg-card/40 flex items-center justify-center text-muted-foreground">
@@ -110,7 +170,8 @@ export default function MarketplaceMap() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-bidragsgivare</a>'
               />
-              {listings.map((l) =>
+              {ort && displayed.length > 0 && <FitToMarkers points={markerPoints} />}
+              {displayed.map((l) =>
                 l.latitude != null && l.longitude != null ? (
                   <Marker
                     key={l.id}
@@ -154,11 +215,13 @@ export default function MarketplaceMap() {
           </div>
         )}
 
-        {listings.length > 0 && (
+        {displayed.length > 0 && (
           <section className="mt-10">
-            <h2 className="font-serif text-2xl text-foreground mb-4">Alla säljare</h2>
+            <h2 className="font-serif text-2xl text-foreground mb-4">
+              {ort ? `Säljare i ${ort.name}` : "Alla säljare"}
+            </h2>
             <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {listings.map((l) => (
+              {displayed.map((l) => (
                 <li key={l.id}>
                   <Link
                     to={`/s/${l.slug}`}
