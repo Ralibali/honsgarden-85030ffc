@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
-import { checkForPwaUpdate } from '@/lib/pwaUpdate';
+import { checkForPwaUpdate, isStandalonePwa } from '@/lib/pwaUpdate';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 function PushNotificationsRow() {
@@ -550,33 +550,35 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* App / Installation */}
-      <Card className="border-border/50 shadow-sm">
-        <CardHeader>
-          <CardTitle className="font-serif text-lg flex items-center gap-2">
-            <Download className="h-5 w-5 text-primary" />
-            App
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">
-            Visa instruktionerna för att installera Hönsgården på hemskärmen igen.
-          </p>
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl"
-            onClick={() => {
-              try {
-                localStorage.removeItem(`u:${user?.id ?? 'anon'}:app-coming-soon-dismissed`);
-              } catch { /* ignore */ }
-              window.dispatchEvent(new CustomEvent('show-app-install-popup'));
-            }}
-          >
-            <Download className="h-4 w-4" />
-            Visa app-installation igen
-          </Button>
-        </CardContent>
-      </Card>
+      {/* App / Installation – göm för användare som redan installerat PWA:n */}
+      {!isStandalonePwa() && (
+        <Card className="border-border/50 shadow-sm">
+          <CardHeader>
+            <CardTitle className="font-serif text-lg flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" />
+              App
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-3">
+              Visa instruktionerna för att installera Hönsgården på hemskärmen igen.
+            </p>
+            <Button
+              variant="outline"
+              className="gap-2 rounded-xl"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(`u:${user?.id ?? 'anon'}:app-coming-soon-dismissed`);
+                } catch { /* ignore */ }
+                window.dispatchEvent(new CustomEvent('show-app-install-popup'));
+              }}
+            >
+              <Download className="h-4 w-4" />
+              Visa app-installation igen
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* App-version / Uppdatering */}
       <Card className="border-border/50 shadow-sm">

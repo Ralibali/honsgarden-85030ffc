@@ -103,6 +103,7 @@ export default function AppComingSoonDialog() {
     }
 
     const handleManualOpen = () => {
+      if (standalone) return;
       setShowSteps(false);
       setOpen(true);
       trackClick('app_coming_soon_shown', {
