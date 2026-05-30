@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Dashboard from './Dashboard';
 import MobileAppDashboardHero from '@/components/MobileAppDashboardHero';
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
-import DataCompletionNudges from '@/components/DataCompletionNudges';
 import InstallAppCard from '@/components/InstallAppCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent } from '@/components/ui/card';
