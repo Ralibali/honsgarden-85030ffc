@@ -2096,7 +2096,9 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          latitude: number | null
           location: string | null
+          longitude: number | null
           p12_price: number | null
           p30_price: number | null
           p6_price: number | null
@@ -2125,7 +2127,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           p12_price?: number | null
           p30_price?: number | null
           p6_price?: number | null
@@ -2154,7 +2158,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           p12_price?: number | null
           p30_price?: number | null
           p6_price?: number | null
