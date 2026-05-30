@@ -234,13 +234,10 @@ export default function SettingsTrustPortal() {
       setTarget(anchor);
     };
 
-    const timer = window.setTimeout(mount, 120);
-    const observer = new MutationObserver(mount);
-    observer.observe(document.body, { childList: true, subtree: true });
+    const timers = [120, 400, 900].map((delay) => window.setTimeout(mount, delay));
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
-      observer.disconnect();
+      timers.forEach((timer) => window.clearTimeout(timer));
     };
   }, [enabled, isSettings]);
 
