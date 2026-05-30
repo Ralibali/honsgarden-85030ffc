@@ -128,6 +128,7 @@ export default function IndexUpdated() {
               </motion.p>
               <motion.div {...fadeUp(0.12)} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-5">
                 <Button asChild size="lg" className="h-12 sm:h-13 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]"><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-4 w-4" /></a></Button>
+                <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base"><a href="/demo">Prova utan konto</a></Button>
                 <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base border-primary/30 text-primary hover:bg-primary/5"><a href="/salja-agg">Se Agdas äggbod</a></Button>
               </motion.div>
               <motion.div {...fadeUp(0.15)} className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-2xl mx-auto lg:mx-0">
