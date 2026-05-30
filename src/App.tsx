@@ -63,6 +63,7 @@ const Health = lazyWithRetry(() => import("./pages/Health"));
 const Breeding = lazyWithRetry(() => import("./pages/Breeding"));
 const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
 const Reports = lazyWithRetry(() => import("./pages/Reports"));
+const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
 
 
 const GuiderRedirect = () => {
