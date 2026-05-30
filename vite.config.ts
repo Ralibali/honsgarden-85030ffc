@@ -59,6 +59,7 @@ export default defineConfig(({ mode }) => {
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
+        importScripts: ['/push-sw.js'],
         globPatterns: ["**/*.{js,css,ico,png,jpg,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api/],
         runtimeCaching: [
