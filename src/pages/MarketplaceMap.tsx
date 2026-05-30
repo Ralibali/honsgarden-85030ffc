@@ -77,14 +77,7 @@ export default function MarketplaceMap() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Helmet>
-        <title>Köp färska ägg nära dig – karta | Hönsgården</title>
-        <meta
-          name="description"
-          content="Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige."
-        />
-        <link rel="canonical" href="https://honsgarden.se/karta" />
-      </Helmet>
+
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="mb-6 sm:mb-8 text-center">
