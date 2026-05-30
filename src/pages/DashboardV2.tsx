@@ -30,9 +30,6 @@ export default function DashboardV2() {
         <ProductOnboardingChecklist />
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        <DataCompletionNudges />
-      </div>
 
       <Card className="max-w-4xl mx-auto border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm">
         <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
