@@ -100,7 +100,7 @@ export function MobileNav() {
   return (
     <>
       {showMore && (
-        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setShowMore(false)}>
+        <div className="fixed inset-0 z-[70] md:hidden" onClick={() => setShowMore(false)}>
           <div className="absolute inset-0 bg-foreground/15 backdrop-blur-sm" />
           <div
             className="absolute bottom-16 left-2 right-2 bg-card border border-border/60 rounded-2xl p-3 pb-safe-bottom-4 shadow-xl animate-fade-in-scale max-h-[85vh] overflow-y-auto"
