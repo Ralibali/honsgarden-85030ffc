@@ -463,7 +463,6 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          </div>
           <div className="border-t border-border/30 pt-4 mt-2">
             <PushNotificationsRow />
           </div>
