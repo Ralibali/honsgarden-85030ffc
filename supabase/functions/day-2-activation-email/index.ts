@@ -7,7 +7,15 @@ const APP_URL = "https://honsgarden.lovable.app/app";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 const LABEL = "day-2-activation";
 
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
+  const auth = req.headers.get("Authorization") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const provided = auth.replace("Bearer ", "").trim();
+  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  if (provided !== serviceKeyAuth && !okSecret) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!serviceKey) {
