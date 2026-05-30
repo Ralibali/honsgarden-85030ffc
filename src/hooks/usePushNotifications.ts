@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { isPwaRegistrationDisabled } from '@/lib/pwaUpdate';
+
+const SW_READY_TIMEOUT_MS = 2500;
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -23,17 +26,31 @@ async function fetchVapidPublicKey(): Promise<string | null> {
   }
 }
 
+async function getReadyServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) return null;
+
+  const existing = await navigator.serviceWorker.getRegistration().catch(() => null);
+  if (!existing) return null;
+
+  return Promise.race<ServiceWorkerRegistration | null>([
+    navigator.serviceWorker.ready,
+    new Promise((resolve) => window.setTimeout(() => resolve(existing), SW_READY_TIMEOUT_MS)),
+  ]).catch(() => existing);
+}
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const supported = typeof window !== 'undefined'
+    && window.isSecureContext
+    && !isPwaRegistrationDisabled()
     && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!supported) return;
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
+    getReadyServiceWorker()
+      .then((reg) => reg?.pushManager.getSubscription() ?? null)
       .then((sub) => setEnabled(!!sub))
       .catch(() => {});
   }, [supported]);
@@ -44,7 +61,8 @@ export function usePushNotifications() {
     try {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return false;
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getReadyServiceWorker();
+      if (!reg) return false;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         const vapidKey = await fetchVapidPublicKey();
@@ -72,7 +90,8 @@ export function usePushNotifications() {
     if (!supported) return;
     setBusy(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
+      const reg = await getReadyServiceWorker();
+      if (!reg) return;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         const ep = sub.endpoint;

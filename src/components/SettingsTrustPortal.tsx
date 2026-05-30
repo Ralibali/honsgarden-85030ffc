@@ -186,9 +186,19 @@ export default function SettingsTrustPortal() {
   const location = useLocation();
   const isSettings = location.pathname === '/app/settings' || location.pathname === '/app/settings/';
   const [target, setTarget] = useState<HTMLElement | null>(null);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     if (!isSettings) {
+      setEnabled(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setEnabled(true), 600);
+    return () => window.clearTimeout(timer);
+  }, [isSettings]);
+
+  useEffect(() => {
+    if (!isSettings || !enabled) {
       document.getElementById(PORTAL_ID)?.remove();
       setTarget(null);
       return;
@@ -224,15 +234,12 @@ export default function SettingsTrustPortal() {
       setTarget(anchor);
     };
 
-    const timer = window.setTimeout(mount, 80);
-    const observer = new MutationObserver(mount);
-    observer.observe(document.body, { childList: true, subtree: true });
+    const timers = [120, 400, 900].map((delay) => window.setTimeout(mount, delay));
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
-      observer.disconnect();
+      timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, [isSettings]);
+  }, [enabled, isSettings]);
 
   if (!isSettings || !target) return null;
   return createPortal(<SettingsTrustContent />, target);
