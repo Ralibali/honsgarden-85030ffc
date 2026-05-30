@@ -22,6 +22,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   refreshSubscription: () => Promise<void>;
+  reloadProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,11 +64,26 @@ async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscrip
   }
 }
 
-async function buildProfile(supaUser: SupabaseUser): Promise<UserProfile | null> {
-  const { subscribed, subscriptionEnd, premiumType: syncedPremiumType, synced, userMissing } = await syncSubscriptionStatus();
-  if (userMissing) {
-    try { await supabase.auth.signOut(); } catch { /* ignore */ }
-    return null;
+async function buildProfile(
+  supaUser: SupabaseUser,
+  options: { sync?: boolean } = {},
+): Promise<UserProfile | null> {
+  const doSync = options.sync !== false; // default: true
+  let subscribed = false;
+  let subscriptionEnd: string | null = null;
+  let syncedPremiumType: PremiumType | null = null;
+  let synced = false;
+
+  if (doSync) {
+    const res = await syncSubscriptionStatus();
+    if (res.userMissing) {
+      try { await supabase.auth.signOut(); } catch { /* ignore */ }
+      return null;
+    }
+    subscribed = res.subscribed;
+    subscriptionEnd = res.subscriptionEnd;
+    syncedPremiumType = res.premiumType;
+    synced = res.synced;
   }
 
   const { data: profile } = await supabase
