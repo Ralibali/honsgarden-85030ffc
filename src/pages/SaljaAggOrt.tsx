@@ -1,5 +1,7 @@
 import React, { lazy, Suspense, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useSeo } from '@/hooks/useSeo';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import LandingNavbar from '@/components/LandingNavbar';
@@ -48,6 +50,19 @@ export default function SaljaAggOrt() {
   const ort = ortSlug ? getOrt(ortSlug) : undefined;
   const prefersReduced = useReducedMotion();
   const fadeUp = makeFadeUp(prefersReduced);
+
+  const { data: sellerCount = 0 } = useQuery({
+    queryKey: ['ort-seller-count', ort?.name],
+    enabled: !!ort,
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from('public_egg_sale_listings')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_active', true)
+        .ilike('location', `%${ort!.name}%`);
+      return count ?? 0;
+    },
+  });
 
   const meta = ort ? buildOrtMeta(ort) : null;
   const title = meta?.title ?? 'Sälja ägg lokalt i Sverige | Hönsgården';
@@ -197,6 +212,19 @@ export default function SaljaAggOrt() {
                   <Button asChild variant="outline" size="lg" className="h-12 px-7 text-base">
                     <Link to="/salja-agg#ai-pitch">Testa AI-säljtext först</Link>
                   </Button>
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <Button asChild size="lg" variant="secondary" className="gap-2">
+                    <Link to={`/karta?ort=${ort.slug}`}>
+                      <MapPin className="h-4 w-4" />
+                      Se säljare i {ort.name} på kartan
+                    </Link>
+                  </Button>
+                  {sellerCount > 0 && (
+                    <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+                      {sellerCount} säljare i {ort.name} just nu
+                    </Badge>
+                  )}
                 </div>
               </motion.div>
 
