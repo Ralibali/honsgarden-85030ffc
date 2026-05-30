@@ -523,12 +523,18 @@ export default function SaljaAggOrt() {
               </ul>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-2 flex flex-wrap gap-4">
               <Link
                 to="/salja-agg"
                 className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
               >
                 Se alla orter där du kan sälja ägg <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                to="/karta"
+                className="text-sm font-medium text-primary hover:underline inline-flex items-center gap-1"
+              >
+                Se alla säljare på kartan <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
