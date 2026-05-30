@@ -1,5 +1,7 @@
 import React, { lazy, Suspense, useMemo } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useSeo } from '@/hooks/useSeo';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import LandingNavbar from '@/components/LandingNavbar';
