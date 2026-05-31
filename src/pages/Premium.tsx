@@ -55,7 +55,11 @@ export default function Premium() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [searchParams] = useSearchParams();
-  const isPremium = user?.subscription_status === 'premium' || user?.is_premium;
+  const premiumType = user?.premium_type;
+  const isPaidPremium = premiumType === 'paid' || premiumType === 'lifetime';
+  // Visa "Premium aktivt" endast för betalande/lifetime – trialanvändare ska kunna teckna Plus
+  const isPremium = isPaidPremium;
+  const isTrial = premiumType === 'trial';
 
   const premiumJsonLd = useMemo(() => ({
     '@type': 'Product',
