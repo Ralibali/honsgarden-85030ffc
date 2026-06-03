@@ -568,6 +568,19 @@ export default function Admin() {
                       </div>
                     </div>
 
+                    {/* Existing admin reply */}
+                    {fb.admin_reply && (
+                      <div className="mt-3 rounded-xl border border-success/30 bg-success/5 p-3">
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                          <p className="text-[10px] font-semibold text-success uppercase tracking-wide">
+                            Ditt svar {fb.admin_reply_at ? `· ${new Date(fb.admin_reply_at).toLocaleDateString('sv-SE')}` : ''}
+                          </p>
+                        </div>
+                        <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">{fb.admin_reply}</p>
+                      </div>
+                    )}
+
                     {/* Reply form */}
                     {replyingTo === fb.id && (
                       <div className="mt-3 space-y-2 animate-fade-in">
