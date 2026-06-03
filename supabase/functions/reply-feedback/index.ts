@@ -62,12 +62,15 @@ Deno.serve(async (req) => {
     status: "resolved",
   }).eq("id", feedback_id);
 
-  // 2. Create in-app notification for the user
+  // 2. Create in-app notification ONLY for this user (not broadcast)
   if (user_id) {
-    await supabase.from("notifications").insert({
+    await supabase.from("user_notifications").insert({
+      user_id,
+      type: "system",
       title: "Svar på din feedback 💬",
-      message: message.length > 120 ? message.slice(0, 120) + "…" : message,
-      author_id: user.id,
+      body: message.length > 160 ? message.slice(0, 160) + "…" : message,
+      link: "/app/settings",
+      metadata: { feedback_id, kind: "feedback_reply" },
     });
   }
 
