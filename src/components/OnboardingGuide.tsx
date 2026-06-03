@@ -143,7 +143,9 @@ export default function OnboardingGuide() {
       setStep(2);
       await markDone();
     } catch (err: any) {
-      toast({ title: 'Något gick fel', description: 'Vi kunde inte spara hönan just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' });
+      console.error('[OnboardingGuide] addHen failed:', err);
+      const description = err?.message || err?.error_description || 'Okänt fel. Kontrollera din anslutning och försök igen.';
+      toast({ title: 'Kunde inte spara hönan', description, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -184,7 +186,9 @@ export default function OnboardingGuide() {
       await markDone();
       toast({ title: 'Exempeldata är inlagt! 🐔', description: 'Nu kan du se hur Hönsgården fungerar med hönor och äggloggar.' });
     } catch (err: any) {
-      toast({ title: 'Något gick fel', description: 'Vi kunde inte skapa exempeldata just nu. Försök igen om en stund.', variant: 'destructive' });
+      console.error('[OnboardingGuide] loadDemoData failed:', err);
+      const description = err?.message || err?.error_description || 'Okänt fel. Försök igen om en stund.';
+      toast({ title: 'Kunde inte skapa exempeldata', description, variant: 'destructive' });
     } finally {
       setLoadingDemo(false);
     }
