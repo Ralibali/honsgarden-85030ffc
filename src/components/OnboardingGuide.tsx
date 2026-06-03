@@ -143,7 +143,9 @@ export default function OnboardingGuide() {
       setStep(2);
       await markDone();
     } catch (err: any) {
-      toast({ title: 'Något gick fel', description: 'Vi kunde inte spara hönan just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' });
+      console.error('[OnboardingGuide] addHen failed:', err);
+      const description = err?.message || err?.error_description || 'Okänt fel. Kontrollera din anslutning och försök igen.';
+      toast({ title: 'Kunde inte spara hönan', description, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
