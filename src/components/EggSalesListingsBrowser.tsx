@@ -322,22 +322,59 @@ export default function EggSalesListingsBrowser() {
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-8 text-center">
-            <ShoppingBasket className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="font-medium">{hasActiveFilter ? 'Inga träffar' : 'Du har inga säljsidor än'}</p>
-            <p className="text-sm text-muted-foreground mt-1 mb-3">
-              {hasActiveFilter
-                ? 'Prova att rensa filter eller ändra sökorden.'
-                : 'Skapa din första säljsida på under en minut – pris, lager och Swish.'}
-            </p>
-            {hasActiveFilter ? (
+          hasActiveFilter ? (
+            <div className="rounded-2xl border border-dashed p-8 text-center">
+              <ShoppingBasket className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="font-medium">Inga träffar</p>
+              <p className="text-sm text-muted-foreground mt-1 mb-3">
+                Prova att rensa filter eller ändra sökorden.
+              </p>
               <Button variant="outline" size="sm" className="mt-1 rounded-xl" onClick={clearFilters}>
                 Rensa filter
               </Button>
-            ) : (
-              <CreateEggSaleListingDialog />
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed bg-gradient-to-br from-primary/5 via-card to-accent/5 p-6 sm:p-8">
+              <div className="max-w-xl mx-auto text-center space-y-2">
+                <div className="mx-auto h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <ShoppingBasket className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-serif text-lg text-foreground">Kom igång med Agdas bod</h3>
+                <p className="text-sm text-muted-foreground">
+                  På under en minut är din säljsida live – med pris, lager och Swish.
+                </p>
+              </div>
+
+              <ol className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl mx-auto">
+                {[
+                  { n: 1, title: 'Fyll i grunderna', text: 'Titel, pris per karta och hur många ägg du har.' },
+                  { n: 2, title: 'Lägg till Swish', text: 'Så kunderna kan betala direkt vid hämtning.' },
+                  { n: 3, title: 'Dela länken', text: 'Publicera och dela på Facebook eller med grannar.' },
+                ].map((step) => (
+                  <li key={step.n} className="rounded-2xl border bg-card/80 p-3 flex gap-3 items-start">
+                    <div className="h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-semibold shrink-0">
+                      {step.n}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground">{step.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{step.text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="mt-5 flex justify-center">
+                <CreateEggSaleListingDialog
+                  trigger={
+                    <Button size="lg" className="rounded-xl gap-2">
+                      <ShoppingBasket className="h-4 w-4" /> Skapa säljsida
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          )
+
         ) : view === 'grid' ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
             {filtered.map((l) => (
