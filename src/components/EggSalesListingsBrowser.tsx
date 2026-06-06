@@ -324,16 +324,18 @@ export default function EggSalesListingsBrowser() {
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed p-8 text-center">
             <ShoppingBasket className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="font-medium">Inga träffar</p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="font-medium">{hasActiveFilter ? 'Inga träffar' : 'Du har inga säljsidor än'}</p>
+            <p className="text-sm text-muted-foreground mt-1 mb-3">
               {hasActiveFilter
                 ? 'Prova att rensa filter eller ändra sökorden.'
-                : 'Skapa din första säljlista nedan så dyker den upp här.'}
+                : 'Skapa din första säljsida på under en minut – pris, lager och Swish.'}
             </p>
-            {hasActiveFilter && (
-              <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={clearFilters}>
+            {hasActiveFilter ? (
+              <Button variant="outline" size="sm" className="mt-1 rounded-xl" onClick={clearFilters}>
                 Rensa filter
               </Button>
+            ) : (
+              <CreateEggSaleListingDialog />
             )}
           </div>
         ) : view === 'grid' ? (
