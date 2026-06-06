@@ -40,10 +40,10 @@ const offering = [
 
 export default function About() {
   useSeo({
-    title: 'Om Hönsgården – appen för ägg, flock, försäljning och mer koll',
+    title: 'Om Hönsgården – appen för ägg, flock och försäljning',
     description: 'Hönsgården hjälper svenska hönsägare att logga ägg, följa flocken, sälja ägg med Agdas äggbod, få statistik, rapporter, community och AI-stöd.',
     path: '/om-oss',
-    ogImage: '/blog-images/hens-garden.jpg',
+    ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
     jsonLd: [
       {
         '@type': 'AboutPage',
