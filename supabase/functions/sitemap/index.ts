@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     { loc: "/klackningskalender", priority: "0.7", changefreq: "monthly" },
     { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
     { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
+    { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
   ];
 
