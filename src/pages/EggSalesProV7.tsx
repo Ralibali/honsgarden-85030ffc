@@ -9,6 +9,7 @@ import { BarChart3, Copy, Crown, PackageCheck, Repeat, ShoppingBasket, Sparkles,
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
+import ManualEggSalesCard from '@/components/ManualEggSalesCard';
 
 type Booking = any;
 type Listing = any;
@@ -133,7 +134,10 @@ export default function EggSalesProV7() {
     <div className="max-w-7xl mx-auto space-y-5 pb-8">
       <EggSalesOverview />
 
+      <ManualEggSalesCard />
+
       <EggSalesListingsBrowser />
+
 
       <Card className="border-primary/25 bg-gradient-to-br from-primary/10 via-card to-accent/10 shadow-sm">
         <CardContent className="p-4 sm:p-5 space-y-4">
