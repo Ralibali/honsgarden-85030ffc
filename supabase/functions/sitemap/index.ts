@@ -13,12 +13,9 @@ const CATEGORIES = [
   "nyborjare", "raser", "tradgard", "hem", "friluftsliv",
 ];
 
-const SEO_SOURCES = [
-  { table: "seo_breeds", base: "/raser", priority: "0.8" },
-  { table: "seo_problems", base: "/problem", priority: "0.8" },
-  { table: "seo_care_topics", base: "/skotsel", priority: "0.7" },
-  { table: "seo_months", base: "/manad", priority: "0.7" },
-];
+// SEO_SOURCES removed: /raser, /problem, /skotsel, /manad routes are not
+// registered in App.tsx, so emitting them in the sitemap produces 404s for
+// crawlers. Re-add here only when matching <Route path="..."> entries exist.
 
 function escapeXml(str: string): string {
   return str
