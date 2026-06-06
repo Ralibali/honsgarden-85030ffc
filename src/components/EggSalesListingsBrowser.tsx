@@ -204,29 +204,32 @@ export default function EggSalesListingsBrowser() {
               Sök, filtrera och hantera dina publicerade säljsidor.
             </p>
           </div>
-          <div className="flex items-center gap-1 rounded-xl border bg-muted/30 p-1">
-            <Button
-              variant={view === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-lg h-8 gap-1.5"
-              onClick={() => setView('grid')}
-              aria-label="Visa som rutnät"
-              aria-pressed={view === 'grid'}
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Rutnät</span>
-            </Button>
-            <Button
-              variant={view === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-lg h-8 gap-1.5"
-              onClick={() => setView('list')}
-              aria-label="Visa som lista"
-              aria-pressed={view === 'list'}
-            >
-              <List className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Lista</span>
-            </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CreateEggSaleListingDialog />
+            <div className="flex items-center gap-1 rounded-xl border bg-muted/30 p-1">
+              <Button
+                variant={view === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-lg h-8 gap-1.5"
+                onClick={() => setView('grid')}
+                aria-label="Visa som rutnät"
+                aria-pressed={view === 'grid'}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Rutnät</span>
+              </Button>
+              <Button
+                variant={view === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-lg h-8 gap-1.5"
+                onClick={() => setView('list')}
+                aria-label="Visa som lista"
+                aria-pressed={view === 'list'}
+              >
+                <List className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Lista</span>
+              </Button>
+            </div>
           </div>
         </div>
 
