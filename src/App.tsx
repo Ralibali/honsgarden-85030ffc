@@ -128,6 +128,10 @@ const AppRoutes = () => (
         <Route path="/foderkostnad-hons" element={<SeoLandingPage pageKey="foderkostnad-hons" />} />
         <Route path="/klackningskalender" element={<SeoLandingPage pageKey="klackningskalender" />} />
         <Route path="/borja-med-hons" element={<SeoLandingPage pageKey="borja-med-hons" />} />
+        <Route path="/honsraser" element={<HonsrasLanding slug="honsraser" />} />
+        <Route path="/honsraser-lista" element={<HonsrasLanding slug="honsraser-lista" />} />
+        <Route path="/dvarghons" element={<HonsrasLanding slug="dvarghons" />} />
+        <Route path="/skansk-blommehona" element={<HonsrasLanding slug="skansk-blommehona" />} />
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/karta" element={<MarketplaceMap />} />
