@@ -269,7 +269,7 @@ export default function AgdaAdminPanel() {
                     return (
                       <TableRow key={l.id}>
                         <TableCell className="max-w-[220px] truncate">
-                          <a href={`/saljsida/${l.slug}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                          <a href={`/s/${l.slug}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                             {l.title || '(utan titel)'}
                           </a>
                         </TableCell>
