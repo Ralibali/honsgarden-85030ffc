@@ -19,6 +19,7 @@ function kr(n: number) {
 
 export default function AgdaAdminPanel() {
   const [q, setQ] = useState('');
+  const [drillSellerId, setDrillSellerId] = useState<string | null>(null);
 
   const { data: listings = [], isLoading: l1 } = useQuery<Listing[]>({
     queryKey: ['admin-agda-listings'],
