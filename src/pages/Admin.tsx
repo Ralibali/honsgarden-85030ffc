@@ -263,6 +263,9 @@ export default function Admin() {
           <TabsTrigger value="moderation" className="text-xs sm:text-sm gap-1 rounded-lg">
             <MessageSquare className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Moderation</span><span className="sm:hidden">🛡️</span>
           </TabsTrigger>
+          <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Insights tab */}
