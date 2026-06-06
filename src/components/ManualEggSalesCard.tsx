@@ -217,11 +217,11 @@ export default function ManualEggSalesCard() {
               <Checkbox id="ms-paid" checked={paid} onCheckedChange={(v) => setPaid(!!v)} />
               <Label htmlFor="ms-paid" className="cursor-pointer">Betalt</Label>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => { resetForm(); setOpen(false); }} disabled={saving}>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pr-20 sm:pr-0">
+              <Button variant="ghost" onClick={() => { resetForm(); setOpen(false); }} disabled={saving} className="sm:w-auto">
                 Avbryt
               </Button>
-              <Button onClick={handleAdd} disabled={saving}>
+              <Button onClick={handleAdd} disabled={saving} className="sm:w-auto">
                 {saving ? 'Sparar…' : 'Spara försäljning'}
               </Button>
             </div>
