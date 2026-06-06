@@ -22,6 +22,7 @@ import SearchConsoleReports from '@/components/admin/SearchConsoleReports';
 import { MarketingOptInPanel } from '@/components/admin/MarketingOptInPanel';
 import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import PwaDashboard from '@/components/admin/PwaDashboard';
+import AgdaAdminPanel from '@/components/admin/AgdaAdminPanel';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -261,6 +262,9 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="moderation" className="text-xs sm:text-sm gap-1 rounded-lg">
             <MessageSquare className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Moderation</span><span className="sm:hidden">🛡️</span>
+          </TabsTrigger>
+          <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
           </TabsTrigger>
         </TabsList>
 
@@ -643,6 +647,10 @@ export default function Admin() {
 
         <TabsContent value="moderation" className="space-y-3">
           <CommunityModerationLog />
+        </TabsContent>
+
+        <TabsContent value="agda" className="space-y-3">
+          <AgdaAdminPanel />
         </TabsContent>
       </Tabs>
 
