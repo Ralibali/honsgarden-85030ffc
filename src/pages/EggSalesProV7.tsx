@@ -9,6 +9,7 @@ import { BarChart3, Copy, Crown, PackageCheck, Repeat, ShoppingBasket, Sparkles,
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
+import ManualEggSalesCard from '@/components/ManualEggSalesCard';
 
 type Booking = any;
 type Listing = any;
