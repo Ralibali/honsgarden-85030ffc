@@ -51,6 +51,7 @@ const Overview = lazyWithRetry(() => import("./pages/Overview"));
 const Import = lazyWithRetry(() => import("./pages/Import"));
 const SeasonalCalendar = lazyWithRetry(() => import("./pages/SeasonalCalendar"));
 const SeoLandingPage = lazyWithRetry(() => import("./pages/SeoLandingPage"));
+const HonsrasLanding = lazyWithRetry(() => import("./pages/HonsrasLanding"));
 const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
 const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
