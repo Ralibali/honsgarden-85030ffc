@@ -96,7 +96,7 @@ const faqs = [
 
 export default function IndexUpdated() {
   useSeo({
-    title: 'Hönsgården – ägglogg, flock, Agdas äggbod, community och AI',
+    title: 'Hönsgården – ägglogg, flock, Agdas äggbod och AI',
     description: 'Hönsgården är en svensk app för hönsägare. Logga ägg, följ flocken, sälj ägg med Agdas äggbod, hantera kunder, få statistik, AI-råd, community och rapporter.',
     path: '/',
     ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
