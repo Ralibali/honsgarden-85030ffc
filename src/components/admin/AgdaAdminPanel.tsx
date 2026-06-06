@@ -357,6 +357,119 @@ export default function AgdaAdminPanel() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!drillSellerId} onOpenChange={(open) => !open && setDrillSellerId(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          {(() => {
+            if (!drillSellerId) return null;
+            const seller = sellerStats.find((s) => s.user_id === drillSellerId);
+            const sellerBookings = bookings.filter((b) => b.seller_user_id === drillSellerId);
+            const sellerListings = listings.filter((l) => l.user_id === drillSellerId);
+            const active = sellerBookings.filter((b) => b.status !== 'cancelled');
+            const confirmed = sellerBookings.filter((b) => b.status === 'paid' || b.status === 'picked_up');
+            const confirmedAmount = confirmed.reduce((sum, b) => sum + Number(listingById[b.listing_id]?.price_per_pack || 0) * Number(b.packs || 0), 0);
+
+            // Group by customer (phone || name)
+            const customerMap = new Map<string, { name: string; phone: string; email: string; bookings: any[]; amount: number; packs: number }>();
+            active.forEach((b) => {
+              const key = String(b.customer_phone || '').replace(/\s+/g, '') || String(b.customer_name || '').toLowerCase();
+              if (!key) return;
+              const row = customerMap.get(key) || { name: b.customer_name || 'Kund', phone: b.customer_phone || '', email: b.customer_email || '', bookings: [], amount: 0, packs: 0 };
+              row.bookings.push(b);
+              row.packs += Number(b.packs || 0);
+              row.amount += Number(listingById[b.listing_id]?.price_per_pack || 0) * Number(b.packs || 0);
+              customerMap.set(key, row);
+            });
+            const customers = Array.from(customerMap.values()).sort((a, b) => b.amount - a.amount);
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{seller?.name || 'Säljare'}</DialogTitle>
+                  <DialogDescription>{seller?.email}</DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3">
+                  <div className="rounded-lg border p-2 text-center">
+                    <p className="text-lg font-bold">{sellerListings.length}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Säljsidor</p>
+                  </div>
+                  <div className="rounded-lg border p-2 text-center">
+                    <p className="text-lg font-bold">{active.length}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Aktiva bokn.</p>
+                  </div>
+                  <div className="rounded-lg border p-2 text-center">
+                    <p className="text-lg font-bold">{customers.length}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Kunder</p>
+                  </div>
+                  <div className="rounded-lg border p-2 text-center">
+                    <p className="text-lg font-bold text-success">{kr(confirmedAmount)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">Bekräftat</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {customers.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-6">Inga bokningar ännu.</p>
+                  )}
+                  {customers.map((c, idx) => (
+                    <div key={idx} className="rounded-xl border p-3 space-y-2">
+                      <div className="flex items-start justify-between flex-wrap gap-2">
+                        <div>
+                          <p className="font-medium text-sm">{c.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {c.phone || '—'}{c.email ? ` · ${c.email}` : ''}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium tabular-nums">{kr(c.amount)}</p>
+                          <p className="text-[10px] text-muted-foreground">{c.bookings.length} bokn. · {c.packs} kartor</p>
+                        </div>
+                      </div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="h-8 text-[11px]">Datum</TableHead>
+                            <TableHead className="h-8 text-[11px]">Säljsida</TableHead>
+                            <TableHead className="h-8 text-[11px] text-right">Kartor</TableHead>
+                            <TableHead className="h-8 text-[11px] text-right">Summa</TableHead>
+                            <TableHead className="h-8 text-[11px]">Status</TableHead>
+                            <TableHead className="h-8 text-[11px]">Meddelande</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {c.bookings.map((b: any) => {
+                            const l = listingById[b.listing_id];
+                            const amount = Number(l?.price_per_pack || 0) * Number(b.packs || 0);
+                            return (
+                              <TableRow key={b.id}>
+                                <TableCell className="text-xs py-2 whitespace-nowrap">
+                                  {b.created_at ? new Date(b.created_at).toLocaleDateString('sv-SE') : '—'}
+                                </TableCell>
+                                <TableCell className="text-xs py-2 max-w-[140px] truncate">{l?.title || '—'}</TableCell>
+                                <TableCell className="text-xs py-2 text-right tabular-nums">{b.packs}</TableCell>
+                                <TableCell className="text-xs py-2 text-right tabular-nums">{kr(amount)}</TableCell>
+                                <TableCell className="text-xs py-2">
+                                  <Badge variant={b.status === 'cancelled' ? 'outline' : b.status === 'paid' || b.status === 'picked_up' ? 'default' : 'secondary'} className="text-[10px]">
+                                    {b.status}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-xs py-2 max-w-[200px] truncate text-muted-foreground" title={b.customer_message || ''}>
+                                  {b.customer_message || '—'}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
