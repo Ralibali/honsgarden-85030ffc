@@ -225,7 +225,7 @@ export default function AgdaAdminPanel() {
                 </TableHeader>
                 <TableBody>
                   {filteredSellers.map((s) => (
-                    <TableRow key={s.user_id}>
+                    <TableRow key={s.user_id} className="cursor-pointer" onClick={() => setDrillSellerId(s.user_id)}>
                       <TableCell>
                         <div className="font-medium text-sm">{s.name}</div>
                         <div className="text-xs text-muted-foreground">{s.email}</div>
