@@ -648,6 +648,10 @@ export default function Admin() {
         <TabsContent value="moderation" className="space-y-3">
           <CommunityModerationLog />
         </TabsContent>
+
+        <TabsContent value="agda" className="space-y-3">
+          <AgdaAdminPanel />
+        </TabsContent>
       </Tabs>
 
       <UserDetailModal
