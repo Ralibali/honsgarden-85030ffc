@@ -139,7 +139,7 @@ export default function SaljaAggOrt() {
     description,
     path: ort ? `/salja-agg/${ort.slug}` : '/salja-agg',
     ogType: 'website',
-    ogImage: '/og-image.jpg',
+    ogImage: 'https://honsgarden.se/og-image.jpg',
     ogImageAlt: ort ? `Sälja ägg lokalt i ${ort.name}` : 'Sälja ägg lokalt i Sverige',
     noindex: !ort,
     jsonLd,

@@ -13,12 +13,9 @@ const CATEGORIES = [
   "nyborjare", "raser", "tradgard", "hem", "friluftsliv",
 ];
 
-const SEO_SOURCES = [
-  { table: "seo_breeds", base: "/raser", priority: "0.8" },
-  { table: "seo_problems", base: "/problem", priority: "0.8" },
-  { table: "seo_care_topics", base: "/skotsel", priority: "0.7" },
-  { table: "seo_months", base: "/manad", priority: "0.7" },
-];
+// SEO_SOURCES removed: /raser, /problem, /skotsel, /manad routes are not
+// registered in App.tsx, so emitting them in the sitemap produces 404s for
+// crawlers. Re-add here only when matching <Route path="..."> entries exist.
 
 function escapeXml(str: string): string {
   return str
@@ -85,6 +82,7 @@ Deno.serve(async (req) => {
     { loc: "/klackningskalender", priority: "0.7", changefreq: "monthly" },
     { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
     { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
+    { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
   ];
 
@@ -198,29 +196,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  if (settings?.public_routes_enabled) {
-    for (const source of SEO_SOURCES) {
-      const { data: rows } = await supabase
-        .from(source.table)
-        .select("slug, updated_at, last_generated_at")
-        .eq("published", true)
-        .order("updated_at", { ascending: false });
+  // SEO_SOURCES loop removed — see comment near top of file.
 
-      for (const row of rows ?? []) {
-        const lastmod = (row.updated_at || row.last_generated_at || now).split("T")[0];
-        const loc = `${source.base}/${row.slug}`;
-        xml += `  <url>
-    <loc>${BASE_URL}${loc}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>${source.priority}</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}${loc}" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}${loc}" />
-  </url>
-`;
-      }
-    }
-  }
 
   xml += `</urlset>`;
 
