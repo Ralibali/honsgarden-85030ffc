@@ -265,7 +265,18 @@ export default function MarketplaceMap() {
     });
 
     return list;
-  }, [listings, ort, query, hideSoldOut, maxPrice, sort, userPos, center]);
+  }, [listings, ort, query, hideSoldOut, maxPrice, sort, userPos, center, filterByMap, mapBounds]);
+
+  const focusListing = (l: Listing) => {
+    if (l.latitude != null && l.longitude != null) {
+      setFlyTarget([l.latitude, l.longitude]);
+      setFlyZoom(13);
+      setTimeout(() => {
+        const m = markerRefs.current[l.id];
+        if (m) m.openPopup();
+      }, 850);
+    }
+  };
 
   const markerPoints = useMemo<[number, number][]>(
     () =>
