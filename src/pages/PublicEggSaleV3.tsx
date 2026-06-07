@@ -218,6 +218,72 @@ export default function PublicEggSaleV3() {
     onError: (e: any) => toast({ title: 'Kunde inte anmäla intresse', description: e.message, variant: 'destructive' }),
   });
 
+  const subscriptionMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Abonnemang kan inte skapas just nu.');
+      if (!subName.trim()) throw new Error('Skriv ditt namn.');
+      if (!subEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subEmail.trim())) throw new Error('Skriv en giltig e-postadress.');
+      const intervalDays = subFreq === 'weekly' ? 7 : subFreq === 'biweekly' ? 14 : 30;
+      const next = new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await (supabase as any).from('egg_sale_subscriptions').insert({
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: subName.trim(), customer_email: subEmail.trim(), customer_phone: subPhone.trim() || null,
+        packs: Math.max(1, Number(subPacks) || 1), frequency: subFreq, next_run_at: next, status: 'active',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setSubName(''); setSubEmail(''); setSubPhone(''); setSubPacks('1'); setShowSub(false);
+      toast({ title: 'Abonnemang skapat 🔁', description: 'Din första leverans bokas vid nästa intervall. Säljaren hör av sig.' });
+    },
+    onError: (e: any) => toast({ title: 'Kunde inte starta abonnemang', description: e.message, variant: 'destructive' }),
+  });
+
+  // Realtime: uppdatera "kartor kvar" direkt när någon bokar/avbokar
+  useEffect(() => {
+    if (!listing?.id) return;
+    const ch = supabase
+      .channel(`egg-sale-${listing.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'public_egg_sale_bookings', filter: `listing_id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing.id] });
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing.id] });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'public_egg_sale_listings', filter: `id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-listing-v3', slug] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [listing?.id, slug, qc]);
+
+  // Google Maps-vägbeskrivning
+  const mapsDirectionsUrl = useMemo(() => {
+    if (!listing) return '';
+    if (listing.latitude && listing.longitude) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${listing.latitude},${listing.longitude}`;
+    }
+    const target = `${listing.location || ''} ${listing.pickup_info || ''}`.trim();
+    return target.length > 2 ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}` : '';
+  }, [listing]);
+
+  const share = async () => { if (navigator.share) await navigator.share({ title: sale.title, text: shareText, url: window.location.href }).catch(() => undefined); else copy(`${shareText}\n\n${window.location.href}`); };
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Kan inte anmäla intresse just nu.');
+      if (!wlName.trim()) throw new Error('Skriv ditt namn.');
+      if (!wlEmail.trim() && !wlPhone.trim()) throw new Error('Lämna e-post eller telefon så vi kan höra av oss.');
+      const { error } = await (supabase as any).from('egg_sale_waitlist').insert({
+        listing_id: listing.id,
+        seller_user_id: listing.user_id,
+        customer_name: wlName.trim(),
+        customer_email: wlEmail.trim() || null,
+        customer_phone: wlPhone.trim() || null,
+        packs_wanted: Math.max(1, Number(wlPacks) || 1),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { setWlName(''); setWlEmail(''); setWlPhone(''); setWlPacks('1'); toast({ title: 'Du är på väntelistan 🔔', description: 'Vi mejlar dig så fort det finns ägg i lager igen.' }); },
+    onError: (e: any) => toast({ title: 'Kunde inte anmäla intresse', description: e.message, variant: 'destructive' }),
+  });
+
   const share = async () => { if (navigator.share) await navigator.share({ title: sale.title, text: shareText, url: window.location.href }).catch(() => undefined); else copy(`${shareText}\n\n${window.location.href}`); };
 
   // Per-page SEO + structured data for indexable listings
