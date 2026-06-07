@@ -119,6 +119,7 @@ export default function PublicEggSaleV3() {
     : '';
   const openSwish = () => {
     if (!swishDeepLink) return;
+    setSwishConfirm(true);
     window.location.href = swishDeepLink;
     setTimeout(() => {
       // Fallback if Swish app isn't installed: copy details
