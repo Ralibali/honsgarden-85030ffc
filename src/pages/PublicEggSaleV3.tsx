@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Navigation, Package, Repeat, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
@@ -37,6 +37,12 @@ export default function PublicEggSaleV3() {
   const [wlPacks, setWlPacks] = useState('1');
   const [swishConfirm, setSwishConfirm] = useState(false);
   const [bookingConfirm, setBookingConfirm] = useState(false);
+  const [subFreq, setSubFreq] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const [subPacks, setSubPacks] = useState('1');
+  const [subName, setSubName] = useState('');
+  const [subEmail, setSubEmail] = useState('');
+  const [subPhone, setSubPhone] = useState('');
+  const [showSub, setShowSub] = useState(false);
 
   const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['public-egg-sale-listing-v3', slug],
@@ -211,6 +217,53 @@ export default function PublicEggSaleV3() {
     onSuccess: () => { setWlName(''); setWlEmail(''); setWlPhone(''); setWlPacks('1'); toast({ title: 'Du är på väntelistan 🔔', description: 'Vi mejlar dig så fort det finns ägg i lager igen.' }); },
     onError: (e: any) => toast({ title: 'Kunde inte anmäla intresse', description: e.message, variant: 'destructive' }),
   });
+
+  const subscriptionMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Abonnemang kan inte skapas just nu.');
+      if (!subName.trim()) throw new Error('Skriv ditt namn.');
+      if (!subEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subEmail.trim())) throw new Error('Skriv en giltig e-postadress.');
+      const intervalDays = subFreq === 'weekly' ? 7 : subFreq === 'biweekly' ? 14 : 30;
+      const next = new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await (supabase as any).from('egg_sale_subscriptions').insert({
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: subName.trim(), customer_email: subEmail.trim(), customer_phone: subPhone.trim() || null,
+        packs: Math.max(1, Number(subPacks) || 1), frequency: subFreq, next_run_at: next, status: 'active',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setSubName(''); setSubEmail(''); setSubPhone(''); setSubPacks('1'); setShowSub(false);
+      toast({ title: 'Abonnemang skapat 🔁', description: 'Din första leverans bokas vid nästa intervall. Säljaren hör av sig.' });
+    },
+    onError: (e: any) => toast({ title: 'Kunde inte starta abonnemang', description: e.message, variant: 'destructive' }),
+  });
+
+  // Realtime: uppdatera "kartor kvar" direkt när någon bokar/avbokar
+  useEffect(() => {
+    if (!listing?.id) return;
+    const ch = supabase
+      .channel(`egg-sale-${listing.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'public_egg_sale_bookings', filter: `listing_id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing.id] });
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing.id] });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'public_egg_sale_listings', filter: `id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-listing-v3', slug] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [listing?.id, slug, qc]);
+
+  // Google Maps-vägbeskrivning
+  const mapsDirectionsUrl = useMemo(() => {
+    if (!listing) return '';
+    if (listing.latitude && listing.longitude) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${listing.latitude},${listing.longitude}`;
+    }
+    const target = `${listing.location || ''} ${listing.pickup_info || ''}`.trim();
+    return target.length > 2 ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}` : '';
+  }, [listing]);
 
   const share = async () => { if (navigator.share) await navigator.share({ title: sale.title, text: shareText, url: window.location.href }).catch(() => undefined); else copy(`${shareText}\n\n${window.location.href}`); };
 
@@ -440,7 +493,7 @@ export default function PublicEggSaleV3() {
           <InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} />
         </div>
         {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
-        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p></Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
+        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p>{mapsDirectionsUrl && (<a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-1.5"><Navigation className="h-3.5 w-3.5" /> Vägbeskrivning i Google Maps</a>)}</Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
         <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p>{sale.swish && pricePerPack > 0 && (<div className="mt-2 flex items-center justify-between rounded-xl border bg-background/70 px-3 py-2"><div className="text-xs text-muted-foreground">Att betala för {packCount} × {sale.size}-pack</div><div className="font-serif text-lg">{swishAmount} kr</div></div>)}</Row>{sale.swish && (<div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Button className="w-full rounded-xl" onClick={openSwish} disabled={!swishAmount}><Wallet className="h-4 w-4 mr-2" /> Öppna Swish ({swishAmount} kr)</Button><Button variant="outline" className="w-full rounded-xl" onClick={() => copy(`${swishText}\nBelopp: ${swishAmount} kr`)}><Copy className="h-4 w-4 mr-2" /> Kopiera uppgifter</Button></div>)}{sale.swish && <p className="text-[11px] text-muted-foreground">Beloppet räknas ut från antal kartor du valt ovan. Du kan justera summan i Swish innan du godkänner.</p>}</CardContent></Card>
         {listing?.id && (
           <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">
@@ -515,6 +568,51 @@ export default function PublicEggSaleV3() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
       </CardContent>
     </Card>
+    {listing?.id && !isSoldOut && (
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          {!showSub ? (
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0"><Repeat className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <h2 className="font-serif text-base">Starta äggabonnemang</h2>
+                  <p className="text-xs text-muted-foreground">Få färska ägg automatiskt – varje vecka, varannan vecka eller månad.</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowSub(true)} className="rounded-xl shrink-0">Sätt upp</Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><h2 className="font-serif text-base flex items-center gap-2"><Repeat className="h-4 w-4 text-primary" /> Ditt äggabonnemang</h2><Button size="sm" variant="ghost" onClick={() => setShowSub(false)}>Avbryt</Button></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium block mb-1">Frekvens</label>
+                  <select value={subFreq} onChange={(e) => setSubFreq(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="weekly">Varje vecka</option>
+                    <option value="biweekly">Varannan vecka</option>
+                    <option value="monthly">Varje månad</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Antal kartor / leverans</label>
+                  <Input type="number" min="1" value={subPacks} onChange={(e) => setSubPacks(e.target.value)} />
+                </div>
+              </div>
+              <Input value={subName} onChange={(e) => setSubName(e.target.value)} placeholder="Namn *" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input type="email" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} placeholder="E-post *" />
+                <Input type="tel" value={subPhone} onChange={(e) => setSubPhone(e.target.value)} placeholder="Telefon (valfritt)" />
+              </div>
+              <Button onClick={() => subscriptionMutation.mutate()} disabled={subscriptionMutation.isPending} className="w-full rounded-xl">
+                <Repeat className="h-4 w-4 mr-2" /> {subscriptionMutation.isPending ? 'Skapar...' : 'Starta abonnemang'}
+              </Button>
+              <p className="text-[11px] text-muted-foreground text-center">Säljaren bekräftar varje leverans. Du kan avsluta när som helst via mejl.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
     <CustomSectionsRenderer sections={sections} accent={accent} />
     {(publicReviews as any[]).length > 0 && (() => {
       const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
