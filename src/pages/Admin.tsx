@@ -656,6 +656,10 @@ export default function Admin() {
         <TabsContent value="agda" className="space-y-3">
           <AgdaAdminPanel />
         </TabsContent>
+
+        <TabsContent value="errors" className="space-y-3">
+          <ErrorLogsPanel />
+        </TabsContent>
       </Tabs>
 
       <UserDetailModal
