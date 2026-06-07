@@ -4,6 +4,7 @@ import Dashboard from './Dashboard';
 import MobileAppDashboardHero from '@/components/MobileAppDashboardHero';
 import ProductOnboardingChecklist from '@/components/ProductOnboardingChecklist';
 import InstallAppCard from '@/components/InstallAppCard';
+import AgdaProductTipCard from '@/components/AgdaProductTipCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,8 @@ export default function DashboardV2() {
           </Button>
         </CardContent>
       </Card>
+
+      <AgdaProductTipCard />
 
       <Dashboard />
     </div>
