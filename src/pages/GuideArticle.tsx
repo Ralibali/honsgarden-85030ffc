@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-react';
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import { BondenAffiliateBanner } from '@/components/BondenAffiliateBanner';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 const categoryLabels: Record<string, string> = {
@@ -629,24 +630,8 @@ export default function GuideArticle() {
           <div className="prose-custom" dangerouslySetInnerHTML={{ __html: articleRestHtml }} />
         )}
 
-        {/* Affiliate banner – Bonden.se via Adtraction (160x600) */}
-        <div className="my-10 flex justify-center">
-          <a
-            href="https://pin.bonden.se/t/t?a=1960530789&as=2056181186&t=2&tk=1"
-            target="_blank"
-            rel="sponsored noopener noreferrer"
-            aria-label="Annons från Bonden.se"
-          >
-            <img
-              src="https://track.adtraction.com/t/t?a=1960530789&as=2056181186&t=1&tk=1&i=1"
-              alt="Bonden.se"
-              width={160}
-              height={600}
-              loading="lazy"
-              className="max-w-full h-auto"
-            />
-          </a>
-        </div>
+        {/* Affiliate banner – Bonden.se via Adtraction */}
+        <BondenAffiliateBanner />
 
         {/* Tags + Share */}
         {post.tags && post.tags.length > 0 && (
