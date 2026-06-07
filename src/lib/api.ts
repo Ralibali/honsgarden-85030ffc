@@ -522,7 +522,8 @@ export async function getTodayStats() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, feed] = await Promise.all([
     supabase.from('egg_logs').select('count').eq('date', today),
-    supabase.from('hens').select('id').eq('is_active', true),
+    // Endast vuxna värphöns räknas i "antal höns" som statistiken jämför mot.
+    supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen'),
     supabase.from('feed_records').select('amount_kg, cost').eq('date', today),
   ]);
   const eggCount = (eggs.data || []).reduce((s, r) => s + r.count, 0);
@@ -565,7 +566,7 @@ export async function getSummaryStats() {
   await getUserId();
   const [eggsRes, hensRes, txnsRes] = await Promise.all([
     supabase.from('egg_logs').select('count, date'),
-    supabase.from('hens').select('id').eq('is_active', true),
+    supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen'),
     supabase.from('transactions').select('amount, type'),
   ]);
   const eggs = eggsRes.data || [];
@@ -607,7 +608,7 @@ export async function getFarmToday() {
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, chores] = await Promise.all([
     supabase.from('egg_logs').select('count').eq('date', today),
-    supabase.from('hens').select('id, name').eq('is_active', true),
+    supabase.from('hens').select('id, name').eq('is_active', true).eq('hen_type', 'hen'),
     getDailyChores(),
   ]);
   return {
@@ -746,7 +747,8 @@ export async function getHenHealthScores(): Promise<HenWithHealthScore[]> {
 export async function getProductivityAlerts(): Promise<ProductivityAlert[]> {
   const eggs = await getEggs();
   const hens = await getHens();
-  const activeHens = hens.filter(h => h.is_active).length;
+  // Endast vuxna värphöns räknas – unghöns/tuppar ska inte dra ner snittet.
+  const activeHens = hens.filter(h => h.is_active && (h.hen_type ?? 'hen') === 'hen').length;
   if (activeHens === 0) return [];
   const last7 = eggs.filter(e => {
     const d = new Date(e.date);
@@ -802,7 +804,8 @@ export async function getStatisticsInsights() {
   const eggs = eggsRes.data || [];
   const txns = txnsRes.data || [];
   const feed = feedRes.data || [];
-  const hens = (hensRes.data || []).filter(h => h.hen_type !== 'rooster');
+  // Exkludera tuppar och unghöns från statistik-snitt (unghöns har ännu inte börjat värpa).
+  const hens = (hensRes.data || []).filter(h => (h.hen_type ?? 'hen') === 'hen');
 
   const tips: string[] = [];
 
@@ -927,7 +930,7 @@ export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unass
 
     const weekChange = prevWeekEggs > 0 ? Math.round(((weekEggs - prevWeekEggs) / prevWeekEggs) * 100) : null;
 
-    const activeHensCount = hens.filter(h => h.flock_id === flock.id && h.is_active && h.hen_type !== 'rooster').length;
+    const activeHensCount = hens.filter(h => h.flock_id === flock.id && h.is_active && (h.hen_type ?? 'hen') === 'hen').length;
     const dailyCounts: Record<string, number> = {};
     allFlockEggs.forEach(e => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + e.count; });
     const daysCount = Object.keys(dailyCounts).length;
