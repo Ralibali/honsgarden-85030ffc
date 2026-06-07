@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { BellRing, CheckCircle2, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
