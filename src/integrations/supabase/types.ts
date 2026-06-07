@@ -908,6 +908,88 @@ export type Database = {
           },
         ]
       }
+      egg_sale_booking_tokens: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_booking_tokens_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "public_egg_sale_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      egg_sale_pickup_slots: {
+        Row: {
+          created_at: string
+          current_bookings: number
+          ends_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          listing_id: string
+          max_bookings: number
+          seller_user_id: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_bookings?: number
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          listing_id: string
+          max_bookings?: number
+          seller_user_id: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_bookings?: number
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          listing_id?: string
+          max_bookings?: number
+          seller_user_id?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_pickup_slots_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       egg_sale_review_tokens: {
         Row: {
           booking_id: string
@@ -1003,6 +1085,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      egg_sale_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          snapshot: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          snapshot?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          snapshot?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       egg_sale_waitlist: {
         Row: {
@@ -2046,6 +2155,10 @@ export type Database = {
           id: string
           listing_id: string
           packs: number
+          payment_status: string
+          pickup_person_name: string | null
+          pickup_person_phone: string | null
+          pickup_slot_id: string | null
           seller_user_id: string
           status: string
           updated_at: string
@@ -2059,6 +2172,10 @@ export type Database = {
           id?: string
           listing_id: string
           packs?: number
+          payment_status?: string
+          pickup_person_name?: string | null
+          pickup_person_phone?: string | null
+          pickup_slot_id?: string | null
           seller_user_id: string
           status?: string
           updated_at?: string
@@ -2072,6 +2189,10 @@ export type Database = {
           id?: string
           listing_id?: string
           packs?: number
+          payment_status?: string
+          pickup_person_name?: string | null
+          pickup_person_phone?: string | null
+          pickup_slot_id?: string | null
           seller_user_id?: string
           status?: string
           updated_at?: string
@@ -2082,6 +2203,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_egg_sale_bookings_pickup_slot_id_fkey"
+            columns: ["pickup_slot_id"]
+            isOneToOne: false
+            referencedRelation: "egg_sale_pickup_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -3282,6 +3410,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_verified_egg_seller: { Args: { _seller_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
