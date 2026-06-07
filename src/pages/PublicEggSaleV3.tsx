@@ -77,6 +77,32 @@ export default function PublicEggSaleV3() {
     staleTime: 60_000,
   });
 
+  const { data: slots = [] } = useQuery<any[]>({
+    queryKey: ['public-egg-sale-slots-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('egg_sale_pickup_slots')
+        .select('*')
+        .eq('listing_id', listing.id)
+        .eq('is_active', true)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true });
+      return data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: isVerified = false } = useQuery({
+    queryKey: ['public-egg-sale-verified-v3', listing?.user_id],
+    enabled: Boolean(listing?.user_id),
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc('is_verified_egg_seller', { _seller_id: listing.user_id });
+      return Boolean(data);
+    },
+    staleTime: 5 * 60_000,
+  });
+
   const theme = useMemo(() => normalizeTheme(listing?.theme), [listing?.theme]);
   const sections = useMemo(() => normalizeSections(listing?.sections), [listing?.sections]);
   const accent = theme.accent || '#3A6B35';
