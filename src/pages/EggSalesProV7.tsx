@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { BarChart3, Copy, Crown, LayoutDashboard, PackageCheck, Palette, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BarChart3, Copy, Crown, LayoutDashboard, PackageCheck, Palette, QrCode, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import QRCode from 'qrcode';
+import { jsPDF } from 'jspdf';
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
