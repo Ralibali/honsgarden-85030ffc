@@ -534,6 +534,7 @@ export default function MarketplaceMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-bidragsgivare</a>'
               />
               <FlyTo center={flyTarget} zoom={flyZoom} />
+              <BoundsTracker onChange={setMapBounds} />
               {ort && displayed.length > 0 && <FitToMarkers points={markerPoints} />}
               {userPos && (
                 <Marker
@@ -548,42 +549,78 @@ export default function MarketplaceMap() {
                   <Popup>Din plats</Popup>
                 </Marker>
               )}
-              {displayed.map((l) =>
-                l.latitude != null && l.longitude != null ? (
-                  <Marker key={l.id} position={[l.latitude, l.longitude]} icon={eggIcon}>
-                    <Popup>
-                      <div className="space-y-2 min-w-[180px]">
+              {displayed.map((l) => {
+                if (l.latitude == null || l.longitude == null) return null;
+                const dist =
+                  userPos != null
+                    ? haversineKm(userPos, [l.latitude, l.longitude])
+                    : null;
+                return (
+                  <Marker
+                    key={l.id}
+                    position={[l.latitude, l.longitude]}
+                    icon={eggIcon}
+                    ref={(ref) => {
+                      if (ref) markerRefs.current[l.id] = ref as unknown as L.Marker;
+                    }}
+                  >
+                    <Popup maxWidth={260} minWidth={220}>
+                      <div className="space-y-2">
                         {l.image_url ? (
                           <img
                             src={l.image_url}
                             alt={l.title || "Äggannons"}
-                            className="w-full h-24 object-cover rounded-md"
+                            className="w-full h-28 object-cover rounded-md"
                             loading="lazy"
                           />
                         ) : null}
                         <div className="flex items-start justify-between gap-2">
-                          <strong className="text-sm">{l.title || "Äggannons"}</strong>
+                          <strong className="text-sm leading-tight">
+                            {l.title || "Äggannons"}
+                          </strong>
                           {l.sold_out_manually ? (
                             <Badge variant="secondary">Slutsåld</Badge>
                           ) : null}
                         </div>
                         {l.location ? (
-                          <div className="text-xs text-muted-foreground">{l.location}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" /> {l.location}
+                            {dist != null && (
+                              <span className="ml-auto">
+                                {dist < 10 ? dist.toFixed(1) : Math.round(dist)} km
+                              </span>
+                            )}
+                          </div>
                         ) : null}
-                        <div className="text-sm">
-                          {l.eggs_per_pack ?? 6}-pack {Math.round(Number(l.price_per_pack || 0))} kr
+                        {l.description ? (
+                          <p className="text-xs text-foreground/80 line-clamp-3">
+                            {l.description}
+                          </p>
+                        ) : null}
+                        <div className="text-sm font-medium">
+                          {l.eggs_per_pack ?? 6}-pack{" "}
+                          {Math.round(Number(l.price_per_pack || 0))} kr
                         </div>
-                        <Link
-                          to={`/s/${l.slug}`}
-                          className="inline-block text-sm font-medium text-primary hover:underline"
-                        >
-                          Se annons & boka →
-                        </Link>
+                        <div className="flex gap-1.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setDetailListing(l)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded-md border bg-background hover:bg-muted transition"
+                          >
+                            <Eye className="h-3 w-3" /> Detaljer
+                          </button>
+                          <Link
+                            to={`/s/${l.slug}`}
+                            className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                          >
+                            Boka <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>
-                ) : null,
-              )}
+                );
+              })}
             </MapContainer>
           </div>
         )}
