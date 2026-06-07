@@ -487,6 +487,7 @@ export default function Hens() {
             <TabsList className="rounded-xl">
               <TabsTrigger value="alla" className="rounded-lg text-xs">Alla ({filteredHens.length})</TabsTrigger>
               <TabsTrigger value="utan" className="rounded-lg text-xs">Utan flock ({filteredHens.filter((h: any) => !h.flock_id).length})</TabsTrigger>
+              <TabsTrigger value="unghons" className="rounded-lg text-xs">Unghöns ({pullets.length})</TabsTrigger>
               <TabsTrigger value="tuppar" className="rounded-lg text-xs">Tuppar ({roosters.length})</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -515,10 +516,13 @@ export default function Hens() {
                     />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-serif text-sm text-foreground truncate">{hen.name}</h3>
-                      {hen.hen_type === 'rooster' && (
+                      {isRooster(hen) && (
                         <Badge variant="secondary" className="text-[9px] px-1.5 py-0 rounded-md shrink-0">Tupp</Badge>
+                      )}
+                      {isPullet(hen) && (
+                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded-md shrink-0 border-accent/40 text-accent-foreground bg-accent/10">Unghöna</Badge>
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground">{hen.breed || 'Okänd ras'}</p>
