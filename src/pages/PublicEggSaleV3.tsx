@@ -329,6 +329,7 @@ export default function PublicEggSaleV3() {
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 text-white space-y-2">
           {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white/90 p-1 object-contain" />}
           <Badge className="bg-white/95 text-foreground border-0 shadow-sm"><Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning</Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm ml-1"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
           <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
           <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">{sale.description}</p>
           {reviewCount > 0 && (
