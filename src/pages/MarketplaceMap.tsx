@@ -8,6 +8,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getOrt } from "@/data/saljaAggOrter";
+import AddMapListingDialog from "@/components/map/AddMapListingDialog";
+import { Plus, Sparkles } from "lucide-react";
 
 function setMeta(name: string, content: string) {
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
