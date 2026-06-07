@@ -631,8 +631,11 @@ export default function GuideArticle() {
           <div className="prose-custom" dangerouslySetInnerHTML={{ __html: articleRestHtml }} />
         )}
 
-        {/* Affiliate banner – Bonden.se via Adtraction */}
-        <BondenAffiliateBanner />
+        {/* Kontextuell produktbox – matchar mot artikelns innehåll */}
+        <AffiliateProductBox slug={post.slug} title={post.title} content={`${post.excerpt || ''} ${articleRestHtml || ''}`} />
+
+        {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
+        <AffiliateBannerRotator slug={post.slug} />
 
         {/* Tags + Share */}
         {post.tags && post.tags.length > 0 && (
