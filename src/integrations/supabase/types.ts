@@ -1086,6 +1086,68 @@ export type Database = {
           },
         ]
       }
+      egg_sale_subscriptions: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          frequency: string
+          id: string
+          last_booking_id: string | null
+          listing_id: string
+          next_run_at: string
+          notes: string | null
+          packs: number
+          seller_user_id: string
+          status: string
+          total_bookings: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          frequency: string
+          id?: string
+          last_booking_id?: string | null
+          listing_id: string
+          next_run_at?: string
+          notes?: string | null
+          packs?: number
+          seller_user_id: string
+          status?: string
+          total_bookings?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          frequency?: string
+          id?: string
+          last_booking_id?: string | null
+          listing_id?: string
+          next_run_at?: string
+          notes?: string | null
+          packs?: number
+          seller_user_id?: string
+          status?: string
+          total_bookings?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_subscriptions_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       egg_sale_templates: {
         Row: {
           created_at: string
