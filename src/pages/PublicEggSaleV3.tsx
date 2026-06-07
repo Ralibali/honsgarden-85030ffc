@@ -31,6 +31,8 @@ export default function PublicEggSaleV3() {
   const [wlEmail, setWlEmail] = useState('');
   const [wlPhone, setWlPhone] = useState('');
   const [wlPacks, setWlPacks] = useState('1');
+  const [swishConfirm, setSwishConfirm] = useState(false);
+  const [bookingConfirm, setBookingConfirm] = useState(false);
 
   const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['public-egg-sale-listing-v3', slug],
