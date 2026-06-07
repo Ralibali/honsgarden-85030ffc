@@ -629,7 +629,13 @@ export default function GuideArticle() {
         </div>
 
         {articleRestHtml && (
-          <div className="prose-custom" dangerouslySetInnerHTML={{ __html: articleRestHtml }} />
+          <div
+            className="prose-custom"
+            dangerouslySetInnerHTML={{ __html: articleRestHtml }}
+            onMouseDownCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+            onAuxClickCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+            onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+          />
         )}
 
         {/* Kontextuell produktbox – matchar mot artikelns innehåll */}
