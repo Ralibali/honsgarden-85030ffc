@@ -267,6 +267,9 @@ export default function Admin() {
           <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
           </TabsTrigger>
+          <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Insights tab */}
