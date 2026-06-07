@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Bird, Loader2, Trash2, ChevronRight, Feather, FolderPlus } from 'lucide-react';
+import { Plus, Bird, Loader2, Trash2, ChevronRight, Feather, FolderPlus, Sparkles } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import HenAvatar from '@/components/HenAvatar';
+import { HEN_TYPES, isPullet, isRooster, isLayingHen, henTypeLabel, henTypeEmoji, isPulletReadyToLay } from '@/lib/henHelpers';
 
 export default function Hens() {
   const navigate = useNavigate();
@@ -67,12 +68,13 @@ export default function Hens() {
       // Sync hen count to coop settings
       try {
         const allHens = await api.getHens();
-        const activeCount = (allHens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
+        const activeCount = (allHens as any[]).filter(isLayingHen).length;
         await api.updateCoopSettings({ hen_count: activeCount });
       } catch (err) {
         console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter create:', err);
       }
-      toast({ title: henForm.hen_type === 'rooster' ? 'Tupp tillagd! 🐓' : 'Höna tillagd! 🐔' });
+      const labelMap: Record<string, string> = { hen: 'Höna tillagd! 🐔', rooster: 'Tupp tillagd! 🐓', pullet: 'Unghöna tillagd! 🐣' };
+      toast({ title: labelMap[henForm.hen_type] ?? 'Tillagd!' });
       setHenDialogOpen(false);
       setHenForm({ name: '', breed: '', color: '', birth_date: '', notes: '', hen_type: 'hen', flock_id: '' });
     },
@@ -94,7 +96,7 @@ export default function Hens() {
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
       try {
         const allHens = await api.getHens();
-        const activeCount = (allHens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
+        const activeCount = (allHens as any[]).filter(isLayingHen).length;
         await api.updateCoopSettings({ hen_count: activeCount });
       } catch (err) {
         console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter delete:', err);
@@ -160,17 +162,19 @@ export default function Hens() {
   const getDisplayHens = () => {
     if (selectedFlock) return filteredHens.filter((h: any) => h.flock_id === selectedFlock);
     if (tab === 'utan') return filteredHens.filter((h: any) => !h.flock_id);
-    if (tab === 'tuppar') return filteredHens.filter((h: any) => h.hen_type === 'rooster');
+    if (tab === 'tuppar') return filteredHens.filter(isRooster);
+    if (tab === 'unghons') return filteredHens.filter(isPullet);
     return filteredHens;
   };
 
   const displayHens = getDisplayHens();
-  const roosters = filteredHens.filter((h: any) => h.hen_type === 'rooster');
-  const hensOnly = filteredHens.filter((h: any) => h.hen_type !== 'rooster');
+  const roosters = filteredHens.filter(isRooster);
+  const pullets = filteredHens.filter(isPullet);
+  const layingHens = filteredHens.filter((h: any) => !isRooster(h) && !isPullet(h));
 
   const getFlockMemberCount = (flockId: string) => filteredHens.filter((h: any) => h.flock_id === flockId).length;
 
-  const getEmoji = (henType: string) => henType === 'rooster' ? '🐓' : '🐔';
+  const getEmoji = (henType: string) => henTypeEmoji(henType);
 
   if (isLoading) {
     return (
@@ -192,7 +196,7 @@ export default function Hens() {
             {selectedFlock ? (flocks as any[]).find((f: any) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'} 🐔
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {hensOnly.length} hönor · {roosters.length} tuppar · {(flocks as any[]).length} flockar
+            {layingHens.length} värphöns{pullets.length > 0 ? ` (+ ${pullets.length} unghöns)` : ''} · {roosters.length} tuppar · {(flocks as any[]).length} flockar
           </p>
         </div>
         <div className="flex gap-2">
@@ -238,7 +242,7 @@ export default function Hens() {
               </DialogHeader>
               <form onSubmit={handleCreateHen} className="space-y-4 pt-2">
                 {/* Type selector */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => setHenForm({ ...henForm, hen_type: 'hen' })}
@@ -249,7 +253,19 @@ export default function Hens() {
                     }`}
                   >
                     <span className="text-2xl block mb-1">🐔</span>
-                    <span className="text-xs font-medium">Höna</span>
+                    <span className="text-xs font-medium">Värphöna</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHenForm({ ...henForm, hen_type: 'pullet' })}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                      henForm.hen_type === 'pullet'
+                        ? 'border-primary bg-primary/8 text-primary'
+                        : 'border-border bg-card text-muted-foreground hover:border-border/80'
+                    }`}
+                  >
+                    <span className="text-2xl block mb-1">🐣</span>
+                    <span className="text-xs font-medium">Unghöna</span>
                   </button>
                   <button
                     type="button"
@@ -264,6 +280,11 @@ export default function Hens() {
                     <span className="text-xs font-medium">Tupp</span>
                   </button>
                 </div>
+                {henForm.hen_type === 'pullet' && (
+                  <p className="text-[11px] text-muted-foreground/80 -mt-2 leading-relaxed">
+                    Unghöns räknas inte med i ”ägg per höna”-statistiken förrän du markerar dem som värpande.
+                  </p>
+                )}
 
                 <div>
                   <Label>Namn *</Label>
