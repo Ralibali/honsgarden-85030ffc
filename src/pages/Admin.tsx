@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
-  Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone
+  Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone, AlertTriangle
 } from 'lucide-react';
 import { DollarSign } from 'lucide-react';
 import BlogEditor from '@/components/admin/BlogEditor';
@@ -23,6 +23,7 @@ import { MarketingOptInPanel } from '@/components/admin/MarketingOptInPanel';
 import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import PwaDashboard from '@/components/admin/PwaDashboard';
 import AgdaAdminPanel from '@/components/admin/AgdaAdminPanel';
+import { ErrorLogsPanel } from '@/components/admin/ErrorLogsPanel';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -265,6 +266,9 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
           </TabsTrigger>
         </TabsList>
 
@@ -651,6 +655,10 @@ export default function Admin() {
 
         <TabsContent value="agda" className="space-y-3">
           <AgdaAdminPanel />
+        </TabsContent>
+
+        <TabsContent value="errors" className="space-y-3">
+          <ErrorLogsPanel />
         </TabsContent>
       </Tabs>
 

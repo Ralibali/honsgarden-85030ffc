@@ -495,6 +495,51 @@ export type Database = {
         }
         Relationships: []
       }
+      client_error_logs: {
+        Row: {
+          build_time: string | null
+          client_ts: string | null
+          context: Json | null
+          created_at: string
+          id: string
+          level: string
+          message: string
+          notified: boolean
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          build_time?: string | null
+          client_ts?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          notified?: boolean
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          build_time?: string | null
+          client_ts?: string | null
+          context?: Json | null
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          notified?: boolean
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       community_comments: {
         Row: {
           content: string
@@ -3408,6 +3453,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_client_error_logs: { Args: never; Returns: undefined }
       count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
       deactivate_expired_simple_listings: { Args: never; Returns: undefined }

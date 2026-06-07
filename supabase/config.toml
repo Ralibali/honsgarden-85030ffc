@@ -29,3 +29,7 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.day-2-activation-email]
     verify_jwt = false
+  [functions.log-client-error]
+    verify_jwt = false
+  [functions.error-alert-digest]
+    verify_jwt = false
