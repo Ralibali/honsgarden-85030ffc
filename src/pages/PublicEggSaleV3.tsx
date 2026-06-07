@@ -352,6 +352,7 @@ export default function PublicEggSaleV3() {
           <Badge className="bg-card text-foreground border shadow-sm" style={{ borderColor: `${accent}40` }}>
             <Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning
           </Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
           {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
           {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
         </div>
