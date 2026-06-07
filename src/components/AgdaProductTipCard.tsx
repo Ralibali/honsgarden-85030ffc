@@ -2,11 +2,11 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { AFFILIATE_PRODUCTS, type AffiliateProduct } from '@/data/affiliateProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
+import { scoreProducts, pickDailyFromTopN } from '@/lib/agdaProductScoring';
+import { useFarmWeather } from '@/hooks/useFarmWeather';
 
 const SNOOZE_KEY = 'hg_agda_tip_snooze_until';
 const SNOOZE_DAYS = 7;
@@ -26,80 +26,35 @@ function snooze() {
   } catch {}
 }
 
-/** Välj produkt utifrån faktisk gårdsdata + säsong. */
-function pickProduct(hens: any[], eggs: any[]): AffiliateProduct | null {
-  const month = new Date().getMonth(); // 0-11
-  const henCount = hens.length;
-
-  const byCategory = (cat: AffiliateProduct['category']) =>
-    AFFILIATE_PRODUCTS.filter((p) => p.category === cat);
-
-  const pickFrom = (list: AffiliateProduct[]): AffiliateProduct | null => {
-    if (!list.length) return null;
-    // Deterministisk rotation per dag så samma produkt visas hela dagen.
-    const dayIdx = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
-    return list[dayIdx % list.length];
-  };
-
-  // Inga höns ännu → startpaket / hönshus
-  if (henCount === 0) {
-    return pickFrom([...byCategory('startset'), ...byCategory('hus')]);
-  }
-
-  // Vinter (nov–feb) → värme / frostskydd
-  if (month >= 10 || month <= 1) {
-    return pickFrom([...byCategory('vaerme'), ...byCategory('vatten')]);
-  }
-
-  // Kläckningssäsong (mars–april)
-  if (month === 2 || month === 3) {
-    return pickFrom(byCategory('klackning'));
-  }
-
-  // Räkna snitt ägg/höna senaste 14 dagar
-  const since = Date.now() - 14 * 24 * 60 * 60 * 1000;
-  const recent = eggs.filter((e: any) => {
-    const d = new Date(e.date ?? e.created_at ?? 0).getTime();
-    return d >= since;
-  });
-  const totalEggs = recent.reduce((sum: number, e: any) => sum + (e.count ?? e.quantity ?? 0), 0);
-  const perHenPerDay = henCount > 0 ? totalEggs / henCount / 14 : 0;
-
-  // Låg produktion → tillskott (kalcium)
-  if (perHenPerDay > 0 && perHenPerDay < 0.4) {
-    return pickFrom(byCategory('tillskott'));
-  }
-
-  // Default: rotera vatten / foder / värprede-tillbehör
-  return pickFrom([
-    ...byCategory('vatten'),
-    ...byCategory('foder'),
-    ...byCategory('tillskott'),
-  ]);
-}
-
 export default function AgdaProductTipCard() {
   const { user } = useAuth();
   const isPlus = user?.subscription_status === 'premium' || (user as any)?.is_premium;
   const [hidden, setHidden] = useState(() => isSnoozed());
 
+  const active = !isPlus && !hidden;
+
   const { data: hens = [] } = useQuery({
     queryKey: ['hens'],
     queryFn: () => api.getHens(),
     staleTime: 5 * 60_000,
-    enabled: !isPlus && !hidden,
+    enabled: active,
   });
   const { data: eggs = [] } = useQuery({
     queryKey: ['eggs'],
     queryFn: () => api.getEggs(),
     staleTime: 5 * 60_000,
-    enabled: !isPlus && !hidden,
+    enabled: active,
   });
+  const { data: weather = null } = useFarmWeather(active);
 
-  const product = useMemo(() => pickProduct(hens as any[], eggs as any[]), [hens, eggs]);
+  const pick = useMemo(() => {
+    if (!active) return null;
+    const scored = scoreProducts({ hens: hens as any[], eggs: eggs as any[], weather });
+    return pickDailyFromTopN(scored, 5);
+  }, [active, hens, eggs, weather]);
 
-  // Plus-användare slipper helt. Visa inget om ingen produkt matchar.
-  if (isPlus || hidden || !product) return null;
+  if (!active || !pick) return null;
+  const { product, reason } = pick;
 
   const handleClick = () => {
     trackAffiliateClick({
@@ -167,7 +122,11 @@ export default function AgdaProductTipCard() {
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground/70 mt-3 leading-relaxed">
+        <p className="text-[11px] text-muted-foreground italic mt-3 leading-relaxed">
+          {reason}
+        </p>
+
+        <p className="text-[11px] text-muted-foreground/70 mt-1.5 leading-relaxed">
           Vi får en liten provision om du köper – det kostar dig inget extra och hjälper oss
           hålla Hönsgården gratis.
         </p>
