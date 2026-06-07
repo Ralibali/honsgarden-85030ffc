@@ -167,6 +167,7 @@ const AppRoutes = () => (
           <Route path="tasks" element={<DailyTasks />} />
           <Route path="finance" element={<Finance />} />
           <Route path="egg-sales" element={<EggSales />} />
+          <Route path="egg-sales/anpassa" element={<EggSaleCustomize />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="overview" element={<Overview />} />
           <Route path="settings" element={<SettingsPage />} />
