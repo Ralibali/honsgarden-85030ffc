@@ -567,6 +567,30 @@ export default function Hens() {
                 {hen.notes && (
                   <p className="text-[10px] text-muted-foreground/70 mt-2 italic leading-relaxed">{hen.notes}</p>
                 )}
+
+                {isPullet(hen) && (
+                  <div
+                    className="mt-3 pt-2.5 border-t border-border/40"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {isPulletReadyToLay(hen) ? (
+                      <div className="rounded-lg bg-primary/8 px-2.5 py-2 flex items-center gap-2">
+                        <Sparkles className="h-3.5 w-3.5 text-primary shrink-0" />
+                        <span className="text-[11px] text-foreground/80 leading-snug flex-1">
+                          {hen.name} är över 18 veckor – har hon börjat värpa?
+                        </span>
+                      </div>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-2 rounded-lg h-8 text-[11px] gap-1.5"
+                      onClick={() => updateHenMutation.mutate({ id: hen.id, data: { hen_type: 'hen' } })}
+                    >
+                      🐔 Markera som värpande
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
