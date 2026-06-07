@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, BookmarkPlus, Calendar, CheckCircle2, Clock, FileText, Loader2, PackageCheck, Plus, Trash2, Wallet, Users } from 'lucide-react';
+import { ArrowLeft, BarChart3, BookmarkPlus, Calendar, CheckCircle2, Clock, FileText, Loader2, PackageCheck, Pause, Play, Plus, Repeat, Trash2, Wallet, Users } from 'lucide-react';
 
 type Listing = any;
 type Booking = any;
