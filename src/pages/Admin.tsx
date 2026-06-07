@@ -664,6 +664,10 @@ export default function Admin() {
         <TabsContent value="errors" className="space-y-3">
           <ErrorLogsPanel />
         </TabsContent>
+
+        <TabsContent value="affiliate" className="space-y-3">
+          <AffiliateClicksPanel />
+        </TabsContent>
       </Tabs>
 
       <UserDetailModal
