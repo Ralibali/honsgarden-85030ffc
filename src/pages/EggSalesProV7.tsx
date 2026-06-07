@@ -32,6 +32,44 @@ async function getCurrentUserId() {
   return data.user.id;
 }
 
+async function downloadQrPdf(listings: Listing[]) {
+  const active = listings.filter((l) => l.is_active !== false);
+  const pool = active.length > 0 ? active : listings;
+  if (pool.length === 0) {
+    toast({ title: 'Skapa en säljsida först', variant: 'destructive' });
+    return;
+  }
+  const pdf = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  for (let i = 0; i < pool.length; i++) {
+    const l = pool[i];
+    const url = `https://honsgarden.lovable.app/s/${l.slug || l.id}`;
+    const dataUrl = await QRCode.toDataURL(url, { margin: 1, width: 600, color: { dark: '#1f2a1f', light: '#FAF8F4' } });
+    if (i > 0) pdf.addPage();
+    pdf.setFillColor(250, 248, 244);
+    pdf.rect(0, 0, pageW, pdf.internal.pageSize.getHeight(), 'F');
+    pdf.setFont('helvetica', 'bold'); pdf.setFontSize(20); pdf.setTextColor(58, 107, 53);
+    pdf.text('Färska ägg till salu', pageW / 2, 22, { align: 'center' });
+    pdf.setFont('helvetica', 'normal'); pdf.setFontSize(12); pdf.setTextColor(80, 70, 60);
+    pdf.text(l.title || 'Agdas bod', pageW / 2, 30, { align: 'center' });
+    const size = 90;
+    pdf.addImage(dataUrl, 'PNG', (pageW - size) / 2, 40, size, size);
+    pdf.setFontSize(11); pdf.setTextColor(40, 40, 40);
+    pdf.text('Skanna för att boka', pageW / 2, 140, { align: 'center' });
+    pdf.setFontSize(9); pdf.setTextColor(120, 110, 100);
+    pdf.text(url, pageW / 2, 146, { align: 'center' });
+    if (l.pickup_info) {
+      const lines = pdf.splitTextToSize(l.pickup_info, pageW - 30);
+      pdf.setFontSize(10); pdf.setTextColor(60, 60, 60);
+      pdf.text(lines, pageW / 2, 156, { align: 'center' });
+    }
+    pdf.setFontSize(8); pdf.setTextColor(150, 150, 150);
+    pdf.text('honsgarden.se · Agdas bod', pageW / 2, pdf.internal.pageSize.getHeight() - 8, { align: 'center' });
+  }
+  pdf.save('agdas-bod-qr.pdf');
+  toast({ title: 'PDF nedladdad', description: `${pool.length} skylt${pool.length > 1 ? 'ar' : ''} skapade.` });
+}
+
 function startOfWeek() {
   const date = new Date();
   const day = date.getDay() || 7;
