@@ -568,6 +568,51 @@ export default function PublicEggSaleV3() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
       </CardContent>
     </Card>
+    {listing?.id && !isSoldOut && (
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          {!showSub ? (
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0"><Repeat className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <h2 className="font-serif text-base">Starta äggabonnemang</h2>
+                  <p className="text-xs text-muted-foreground">Få färska ägg automatiskt – varje vecka, varannan vecka eller månad.</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowSub(true)} className="rounded-xl shrink-0">Sätt upp</Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><h2 className="font-serif text-base flex items-center gap-2"><Repeat className="h-4 w-4 text-primary" /> Ditt äggabonnemang</h2><Button size="sm" variant="ghost" onClick={() => setShowSub(false)}>Avbryt</Button></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium block mb-1">Frekvens</label>
+                  <select value={subFreq} onChange={(e) => setSubFreq(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="weekly">Varje vecka</option>
+                    <option value="biweekly">Varannan vecka</option>
+                    <option value="monthly">Varje månad</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Antal kartor / leverans</label>
+                  <Input type="number" min="1" value={subPacks} onChange={(e) => setSubPacks(e.target.value)} />
+                </div>
+              </div>
+              <Input value={subName} onChange={(e) => setSubName(e.target.value)} placeholder="Namn *" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input type="email" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} placeholder="E-post *" />
+                <Input type="tel" value={subPhone} onChange={(e) => setSubPhone(e.target.value)} placeholder="Telefon (valfritt)" />
+              </div>
+              <Button onClick={() => subscriptionMutation.mutate()} disabled={subscriptionMutation.isPending} className="w-full rounded-xl">
+                <Repeat className="h-4 w-4 mr-2" /> {subscriptionMutation.isPending ? 'Skapar...' : 'Starta abonnemang'}
+              </Button>
+              <p className="text-[11px] text-muted-foreground text-center">Säljaren bekräftar varje leverans. Du kan avsluta när som helst via mejl.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
     <CustomSectionsRenderer sections={sections} accent={accent} />
     {(publicReviews as any[]).length > 0 && (() => {
       const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
