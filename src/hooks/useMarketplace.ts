@@ -253,5 +253,5 @@ export function useReportListing() {
 }
 
 export async function incrementView(slug: string) {
-  await supabase.rpc('increment_marketplace_view', { _slug: slug }).then(() => {}).catch(() => {});
+  try { await supabase.rpc('increment_marketplace_view', { _slug: slug }); } catch {}
 }

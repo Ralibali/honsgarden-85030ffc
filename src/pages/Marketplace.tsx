@@ -18,7 +18,7 @@ export default function Marketplace() {
   useSeo({
     title: 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
     description: 'Sveriges marknadsplats för hönsfolk. Köp och sälj höns, kläckägg, hönshus, foder, maskiner och mer. Helt gratis.',
-    canonicalUrl: 'https://honsgarden.se/marknad',
+    path: '/marknad',
   });
 
   const { isAuthenticated } = useAuth();

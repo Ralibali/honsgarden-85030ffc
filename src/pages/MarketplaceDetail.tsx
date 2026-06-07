@@ -35,7 +35,7 @@ export default function MarketplaceDetail() {
   useSeo({
     title: listing ? `${listing.title} | Marknad Hönsgården` : 'Marknad',
     description: listing?.description?.slice(0, 155) ?? 'Köp och sälj på Hönsgården.',
-    canonicalUrl: listing ? `https://honsgarden.se/marknad/${listing.slug}` : undefined,
+    path: listing ? `/marknad/${listing.slug}` : '/marknad',
     ogImage: listing?.image_urls?.[0],
   });
 
