@@ -303,6 +303,7 @@ export default function PublicEggSaleV3() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
       </CardContent>
     </Card>
+    <CustomSectionsRenderer sections={sections} accent={accent} />
     {(publicReviews as any[]).length > 0 && (() => {
       const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
       return (
