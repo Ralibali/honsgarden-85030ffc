@@ -80,6 +80,57 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_clicks: {
+        Row: {
+          advertiser: string
+          banner_id: string | null
+          created_at: string
+          href: string
+          id: string
+          ip_hash: string | null
+          path: string | null
+          product_id: string | null
+          referer: string | null
+          session_id: string | null
+          slug: string | null
+          source: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          advertiser: string
+          banner_id?: string | null
+          created_at?: string
+          href: string
+          id?: string
+          ip_hash?: string | null
+          path?: string | null
+          product_id?: string | null
+          referer?: string | null
+          session_id?: string | null
+          slug?: string | null
+          source: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          advertiser?: string
+          banner_id?: string | null
+          created_at?: string
+          href?: string
+          id?: string
+          ip_hash?: string | null
+          path?: string | null
+          product_id?: string | null
+          referer?: string | null
+          session_id?: string | null
+          slug?: string | null
+          source?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       affiliate_link_tests: {
         Row: {
           adtraction_registered_at: string | null

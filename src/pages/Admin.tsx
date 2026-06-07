@@ -24,6 +24,7 @@ import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import PwaDashboard from '@/components/admin/PwaDashboard';
 import AgdaAdminPanel from '@/components/admin/AgdaAdminPanel';
 import { ErrorLogsPanel } from '@/components/admin/ErrorLogsPanel';
+import AffiliateClicksPanel from '@/components/admin/AffiliateClicksPanel';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -269,6 +270,9 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
             <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
+          </TabsTrigger>
+          <TabsTrigger value="affiliate" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Link2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Affiliate</span><span className="sm:hidden">💰</span>
           </TabsTrigger>
         </TabsList>
 
@@ -659,6 +663,10 @@ export default function Admin() {
 
         <TabsContent value="errors" className="space-y-3">
           <ErrorLogsPanel />
+        </TabsContent>
+
+        <TabsContent value="affiliate" className="space-y-3">
+          <AffiliateClicksPanel />
         </TabsContent>
       </Tabs>
 

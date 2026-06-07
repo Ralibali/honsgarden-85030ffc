@@ -1,5 +1,6 @@
 import { ExternalLink, ShoppingBag } from 'lucide-react';
 import { matchProductsForArticle } from '@/data/affiliateProducts';
+import { AffiliateLink } from '@/components/AffiliateLink';
 
 interface Props {
   slug: string;
@@ -36,11 +37,13 @@ export function AffiliateProductBox({ slug, title, content, limit = 3 }: Props) 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {products.map((p) => (
-          <a
+          <AffiliateLink
             key={p.id}
             href={p.trackingUrl}
-            target="_blank"
-            rel="sponsored noopener noreferrer"
+            productId={p.id}
+            advertiser={p.advertiser}
+            source="product_box"
+            slug={slug}
             className="group flex sm:flex-col items-stretch gap-3 rounded-xl border border-border/60 bg-background overflow-hidden hover:border-primary/40 hover:shadow-md transition-all"
           >
             <div className="w-24 sm:w-full aspect-square sm:aspect-[4/3] bg-muted shrink-0 overflow-hidden">
@@ -62,7 +65,7 @@ export function AffiliateProductBox({ slug, title, content, limit = 3 }: Props) 
                 <ExternalLink className="h-2.5 w-2.5 group-hover:translate-x-0.5 transition-transform" />
               </span>
             </div>
-          </a>
+          </AffiliateLink>
         ))}
       </div>
 

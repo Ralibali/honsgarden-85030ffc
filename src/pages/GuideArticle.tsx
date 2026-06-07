@@ -11,7 +11,45 @@ import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
+import { trackAffiliateClick } from '@/lib/affiliateTracking';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
+
+/**
+ * Event-delegerar klick på affiliate-länkar inom artikelns prose-container
+ * (glossary-länkar, inline-länkar i markdown etc). Loggar advertiser baserat på href.
+ */
+function handleProseAffiliateClick(
+  e: React.MouseEvent<HTMLDivElement>,
+  slug: string,
+) {
+  // Hoppa över synthetic 'click' triggad efter mousedown – vi loggar redan på mousedown
+  if (e.type === 'click' && e.detail > 0) return;
+  const target = e.target as HTMLElement | null;
+  const anchor = target?.closest('a') as HTMLAnchorElement | null;
+  if (!anchor) return;
+  const href = anchor.href;
+  if (!href) return;
+
+  // Identifiera affiliate-länkar: sponsored rel ELLER känd tracking-domän
+  const rel = (anchor.getAttribute('rel') || '').toLowerCase();
+  const isSponsored = rel.includes('sponsored');
+  const hrefLower = href.toLowerCase();
+  let advertiser: string | null = null;
+  if (hrefLower.includes('bonden.se') || hrefLower.includes('pin.bonden')) advertiser = 'bonden';
+  else if (hrefLower.includes('p-lindberg')) advertiser = 'p-lindberg';
+  else if (hrefLower.includes('adtraction')) advertiser = 'adtraction';
+  else if (hrefLower.includes('awin')) advertiser = 'awin';
+  else if (hrefLower.includes('tradedoubler')) advertiser = 'tradedoubler';
+
+  if (!isSponsored && !advertiser) return;
+
+  trackAffiliateClick({
+    advertiser: advertiser || 'unknown',
+    source: 'glossary',
+    slug,
+    href,
+  });
+}
 
 const categoryLabels: Record<string, string> = {
   guide: 'Guide',
@@ -628,7 +666,13 @@ export default function GuideArticle() {
         </div>
 
         {articleRestHtml && (
-          <div className="prose-custom" dangerouslySetInnerHTML={{ __html: articleRestHtml }} />
+          <div
+            className="prose-custom"
+            dangerouslySetInnerHTML={{ __html: articleRestHtml }}
+            onMouseDownCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+            onAuxClickCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+            onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+          />
         )}
 
         {/* Kontextuell produktbox – matchar mot artikelns innehåll */}
