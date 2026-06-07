@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
@@ -27,6 +27,10 @@ export default function PublicEggSaleV3() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [packs, setPacks] = useState('1');
+  const [pickupSlotId, setPickupSlotId] = useState<string>('');
+  const [pickupPersonName, setPickupPersonName] = useState('');
+  const [pickupPersonPhone, setPickupPersonPhone] = useState('');
+  const [otherPickup, setOtherPickup] = useState(false);
   const [wlName, setWlName] = useState('');
   const [wlEmail, setWlEmail] = useState('');
   const [wlPhone, setWlPhone] = useState('');
