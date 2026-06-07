@@ -160,6 +160,15 @@ export default function MarketplaceMap() {
   const [maxPrice, setMaxPrice] = useState<number>(150);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(false);
+  const [filterByMap, setFilterByMap] = useState(false);
+  const [mapBounds, setMapBounds] = useState<{
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  } | null>(null);
+  const [detailListing, setDetailListing] = useState<Listing | null>(null);
+  const markerRefs = React.useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
     const title = ort
