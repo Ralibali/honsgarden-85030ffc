@@ -141,7 +141,7 @@ export default function PublicEggSaleV3() {
       const { error } = await (supabase as any).from('public_egg_sale_bookings').insert({ listing_id: listing.id, seller_user_id: listing.user_id, customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(), customer_message: message.trim() || null, packs: packAmount, status: 'reserved' });
       if (error) throw error;
     },
-    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
+    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); setBookingConfirm(true); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
     onError: (e: any) => toast({ title: 'Kunde inte skicka förfrågan', description: e.message, variant: 'destructive' }),
   });
 
