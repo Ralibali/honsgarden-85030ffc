@@ -641,9 +641,10 @@ export default function MarketplaceMap() {
                     : null;
                 return (
                   <li key={l.id}>
-                    <Link
-                      to={`/s/${l.slug}`}
-                      className="block rounded-xl border bg-card hover:bg-accent/50 transition p-4 h-full"
+                    <button
+                      type="button"
+                      onClick={() => focusListing(l)}
+                      className="text-left w-full rounded-xl border bg-card hover:bg-accent/50 transition p-4 h-full group"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <strong className="text-foreground">
@@ -667,7 +668,23 @@ export default function MarketplaceMap() {
                         {l.eggs_per_pack ?? 6}-pack{" "}
                         {Math.round(Number(l.price_per_pack || 0))} kr
                       </div>
-                    </Link>
+                      <div className="mt-3 flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 text-primary group-hover:underline">
+                          <Locate className="h-3 w-3" /> Visa på karta
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetailListing(l);
+                          }}
+                          className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md border bg-background hover:bg-muted"
+                        >
+                          <Eye className="h-3 w-3" /> Detaljer
+                        </span>
+                      </div>
+                    </button>
                   </li>
                 );
               })}
@@ -684,6 +701,7 @@ export default function MarketplaceMap() {
                 setQuery("");
                 setMaxPrice(200);
                 setHideSoldOut(false);
+                setFilterByMap(false);
               }}
             >
               Rensa filter
@@ -691,6 +709,84 @@ export default function MarketplaceMap() {
           </div>
         )}
       </div>
+
+      <Sheet open={!!detailListing} onOpenChange={(o) => !o && setDetailListing(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          {detailListing && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="font-serif text-2xl">
+                  {detailListing.title || "Äggannons"}
+                </SheetTitle>
+                {detailListing.location && (
+                  <SheetDescription className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> {detailListing.location}
+                  </SheetDescription>
+                )}
+              </SheetHeader>
+
+              {detailListing.image_url && (
+                <img
+                  src={detailListing.image_url}
+                  alt={detailListing.title || "Äggannons"}
+                  className="mt-4 w-full h-52 object-cover rounded-xl border"
+                />
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {detailListing.sold_out_manually && (
+                  <Badge variant="secondary">Slutsåld</Badge>
+                )}
+                <Badge variant="outline">
+                  {detailListing.eggs_per_pack ?? 6}-pack
+                </Badge>
+                <Badge>
+                  {Math.round(Number(detailListing.price_per_pack || 0))} kr
+                </Badge>
+                {userPos &&
+                  detailListing.latitude != null &&
+                  detailListing.longitude != null && (
+                    <Badge variant="outline" className="gap-1">
+                      <Navigation className="h-3 w-3" />
+                      {(() => {
+                        const d = haversineKm(userPos, [
+                          detailListing.latitude,
+                          detailListing.longitude,
+                        ]);
+                        return `${d < 10 ? d.toFixed(1) : Math.round(d)} km bort`;
+                      })()}
+                    </Badge>
+                  )}
+              </div>
+
+              {detailListing.description && (
+                <p className="mt-4 text-sm text-foreground/90 whitespace-pre-line">
+                  {detailListing.description}
+                </p>
+              )}
+
+              <div className="mt-6 flex flex-col gap-2">
+                <Button asChild size="lg">
+                  <Link to={`/s/${detailListing.slug}`}>
+                    Se hela annonsen & boka <ExternalLink className="h-4 w-4 ml-1.5" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    const l = detailListing;
+                    setDetailListing(null);
+                    focusListing(l);
+                  }}
+                >
+                  <Locate className="h-4 w-4 mr-1.5" /> Visa på karta
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
