@@ -20,11 +20,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ORTER, getOrt } from "@/data/saljaAggOrter";
 import AddMapListingDialog from "@/components/map/AddMapListingDialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Plus,
   Sparkles,
@@ -33,6 +40,10 @@ import {
   Navigation,
   MapPin,
   X,
+  Eye,
+  Frame,
+  ExternalLink,
+  Locate,
 } from "lucide-react";
 
 function setMeta(name: string, content: string) {
@@ -87,6 +98,35 @@ function FlyTo({ center, zoom }: { center: [number, number] | null; zoom: number
   return null;
 }
 
+function BoundsTracker({
+  onChange,
+}: {
+  onChange: (b: { south: number; west: number; north: number; east: number }) => void;
+}) {
+  const map = useMap();
+  React.useEffect(() => {
+    const b = map.getBounds();
+    onChange({
+      south: b.getSouth(),
+      west: b.getWest(),
+      north: b.getNorth(),
+      east: b.getEast(),
+    });
+  }, []); // initial
+  useMapEvents({
+    moveend: () => {
+      const b = map.getBounds();
+      onChange({
+        south: b.getSouth(),
+        west: b.getWest(),
+        north: b.getNorth(),
+        east: b.getEast(),
+      });
+    },
+  });
+  return null;
+}
+
 function haversineKm(a: [number, number], b: [number, number]) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 6371;
@@ -120,6 +160,15 @@ export default function MarketplaceMap() {
   const [maxPrice, setMaxPrice] = useState<number>(150);
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(false);
+  const [filterByMap, setFilterByMap] = useState(false);
+  const [mapBounds, setMapBounds] = useState<{
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  } | null>(null);
+  const [detailListing, setDetailListing] = useState<Listing | null>(null);
+  const markerRefs = React.useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
     const title = ort
@@ -180,6 +229,18 @@ export default function MarketplaceMap() {
     if (hideSoldOut) list = list.filter((l) => !l.sold_out_manually);
     list = list.filter((l) => Number(l.price_per_pack ?? 0) <= maxPrice);
 
+    if (filterByMap && mapBounds) {
+      list = list.filter(
+        (l) =>
+          l.latitude != null &&
+          l.longitude != null &&
+          l.latitude >= mapBounds.south &&
+          l.latitude <= mapBounds.north &&
+          l.longitude >= mapBounds.west &&
+          l.longitude <= mapBounds.east,
+      );
+    }
+
     const sortRef = userPos ?? center;
     list.sort((a, b) => {
       if (sort === "cheapest") {
@@ -204,7 +265,18 @@ export default function MarketplaceMap() {
     });
 
     return list;
-  }, [listings, ort, query, hideSoldOut, maxPrice, sort, userPos, center]);
+  }, [listings, ort, query, hideSoldOut, maxPrice, sort, userPos, center, filterByMap, mapBounds]);
+
+  const focusListing = (l: Listing) => {
+    if (l.latitude != null && l.longitude != null) {
+      setFlyTarget([l.latitude, l.longitude]);
+      setFlyZoom(13);
+      setTimeout(() => {
+        const m = markerRefs.current[l.id];
+        if (m) m.openPopup();
+      }, 850);
+    }
+  };
 
   const markerPoints = useMemo<[number, number][]>(
     () =>
@@ -341,6 +413,19 @@ export default function MarketplaceMap() {
                         onCheckedChange={setHideSoldOut}
                       />
                     </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="filter-map" className="text-sm flex items-center gap-1.5">
+                        <Frame className="h-3.5 w-3.5" /> Filtrera efter kartan
+                      </Label>
+                      <Switch
+                        id="filter-map"
+                        checked={filterByMap}
+                        onCheckedChange={setFilterByMap}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-3">
+                      Visa bara säljare i det område du ser på kartan.
+                    </p>
                   </div>
                 </PopoverContent>
               </Popover>
@@ -449,6 +534,7 @@ export default function MarketplaceMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-bidragsgivare</a>'
               />
               <FlyTo center={flyTarget} zoom={flyZoom} />
+              <BoundsTracker onChange={setMapBounds} />
               {ort && displayed.length > 0 && <FitToMarkers points={markerPoints} />}
               {userPos && (
                 <Marker
@@ -463,42 +549,78 @@ export default function MarketplaceMap() {
                   <Popup>Din plats</Popup>
                 </Marker>
               )}
-              {displayed.map((l) =>
-                l.latitude != null && l.longitude != null ? (
-                  <Marker key={l.id} position={[l.latitude, l.longitude]} icon={eggIcon}>
-                    <Popup>
-                      <div className="space-y-2 min-w-[180px]">
+              {displayed.map((l) => {
+                if (l.latitude == null || l.longitude == null) return null;
+                const dist =
+                  userPos != null
+                    ? haversineKm(userPos, [l.latitude, l.longitude])
+                    : null;
+                return (
+                  <Marker
+                    key={l.id}
+                    position={[l.latitude, l.longitude]}
+                    icon={eggIcon}
+                    ref={(ref) => {
+                      if (ref) markerRefs.current[l.id] = ref as unknown as L.Marker;
+                    }}
+                  >
+                    <Popup maxWidth={260} minWidth={220}>
+                      <div className="space-y-2">
                         {l.image_url ? (
                           <img
                             src={l.image_url}
                             alt={l.title || "Äggannons"}
-                            className="w-full h-24 object-cover rounded-md"
+                            className="w-full h-28 object-cover rounded-md"
                             loading="lazy"
                           />
                         ) : null}
                         <div className="flex items-start justify-between gap-2">
-                          <strong className="text-sm">{l.title || "Äggannons"}</strong>
+                          <strong className="text-sm leading-tight">
+                            {l.title || "Äggannons"}
+                          </strong>
                           {l.sold_out_manually ? (
                             <Badge variant="secondary">Slutsåld</Badge>
                           ) : null}
                         </div>
                         {l.location ? (
-                          <div className="text-xs text-muted-foreground">{l.location}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="h-3 w-3" /> {l.location}
+                            {dist != null && (
+                              <span className="ml-auto">
+                                {dist < 10 ? dist.toFixed(1) : Math.round(dist)} km
+                              </span>
+                            )}
+                          </div>
                         ) : null}
-                        <div className="text-sm">
-                          {l.eggs_per_pack ?? 6}-pack {Math.round(Number(l.price_per_pack || 0))} kr
+                        {l.description ? (
+                          <p className="text-xs text-foreground/80 line-clamp-3">
+                            {l.description}
+                          </p>
+                        ) : null}
+                        <div className="text-sm font-medium">
+                          {l.eggs_per_pack ?? 6}-pack{" "}
+                          {Math.round(Number(l.price_per_pack || 0))} kr
                         </div>
-                        <Link
-                          to={`/s/${l.slug}`}
-                          className="inline-block text-sm font-medium text-primary hover:underline"
-                        >
-                          Se annons & boka →
-                        </Link>
+                        <div className="flex gap-1.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setDetailListing(l)}
+                            className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded-md border bg-background hover:bg-muted transition"
+                          >
+                            <Eye className="h-3 w-3" /> Detaljer
+                          </button>
+                          <Link
+                            to={`/s/${l.slug}`}
+                            className="flex-1 inline-flex items-center justify-center gap-1 text-xs font-medium px-2 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition"
+                          >
+                            Boka <ExternalLink className="h-3 w-3" />
+                          </Link>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>
-                ) : null,
-              )}
+                );
+              })}
             </MapContainer>
           </div>
         )}
@@ -519,9 +641,10 @@ export default function MarketplaceMap() {
                     : null;
                 return (
                   <li key={l.id}>
-                    <Link
-                      to={`/s/${l.slug}`}
-                      className="block rounded-xl border bg-card hover:bg-accent/50 transition p-4 h-full"
+                    <button
+                      type="button"
+                      onClick={() => focusListing(l)}
+                      className="text-left w-full rounded-xl border bg-card hover:bg-accent/50 transition p-4 h-full group"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <strong className="text-foreground">
@@ -545,7 +668,23 @@ export default function MarketplaceMap() {
                         {l.eggs_per_pack ?? 6}-pack{" "}
                         {Math.round(Number(l.price_per_pack || 0))} kr
                       </div>
-                    </Link>
+                      <div className="mt-3 flex items-center gap-2 text-xs">
+                        <span className="inline-flex items-center gap-1 text-primary group-hover:underline">
+                          <Locate className="h-3 w-3" /> Visa på karta
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDetailListing(l);
+                          }}
+                          className="ml-auto inline-flex items-center gap-1 px-2 py-0.5 rounded-md border bg-background hover:bg-muted"
+                        >
+                          <Eye className="h-3 w-3" /> Detaljer
+                        </span>
+                      </div>
+                    </button>
                   </li>
                 );
               })}
@@ -562,6 +701,7 @@ export default function MarketplaceMap() {
                 setQuery("");
                 setMaxPrice(200);
                 setHideSoldOut(false);
+                setFilterByMap(false);
               }}
             >
               Rensa filter
@@ -569,6 +709,84 @@ export default function MarketplaceMap() {
           </div>
         )}
       </div>
+
+      <Sheet open={!!detailListing} onOpenChange={(o) => !o && setDetailListing(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          {detailListing && (
+            <>
+              <SheetHeader className="text-left">
+                <SheetTitle className="font-serif text-2xl">
+                  {detailListing.title || "Äggannons"}
+                </SheetTitle>
+                {detailListing.location && (
+                  <SheetDescription className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" /> {detailListing.location}
+                  </SheetDescription>
+                )}
+              </SheetHeader>
+
+              {detailListing.image_url && (
+                <img
+                  src={detailListing.image_url}
+                  alt={detailListing.title || "Äggannons"}
+                  className="mt-4 w-full h-52 object-cover rounded-xl border"
+                />
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {detailListing.sold_out_manually && (
+                  <Badge variant="secondary">Slutsåld</Badge>
+                )}
+                <Badge variant="outline">
+                  {detailListing.eggs_per_pack ?? 6}-pack
+                </Badge>
+                <Badge>
+                  {Math.round(Number(detailListing.price_per_pack || 0))} kr
+                </Badge>
+                {userPos &&
+                  detailListing.latitude != null &&
+                  detailListing.longitude != null && (
+                    <Badge variant="outline" className="gap-1">
+                      <Navigation className="h-3 w-3" />
+                      {(() => {
+                        const d = haversineKm(userPos, [
+                          detailListing.latitude,
+                          detailListing.longitude,
+                        ]);
+                        return `${d < 10 ? d.toFixed(1) : Math.round(d)} km bort`;
+                      })()}
+                    </Badge>
+                  )}
+              </div>
+
+              {detailListing.description && (
+                <p className="mt-4 text-sm text-foreground/90 whitespace-pre-line">
+                  {detailListing.description}
+                </p>
+              )}
+
+              <div className="mt-6 flex flex-col gap-2">
+                <Button asChild size="lg">
+                  <Link to={`/s/${detailListing.slug}`}>
+                    Se hela annonsen & boka <ExternalLink className="h-4 w-4 ml-1.5" />
+                  </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => {
+                    const l = detailListing;
+                    setDetailListing(null);
+                    focusListing(l);
+                  }}
+                >
+                  <Locate className="h-4 w-4 mr-1.5" /> Visa på karta
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
