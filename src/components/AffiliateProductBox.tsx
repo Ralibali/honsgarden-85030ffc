@@ -1,5 +1,6 @@
 import { ExternalLink, ShoppingBag } from 'lucide-react';
 import { matchProductsForArticle } from '@/data/affiliateProducts';
+import { AffiliateLink } from '@/components/AffiliateLink';
 
 interface Props {
   slug: string;
