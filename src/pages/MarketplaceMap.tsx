@@ -8,6 +8,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { getOrt } from "@/data/saljaAggOrter";
+import AddMapListingDialog from "@/components/map/AddMapListingDialog";
+import { Plus, Sparkles } from "lucide-react";
 
 function setMeta(name: string, content: string) {
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -134,6 +136,27 @@ export default function MarketplaceMap() {
           )}
         </header>
 
+        <div className="mb-6 sm:mb-8 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="hidden sm:grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg sm:text-xl text-foreground">Säljer du egna ägg? Lägg upp på kartan — gratis</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Inget konto krävs. Bekräfta via mejl och din annons syns direkt — i 60 dagar.
+              </p>
+            </div>
+          </div>
+          <AddMapListingDialog
+            trigger={
+              <Button size="lg" className="shrink-0 shadow-sm">
+                <Plus className="h-4 w-4 mr-1.5" /> Lägg till din annons
+              </Button>
+            }
+          />
+        </div>
+
         {ortEmpty && (
           <div className="mb-5 rounded-2xl border border-primary/30 bg-primary/5 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -144,9 +167,9 @@ export default function MarketplaceMap() {
                 Bli först! Sälj dina egna ägg och dyk upp här direkt.
               </p>
             </div>
-            <Button asChild size="lg" className="shrink-0">
-              <Link to="/login">Sälj dina egna ägg här →</Link>
-            </Button>
+            <AddMapListingDialog
+              trigger={<Button size="lg" className="shrink-0">Bli först — lägg upp din annons →</Button>}
+            />
           </div>
         )}
 

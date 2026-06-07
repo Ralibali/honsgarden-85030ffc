@@ -65,6 +65,8 @@ const Breeding = lazyWithRetry(() => import("./pages/Breeding"));
 const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
 const Reports = lazyWithRetry(() => import("./pages/Reports"));
 const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
+const MapListingConfirm = lazyWithRetry(() => import("./pages/MapListingConfirm"));
+const MapListingManage = lazyWithRetry(() => import("./pages/MapListingManage"));
 const DemoApp = lazyWithRetry(() => import("./pages/DemoApp"));
 
 
@@ -135,6 +137,8 @@ const AppRoutes = () => (
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/karta" element={<MarketplaceMap />} />
+        <Route path="/karta/bekrafta" element={<MapListingConfirm />} />
+        <Route path="/karta/hantera/:token" element={<MapListingManage />} />
         <Route path="/demo" element={<DemoApp />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
