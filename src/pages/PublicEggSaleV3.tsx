@@ -224,34 +224,50 @@ export default function PublicEggSaleV3() {
   const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
 
   return <main className="min-h-screen noise-bg px-4 py-8 sm:py-12">
-    <div className="mx-auto max-w-2xl space-y-5">
-    <div className="text-center space-y-4">
-      {sale.imageUrl
-        ? <img src={sale.imageUrl} alt={sale.title} className="mx-auto h-56 w-full max-w-xl rounded-3xl object-cover border shadow-sm" />
-        : <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border"><Egg className="h-8 w-8 text-primary" /></div>}
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">Lokal äggförsäljning</Badge>
-          {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30">Endast {remaining} kvar</Badge>}
-          {reviewCount > 0 && (
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-              <strong className="text-foreground">{avgRating.toFixed(1)}</strong> ({reviewCount})
-            </span>
-          )}
+    <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
+
+    {/* Hero */}
+    <div className="text-center space-y-5">
+      <div className="relative mx-auto max-w-xl">
+        <div aria-hidden="true" className="absolute -inset-6 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent blur-2xl rounded-[2rem]" />
+        {sale.imageUrl
+          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border border-primary/15 shadow-lg" />
+          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border border-primary/15 shadow-sm"><Egg className="h-9 w-9 text-primary" /></div>}
+        <div className="relative -mt-4 flex flex-wrap items-center justify-center gap-2">
+          <Badge className="bg-card text-foreground border border-primary/25 shadow-sm">
+            <Sparkles className="h-3 w-3 mr-1 text-primary" /> Lokal äggförsäljning
+          </Badge>
+          {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
+          {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
         </div>
-        <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
+      </div>
+      <div className="space-y-2.5">
+        <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-foreground">{sale.title}</h1>
         <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto">{sale.description}</p>
+        {reviewCount > 0 && (
+          <div className="inline-flex items-center gap-2 text-sm rounded-full bg-card border border-border px-3 py-1.5 shadow-sm">
+            <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
+            <span className="text-muted-foreground"><strong className="text-foreground">{avgRating.toFixed(1)}</strong> · {reviewCount} {reviewCount === 1 ? 'recension' : 'recensioner'}</span>
+          </div>
+        )}
       </div>
     </div>
-    <Card className="border-primary/20 shadow-sm bg-gradient-to-br from-primary/8 via-card to-accent/8"><CardContent className="p-5 sm:p-6 space-y-5">
-      <div className="grid grid-cols-3 gap-3 text-center"><InfoStat label="ägg/karta" value={sale.size} /><InfoStat label="pris/karta" value={`${sale.price} kr`} /><InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} /></div>
-      {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
-      <div className="rounded-2xl border bg-card/70 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p></Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
-      <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p></Row>{sale.swish && <Button variant="outline" className="w-full rounded-xl" onClick={() => copy(swishText)}><Copy className="h-4 w-4 mr-2" /> Kopiera Swishuppgifter</Button>}</CardContent></Card>
-      {listing?.id && <Card className="shadow-none"><CardContent className="p-4 space-y-3">{isSoldOut ? <><h2 className="font-serif text-sm flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2><p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" /><Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" /><Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" /></div><Button onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl"><BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}</Button></> : <><h2 className="font-serif text-sm flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Skicka bokningsförfrågan</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" /><Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" /></div><Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse & recension)" /><Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" /><Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" /><p className="text-[11px] text-muted-foreground">Vi använder kontaktuppgifterna för att bekräfta bokningen och skicka en kort recensions-länk efter hämtning.</p><Button onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl"><CheckCircle2 className="h-4 w-4 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar...' : 'Skicka bokningsförfrågan'}</Button></>}</CardContent></Card>}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
-    </CardContent></Card>
+
+    {/* Stats + details */}
+    <Card className="border-primary/15 shadow-md bg-gradient-to-br from-primary/8 via-card to-accent/5 overflow-hidden">
+      <CardContent className="p-5 sm:p-6 space-y-5">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <InfoStat label="ägg/karta" value={sale.size} />
+          <InfoStat label="pris/karta" value={`${sale.price} kr`} accent />
+          <InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} />
+        </div>
+        {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
+        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p></Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
+        <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p></Row>{sale.swish && <Button variant="outline" className="w-full rounded-xl" onClick={() => copy(swishText)}><Copy className="h-4 w-4 mr-2" /> Kopiera Swishuppgifter</Button>}</CardContent></Card>
+        {listing?.id && <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">{isSoldOut ? <><h2 className="font-serif text-base flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2><p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" /><Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" /><Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" /></div><Button size="lg" onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl shadow-sm"><BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}</Button></> : <><h2 className="font-serif text-base flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Boka ägg</h2><p className="text-xs text-muted-foreground">Säljaren bekräftar din bokning och återkommer om hämtning.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" /><Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" /></div><Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse)" /><Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" /><Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" /><Button size="lg" onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl shadow-sm text-base"><CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar bokning...' : 'Skicka bokningsförfrågan'}</Button><p className="text-[11px] text-muted-foreground text-center">Ingen betalning sker här – endast en förfrågan till säljaren.</p></>}</CardContent></Card>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
+      </CardContent>
+    </Card>
     {(publicReviews as any[]).length > 0 && (() => {
       const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
       return (
