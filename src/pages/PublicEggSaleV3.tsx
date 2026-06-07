@@ -168,10 +168,28 @@ export default function PublicEggSaleV3() {
       if (!phone.trim()) throw new Error('Skriv ditt telefonnummer.');
       if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new Error('Skriv en giltig e-postadress.');
       if (packAmount > remaining) throw new Error(`Det finns bara ${remaining} kartor kvar.`);
-      const { error } = await (supabase as any).from('public_egg_sale_bookings').insert({ listing_id: listing.id, seller_user_id: listing.user_id, customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(), customer_message: message.trim() || null, packs: packAmount, status: 'reserved' });
+      if (slots.length > 0 && !pickupSlotId) throw new Error('Välj en hämtningstid.');
+      const payload: any = {
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(),
+        customer_message: message.trim() || null, packs: packAmount, status: 'reserved',
+      };
+      if (pickupSlotId) payload.pickup_slot_id = pickupSlotId;
+      if (otherPickup && pickupPersonName.trim()) {
+        payload.pickup_person_name = pickupPersonName.trim();
+        payload.pickup_person_phone = pickupPersonPhone.trim() || null;
+      }
+      const { error } = await (supabase as any).from('public_egg_sale_bookings').insert(payload);
       if (error) throw error;
     },
-    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); setBookingConfirm(true); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
+    onSuccess: async () => {
+      setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
+      setPickupSlotId(''); setPickupPersonName(''); setPickupPersonPhone(''); setOtherPickup(false);
+      setBookingConfirm(true);
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] });
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing?.id] });
+      toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' });
+    },
     onError: (e: any) => toast({ title: 'Kunde inte skicka förfrågan', description: e.message, variant: 'destructive' }),
   });
 
