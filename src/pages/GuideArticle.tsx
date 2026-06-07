@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-react';
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import { BondenAffiliateBanner } from '@/components/BondenAffiliateBanner';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 const categoryLabels: Record<string, string> = {
