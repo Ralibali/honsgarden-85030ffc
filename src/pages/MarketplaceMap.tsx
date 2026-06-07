@@ -98,6 +98,35 @@ function FlyTo({ center, zoom }: { center: [number, number] | null; zoom: number
   return null;
 }
 
+function BoundsTracker({
+  onChange,
+}: {
+  onChange: (b: { south: number; west: number; north: number; east: number }) => void;
+}) {
+  const map = useMap();
+  React.useEffect(() => {
+    const b = map.getBounds();
+    onChange({
+      south: b.getSouth(),
+      west: b.getWest(),
+      north: b.getNorth(),
+      east: b.getEast(),
+    });
+  }, []); // initial
+  useMapEvents({
+    moveend: () => {
+      const b = map.getBounds();
+      onChange({
+        south: b.getSouth(),
+        west: b.getWest(),
+        north: b.getNorth(),
+        east: b.getEast(),
+      });
+    },
+  });
+  return null;
+}
+
 function haversineKm(a: [number, number], b: [number, number]) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 6371;
