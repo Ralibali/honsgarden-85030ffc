@@ -1,0 +1,163 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, MapPin, Plus, Image as ImageIcon, X } from 'lucide-react';
+import LandingNavbar from '@/components/LandingNavbar';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { useListings, type ListingFilters } from '@/hooks/useMarketplace';
+import { CATEGORIES, REGIONS, categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
+import { useAuth } from '@/hooks/useAuth';
+import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeo } from '@/hooks/useSeo';
+
+export default function Marketplace() {
+  usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
+  useSeo({
+    title: 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
+    description: 'Sveriges marknadsplats för hönsfolk. Köp och sälj höns, kläckägg, hönshus, foder, maskiner och mer. Helt gratis.',
+    path: '/marknad',
+  });
+
+  const { isAuthenticated } = useAuth();
+  const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
+  const [searchInput, setSearchInput] = useState('');
+
+  const { data: listings = [], isLoading } = useListings(filters);
+
+  const applySearch = () => setFilters((f) => ({ ...f, search: searchInput.trim() || undefined }));
+  const clearAll = () => {
+    setFilters({ sort: 'newest', category: 'all', region: 'all' });
+    setSearchInput('');
+  };
+  const hasFilters = !!(filters.search || (filters.category && filters.category !== 'all') || (filters.region && filters.region !== 'all') || filters.hasImage);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <LandingNavbar />
+      <main className="pt-24 pb-16 container max-w-6xl mx-auto px-5">
+        <header className="mb-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+            <div>
+              <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-2">Marknad</h1>
+              <p className="text-muted-foreground max-w-xl">
+                Köp och sälj höns, utrustning och allt annat för lantlivet. Helt gratis.
+              </p>
+            </div>
+            <Button asChild size="lg" className="rounded-2xl gap-2">
+              <Link to={isAuthenticated ? '/marknad/ny' : '/login?redirect=/marknad/ny'}>
+                <Plus className="h-4 w-4" /> Lägg in annons
+              </Link>
+            </Button>
+          </div>
+
+          {/* Sök + filter */}
+          <Card className="border-border/60">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && applySearch()}
+                    placeholder="Sök efter höns, hönshus, foder…"
+                    className="pl-10"
+                  />
+                </div>
+                <Button onClick={applySearch}>Sök</Button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Select value={filters.category ?? 'all'} onValueChange={(v) => setFilters((f) => ({ ...f, category: v as any }))}>
+                  <SelectTrigger><SelectValue placeholder="Kategori" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alla kategorier</SelectItem>
+                    {CATEGORIES.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>{c.emoji} {c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filters.region ?? 'all'} onValueChange={(v) => setFilters((f) => ({ ...f, region: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Region" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Hela Sverige</SelectItem>
+                    {REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={filters.sort ?? 'newest'} onValueChange={(v) => setFilters((f) => ({ ...f, sort: v as any }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Nyast först</SelectItem>
+                    <SelectItem value="price_asc">Billigast först</SelectItem>
+                    <SelectItem value="price_desc">Dyrast först</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant={filters.hasImage ? 'default' : 'outline'}
+                  onClick={() => setFilters((f) => ({ ...f, hasImage: !f.hasImage }))}
+                  className="gap-2"
+                >
+                  <ImageIcon className="h-4 w-4" /> Endast med bild
+                </Button>
+              </div>
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1 text-muted-foreground">
+                  <X className="h-3 w-3" /> Rensa filter
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </header>
+
+        {/* Resultat */}
+        {isLoading ? (
+          <p className="text-muted-foreground text-center py-12">Laddar annonser…</p>
+        ) : listings.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground mb-4">Inga annonser matchar din sökning.</p>
+            {hasFilters && <Button variant="outline" onClick={clearAll}>Rensa filter</Button>}
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-muted-foreground mb-4">{listings.length} annonser</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {listings.map((l) => (
+                <Link to={`/marknad/${l.slug}`} key={l.id} className="group">
+                  <Card className="overflow-hidden h-full hover:shadow-md transition-shadow border-border/60">
+                    <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                      {l.image_urls?.[0] ? (
+                        <img
+                          src={l.image_urls[0]}
+                          alt={l.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl">{categoryEmoji(l.category)}</div>
+                      )}
+                      <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur">
+                        {categoryEmoji(l.category)} {categoryLabel(l.category)}
+                      </Badge>
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-medium text-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors">{l.title}</h3>
+                      <p className="font-serif text-lg text-primary mb-2">{formatPrice(l.price as any, l.is_giveaway)}</p>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          {l.city || l.region ? <><MapPin className="h-3 w-3" /> {l.city || l.region}</> : null}
+                        </span>
+                        <span>{timeAgo(l.created_at)}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}

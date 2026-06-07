@@ -71,6 +71,10 @@ const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
 const MapListingConfirm = lazyWithRetry(() => import("./pages/MapListingConfirm"));
 const MapListingManage = lazyWithRetry(() => import("./pages/MapListingManage"));
 const DemoApp = lazyWithRetry(() => import("./pages/DemoApp"));
+const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
+const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
+const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
+const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 
 
 const GuiderRedirect = () => {
@@ -159,6 +163,9 @@ const AppRoutes = () => (
         <Route path="/blogg/kategori/:category" element={<BlogCategory />} />
         <Route path="/blogg/tagg/:tag" element={<BlogTag />} />
         <Route path="/blogg/:slug" element={<GuideArticle />} />
+        <Route path="/marknad" element={<Marketplace />} />
+        <Route path="/marknad/ny" element={<MarketplaceNew />} />
+        <Route path="/marknad/:slug" element={<MarketplaceDetail />} />
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Navigate to="/app" replace />} />
@@ -192,6 +199,7 @@ const AppRoutes = () => (
           <Route path="avel" element={<Breeding />} />
           <Route path="lager" element={<Inventory />} />
           <Route path="rapporter" element={<Reports />} />
+          <Route path="marknad/mina" element={<MarketplaceMine />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

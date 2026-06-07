@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes, FileText } from 'lucide-react';
+import { Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe, Baby, ClipboardCheck, Crown, Shield, Feather, Bot, PieChart, Upload, CalendarDays, Users, ReceiptText, Newspaper, CloudSun, Sparkles, MessageCircle, Stethoscope, Heart, Boxes, FileText, Tag } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -49,6 +49,7 @@ const moreNav = [
   { title: 'Nyheter', url: '/app/news', icon: Newspaper },
   { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
   { title: 'Community', url: '/app/community', icon: Users },
+  { title: 'Marknad', url: '/app/marknad/mina', icon: Tag },
   { title: 'Premium', url: '/app/premium', icon: Crown },
   { title: 'Importera data', url: '/app/import', icon: Upload },
   { title: 'Feedback', url: '/app/feedback', icon: MessageCircle },
