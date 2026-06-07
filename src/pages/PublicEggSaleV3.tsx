@@ -236,27 +236,48 @@ export default function PublicEggSaleV3() {
   const reviewCount = (publicReviews as any[]).length;
   const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
 
-  return <main className="min-h-screen noise-bg px-4 py-8 sm:py-12">
+  return <main className={`min-h-screen ${bgClass} px-4 py-8 sm:py-12`} style={{ ['--theme-accent' as any]: accent }}>
     <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
 
     {/* Hero */}
+    {headerStyle === 'hero' && sale.imageUrl ? (
+      <div className="relative mx-auto -mt-4 sm:-mt-6 overflow-hidden rounded-3xl border shadow-lg" style={{ borderColor: `${accent}33` }}>
+        <img src={sale.imageUrl} alt={sale.title} className="w-full h-72 sm:h-96 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 text-white space-y-2">
+          {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white/90 p-1 object-contain" />}
+          <Badge className="bg-white/95 text-foreground border-0 shadow-sm"><Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning</Badge>
+          <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
+          <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">{sale.description}</p>
+          {reviewCount > 0 && (
+            <div className="inline-flex items-center gap-2 text-sm rounded-full bg-white/95 text-foreground px-3 py-1.5 shadow-sm">
+              <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
+              <span className="text-muted-foreground"><strong className="text-foreground">{avgRating.toFixed(1)}</strong> · {reviewCount} {reviewCount === 1 ? 'recension' : 'recensioner'}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : (
     <div className="text-center space-y-5">
+      {headerStyle !== 'minimal' && (
       <div className="relative mx-auto max-w-xl">
-        <div aria-hidden="true" className="absolute -inset-6 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent blur-2xl rounded-[2rem]" />
+        <div aria-hidden="true" className="absolute -inset-6 blur-2xl rounded-[2rem]" style={{ background: `radial-gradient(circle, ${accent}26 0%, transparent 70%)` }} />
         {sale.imageUrl
-          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border border-primary/15 shadow-lg" />
-          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border border-primary/15 shadow-sm"><Egg className="h-9 w-9 text-primary" /></div>}
+          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border shadow-lg" style={{ borderColor: `${accent}26` }} />
+          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border shadow-sm" style={{ borderColor: `${accent}33` }}><Egg className="h-9 w-9" style={{ color: accent }} /></div>}
         <div className="relative -mt-4 flex flex-wrap items-center justify-center gap-2">
-          <Badge className="bg-card text-foreground border border-primary/25 shadow-sm">
-            <Sparkles className="h-3 w-3 mr-1 text-primary" /> Lokal äggförsäljning
+          <Badge className="bg-card text-foreground border shadow-sm" style={{ borderColor: `${accent}40` }}>
+            <Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning
           </Badge>
           {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
           {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
         </div>
       </div>
+      )}
+      {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="mx-auto h-12 w-12 rounded-xl border bg-card p-1 object-contain" />}
       <div className="space-y-2.5">
-        <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-foreground">{sale.title}</h1>
-        <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto">{sale.description}</p>
+        <h1 className={`font-serif text-3xl sm:text-4xl leading-tight ${isDark ? 'text-white' : 'text-foreground'}`}>{sale.title}</h1>
+        <p className={`leading-relaxed max-w-xl mx-auto ${isDark ? 'text-stone-200' : 'text-muted-foreground'}`}>{sale.description}</p>
         {reviewCount > 0 && (
           <div className="inline-flex items-center gap-2 text-sm rounded-full bg-card border border-border px-3 py-1.5 shadow-sm">
             <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
@@ -265,6 +286,7 @@ export default function PublicEggSaleV3() {
         )}
       </div>
     </div>
+    )}
 
     {/* Stats + details */}
     <Card className="border-primary/15 shadow-md bg-gradient-to-br from-primary/8 via-card to-accent/5 overflow-hidden">
