@@ -20,11 +20,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { ORTER, getOrt } from "@/data/saljaAggOrter";
 import AddMapListingDialog from "@/components/map/AddMapListingDialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Plus,
   Sparkles,
@@ -33,6 +40,10 @@ import {
   Navigation,
   MapPin,
   X,
+  Eye,
+  Frame,
+  ExternalLink,
+  Locate,
 } from "lucide-react";
 
 function setMeta(name: string, content: string) {
