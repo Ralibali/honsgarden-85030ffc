@@ -97,9 +97,15 @@ export default function AgdaProductTipCard() {
             src={product.imageUrl}
             alt={product.name}
             loading="lazy"
+            referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             className="h-20 w-20 sm:h-24 sm:w-24 object-contain rounded-lg bg-background/60 shrink-0"
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.visibility = 'hidden';
+              const img = e.currentTarget as HTMLImageElement;
+              if (img.dataset.fallback !== '1') {
+                img.dataset.fallback = '1';
+                img.src = '/placeholder.svg';
+              }
             }}
           />
           <div className="flex-1 min-w-0">
