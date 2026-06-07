@@ -10,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
 import { BellRing, CheckCircle2, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
+import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
+import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
@@ -69,13 +71,24 @@ export default function PublicEggSaleV3() {
     staleTime: 60_000,
   });
 
+  const theme = useMemo(() => normalizeTheme(listing?.theme), [listing?.theme]);
+  const sections = useMemo(() => normalizeSections(listing?.sections), [listing?.sections]);
+  const accent = theme.accent || '#3A6B35';
+  const bgClass = BG_CLASS[theme.bg || 'cream'] || BG_CLASS.cream;
+  const headerStyle = theme.headerStyle || 'classic';
+  const isDark = theme.bg === 'dark';
+
   const sale = useMemo(() => {
     if (listing) return {
-      id: listing.id, sellerUserId: listing.user_id, title: listing.title || 'Färska ägg till salu', description: listing.description || 'Färska ägg från lokal hönsgård.', imageUrl: listing.image_url || '', packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
+      id: listing.id, sellerUserId: listing.user_id,
+      title: theme.headline || listing.title || 'Färska ägg till salu',
+      description: theme.tagline || listing.description || 'Färska ägg från lokal hönsgård.',
+      imageUrl: theme.coverUrl || listing.image_url || '',
+      packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
     };
     const price = getParam(params, 'price', '60');
     return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')) || 6, size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12', price), p30: getParam(params, 'p30', ''), soldOut: false };
-  }, [listing, params]);
+  }, [listing, params, theme]);
 
   const remaining = Math.max(0, sale.packs - bookedPacks);
   const isSoldOut = sale.soldOut || remaining <= 0;
@@ -223,27 +236,48 @@ export default function PublicEggSaleV3() {
   const reviewCount = (publicReviews as any[]).length;
   const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
 
-  return <main className="min-h-screen noise-bg px-4 py-8 sm:py-12">
+  return <main className={`min-h-screen ${bgClass} px-4 py-8 sm:py-12`} style={{ ['--theme-accent' as any]: accent }}>
     <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
 
     {/* Hero */}
+    {headerStyle === 'hero' && sale.imageUrl ? (
+      <div className="relative mx-auto -mt-4 sm:-mt-6 overflow-hidden rounded-3xl border shadow-lg" style={{ borderColor: `${accent}33` }}>
+        <img src={sale.imageUrl} alt={sale.title} className="w-full h-72 sm:h-96 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 text-white space-y-2">
+          {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white/90 p-1 object-contain" />}
+          <Badge className="bg-white/95 text-foreground border-0 shadow-sm"><Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning</Badge>
+          <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
+          <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">{sale.description}</p>
+          {reviewCount > 0 && (
+            <div className="inline-flex items-center gap-2 text-sm rounded-full bg-white/95 text-foreground px-3 py-1.5 shadow-sm">
+              <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
+              <span className="text-muted-foreground"><strong className="text-foreground">{avgRating.toFixed(1)}</strong> · {reviewCount} {reviewCount === 1 ? 'recension' : 'recensioner'}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : (
     <div className="text-center space-y-5">
+      {headerStyle !== 'minimal' && (
       <div className="relative mx-auto max-w-xl">
-        <div aria-hidden="true" className="absolute -inset-6 bg-gradient-to-br from-primary/15 via-accent/10 to-transparent blur-2xl rounded-[2rem]" />
+        <div aria-hidden="true" className="absolute -inset-6 blur-2xl rounded-[2rem]" style={{ background: `radial-gradient(circle, ${accent}26 0%, transparent 70%)` }} />
         {sale.imageUrl
-          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border border-primary/15 shadow-lg" />
-          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border border-primary/15 shadow-sm"><Egg className="h-9 w-9 text-primary" /></div>}
+          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border shadow-lg" style={{ borderColor: `${accent}26` }} />
+          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border shadow-sm" style={{ borderColor: `${accent}33` }}><Egg className="h-9 w-9" style={{ color: accent }} /></div>}
         <div className="relative -mt-4 flex flex-wrap items-center justify-center gap-2">
-          <Badge className="bg-card text-foreground border border-primary/25 shadow-sm">
-            <Sparkles className="h-3 w-3 mr-1 text-primary" /> Lokal äggförsäljning
+          <Badge className="bg-card text-foreground border shadow-sm" style={{ borderColor: `${accent}40` }}>
+            <Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning
           </Badge>
           {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
           {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
         </div>
       </div>
+      )}
+      {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="mx-auto h-12 w-12 rounded-xl border bg-card p-1 object-contain" />}
       <div className="space-y-2.5">
-        <h1 className="font-serif text-3xl sm:text-4xl leading-tight text-foreground">{sale.title}</h1>
-        <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto">{sale.description}</p>
+        <h1 className={`font-serif text-3xl sm:text-4xl leading-tight ${isDark ? 'text-white' : 'text-foreground'}`}>{sale.title}</h1>
+        <p className={`leading-relaxed max-w-xl mx-auto ${isDark ? 'text-stone-200' : 'text-muted-foreground'}`}>{sale.description}</p>
         {reviewCount > 0 && (
           <div className="inline-flex items-center gap-2 text-sm rounded-full bg-card border border-border px-3 py-1.5 shadow-sm">
             <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
@@ -252,6 +286,7 @@ export default function PublicEggSaleV3() {
         )}
       </div>
     </div>
+    )}
 
     {/* Stats + details */}
     <Card className="border-primary/15 shadow-md bg-gradient-to-br from-primary/8 via-card to-accent/5 overflow-hidden">
@@ -268,6 +303,7 @@ export default function PublicEggSaleV3() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
       </CardContent>
     </Card>
+    <CustomSectionsRenderer sections={sections} accent={accent} />
     {(publicReviews as any[]).length > 0 && (() => {
       const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
       return (

@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { BarChart3, Copy, Crown, PackageCheck, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
+import { BarChart3, Copy, Crown, PackageCheck, Palette, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
@@ -152,9 +153,14 @@ export default function EggSalesProV7() {
                 Agda samlar dina säljsidor, bokningar, kunder och enkla rapporter på samma plats – så att du slipper hålla allt i huvudet.
               </p>
             </div>
-            <Button variant="outline" className="rounded-xl gap-2" onClick={() => copyText(weeklyReport, 'Veckorapporten')}>
-              <Copy className="h-4 w-4" /> Kopiera veckorapport
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" className="rounded-xl gap-2">
+                <Link to="/app/egg-sales/anpassa"><Palette className="h-4 w-4" /> Designa säljsidan <Badge className="ml-1 bg-warning/15 text-warning border-warning/25"><Crown className="h-3 w-3 mr-0.5" />Plus</Badge></Link>
+              </Button>
+              <Button variant="outline" className="rounded-xl gap-2" onClick={() => copyText(weeklyReport, 'Veckorapporten')}>
+                <Copy className="h-4 w-4" /> Kopiera veckorapport
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
