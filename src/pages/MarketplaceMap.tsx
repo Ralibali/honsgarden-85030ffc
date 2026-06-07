@@ -413,6 +413,19 @@ export default function MarketplaceMap() {
                         onCheckedChange={setHideSoldOut}
                       />
                     </div>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="filter-map" className="text-sm flex items-center gap-1.5">
+                        <Frame className="h-3.5 w-3.5" /> Filtrera efter kartan
+                      </Label>
+                      <Switch
+                        id="filter-map"
+                        checked={filterByMap}
+                        onCheckedChange={setFilterByMap}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground -mt-3">
+                      Visa bara säljare i det område du ser på kartan.
+                    </p>
                   </div>
                 </PopoverContent>
               </Popover>
