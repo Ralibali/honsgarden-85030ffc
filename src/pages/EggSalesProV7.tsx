@@ -165,6 +165,9 @@ export default function EggSalesProV7() {
               <Button variant="outline" className="rounded-xl gap-2" onClick={() => copyText(weeklyReport, 'Veckorapporten')}>
                 <Copy className="h-4 w-4" /> Kopiera veckorapport
               </Button>
+              <Button variant="outline" className="rounded-xl gap-2" onClick={() => downloadQrPdf(listings as Listing[])}>
+                <QrCode className="h-4 w-4" /> QR-skylt (PDF)
+              </Button>
             </div>
           </div>
 
