@@ -229,6 +229,18 @@ export default function MarketplaceMap() {
     if (hideSoldOut) list = list.filter((l) => !l.sold_out_manually);
     list = list.filter((l) => Number(l.price_per_pack ?? 0) <= maxPrice);
 
+    if (filterByMap && mapBounds) {
+      list = list.filter(
+        (l) =>
+          l.latitude != null &&
+          l.longitude != null &&
+          l.latitude >= mapBounds.south &&
+          l.latitude <= mapBounds.north &&
+          l.longitude >= mapBounds.west &&
+          l.longitude <= mapBounds.east,
+      );
+    }
+
     const sortRef = userPos ?? center;
     list.sort((a, b) => {
       if (sort === "cheapest") {
