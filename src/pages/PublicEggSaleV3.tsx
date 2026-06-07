@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { BellRing, CheckCircle2, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
@@ -31,6 +31,8 @@ export default function PublicEggSaleV3() {
   const [wlEmail, setWlEmail] = useState('');
   const [wlPhone, setWlPhone] = useState('');
   const [wlPacks, setWlPacks] = useState('1');
+  const [swishConfirm, setSwishConfirm] = useState(false);
+  const [bookingConfirm, setBookingConfirm] = useState(false);
 
   const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['public-egg-sale-listing-v3', slug],
@@ -117,6 +119,7 @@ export default function PublicEggSaleV3() {
     : '';
   const openSwish = () => {
     if (!swishDeepLink) return;
+    setSwishConfirm(true);
     window.location.href = swishDeepLink;
     setTimeout(() => {
       // Fallback if Swish app isn't installed: copy details
@@ -138,7 +141,7 @@ export default function PublicEggSaleV3() {
       const { error } = await (supabase as any).from('public_egg_sale_bookings').insert({ listing_id: listing.id, seller_user_id: listing.user_id, customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(), customer_message: message.trim() || null, packs: packAmount, status: 'reserved' });
       if (error) throw error;
     },
-    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
+    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); setBookingConfirm(true); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
     onError: (e: any) => toast({ title: 'Kunde inte skicka förfrågan', description: e.message, variant: 'destructive' }),
   });
 
@@ -317,6 +320,65 @@ export default function PublicEggSaleV3() {
         )}
       </div>
     </div>
+    )}
+
+    {/* Swish confirmation */}
+    {swishConfirm && (
+      <Card className="border-green-200 shadow-md bg-green-50/80 overflow-hidden">
+        <CardContent className="p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg text-green-800">Betalningsförfrågan skickad</h2>
+              <p className="text-sm text-green-700">Öppna Swish-appen och godkänn betalningen.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-white/70 p-4 space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Mottagare</span><strong>{sale.swishName || sale.swish}</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Belopp</span><strong className="text-green-700">{swishAmount} kr</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Meddelande</span><strong className="truncate max-w-[140px]">{swishMsgFull}</strong></div>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-green-700">
+            <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+            <p>Efter att du betalat via Swish, be säljaren bekräfta mottagningen. Har du inte Swish installerat? Uppgifterna finns kopierade.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => copy(`Swish: ${sale.swish}\nBelopp: ${swishAmount} kr\nMeddelande: ${swishMsgFull}`)}><Copy className="h-3.5 w-3.5 mr-1.5" /> Kopiera uppgifter</Button>
+            <Button variant="ghost" size="sm" className="rounded-lg text-green-700 hover:text-green-800 hover:bg-green-100" onClick={() => setSwishConfirm(false)}>Stäng</Button>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Booking confirmation */}
+    {bookingConfirm && (
+      <Card className="border-primary/20 shadow-md bg-primary/5 overflow-hidden">
+        <CardContent className="p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg text-foreground">Förhandsbokning mottagen</h2>
+              <p className="text-sm text-muted-foreground">Säljaren återkommer med bekräftelse.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card/70 p-4 space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Säljare</span><strong>{sale.title}</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Beräknat pris</span><strong>{swishAmount} kr</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Hämtas</span><strong>{sale.location}</strong></div>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+            <p>Ingen betalning har ännu skett. Säljaren kontaktar dig för att bekräfta tillgång och hämtning. Du betalar först vid upphämtning.</p>
+          </div>
+          <Button variant="ghost" size="sm" className="rounded-lg" onClick={() => setBookingConfirm(false)}>Stäng</Button>
+        </CardContent>
+      </Card>
     )}
 
     {/* Stats + details */}
