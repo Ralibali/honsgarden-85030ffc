@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navLinks = [
   { label: 'Funktioner', href: '#funktioner' },
   { label: 'Priser', href: '#priser' },
+  { label: 'Marknad', href: '/marknad' },
   { label: 'Äggkalkylator', href: '/verktyg/aggkalkylator' },
   { label: 'Blogg', href: '/blogg' },
 ];

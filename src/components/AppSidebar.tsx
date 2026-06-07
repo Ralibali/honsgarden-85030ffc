@@ -49,6 +49,7 @@ const moreNav = [
   { title: 'Nyheter', url: '/app/news', icon: Newspaper },
   { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
   { title: 'Community', url: '/app/community', icon: Users },
+  { title: 'Marknad', url: '/app/marknad/mina', icon: ReceiptText },
   { title: 'Premium', url: '/app/premium', icon: Crown },
   { title: 'Importera data', url: '/app/import', icon: Upload },
   { title: 'Feedback', url: '/app/feedback', icon: MessageCircle },
