@@ -96,6 +96,37 @@ export default function PublicEggSaleV3() {
   const shareText = `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
   const priceRows = [sale.p6 ? { label: '6-pack', price: sale.p6 } : null, { label: `${sale.size}-pack`, price: sale.p12 || `${sale.price} kr` }, sale.p30 ? { label: '30-pack', price: sale.p30 } : null].filter(Boolean) as { label: string; price: string }[];
 
+  const parseKr = (v: unknown) => {
+    const n = Number(String(v ?? '').replace(/[^\d.,-]/g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const pricePerPack = parseKr(sale.p12) || parseKr(sale.price);
+  const packCount = Math.max(1, Number(packs) || 1);
+  const swishAmount = Math.round(packCount * pricePerPack);
+  const swishMsgFull = `${sale.swishMsg || 'Ägg'} ${packCount}x${sale.size}-pack`.slice(0, 50);
+  const swishPayee = (sale.swish || '').replace(/\D/g, '');
+  const swishDeepLink = sale.swish
+    ? `swish://payment?data=${encodeURIComponent(
+        JSON.stringify({
+          version: 1,
+          payee: { value: swishPayee, editable: false },
+          amount: { value: swishAmount, editable: true },
+          message: { value: swishMsgFull, editable: true },
+        }),
+      )}`
+    : '';
+  const openSwish = () => {
+    if (!swishDeepLink) return;
+    window.location.href = swishDeepLink;
+    setTimeout(() => {
+      // Fallback if Swish app isn't installed: copy details
+      if (document.hasFocus()) {
+        copy(`${swishText}\nBelopp: ${swishAmount} kr`);
+        toast({ title: 'Öppna Swish manuellt', description: `Beloppet ${swishAmount} kr och uppgifterna är kopierade.` });
+      }
+    }, 1200);
+  };
+
   const bookingMutation = useMutation({
     mutationFn: async () => {
       if (!listing?.id || !listing?.user_id) throw new Error('Den här säljlistan kan inte ta emot förfrågningar just nu.');
