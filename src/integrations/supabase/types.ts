@@ -2090,15 +2090,20 @@ export type Database = {
         Row: {
           auto_publish: boolean
           contact_info: string | null
+          contact_phone: string | null
           created_at: string
           description: string
           eggs_per_pack: number
+          expires_at: string | null
           id: string
           image_url: string | null
           is_active: boolean
           latitude: number | null
+          listing_kind: string
           location: string | null
           longitude: number | null
+          manage_token: string | null
+          owner_email: string | null
           p12_price: number | null
           p30_price: number | null
           p6_price: number | null
@@ -2111,25 +2116,32 @@ export type Database = {
           sold_out_manually: boolean
           stock_packs: number
           stock_source: string
+          submitted_ip: string | null
           swish_message: string | null
           swish_name: string | null
           swish_number: string | null
           title: string
           updated_at: string
-          user_id: string
+          user_id: string | null
+          verified_at: string | null
         }
         Insert: {
           auto_publish?: boolean
           contact_info?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string
           eggs_per_pack?: number
+          expires_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           latitude?: number | null
+          listing_kind?: string
           location?: string | null
           longitude?: number | null
+          manage_token?: string | null
+          owner_email?: string | null
           p12_price?: number | null
           p30_price?: number | null
           p6_price?: number | null
@@ -2142,25 +2154,32 @@ export type Database = {
           sold_out_manually?: boolean
           stock_packs?: number
           stock_source?: string
+          submitted_ip?: string | null
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
           title?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
+          verified_at?: string | null
         }
         Update: {
           auto_publish?: boolean
           contact_info?: string | null
+          contact_phone?: string | null
           created_at?: string
           description?: string
           eggs_per_pack?: number
+          expires_at?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
           latitude?: number | null
+          listing_kind?: string
           location?: string | null
           longitude?: number | null
+          manage_token?: string | null
+          owner_email?: string | null
           p12_price?: number | null
           p30_price?: number | null
           p6_price?: number | null
@@ -2173,12 +2192,14 @@ export type Database = {
           sold_out_manually?: boolean
           stock_packs?: number
           stock_source?: string
+          submitted_ip?: string | null
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
           title?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
+          verified_at?: string | null
         }
         Relationships: []
       }
@@ -3193,6 +3214,7 @@ export type Database = {
       }
       count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
+      deactivate_expired_simple_listings: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
