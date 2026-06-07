@@ -167,9 +167,9 @@ export default function MarketplaceMap() {
                 Bli först! Sälj dina egna ägg och dyk upp här direkt.
               </p>
             </div>
-            <Button asChild size="lg" className="shrink-0">
-              <Link to="/login">Sälj dina egna ägg här →</Link>
-            </Button>
+            <AddMapListingDialog
+              trigger={<Button size="lg" className="shrink-0">Bli först — lägg upp din annons →</Button>}
+            />
           </div>
         )}
 
