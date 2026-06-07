@@ -14,14 +14,9 @@ const SPIKE_THRESHOLD = 10; // antal fel inom intervall för "spike"-rubrik
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  const auth = req.headers.get("Authorization") ?? "";
+  // Intern cron-trigger — verify_jwt=false. Värsta scenariot vid spam är att
+  // admin får en extra mejl OM det finns onotifierade fel; annars no-op.
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-  }
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
