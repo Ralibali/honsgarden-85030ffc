@@ -94,16 +94,20 @@ function Dashboard() {
 
       {current && (
         <Tabs defaultValue="bookings" className="space-y-3">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 mr-1.5" />Bokningar</TabsTrigger>
-            <TabsTrigger value="slots"><Calendar className="h-4 w-4 mr-1.5" />Tidsluckor</TabsTrigger>
-            <TabsTrigger value="waitlist"><Users className="h-4 w-4 mr-1.5" />Väntelista</TabsTrigger>
-            <TabsTrigger value="templates"><BookmarkPlus className="h-4 w-4 mr-1.5" />Mallar</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Bokningar</span></TabsTrigger>
+            <TabsTrigger value="slots"><Calendar className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Tider</span></TabsTrigger>
+            <TabsTrigger value="waitlist"><Users className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Väntelista</span></TabsTrigger>
+            <TabsTrigger value="subs"><Repeat className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Abonnemang</span></TabsTrigger>
+            <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Statistik</span></TabsTrigger>
+            <TabsTrigger value="templates"><BookmarkPlus className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Mallar</span></TabsTrigger>
           </TabsList>
 
           <TabsContent value="bookings"><BookingsTab listing={current} /></TabsContent>
           <TabsContent value="slots"><SlotsTab listing={current} /></TabsContent>
           <TabsContent value="waitlist"><WaitlistTab listing={current} /></TabsContent>
+          <TabsContent value="subs"><SubscriptionsTab listing={current} /></TabsContent>
+          <TabsContent value="stats"><StatsTab listing={current} /></TabsContent>
           <TabsContent value="templates"><TemplatesTab listing={current} onApply={() => qc.invalidateQueries({ queryKey: ['dashboard-listings'] })} /></TabsContent>
         </Tabs>
       )}
