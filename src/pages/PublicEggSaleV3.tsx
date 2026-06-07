@@ -37,6 +37,12 @@ export default function PublicEggSaleV3() {
   const [wlPacks, setWlPacks] = useState('1');
   const [swishConfirm, setSwishConfirm] = useState(false);
   const [bookingConfirm, setBookingConfirm] = useState(false);
+  const [subFreq, setSubFreq] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const [subPacks, setSubPacks] = useState('1');
+  const [subName, setSubName] = useState('');
+  const [subEmail, setSubEmail] = useState('');
+  const [subPhone, setSubPhone] = useState('');
+  const [showSub, setShowSub] = useState(false);
 
   const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
     queryKey: ['public-egg-sale-listing-v3', slug],
