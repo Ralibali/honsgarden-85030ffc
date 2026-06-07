@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, Wallet } from 'lucide-react';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Package, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 
@@ -27,6 +27,10 @@ export default function PublicEggSaleV3() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [packs, setPacks] = useState('1');
+  const [pickupSlotId, setPickupSlotId] = useState<string>('');
+  const [pickupPersonName, setPickupPersonName] = useState('');
+  const [pickupPersonPhone, setPickupPersonPhone] = useState('');
+  const [otherPickup, setOtherPickup] = useState(false);
   const [wlName, setWlName] = useState('');
   const [wlEmail, setWlEmail] = useState('');
   const [wlPhone, setWlPhone] = useState('');
@@ -71,6 +75,32 @@ export default function PublicEggSaleV3() {
       return data || [];
     },
     staleTime: 60_000,
+  });
+
+  const { data: slots = [] } = useQuery<any[]>({
+    queryKey: ['public-egg-sale-slots-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('egg_sale_pickup_slots')
+        .select('*')
+        .eq('listing_id', listing.id)
+        .eq('is_active', true)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true });
+      return data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: isVerified = false } = useQuery({
+    queryKey: ['public-egg-sale-verified-v3', listing?.user_id],
+    enabled: Boolean(listing?.user_id),
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc('is_verified_egg_seller', { _seller_id: listing.user_id });
+      return Boolean(data);
+    },
+    staleTime: 5 * 60_000,
   });
 
   const theme = useMemo(() => normalizeTheme(listing?.theme), [listing?.theme]);
@@ -138,10 +168,28 @@ export default function PublicEggSaleV3() {
       if (!phone.trim()) throw new Error('Skriv ditt telefonnummer.');
       if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new Error('Skriv en giltig e-postadress.');
       if (packAmount > remaining) throw new Error(`Det finns bara ${remaining} kartor kvar.`);
-      const { error } = await (supabase as any).from('public_egg_sale_bookings').insert({ listing_id: listing.id, seller_user_id: listing.user_id, customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(), customer_message: message.trim() || null, packs: packAmount, status: 'reserved' });
+      if (slots.length > 0 && !pickupSlotId) throw new Error('Välj en hämtningstid.');
+      const payload: any = {
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(),
+        customer_message: message.trim() || null, packs: packAmount, status: 'reserved',
+      };
+      if (pickupSlotId) payload.pickup_slot_id = pickupSlotId;
+      if (otherPickup && pickupPersonName.trim()) {
+        payload.pickup_person_name = pickupPersonName.trim();
+        payload.pickup_person_phone = pickupPersonPhone.trim() || null;
+      }
+      const { error } = await (supabase as any).from('public_egg_sale_bookings').insert(payload);
       if (error) throw error;
     },
-    onSuccess: async () => { setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1'); setBookingConfirm(true); await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] }); toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' }); },
+    onSuccess: async () => {
+      setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
+      setPickupSlotId(''); setPickupPersonName(''); setPickupPersonPhone(''); setOtherPickup(false);
+      setBookingConfirm(true);
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] });
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing?.id] });
+      toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' });
+    },
     onError: (e: any) => toast({ title: 'Kunde inte skicka förfrågan', description: e.message, variant: 'destructive' }),
   });
 
@@ -281,6 +329,7 @@ export default function PublicEggSaleV3() {
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 text-white space-y-2">
           {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white/90 p-1 object-contain" />}
           <Badge className="bg-white/95 text-foreground border-0 shadow-sm"><Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning</Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm ml-1"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
           <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
           <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">{sale.description}</p>
           {reviewCount > 0 && (
@@ -303,6 +352,7 @@ export default function PublicEggSaleV3() {
           <Badge className="bg-card text-foreground border shadow-sm" style={{ borderColor: `${accent}40` }}>
             <Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning
           </Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
           {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
           {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
         </div>
@@ -392,7 +442,76 @@ export default function PublicEggSaleV3() {
         {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
         <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p></Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
         <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p>{sale.swish && pricePerPack > 0 && (<div className="mt-2 flex items-center justify-between rounded-xl border bg-background/70 px-3 py-2"><div className="text-xs text-muted-foreground">Att betala för {packCount} × {sale.size}-pack</div><div className="font-serif text-lg">{swishAmount} kr</div></div>)}</Row>{sale.swish && (<div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Button className="w-full rounded-xl" onClick={openSwish} disabled={!swishAmount}><Wallet className="h-4 w-4 mr-2" /> Öppna Swish ({swishAmount} kr)</Button><Button variant="outline" className="w-full rounded-xl" onClick={() => copy(`${swishText}\nBelopp: ${swishAmount} kr`)}><Copy className="h-4 w-4 mr-2" /> Kopiera uppgifter</Button></div>)}{sale.swish && <p className="text-[11px] text-muted-foreground">Beloppet räknas ut från antal kartor du valt ovan. Du kan justera summan i Swish innan du godkänner.</p>}</CardContent></Card>
-        {listing?.id && <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">{isSoldOut ? <><h2 className="font-serif text-base flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2><p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" /><Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" /><Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" /></div><Button size="lg" onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl shadow-sm"><BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}</Button></> : <><h2 className="font-serif text-base flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Boka ägg</h2><p className="text-xs text-muted-foreground">Säljaren bekräftar din bokning och återkommer om hämtning.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" /><Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" /></div><Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse)" /><Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" /><Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" /><Button size="lg" onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl shadow-sm text-base"><CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar bokning...' : 'Skicka bokningsförfrågan'}</Button><p className="text-[11px] text-muted-foreground text-center">Ingen betalning sker här – endast en förfrågan till säljaren.</p></>}</CardContent></Card>}
+        {listing?.id && (
+          <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">
+            {isSoldOut ? (
+              <>
+                <h2 className="font-serif text-base flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2>
+                <p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" />
+                  <Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" />
+                  <Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" />
+                </div>
+                <Button size="lg" onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl shadow-sm">
+                  <BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <h2 className="font-serif text-base flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Boka ägg</h2>
+                <p className="text-xs text-muted-foreground">Säljaren bekräftar din bokning och återkommer om hämtning.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" />
+                  <Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" />
+                </div>
+                <Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse)" />
+                <Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" />
+
+                {slots.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Välj hämtningstid *</label>
+                    <select
+                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      value={pickupSlotId}
+                      onChange={(e) => setPickupSlotId(e.target.value)}
+                    >
+                      <option value="">– Välj tid –</option>
+                      {slots.map((s) => {
+                        const full = s.current_bookings >= s.max_bookings;
+                        const dateStr = new Date(s.starts_at).toLocaleString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        const endStr = new Date(s.ends_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+                        return <option key={s.id} value={s.id} disabled={full}>{dateStr}–{endStr}{s.label ? ` · ${s.label}` : ''}{full ? ' (Fullt)' : ` (${s.max_bookings - s.current_bookings} kvar)`}</option>;
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={otherPickup} onChange={(e) => setOtherPickup(e.target.checked)} className="rounded" />
+                    <UserPlus className="h-3.5 w-3.5" /> Någon annan hämtar åt mig
+                  </label>
+                  {otherPickup && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input aria-label="Hämtarens namn" value={pickupPersonName} onChange={(e) => setPickupPersonName(e.target.value)} placeholder="Hämtarens namn" />
+                      <Input aria-label="Hämtarens telefon" value={pickupPersonPhone} onChange={(e) => setPickupPersonPhone(e.target.value)} placeholder="Hämtarens telefon" />
+                    </div>
+                  )}
+                </div>
+
+                <Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" />
+                <Button size="lg" onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl shadow-sm text-base">
+                  <CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar bokning...' : 'Skicka bokningsförfrågan'}
+                </Button>
+                <p className="text-[11px] text-muted-foreground text-center">Ingen betalning sker här – endast en förfrågan till säljaren.</p>
+              </>
+            )}
+          </CardContent></Card>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
       </CardContent>
     </Card>
