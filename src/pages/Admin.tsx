@@ -24,6 +24,7 @@ import CommunityModerationLog from '@/components/admin/CommunityModerationLog';
 import PwaDashboard from '@/components/admin/PwaDashboard';
 import AgdaAdminPanel from '@/components/admin/AgdaAdminPanel';
 import { ErrorLogsPanel } from '@/components/admin/ErrorLogsPanel';
+import AffiliateClicksPanel from '@/components/admin/AffiliateClicksPanel';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
