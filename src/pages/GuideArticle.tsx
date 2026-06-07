@@ -11,6 +11,7 @@ import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
+import { trackAffiliateClick } from '@/lib/affiliateTracking';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 const categoryLabels: Record<string, string> = {
