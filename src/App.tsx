@@ -56,6 +56,8 @@ const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
 const EggSaleCustomize = lazyWithRetry(() => import("./pages/EggSaleCustomize"));
 const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
+const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
+const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
 const News = lazyWithRetry(() => import("./pages/News"));
 const Weather = lazyWithRetry(() => import("./pages/Weather"));
 const WeatherHistoryDetail = lazyWithRetry(() => import("./pages/WeatherHistoryDetail"));
@@ -144,6 +146,7 @@ const AppRoutes = () => (
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<PublicReview />} />
+        <Route path="/avboka/:token" element={<CancelBooking />} />
         <Route path="/login" element={<Login />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -168,6 +171,7 @@ const AppRoutes = () => (
           <Route path="finance" element={<Finance />} />
           <Route path="egg-sales" element={<EggSales />} />
           <Route path="egg-sales/anpassa" element={<EggSaleCustomize />} />
+          <Route path="egg-sales/dashboard" element={<EggSaleDashboard />} />
           <Route path="statistics" element={<Statistics />} />
           <Route path="overview" element={<Overview />} />
           <Route path="settings" element={<SettingsPage />} />
