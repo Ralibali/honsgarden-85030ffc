@@ -271,6 +271,9 @@ export default function Admin() {
           <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
             <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
           </TabsTrigger>
+          <TabsTrigger value="affiliate" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Link2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Affiliate</span><span className="sm:hidden">💰</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Insights tab */}
