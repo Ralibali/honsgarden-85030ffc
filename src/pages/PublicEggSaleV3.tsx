@@ -219,29 +219,34 @@ export default function PublicEggSaleV3() {
   if (isLoading) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
   if (shouldLoadSlug && !listing) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
 
-  return <main className="min-h-screen noise-bg px-4 py-8 sm:py-12 relative overflow-hidden">
-    {/* Playful floating egg decorations */}
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      <span className="absolute top-10 left-4 text-4xl opacity-20 animate-float-slow">🥚</span>
-      <span className="absolute top-32 right-6 text-3xl opacity-15 animate-float-slower">🐔</span>
-      <span className="absolute top-1/2 left-2 text-2xl opacity-10 animate-float-slow">🌿</span>
-      <span className="absolute bottom-40 right-4 text-4xl opacity-15 animate-float-slower">🥚</span>
-      <span className="absolute bottom-20 left-8 text-3xl opacity-15 animate-float-slow">🌾</span>
-    </div>
-    <div className="mx-auto max-w-2xl space-y-5 relative">
-    <div className="text-center space-y-3 relative">
+  const lowStock = !isSoldOut && remaining > 0 && remaining <= 3;
+  const reviewCount = (publicReviews as any[]).length;
+  const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
+
+  return <main className="min-h-screen noise-bg px-4 py-8 sm:py-12">
+    <div className="mx-auto max-w-2xl space-y-5">
+    <div className="text-center space-y-4">
       {sale.imageUrl
-        ? <div className="relative mx-auto max-w-xl"><img src={sale.imageUrl} alt={sale.title} className="mx-auto h-52 w-full rounded-3xl object-cover border-2 border-primary/20 shadow-lg" /><span className="absolute -top-3 -right-3 text-4xl rotate-12 drop-shadow-md select-none">🥚</span><span className="absolute -bottom-2 -left-2 text-3xl -rotate-12 drop-shadow-md select-none">🐔</span></div>
-        : <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-primary/20 shadow-md hover:rotate-6 transition-transform"><Egg className="h-10 w-10 text-primary" /></div>}
-      <div>
-        <Badge className="mb-3 rotate-[-2deg] shadow-sm text-sm px-3 py-1">✨ Lokal äggförsäljning</Badge>
-        <h1 className="font-serif text-3xl sm:text-4xl">{sale.title}</h1>
-        <p className="mt-2 text-muted-foreground leading-relaxed">{sale.description}</p>
+        ? <img src={sale.imageUrl} alt={sale.title} className="mx-auto h-56 w-full max-w-xl rounded-3xl object-cover border shadow-sm" />
+        : <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border"><Egg className="h-8 w-8 text-primary" /></div>}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">Lokal äggförsäljning</Badge>
+          {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30">Endast {remaining} kvar</Badge>}
+          {reviewCount > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+              <strong className="text-foreground">{avgRating.toFixed(1)}</strong> ({reviewCount})
+            </span>
+          )}
+        </div>
+        <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
+        <p className="text-muted-foreground leading-relaxed max-w-xl mx-auto">{sale.description}</p>
       </div>
     </div>
     <Card className="border-primary/20 shadow-sm bg-gradient-to-br from-primary/8 via-card to-accent/8"><CardContent className="p-5 sm:p-6 space-y-5">
-      <div className="grid grid-cols-3 gap-3 text-center"><InfoStat label="ägg/karta" value={sale.size} emoji="🥚" /><InfoStat label="kr" value={sale.price} emoji="💰" /><InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} emoji={isSoldOut ? "🚫" : "📦"} /></div>
-      {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Hoppsan – slutsålt just nu! 🥚</p><p className="text-sm text-muted-foreground">Kontakta säljaren eller ställ dig på väntelistan nedan.</p></div>}
+      <div className="grid grid-cols-3 gap-3 text-center"><InfoStat label="ägg/karta" value={sale.size} /><InfoStat label="pris/karta" value={`${sale.price} kr`} /><InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} /></div>
+      {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
       <div className="rounded-2xl border bg-card/70 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p></Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
       <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p></Row>{sale.swish && <Button variant="outline" className="w-full rounded-xl" onClick={() => copy(swishText)}><Copy className="h-4 w-4 mr-2" /> Kopiera Swishuppgifter</Button>}</CardContent></Card>
       {listing?.id && <Card className="shadow-none"><CardContent className="p-4 space-y-3">{isSoldOut ? <><h2 className="font-serif text-sm flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2><p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" /><Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" /><Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" /></div><Button onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl"><BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}</Button></> : <><h2 className="font-serif text-sm flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Skicka bokningsförfrågan</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" /><Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" /></div><Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse & recension)" /><Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" /><Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" /><p className="text-[11px] text-muted-foreground">Vi använder kontaktuppgifterna för att bekräfta bokningen och skicka en kort recensions-länk efter hämtning.</p><Button onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl"><CheckCircle2 className="h-4 w-4 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar...' : 'Skicka bokningsförfrågan'}</Button></>}</CardContent></Card>}
@@ -276,5 +281,5 @@ export default function PublicEggSaleV3() {
     <details className="rounded-2xl border bg-card/60 p-4 text-center"><summary className="cursor-pointer list-none text-xs text-muted-foreground">Skapad med <strong>Hönsgården.se</strong></summary><div className="pt-4 space-y-3"><Sparkles className="h-5 w-5 mx-auto text-primary" /><p className="text-sm font-medium">Vill du också sälja ägg enklare?</p><p className="text-xs text-muted-foreground">Med Hönsgården kan du logga ägg, skapa säljannonser, dela försäljningssidor och hålla koll på betalningar.</p><Button variant="outline" size="sm" onClick={() => window.open('https://honsgarden.se', '_blank')}><ExternalLink className="h-3.5 w-3.5 mr-2" /> Besök Hönsgården.se</Button></div></details>
   </div></main>;
 }
-function InfoStat({ label, value, warn, emoji }: { label: string; value: string | number; warn?: boolean; emoji?: string }) { return <div className={`rounded-2xl border-2 p-4 transition-transform hover:-translate-y-0.5 hover:rotate-[-1deg] ${warn ? 'bg-destructive/5 border-destructive/20' : 'bg-card/80 border-primary/15 shadow-sm'}`}>{emoji && <p className="text-xl mb-1" aria-hidden="true">{emoji}</p>}<p className="text-2xl font-bold tabular-nums">{value}</p><p className="data-label text-[10px] mt-1">{label}</p></div>; }
+function InfoStat({ label, value, warn, highlight }: { label: string; value: string | number; warn?: boolean; highlight?: boolean }) { return <div className={`rounded-2xl border p-4 ${warn ? 'bg-destructive/5 border-destructive/20' : highlight ? 'bg-warning/5 border-warning/30' : 'bg-card/80 border-border'}`}><p className={`text-2xl font-bold tabular-nums ${warn ? 'text-destructive' : highlight ? 'text-warning' : ''}`}>{value}</p><p className="data-label text-[10px] mt-1">{label}</p></div>; }
 function Row({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) { return <section className="flex gap-3 border-b border-border/40 last:border-0 pb-3 last:pb-0"><Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" /><div className="flex-1"><h2 className="text-sm font-medium font-serif">{title}</h2>{children}</div></section>; }
