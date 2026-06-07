@@ -71,13 +71,24 @@ export default function PublicEggSaleV3() {
     staleTime: 60_000,
   });
 
+  const theme = useMemo(() => normalizeTheme(listing?.theme), [listing?.theme]);
+  const sections = useMemo(() => normalizeSections(listing?.sections), [listing?.sections]);
+  const accent = theme.accent || '#3A6B35';
+  const bgClass = BG_CLASS[theme.bg || 'cream'] || BG_CLASS.cream;
+  const headerStyle = theme.headerStyle || 'classic';
+  const isDark = theme.bg === 'dark';
+
   const sale = useMemo(() => {
     if (listing) return {
-      id: listing.id, sellerUserId: listing.user_id, title: listing.title || 'Färska ägg till salu', description: listing.description || 'Färska ägg från lokal hönsgård.', imageUrl: listing.image_url || '', packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
+      id: listing.id, sellerUserId: listing.user_id,
+      title: theme.headline || listing.title || 'Färska ägg till salu',
+      description: theme.tagline || listing.description || 'Färska ägg från lokal hönsgård.',
+      imageUrl: theme.coverUrl || listing.image_url || '',
+      packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
     };
     const price = getParam(params, 'price', '60');
     return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')) || 6, size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12', price), p30: getParam(params, 'p30', ''), soldOut: false };
-  }, [listing, params]);
+  }, [listing, params, theme]);
 
   const remaining = Math.max(0, sale.packs - bookedPacks);
   const isSoldOut = sale.soldOut || remaining <= 0;
