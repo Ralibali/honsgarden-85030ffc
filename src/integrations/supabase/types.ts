@@ -2112,6 +2112,7 @@ export type Database = {
           price_per_pack: number
           regular_customer_threshold: number
           reserved_packs: number
+          sections: Json
           slug: string
           sold_out_manually: boolean
           stock_packs: number
@@ -2120,6 +2121,7 @@ export type Database = {
           swish_message: string | null
           swish_name: string | null
           swish_number: string | null
+          theme: Json
           title: string
           updated_at: string
           user_id: string | null
@@ -2150,6 +2152,7 @@ export type Database = {
           price_per_pack?: number
           regular_customer_threshold?: number
           reserved_packs?: number
+          sections?: Json
           slug: string
           sold_out_manually?: boolean
           stock_packs?: number
@@ -2158,6 +2161,7 @@ export type Database = {
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
+          theme?: Json
           title?: string
           updated_at?: string
           user_id?: string | null
@@ -2188,6 +2192,7 @@ export type Database = {
           price_per_pack?: number
           regular_customer_threshold?: number
           reserved_packs?: number
+          sections?: Json
           slug?: string
           sold_out_manually?: boolean
           stock_packs?: number
@@ -2196,6 +2201,7 @@ export type Database = {
           swish_message?: string | null
           swish_name?: string | null
           swish_number?: string | null
+          theme?: Json
           title?: string
           updated_at?: string
           user_id?: string | null
