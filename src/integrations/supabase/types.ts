@@ -2106,6 +2106,145 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_listings: {
+        Row: {
+          category: string
+          city: string | null
+          condition: string | null
+          created_at: string
+          currency: string
+          description: string
+          expires_at: string
+          id: string
+          image_urls: string[]
+          is_giveaway: boolean
+          postal_code: string | null
+          price: number | null
+          region: string | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          category: string
+          city?: string | null
+          condition?: string | null
+          created_at?: string
+          currency?: string
+          description: string
+          expires_at?: string
+          id?: string
+          image_urls?: string[]
+          is_giveaway?: boolean
+          postal_code?: string | null
+          price?: number | null
+          region?: string | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          category?: string
+          city?: string | null
+          condition?: string | null
+          created_at?: string
+          currency?: string
+          description?: string
+          expires_at?: string
+          id?: string
+          image_urls?: string[]
+          is_giveaway?: boolean
+          postal_code?: string | null
+          price?: number | null
+          region?: string | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      marketplace_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          listing_id: string
+          read_at: string | null
+          recipient_user_id: string
+          sender_user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          read_at?: string | null
+          recipient_user_id: string
+          sender_user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          read_at?: string | null
+          recipient_user_id?: string
+          sender_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_messages_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_reports: {
+        Row: {
+          created_at: string
+          id: string
+          listing_id: string
+          reason: string
+          reported_by: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          listing_id: string
+          reason: string
+          reported_by: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          listing_id?: string
+          reason?: string
+          reported_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reports_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
@@ -3516,6 +3655,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_marketplace_listings: { Args: never; Returns: undefined }
       get_farm_member_display_names: {
         Args: { _uid: string }
         Returns: {
@@ -3569,6 +3709,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_marketplace_view: {
+        Args: { _slug: string }
+        Returns: undefined
+      }
       is_verified_egg_seller: { Args: { _seller_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {
@@ -3596,6 +3740,7 @@ export type Database = {
         Args: { _is_lifetime: boolean; _user_id: string }
         Returns: undefined
       }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
