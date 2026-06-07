@@ -406,3 +406,166 @@ function TemplatesTab({ listing, onApply }: { listing: Listing; onApply: () => v
     </div>
   );
 }
+
+function SubscriptionsTab({ listing }: { listing: Listing }) {
+  const qc = useQueryClient();
+  const { data: subs = [] } = useQuery<any[]>({
+    queryKey: ['dash-subs', listing.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('egg_sale_subscriptions').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const update = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await (supabase as any).from('egg_sale_subscriptions').update(patch).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast({ title: 'Uppdaterat' }); qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }); },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from('egg_sale_subscriptions').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast({ title: 'Borttaget' }); qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }); },
+  });
+
+  if (subs.length === 0) {
+    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground space-y-2"><Repeat className="h-8 w-8 mx-auto text-muted-foreground/50" /><p>Inga abonnemang ännu.</p><p className="text-xs">Köpare kan starta abonnemang direkt från din säljsida.</p></CardContent></Card>;
+  }
+
+  const freqLabel = (f: string) => f === 'weekly' ? 'Varje vecka' : f === 'biweekly' ? 'Varannan vecka' : 'Varje månad';
+
+  return (
+    <div className="space-y-2">
+      {subs.map((s) => {
+        const active = s.status === 'active';
+        return (
+          <Card key={s.id} className={active ? '' : 'opacity-60'}>
+            <CardContent className="p-4 space-y-2.5">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="min-w-0">
+                  <p className="font-medium">{s.customer_name} <span className="text-xs text-muted-foreground">· {s.packs} kartor · {freqLabel(s.frequency)}</span></p>
+                  <p className="text-xs text-muted-foreground">{s.customer_email} · {s.customer_phone || '–'}</p>
+                  <p className="text-xs text-muted-foreground">Nästa leverans: {dt(s.next_run_at)} · Skickade: {s.total_bookings}</p>
+                </div>
+                <Badge variant={active ? 'default' : 'secondary'}>{s.status}</Badge>
+              </div>
+              <div className="flex gap-1.5 flex-wrap pt-1">
+                {active ? (
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => update.mutate({ id: s.id, patch: { status: 'paused' } })}>
+                    <Pause className="h-3 w-3 mr-1" />Pausa
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => update.mutate({ id: s.id, patch: { status: 'active' } })}>
+                    <Play className="h-3 w-3 mr-1" />Återuppta
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => { if (confirm('Avsluta abonnemang?')) remove.mutate(s.id); }}>
+                  <Trash2 className="h-3 w-3 mr-1" />Avsluta
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatsTab({ listing }: { listing: Listing }) {
+  const { data: bookings = [] } = useQuery<any[]>({
+    queryKey: ['dash-stats-bookings', listing.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('public_egg_sale_bookings').select('*').eq('listing_id', listing.id).neq('status', 'cancelled');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const stats = useMemo(() => {
+    const price = Number(listing.price_per_pack || 0);
+    const months = new Map<string, { packs: number; revenue: number; count: number }>();
+    const customers = new Map<string, { name: string; packs: number; revenue: number; count: number }>();
+    let totalPacks = 0, totalRevenue = 0, paidRevenue = 0;
+    const now = new Date();
+    const monthsBack: { key: string; label: string }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthsBack.push({ key, label: d.toLocaleDateString('sv-SE', { month: 'short', year: '2-digit' }) });
+      months.set(key, { packs: 0, revenue: 0, count: 0 });
+    }
+    for (const b of bookings) {
+      const d = new Date(b.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const rev = Number(b.packs || 0) * price;
+      totalPacks += Number(b.packs || 0);
+      totalRevenue += rev;
+      if (b.payment_status === 'paid') paidRevenue += rev;
+      if (months.has(key)) {
+        const m = months.get(key)!;
+        m.packs += Number(b.packs || 0); m.revenue += rev; m.count += 1;
+      }
+      const cKey = (b.customer_email || b.customer_phone || b.customer_name || '').toLowerCase();
+      if (cKey) {
+        const c = customers.get(cKey) || { name: b.customer_name, packs: 0, revenue: 0, count: 0 };
+        c.packs += Number(b.packs || 0); c.revenue += rev; c.count += 1;
+        customers.set(cKey, c);
+      }
+    }
+    const topCustomers = [...customers.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    const monthsArr = monthsBack.map((m) => ({ ...m, ...months.get(m.key)! }));
+    const maxRev = Math.max(1, ...monthsArr.map((m) => m.revenue));
+    return { monthsArr, topCustomers, totalPacks, totalRevenue, paidRevenue, maxRev, avg: bookings.length > 0 ? totalRevenue / bookings.length : 0 };
+  }, [bookings, listing.price_per_pack]);
+
+  if (bookings.length === 0) {
+    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground"><BarChart3 className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />Ingen försäljningsdata ännu.</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total intäkt</p><p className="text-xl font-bold text-primary">{kr(stats.totalRevenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Betalt</p><p className="text-xl font-bold text-green-600">{kr(stats.paidRevenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Kartor sålda</p><p className="text-xl font-bold">{stats.totalPacks}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Snitt/bokning</p><p className="text-xl font-bold">{kr(stats.avg)}</p></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Intäkt senaste 6 månaderna</h3>
+          <div className="space-y-2">
+            {stats.monthsArr.map((m) => (
+              <div key={m.key} className="space-y-1">
+                <div className="flex justify-between text-xs"><span className="text-muted-foreground">{m.label}</span><span className="font-medium tabular-nums">{kr(m.revenue)} · {m.count} bokn.</span></div>
+                <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary transition-all" style={{ width: `${(m.revenue / stats.maxRev) * 100}%` }} /></div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <h3 className="font-serif text-base flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Bästa kunder</h3>
+          <div className="space-y-1.5">
+            {stats.topCustomers.map((c, i) => (
+              <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/40 last:border-0">
+                <span className="font-medium">{i + 1}. {c.name}</span>
+                <span className="text-xs text-muted-foreground tabular-nums">{c.count} bokn. · {c.packs} kartor · <strong className="text-foreground">{kr(c.revenue)}</strong></span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
