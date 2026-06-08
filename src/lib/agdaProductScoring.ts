@@ -109,7 +109,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
         signals.push({
           categories: ['tillskott', 'foder'],
           weight: 70,
-          reason: `produktionen sjunkit ~${Math.round(drop * 100)}% mot dina senaste 4 veckor`,
+          reason: `produktionen har sjunkit ~${Math.round(drop * 100)}% mot dina senaste 4 veckor`,
         });
       }
     }
