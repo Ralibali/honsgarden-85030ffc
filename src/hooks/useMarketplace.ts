@@ -22,7 +22,10 @@ export function useListings(filters: ListingFilters = {}) {
 
       if (filters.category && filters.category !== 'all') q = q.eq('category', filters.category);
       if (filters.region && filters.region !== 'all') q = q.eq('region', filters.region);
-      if (filters.search?.trim()) q = q.ilike('title', `%${filters.search.trim()}%`);
+      if (filters.search?.trim()) {
+        // Fulltextsök över titel + beskrivning (använder gin-indexet idx_marketplace_search_vector)
+        q = (q as any).textSearch('search_vector', filters.search.trim(), { type: 'websearch', config: 'swedish' });
+      }
 
       if (filters.sort === 'price_asc') q = q.order('price', { ascending: true, nullsFirst: false });
       else if (filters.sort === 'price_desc') q = q.order('price', { ascending: false, nullsFirst: false });

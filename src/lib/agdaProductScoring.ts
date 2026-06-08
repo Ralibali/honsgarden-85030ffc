@@ -162,13 +162,14 @@ function detectSignals(ctx: FarmContext): Signal[] {
  * Returnera produkter sorterade efter sammanlagd poäng.
  * Varje produkt har en motivering från den signal som bidrog mest.
  */
-export function scoreProducts(ctx: FarmContext): ScoredProduct[] {
+export function scoreProducts(ctx: FarmContext, products: AffiliateProduct[] = AFFILIATE_PRODUCTS): ScoredProduct[] {
   const signals = detectSignals(ctx);
+  const catalog = products.filter((p) => p.inStock !== false);
 
   const byProduct = new Map<string, { product: AffiliateProduct; score: number; topReason: string; topWeight: number }>();
 
   for (const sig of signals) {
-    const pool = AFFILIATE_PRODUCTS.filter((p) => sig.categories.includes(p.category));
+    const pool = catalog.filter((p) => sig.categories.includes(p.category));
     if (pool.length === 0) continue;
     // Fördela signalens vikt över matchande produkter så ingen kategori
     // får oproportionerligt stor vikt bara för att vi har många produkter där.
