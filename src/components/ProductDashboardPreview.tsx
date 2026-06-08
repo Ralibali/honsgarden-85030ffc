@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart3, BellRing, CloudSun, Egg, MessageCircle, ReceiptText, Sparkles, Users, Wheat } from 'lucide-react';
+import { AFFILIATE_PRODUCTS } from '@/data/affiliateProducts';
 
 const metrics = [
   { label: 'Ägg idag', value: '18', icon: Egg, hint: '+12% mot snitt' },
