@@ -43,7 +43,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     signals.push({
       categories: ['startset', 'hus'],
       weight: 100,
-      reason: 'du inte registrerat några höns än',
+      reason: 'du ännu inte har registrerat några höns',
     });
     return signals; // Inget annat är meningsfullt utan höns.
   }
@@ -62,7 +62,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     signals.push({
       categories: ['vatten'],
       weight: 50,
-      reason: 'varm väderprognos – färskvatten blir extra viktigt',
+      reason: 'varm väderprognos väntas – färskvatten blir extra viktigt',
     });
   }
 
@@ -109,7 +109,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
         signals.push({
           categories: ['tillskott', 'foder'],
           weight: 70,
-          reason: `produktionen sjunkit ~${Math.round(drop * 100)}% mot dina senaste 4 veckor`,
+          reason: `produktionen har sjunkit ~${Math.round(drop * 100)}% mot dina senaste 4 veckor`,
         });
       }
     }
@@ -152,7 +152,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
   signals.push({
     categories: ['vatten', 'foder', 'tillskott'],
     weight: 5,
-    reason: 'en av de mest använda produkterna bland hönsägare',
+    reason: 'det är en av de mest använda produkterna bland hönsägare',
   });
 
   return signals;
@@ -198,7 +198,7 @@ export function scoreProducts(ctx: FarmContext, products: AffiliateProduct[] = A
     .map((c) => ({
       product: c.product,
       score: c.score,
-      reason: `Föreslås för att ${c.topReason}.`,
+      reason: `Rekommenderas eftersom ${c.topReason}.`,
     }));
 }
 
