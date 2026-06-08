@@ -47,6 +47,8 @@ export type Database = {
           name: string
           notes: string | null
           pin_domain: string | null
+          product_feed_format: string
+          product_feed_url: string | null
           slug: string
           updated_at: string
         }
@@ -61,6 +63,8 @@ export type Database = {
           name: string
           notes?: string | null
           pin_domain?: string | null
+          product_feed_format?: string
+          product_feed_url?: string | null
           slug: string
           updated_at?: string
         }
@@ -75,6 +79,8 @@ export type Database = {
           name?: string
           notes?: string | null
           pin_domain?: string | null
+          product_feed_format?: string
+          product_feed_url?: string | null
           slug?: string
           updated_at?: string
         }
@@ -2121,6 +2127,7 @@ export type Database = {
           postal_code: string | null
           price: number | null
           region: string | null
+          search_vector: unknown
           slug: string
           status: string
           title: string
@@ -2142,6 +2149,7 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           region?: string | null
+          search_vector?: unknown
           slug: string
           status?: string
           title: string
@@ -2163,6 +2171,7 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           region?: string | null
+          search_vector?: unknown
           slug?: string
           status?: string
           title?: string
