@@ -62,7 +62,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     signals.push({
       categories: ['vatten'],
       weight: 50,
-      reason: 'varm väderprognos – färskvatten blir extra viktigt',
+      reason: 'varm väderprognos väntas – färskvatten blir extra viktigt',
     });
   }
 
