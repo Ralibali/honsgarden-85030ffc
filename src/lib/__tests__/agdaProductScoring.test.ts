@@ -56,7 +56,7 @@ describe('scoreProducts', () => {
 
   it('ger varje produkt en mänsklig motivering', () => {
     const scored = scoreProducts(ctx({ hens: [] }));
-    expect(scored.every((s) => s.reason.startsWith('Föreslås för att'))).toBe(true);
+    expect(scored.every((s) => s.reason.startsWith('Rekommenderas eftersom'))).toBe(true);
   });
 });
 
