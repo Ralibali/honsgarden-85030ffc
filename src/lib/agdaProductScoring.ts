@@ -43,7 +43,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     signals.push({
       categories: ['startset', 'hus'],
       weight: 100,
-      reason: 'du inte registrerat några höns än',
+      reason: 'du ännu inte har registrerat några höns',
     });
     return signals; // Inget annat är meningsfullt utan höns.
   }
