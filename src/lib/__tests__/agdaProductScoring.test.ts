@@ -17,7 +17,7 @@ describe('scoreProducts', () => {
     const scored = scoreProducts(ctx({ hens: [] }));
     expect(scored.length).toBeGreaterThan(0);
     expect(['startset', 'hus']).toContain(scored[0].product.category);
-    expect(scored[0].reason).toMatch(/registrerat/i);
+    expect(scored[0].reason).toMatch(/ännu inte har registrerat/i);
   });
 
   it('prioriterar värme/vatten vid frostvarning', () => {
