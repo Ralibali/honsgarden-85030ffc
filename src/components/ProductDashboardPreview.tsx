@@ -2,6 +2,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart3, BellRing, CloudSun, Egg, MessageCircle, ReceiptText, Sparkles, Users, Wheat } from 'lucide-react';
+import { AFFILIATE_PRODUCTS } from '@/data/affiliateProducts';
 
 const metrics = [
   { label: 'Ägg idag', value: '18', icon: Egg, hint: '+12% mot snitt' },
@@ -63,10 +64,37 @@ export default function ProductDashboardPreview() {
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="rounded-2xl bg-primary/8 border border-primary/15 p-3">
-                <Sparkles className="h-4 w-4 text-primary mb-2" />
-                <p className="text-xs font-medium text-foreground">Agda föreslår</p>
-                <p className="text-[11px] text-muted-foreground mt-1">Följ upp foderbyte om 3 dagar.</p>
+              <div className="rounded-2xl bg-primary/8 border border-primary/15 p-3 flex flex-col">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[10px] font-semibold text-foreground uppercase tracking-wider">Agda tipsar</span>
+                </div>
+                {(() => {
+                  const p = AFFILIATE_PRODUCTS.find((x) => x.id === 'bonden-vaermeplatta-25') ?? AFFILIATE_PRODUCTS[0];
+                  return (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
+                        className="h-10 w-10 object-contain rounded-lg bg-background/70 shrink-0"
+                        onError={(e) => {
+                          const img = e.currentTarget as HTMLImageElement;
+                          if (img.dataset.fallback !== '1') {
+                            img.dataset.fallback = '1';
+                            img.src = '/placeholder.svg';
+                          }
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-medium text-foreground line-clamp-2 leading-tight">{p.name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{p.price}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               <div className="rounded-2xl bg-warning/10 border border-warning/20 p-3">
                 <BellRing className="h-4 w-4 text-warning mb-2" />
