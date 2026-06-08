@@ -5,59 +5,43 @@ const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 type Row = Record<string, string>;
 
-// ── CSV-parser (tab-delim, single-quote-qualifier, klarar radbrytningar i fält) ──
-function parseCsv(text: string, delim = '\t', q = "'"): Row[] {
-  const records: string[][] = [];
-  let row: string[] = [];
+// ── Streaming line reader (för att inte ladda hela CSV:n i minnet) ──
+async function* iterLines(stream: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let i: number;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      yield buf.slice(0, i).replace(/\r$/, '');
+      buf = buf.slice(i + 1);
+    }
+  }
+  if (buf.length) yield buf.replace(/\r$/, '');
+}
+
+// CSV-radparser (tab-delim, singlequote-qualifier). Klarar INTE fält med radbrytningar,
+// men Adtractions feeds använder dem inte i vår whitelist – fördel: streaming utan stor buffer.
+function parseCsvLine(line: string, delim = '\t', q = "'"): string[] {
+  const out: string[] = [];
   let field = '';
   let inQ = false;
-  let i = 0;
-  const pushField = () => { row.push(field); field = ''; };
-  const pushRow = () => { if (row.length || field.length) { pushField(); records.push(row); row = []; } };
-  while (i < text.length) {
-    const c = text[i];
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
     if (inQ) {
-      if (c === q) { if (text[i + 1] === q) { field += q; i += 2; continue; } inQ = false; i++; continue; }
-      field += c; i++; continue;
+      if (c === q) { if (line[i + 1] === q) { field += q; i++; } else inQ = false; }
+      else field += c;
+    } else {
+      if (c === q) inQ = true;
+      else if (c === delim) { out.push(field); field = ''; }
+      else field += c;
     }
-    if (c === q) { inQ = true; i++; continue; }
-    if (c === delim) { pushField(); i++; continue; }
-    if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; pushRow(); i++; continue; }
-    field += c; i++;
   }
-  pushRow();
-  const [head, ...rest] = records;
-  if (!head) return [];
-  return rest.map((cols) => Object.fromEntries(head.map((h, idx) => [h, cols[idx] ?? ''])) as Row);
-}
-
-// ── XML-parser (tar bort nästlade <Extras> så produktens <Name> inte krockar) ──
-function decodeXml(s: string): string {
-  return s
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'").replace(/&apos;/g, "'").replace(/&amp;/g, '&').trim();
-}
-function xmlTag(block: string, t: string): string {
-  const m = block.match(new RegExp(`<${t}>([\\s\\S]*?)</${t}>`));
-  return m ? decodeXml(m[1]) : '';
-}
-function parseXml(xml: string): Row[] {
-  return xml.split('<product>').slice(1).map((raw) => {
-    const block = raw.split('</product>')[0].replace(/<Extras>[\s\S]*?<\/Extras>/g, '');
-    return {
-      SKU: xmlTag(block, 'SKU'), Name: xmlTag(block, 'Name'), Description: xmlTag(block, 'Description'),
-      Category: xmlTag(block, 'Category'), Price: xmlTag(block, 'Price'), Currency: xmlTag(block, 'Currency'),
-      Instock: xmlTag(block, 'Instock'), ProductUrl: xmlTag(block, 'ProductUrl'), ImageUrl: xmlTag(block, 'ImageUrl'),
-      TrackingUrl: xmlTag(block, 'TrackingUrl'), OriginalPrice: xmlTag(block, 'OriginalPrice'), Ean: xmlTag(block, 'Ean'),
-    } as Row;
-  });
-}
-
-function parseFeed(text: string): Row[] {
-  const t = text.trimStart();
-  return (t.startsWith('<?xml') || t.startsWith('<productFeed') || t.startsWith('<product'))
-    ? parseXml(text)
-    : parseCsv(text);
+  out.push(field);
+  return out;
 }
 
 function decodeEntities(s: string): string {
@@ -74,13 +58,13 @@ const EXCLUDE = ['kanin', 'hundfoder', 'hund ', 'katt', 'häst', 'gris', 'bilvå
   'kemtvätt', 'partytält', 'vedklyv', 'blåspistol', 'membran', 'fordonstvätt', 'hörselskydd'];
 
 function isPoultry(p: Row): boolean {
-  const hay = `${p.Name} ${p.Description} ${p.Category}`.toLowerCase();
+  const hay = `${p.Name ?? ''} ${p.Description ?? ''} ${p.Category ?? ''}`.toLowerCase();
   if (EXCLUDE.some((k) => hay.includes(k)) && !(hay.includes('höns') || hay.includes('fjäderfä'))) return false;
   return INCLUDE.some((k) => hay.includes(k));
 }
 
 function mapCategory(p: Row): string {
-  const h = `${p.Name} ${p.Category}`.toLowerCase();
+  const h = `${p.Name ?? ''} ${p.Category ?? ''}`.toLowerCase();
   if (/(startset|startpaket)/.test(h)) return 'startset';
   if (/(kläck|ruvmaskin|äggkläck|kläckmaskin|hygrometer|termo)/.test(h)) return 'klackning';
   if (/(värmelampa)/.test(h)) return 'vaerme';
@@ -94,69 +78,105 @@ function mapCategory(p: Row): string {
 
 const fmtKr = (n: number) => `${Math.round(n).toLocaleString('sv-SE')} kr`;
 
-Deno.serve(async () => {
+function recordFromRow(p: Row, advertiserId: string, startedAt: string) {
+  const price = parseFloat((p.Price || '0').replace(',', '.')) || 0;
+  const orig = parseFloat((p.OriginalPrice || '0').replace(',', '.')) || null;
+  return {
+    advertiser_id: advertiserId,
+    external_id: p.SKU,
+    name: decodeEntities(p.Name ?? ''),
+    short_description: decodeEntities(p.Description ?? '').slice(0, 300),
+    category: mapCategory(p),
+    price: fmtKr(price),
+    price_original: orig && orig > price ? orig : null,
+    currency: p.Currency || 'SEK',
+    in_stock: (p.Instock || '').toLowerCase() === 'yes',
+    image_url: p.ImageUrl || null,
+    image_urls: p.ImageUrl ? [p.ImageUrl] : [],
+    product_url: p.ProductUrl || null,
+    affiliate_url: p.TrackingUrl || null,
+    is_active: true,
+    last_scraped_at: startedAt,
+  };
+}
+
+async function syncAdvertiser(
+  supabase: ReturnType<typeof createClient>,
+  adv: { id: string; slug: string; product_feed_url: string },
+  startedAt: string,
+) {
+  const resp = await fetch(adv.product_feed_url);
+  if (!resp.ok || !resp.body) return { slug: adv.slug, error: `feed ${resp.status}` };
+
+  // Bara CSV-streaming stöds här (XML kräver hela dokumentet → out-of-memory).
+  const lines = iterLines(resp.body);
+  const firstLine = (await lines.next()).value as string | undefined;
+  if (!firstLine) return { slug: adv.slug, error: 'tomt svar' };
+  if (firstLine.trimStart().startsWith('<')) {
+    return { slug: adv.slug, error: 'XML-feed stöds ej (minne)' };
+  }
+  const header = parseCsvLine(firstLine);
+
+  let matched = 0;
+  let inStock = 0;
+  const batch: ReturnType<typeof recordFromRow>[] = [];
+  const BATCH = 200;
+
+  const flush = async () => {
+    if (!batch.length) return;
+    const { error } = await supabase
+      .from('affiliate_products')
+      .upsert(batch, { onConflict: 'advertiser_id,external_id' });
+    if (error) throw error;
+    batch.length = 0;
+  };
+
+  for await (const line of lines) {
+    if (!line) continue;
+    const cols = parseCsvLine(line);
+    const row: Row = Object.fromEntries(header.map((h, i) => [h, cols[i] ?? '']));
+    if (!isPoultry(row) || !row.SKU) continue;
+    const rec = recordFromRow(row, adv.id, startedAt);
+    matched++;
+    if (rec.in_stock) inStock++;
+    batch.push(rec);
+    if (batch.length >= BATCH) await flush();
+  }
+  await flush();
+
+  // Markera försvunna produkter som slut i lager
+  await supabase
+    .from('affiliate_products')
+    .update({ in_stock: false })
+    .eq('advertiser_id', adv.id)
+    .lt('last_scraped_at', startedAt);
+
+  return { slug: adv.slug, matched, in_stock: inStock };
+}
+
+Deno.serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
   const startedAt = new Date().toISOString();
+  const url = new URL(req.url);
+  const slugFilter = url.searchParams.get('slug');
 
-  const { data: advertisers, error: advErr } = await supabase
+  let q = supabase
     .from('affiliate_advertisers')
     .select('id, slug, product_feed_url')
     .eq('is_active', true)
     .not('product_feed_url', 'is', null);
+  if (slugFilter) q = q.eq('slug', slugFilter);
+
+  const { data: advertisers, error: advErr } = await q;
   if (advErr) return new Response(JSON.stringify({ error: advErr.message }), { status: 500 });
 
   const summary: Record<string, unknown>[] = [];
-
   for (const adv of advertisers ?? []) {
     try {
-      const resp = await fetch(adv.product_feed_url as string);
-      if (!resp.ok) { summary.push({ slug: adv.slug, error: `feed ${resp.status}` }); continue; }
-      const text = await resp.text();
-      const rows = parseFeed(text).filter(isPoultry);
-
-      const records = rows.map((p) => {
-        const price = parseFloat((p.Price || '0').replace(',', '.')) || 0;
-        const orig = parseFloat((p.OriginalPrice || '0').replace(',', '.')) || null;
-        return {
-          advertiser_id: adv.id,
-          external_id: p.SKU,
-          name: decodeEntities(p.Name),
-          short_description: decodeEntities(p.Description).slice(0, 300),
-          category: mapCategory(p),
-          price: fmtKr(price),
-          price_original: orig && orig > price ? orig : null,
-          currency: p.Currency || 'SEK',
-          in_stock: (p.Instock || '').toLowerCase() === 'yes',
-          image_url: p.ImageUrl || null,
-          image_urls: p.ImageUrl ? [p.ImageUrl] : [],
-          product_url: p.ProductUrl || null,
-          affiliate_url: p.TrackingUrl || null,
-          is_active: true,
-          last_scraped_at: startedAt,
-        };
-      });
-
-      for (let i = 0; i < records.length; i += 500) {
-        const { error } = await supabase
-          .from('affiliate_products')
-          .upsert(records.slice(i, i + 500), { onConflict: 'advertiser_id,external_id' });
-        if (error) throw error;
-      }
-
-      // Allt som inte fanns i denna körning → markera slut (göms i frontend)
-      await supabase
-        .from('affiliate_products')
-        .update({ in_stock: false })
-        .eq('advertiser_id', adv.id)
-        .lt('last_scraped_at', startedAt);
-
-      summary.push({
-        slug: adv.slug,
-        matched: records.length,
-        in_stock: records.filter((r) => r.in_stock).length,
-      });
+      // deno-lint-ignore no-explicit-any
+      summary.push(await syncAdvertiser(supabase, adv as any, startedAt));
     } catch (e) {
-      summary.push({ slug: adv.slug, error: String((e as Error).message) });
+      summary.push({ slug: (adv as { slug: string }).slug, error: String((e as Error).message) });
     }
   }
 
