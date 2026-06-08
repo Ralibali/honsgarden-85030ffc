@@ -94,7 +94,7 @@ function isHtmlContent(content: string): boolean {
 
 /** Simple markdown to HTML - handles common patterns */
 function renderMarkdown(md: string): string {
-  let html = md
+  const html = md
     // Headers
     .replace(/^### (.+)$/gm, (_, text) => `<h3 id="${slugifyHeading(text)}" class="text-lg font-serif text-foreground mt-6 mb-2 scroll-mt-24">${text}</h3>`)
     .replace(/^## (.+)$/gm, (_, text) => `<h2 id="${slugifyHeading(text)}" class="text-xl font-serif text-foreground mt-8 mb-3 scroll-mt-24">${text}</h2>`)

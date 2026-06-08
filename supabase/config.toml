@@ -33,3 +33,5 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.error-alert-digest]
     verify_jwt = false
+  [functions.sync-affiliate-feed]
+    verify_jwt = false
