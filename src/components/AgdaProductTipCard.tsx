@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { scoreProducts, pickDailyFromTopN } from '@/lib/agdaProductScoring';
+import { useCatalog, priceToNumber } from '@/hooks/useAffiliateProducts';
 import { useFarmWeather } from '@/hooks/useFarmWeather';
 
 const SNOOZE_KEY = 'hg_agda_tip_snooze_until';
@@ -46,12 +47,13 @@ export default function AgdaProductTipCard() {
     enabled: active,
   });
   const { data: weather = null } = useFarmWeather(active);
+  const catalog = useCatalog(active);
 
   const pick = useMemo(() => {
     if (!active) return null;
-    const scored = scoreProducts({ hens: hens as any[], eggs: eggs as any[], weather });
+    const scored = scoreProducts({ hens: hens as any[], eggs: eggs as any[], weather }, catalog);
     return pickDailyFromTopN(scored, 5);
-  }, [active, hens, eggs, weather]);
+  }, [active, hens, eggs, weather, catalog]);
 
   if (!active || !pick) return null;
   const { product, reason } = pick;
@@ -113,7 +115,13 @@ export default function AgdaProductTipCard() {
               {product.name}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
-              {product.price} ·{' '}
+              {product.price}
+              {product.priceOriginal && product.priceOriginal > (priceToNumber(product.price) ?? 0) && (
+                <span className="ml-1.5 line-through text-muted-foreground/60">
+                  {product.priceOriginal.toLocaleString('sv-SE')} kr
+                </span>
+              )}
+              {' · '}
               {product.advertiser === 'p-lindberg' ? 'P. Lindberg' : 'Bonden.se'}
             </p>
             <a

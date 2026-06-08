@@ -19,6 +19,12 @@ export interface AffiliateProduct {
   keywords: string[]; // matcha mot tolower(slug + title + content)
   slugs?: string[]; // valfritt: tvinga visning på dessa slugs
   category: 'vatten' | 'foder' | 'vaerme' | 'hus' | 'klackning' | 'staengsel' | 'redskap' | 'tillskott' | 'startset';
+  /** Live-fält (sätts av DB-katalogen). undefined = behandlas som i lager. */
+  inStock?: boolean;
+  /** Ordinarie pris (numeriskt) för rea-märke. */
+  priceOriginal?: number;
+  /** Direktlänk till produktsidan (utan affiliate-redirect). */
+  productUrl?: string;
 }
 
 export const AFFILIATE_PRODUCTS: AffiliateProduct[] = [
@@ -298,16 +304,19 @@ export function matchProductsForArticle(
   title: string,
   content: string,
   limit = 3,
+  products: AffiliateProduct[] = AFFILIATE_PRODUCTS,
 ): AffiliateProduct[] {
   const haystack = `${slug} ${title} ${content}`.toLowerCase();
-  const scored = AFFILIATE_PRODUCTS.map((p) => {
-    let score = 0;
-    if (p.slugs?.some((s) => slug.includes(s))) score += 100;
-    for (const kw of p.keywords) {
-      if (haystack.includes(kw.toLowerCase())) score += 1;
-    }
-    return { p, score };
-  })
+  const scored = products
+    .filter((p) => p.inStock !== false)
+    .map((p) => {
+      let score = 0;
+      if (p.slugs?.some((s) => slug.includes(s))) score += 100;
+      for (const kw of p.keywords) {
+        if (haystack.includes(kw.toLowerCase())) score += 1;
+      }
+      return { p, score };
+    })
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score);
 

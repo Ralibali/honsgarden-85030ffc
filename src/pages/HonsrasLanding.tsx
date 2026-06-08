@@ -22,6 +22,38 @@ function fadeUp(delay = 0) {
 export default function HonsrasLanding({ slug }: { slug: keyof typeof longformPages | string }) {
   const page = longformPages[slug as string] as LongformPage | undefined;
 
+  const articleJsonLd = page
+    ? {
+        '@type': 'Article',
+        headline: page.h1,
+        description: page.description,
+        url: `https://honsgarden.se${page.path}`,
+        author: { '@type': 'Organization', name: 'Hönsgården' },
+        publisher: { '@type': 'Organization', name: 'Hönsgården' },
+        inLanguage: 'sv-SE',
+      }
+    : null;
+
+  const faqJsonLd = page
+    ? {
+        '@type': 'FAQPage',
+        mainEntity: page.faq.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      }
+    : null;
+
+  useSeo({
+    title: page?.title ?? 'Hönsraser',
+    description: page?.description ?? '',
+    path: page?.path ?? '/honsraser',
+    ogType: 'article',
+    ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
+    jsonLd: page ? [articleJsonLd, faqJsonLd] : [],
+  });
+
   if (!page) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-background">
@@ -29,34 +61,6 @@ export default function HonsrasLanding({ slug }: { slug: keyof typeof longformPa
       </main>
     );
   }
-
-  const articleJsonLd = {
-    '@type': 'Article',
-    headline: page.h1,
-    description: page.description,
-    url: `https://honsgarden.se${page.path}`,
-    author: { '@type': 'Organization', name: 'Hönsgården' },
-    publisher: { '@type': 'Organization', name: 'Hönsgården' },
-    inLanguage: 'sv-SE',
-  };
-
-  const faqJsonLd = {
-    '@type': 'FAQPage',
-    mainEntity: page.faq.map((f) => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
-    })),
-  };
-
-  useSeo({
-    title: page.title,
-    description: page.description,
-    path: page.path,
-    ogType: 'article',
-    ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
-    jsonLd: [articleJsonLd, faqJsonLd],
-  });
 
   return (
     <main id="main-content" className="min-h-screen bg-background overflow-x-hidden">

@@ -7,8 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { BarChart3, Copy, Crown, LayoutDashboard, PackageCheck, Palette, QrCode, Repeat, ShoppingBasket, Sparkles, TrendingUp, Users, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import QRCode from 'qrcode';
-import { jsPDF } from 'jspdf';
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
@@ -39,6 +37,8 @@ async function downloadQrPdf(listings: Listing[]) {
     toast({ title: 'Skapa en säljsida först', variant: 'destructive' });
     return;
   }
+  const [{ jsPDF }, qrModule] = await Promise.all([import('jspdf'), import('qrcode')]);
+  const QRCode = (qrModule as any).default ?? qrModule;
   const pdf = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
   const pageW = pdf.internal.pageSize.getWidth();
   for (let i = 0; i < pool.length; i++) {
