@@ -49,16 +49,29 @@ export function QuickEggFAB() {
   const hasHens = activeHens.length > 0;
 
   const mutation = useMutation({
-    mutationFn: ({ count, hen_id, flock_id }: { count: number; hen_id?: string; flock_id?: string }) => {
+    mutationFn: async ({ count, hen_id, flock_id }: { count: number; hen_id?: string; flock_id?: string }) => {
       const date = useYesterday
         ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
         : new Date().toISOString().split('T')[0];
-      return api.createEggRecord({
-        date,
-        count,
-        hen_id: hen_id || undefined,
-        flock_id: flock_id || undefined,
-      });
+      const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+      const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const { enqueueEggLog } = await import('@/lib/offlineQueue');
+        enqueueEggLog({ ...payload, client_id });
+        return { __offline: true, client_id, ...payload } as any;
+      }
+      try {
+        return await api.createEggRecord({ ...payload, client_id });
+      } catch (err: any) {
+        const msg = (err?.message ?? '').toLowerCase();
+        const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
+        if (isNet) {
+          const { enqueueEggLog } = await import('@/lib/offlineQueue');
+          enqueueEggLog({ ...payload, client_id });
+          return { __offline: true, client_id, ...payload } as any;
+        }
+        throw err;
+      }
     },
     onMutate: async ({ count }) => {
       await queryClient.cancelQueries({ queryKey: ['eggs'] });
@@ -72,9 +85,30 @@ export function QuickEggFAB() {
       });
       return { prev };
     },
-    onSuccess: (_d, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['eggs'] });
-      queryClient.invalidateQueries({ queryKey: ['streak'] });
+    onSuccess: (result: any) => {
+      const isOffline = result?.__offline === true;
+      if (isOffline) {
+        const date = useYesterday
+          ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+        queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
+          const next = (old ?? []).filter((e: any) => !String(e.id).startsWith('temp-'));
+          next.unshift({
+            id: `pending-${result.client_id}`,
+            client_id: result.client_id,
+            date,
+            count,
+            hen_id: result.hen_id ?? null,
+            flock_id: result.flock_id ?? null,
+            pending: true,
+          });
+          return next;
+        });
+        toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['eggs'] });
+        queryClient.invalidateQueries({ queryKey: ['streak'] });
+      }
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
@@ -108,6 +142,7 @@ export function QuickEggFAB() {
       toast({ title: 'Fel', description: err.message, variant: 'destructive' });
     },
   });
+
 
   const handleSave = () => {
     const isFlockSelection = selectedHenId.startsWith('flock:');

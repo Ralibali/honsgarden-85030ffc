@@ -17,6 +17,8 @@ import EmptyState from '@/components/EmptyState';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate } from '@/lib/feedback';
 import { useAuth } from '@/hooks/useAuth';
+import { enqueueEggLog } from '@/lib/offlineQueue';
+
 
 export default function Eggs() {
   const queryClient = useQueryClient();
@@ -66,12 +68,47 @@ export default function Eggs() {
 
   const createMutation = useMutation({
     mutationFn: async (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => {
-      const weather = await api.fetchEggLogWeatherSnapshot(data.date);
-      return api.createEggRecord({ ...data, weather });
+      const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+      // Offline path: enqueue locally and bail out (still optimistic)
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const queued = enqueueEggLog({ ...data, client_id });
+        return { __offline: true, client_id: queued.client_id, ...data } as any;
+      }
+      try {
+        const weather = await api.fetchEggLogWeatherSnapshot(data.date);
+        return await api.createEggRecord({ ...data, weather, client_id });
+      } catch (err: any) {
+        const msg = (err?.message ?? '').toLowerCase();
+        const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
+        if (isNet) {
+          const queued = enqueueEggLog({ ...data, client_id });
+          return { __offline: true, client_id: queued.client_id, ...data } as any;
+        }
+        throw err;
+      }
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['eggs'] });
-      queryClient.invalidateQueries({ queryKey: ['streak'] });
+    onSuccess: (result: any, variables) => {
+      const isOffline = result?.__offline === true;
+      if (isOffline) {
+        // Optimistic insert with pending flag
+        queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
+          const next = [...(old ?? [])];
+          next.unshift({
+            id: `pending-${result.client_id}`,
+            client_id: result.client_id,
+            date: variables.date,
+            count: variables.count,
+            hen_id: variables.hen_id ?? null,
+            flock_id: variables.flock_id ?? null,
+            pending: true,
+          });
+          return next;
+        });
+        toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['eggs'] });
+        queryClient.invalidateQueries({ queryKey: ['streak'] });
+      }
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
@@ -93,8 +130,9 @@ export default function Eggs() {
         }, 600);
       }
     },
-    onError: (err: any) => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara äggen just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
+    onError: (err: any) => toast({ title: 'Något gick fel', description: err?.message ?? 'Vi kunde inte spara äggen just nu.', variant: 'destructive' }),
   });
+
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteEggRecord(id),

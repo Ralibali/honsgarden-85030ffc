@@ -1,6 +1,7 @@
 import React from 'react';
-import { Calendar, Egg as EggIcon, Trash2 } from 'lucide-react';
+import { Calendar, Egg as EggIcon, Trash2, CloudOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
 
 interface EggListViewProps {
   eggs: any[];
@@ -33,6 +34,11 @@ export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, 
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                   <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
                   <p className="text-xs sm:text-sm text-muted-foreground">{entry.date}</p>
+                  {entry.pending && (
+                    <span className="inline-flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-md font-medium">
+                      <CloudOff className="h-2.5 w-2.5" /> Väntar på synk
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {flockName && (
@@ -47,6 +53,7 @@ export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, 
                 </div>
                 {entry.notes && <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">{entry.notes}</p>}
               </div>
+
             </div>
             <div className="flex items-center gap-2">
               <span className="stat-number text-lg sm:text-xl text-foreground">{entry.count}</span>
