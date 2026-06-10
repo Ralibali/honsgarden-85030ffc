@@ -434,7 +434,7 @@ export default function DailyTasks() {
         </Card>
       )}
 
-      <PremiumGate soft feature="automatiska påminnelser & obegränsade uppgifter">
+      <PremiumGate soft feature="automatiska påminnelser & obegränsade uppgifter" featureKey="reminders">
         <div />
       </PremiumGate>
     </motion.div>
