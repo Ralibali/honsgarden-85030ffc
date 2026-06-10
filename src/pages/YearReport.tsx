@@ -89,7 +89,7 @@ function drawYearCard(
     { value: `${data.longestStreak} dagar`, label: 'längsta streak 🔥' },
   ].filter((s) => s.value && s.value !== '0' && s.value !== '—');
 
-  let y = 470;
+  const y = 470;
   const blockH = 220;
   stats.slice(0, 5).forEach((s, i) => {
     const cy = y + i * blockH;
