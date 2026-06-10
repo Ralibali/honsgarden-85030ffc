@@ -7,9 +7,11 @@ import { toast } from 'sonner';
 
 interface NewsletterSignupProps {
   variant?: 'inline' | 'card';
+  title?: string;
+  description?: string;
 }
 
-export default function NewsletterSignup({ variant = 'card' }: NewsletterSignupProps) {
+export default function NewsletterSignup({ variant = 'card', title, description }: NewsletterSignupProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
