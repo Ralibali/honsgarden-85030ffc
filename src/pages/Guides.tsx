@@ -182,7 +182,10 @@ export default function Guides() {
 
         {/* Newsletter */}
         <div className="mt-16">
-          <NewsletterSignup />
+          <NewsletterSignup
+            title="Hönstips i inkorgen — en gång i månaden"
+            description="Säsongsråd, nya guider och smarta tips för dig med höns. Inget spam, avsluta när du vill."
+          />
         </div>
 
         {/* CTA */}

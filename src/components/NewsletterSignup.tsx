@@ -7,9 +7,11 @@ import { toast } from 'sonner';
 
 interface NewsletterSignupProps {
   variant?: 'inline' | 'card';
+  title?: string;
+  description?: string;
 }
 
-export default function NewsletterSignup({ variant = 'card' }: NewsletterSignupProps) {
+export default function NewsletterSignup({ variant = 'card', title, description }: NewsletterSignupProps) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -78,10 +80,10 @@ export default function NewsletterSignup({ variant = 'card' }: NewsletterSignupP
         <Mail className="h-6 w-6 text-primary" />
       </div>
       <h2 className="font-serif text-xl sm:text-2xl text-foreground mb-2">
-        Få tips & guider direkt i mejlen
+        {title || 'Få tips & guider direkt i mejlen'}
       </h2>
       <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
-        Prenumerera på vårt nyhetsbrev och få de senaste guiderna, tipsen och nyheterna om höns, trädgård och hållbart liv.
+        {description || 'Prenumerera på vårt nyhetsbrev och få de senaste guiderna, tipsen och nyheterna om höns, trädgård och hållbart liv.'}
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
         <Input

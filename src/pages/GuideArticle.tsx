@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-react';
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import ArticleCta from '@/components/blog/ArticleCta';
+import { useAuth } from '@/hooks/useAuth';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
@@ -214,6 +216,7 @@ function renderContent(
 
 export default function GuideArticle() {
   const { slug } = useParams<{ slug: string }>();
+  const { isAuthenticated } = useAuth();
   const [readingProgress, setReadingProgress] = useState(0);
 
   // Fetch current post
@@ -659,11 +662,7 @@ export default function GuideArticle() {
           dangerouslySetInnerHTML={{ __html: articleIntroHtml }}
         />
 
-        <div className="my-10 rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-6 text-center sm:p-8">
-          <h2 className="font-serif text-xl text-foreground mb-2">Börja gratis i Hönsgården</h2>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">Logga ägg, följ dina hönor och få påminnelser utan krångel.</p>
-          <Link to="/login"><Button className="rounded-xl gap-2"><Egg className="h-4 w-4" /> Kom igång gratis</Button></Link>
-        </div>
+        {!isAuthenticated && <ArticleCta category={post.category} variant="inline" />}
 
         {articleRestHtml && (
           <div
@@ -704,20 +703,40 @@ export default function GuideArticle() {
           <BlogComments postId={post.id} />
         </Suspense>
 
-        {/* Inline CTA */}
-        <div className="mt-12 bg-gradient-to-br from-primary/5 via-card to-accent/5 rounded-2xl p-6 sm:p-8 border border-border/30 text-center">
-          <span className="text-2xl mb-2 block">🐔</span>
-          <h3 className="font-serif text-lg text-foreground mb-2">
-            Vill du hålla koll på dina höns?
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-            Logga ägg, foder och hälsa med Hönsgården – helt kostnadsfritt.
-          </p>
-          <Link to="/login">
-            <Button className="rounded-xl gap-2">
-              <Egg className="h-4 w-4" /> Skapa ett konto
-            </Button>
-          </Link>
+        {/* Author box (E-E-A-T) */}
+        <div className="mt-12 rounded-2xl border border-border/50 bg-card/70 p-5 sm:p-6 flex items-start gap-4">
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-xl shrink-0" aria-hidden="true">✍️</div>
+          <div className="flex-1 min-w-0">
+            <p className="font-serif text-base text-foreground">
+              {post.author_name && post.author_name !== 'Hönsgården' ? post.author_name : 'Redaktionen på Hönsgården'}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              Vi skriver praktiska guider om hönsskötsel, ägg, foder och hållbart liv på landet — alltid baserat på egen erfarenhet och svenska förhållanden.
+            </p>
+            <p className="text-[11px] text-muted-foreground/80 mt-2">
+              {post.published_at && (
+                <>Publicerad {new Date(post.published_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })}</>
+              )}
+              {post.updated_at && post.published_at && post.updated_at > post.published_at && (
+                <> · Uppdaterad {new Date(post.updated_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })}</>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Final CTA (logged-out only) */}
+        {!isAuthenticated && (
+          <div className="mt-8">
+            <ArticleCta category={post.category} variant="final" />
+          </div>
+        )}
+
+        {/* Newsletter signup */}
+        <div className="mt-8">
+          <NewsletterSignup
+            title="Hönstips i inkorgen — en gång i månaden"
+            description="Säsongsråd, nya guider och smarta tips för dig med höns. Inget spam, avsluta när du vill."
+          />
         </div>
 
         {/* Related posts */}
@@ -771,9 +790,6 @@ export default function GuideArticle() {
         })()}
       </article>
 
-      <div className="lg:col-span-2 mt-10">
-        <NewsletterSignup />
-      </div>
 
       {toc.length > 0 && (
         <aside className="hidden lg:block">
