@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useSeo } from '@/hooks/useSeo';
+import { trackClick } from '@/hooks/useTracking';
 
 type BillingPlan = 'monthly' | 'yearly';
 
