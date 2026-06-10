@@ -37,6 +37,7 @@ const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const Terms = lazyWithRetry(() => import("./pages/Terms"));
 const HenProfile = lazyWithRetry(() => import("./pages/HenProfile"));
 const WeeklyReport = lazyWithRetry(() => import("./pages/WeeklyReport"));
+const YearReport = lazyWithRetry(() => import("./pages/YearReport"));
 const SmartFarmReport = lazyWithRetry(() => import("./pages/SmartFarmReport"));
 const Guides = lazyWithRetry(() => import("./pages/Guides"));
 const GuideArticle = lazyWithRetry(() => import("./pages/GuideArticle"));
@@ -188,6 +189,7 @@ const AppRoutes = () => (
           <Route path="admin" element={<Admin />} />
           <Route path="hens/:henId" element={<HenProfile />} />
           <Route path="weekly-report" element={<WeeklyReport />} />
+          <Route path="year-report" element={<YearReport />} />
           <Route path="smart-report" element={<SmartFarmReport />} />
           <Route path="agda" element={<Agda />} />
           <Route path="import" element={<Import />} />

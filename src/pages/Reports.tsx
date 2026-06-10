@@ -314,6 +314,12 @@ function ReportsInner() {
           <p className="text-sm text-muted-foreground mt-1">
             Generera PDF-rapporter med din gårds data – för bokföring, översikt eller delning.
           </p>
+          <a
+            href="/app/year-report"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-2"
+          >
+            ✨ Se ditt delbara hönsår ({new Date().getFullYear()})
+          </a>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
