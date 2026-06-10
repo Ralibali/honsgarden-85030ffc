@@ -227,7 +227,19 @@ export default function WeeklyReport() {
     return actions.slice(0, 3);
   }, [weekEggs, henCount, feedStats, chores.length]);
 
-  const weekData = { weekEggs, prevWeekEggs, avgPerDay, henCount, bestDay, feedCost: (feedStats as any)?.total_cost || 0, streak: streakVal, season: getSeason() };
+  const weekData = useMemo(
+    () => ({
+      weekEggs,
+      prevWeekEggs,
+      avgPerDay,
+      henCount,
+      bestDay,
+      feedCost: (feedStats as any)?.total_cost || 0,
+      streak: streakVal,
+      season: getSeason(),
+    }),
+    [weekEggs, prevWeekEggs, avgPerDay, henCount, bestDay, feedStats, streakVal],
+  );
 
   const fetchInsights = async () => {
     setLoadingAI(true);
@@ -250,7 +262,7 @@ export default function WeeklyReport() {
     setGenerated(true);
   }, [weekData, visibleInsights, user?.name, weekLabel]);
 
-  useEffect(() => { generateImage(); }, [eggs, hens, visibleInsights.length]);
+  useEffect(() => { generateImage(); }, [generateImage]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
