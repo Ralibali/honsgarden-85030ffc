@@ -1,5 +1,5 @@
 // Offline queue for egg log entries. Persists to localStorage and syncs sequentially.
-import { logClientError } from '@/lib/errorLogger';
+
 
 const QUEUE_KEY = 'honsgarden_offline_queue_v1';
 const MAX_QUEUE = 200;
@@ -83,42 +83,43 @@ function isNetworkError(err: unknown): boolean {
 
 let syncInFlight: Promise<{ synced: number; remaining: number }> | null = null;
 
+async function runSyncInternal(createEggRecord: CreateEggRecordFn): Promise<{ synced: number; remaining: number }> {
+  let synced = 0;
+  const queue = readQueue();
+  for (const item of [...queue]) {
+    try {
+      await createEggRecord({
+        date: item.date,
+        count: item.count,
+        hen_id: item.hen_id,
+        flock_id: item.flock_id,
+        weather: null,
+        client_id: item.client_id,
+      });
+      removeFromQueue(item.client_id);
+      synced++;
+    } catch (err) {
+      if (isNetworkError(err)) {
+        break;
+      }
+      // Non-network error: drop so it doesn't block forever
+      console.error('offlineQueue: dropping invalid entry', item.client_id, err);
+      removeFromQueue(item.client_id);
+    }
+  }
+  return { synced, remaining: readQueue().length };
+}
+
 export function syncQueue(createEggRecord: CreateEggRecordFn): Promise<{ synced: number; remaining: number }> {
   if (syncInFlight) return syncInFlight;
-  syncInFlight = (async () => {
-    let synced = 0;
-    const queue = readQueue();
-    for (const item of [...queue]) {
-      try {
-        await createEggRecord({
-          date: item.date,
-          count: item.count,
-          hen_id: item.hen_id,
-          flock_id: item.flock_id,
-          weather: null,
-          client_id: item.client_id,
-        });
-        removeFromQueue(item.client_id);
-        synced++;
-      } catch (err) {
-        if (isNetworkError(err)) {
-          // Stop here, keep remaining entries for next attempt
-          break;
-        }
-        // Non-network error: log and drop so it doesn't block forever
-        try {
-          logClientError(err as Error, { context: 'offlineQueue.sync', clientId: item.client_id });
-        } catch {
-          /* ignore */
-        }
-        removeFromQueue(item.client_id);
-      }
-    }
-    return { synced, remaining: readQueue().length };
-  })();
-  try {
-    return await syncInFlight;
-  } finally {
+  syncInFlight = runSyncInternal(createEggRecord).finally(() => {
     syncInFlight = null;
-  }
+    try {
+      window.dispatchEvent(new Event('honsgarden:queue-changed'));
+    } catch {
+      /* ignore */
+    }
+  });
+  return syncInFlight;
 }
+

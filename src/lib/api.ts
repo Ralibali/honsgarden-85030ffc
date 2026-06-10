@@ -148,18 +148,19 @@ export async function createEggRecord(record: { date: string; count: number; not
   if (error) {
     // Unique violation on (user_id, client_id) — already inserted, treat as success and return existing row.
     if ((error as any).code === '23505' && record.client_id) {
-      const { data: existing, error: fetchErr } = await supabase
-        .from('egg_logs')
+      const { data: existing } = await (supabase
+        .from('egg_logs') as any)
         .select('*')
         .eq('user_id', userId)
-        .eq('client_id' as any, record.client_id)
+        .eq('client_id', record.client_id)
         .maybeSingle();
-      if (!fetchErr && existing) return existing as EggLog;
+      if (existing) return existing as EggLog;
     }
     throw new Error(error.message);
   }
   return data;
 }
+
 
 
 // Snapshot today's weather (current temp + weathercode) for an egg log.
