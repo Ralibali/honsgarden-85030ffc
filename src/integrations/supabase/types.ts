@@ -961,6 +961,7 @@ export type Database = {
       }
       egg_logs: {
         Row: {
+          client_id: string | null
           count: number
           created_at: string
           date: string
@@ -972,6 +973,7 @@ export type Database = {
           weather: Json | null
         }
         Insert: {
+          client_id?: string | null
           count?: number
           created_at?: string
           date: string
@@ -983,6 +985,7 @@ export type Database = {
           weather?: Json | null
         }
         Update: {
+          client_id?: string | null
           count?: number
           created_at?: string
           date?: string
