@@ -184,14 +184,14 @@ const AppRoutes = () => (
           <Route path="hens" element={<Hens />} />
           <Route path="feed" element={<Feed />} />
           <Route path="reminders" element={<Reminders />} />
-          <Route path="hatching" element={<Hatching />} />
+          <Route path="hatching" element={<Navigate to="/app/avel?tab=hatching" replace />} />
           <Route path="tasks" element={<DailyTasks />} />
           <Route path="finance" element={<Finance />} />
           <Route path="egg-sales" element={<EggSales />} />
           <Route path="egg-sales/anpassa" element={<EggSaleCustomize />} />
           <Route path="egg-sales/dashboard" element={<EggSaleDashboard />} />
           <Route path="statistics" element={<Statistics />} />
-          <Route path="overview" element={<Overview />} />
+          <Route path="overview" element={<Navigate to="/app" replace />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="feedback" element={<Feedback />} />
           <Route path="premium" element={<Premium />} />
@@ -200,7 +200,7 @@ const AppRoutes = () => (
           <Route path="hens/:henId" element={<HenProfile />} />
           <Route path="weekly-report" element={<WeeklyReport />} />
           <Route path="year-report" element={<YearReport />} />
-          <Route path="smart-report" element={<SmartFarmReport />} />
+          <Route path="smart-report" element={<Navigate to="/app/rapporter?tab=smart" replace />} />
           <Route path="agda" element={<Agda />} />
           <Route path="import" element={<Import />} />
           <Route path="calendar" element={<SeasonalCalendar />} />
