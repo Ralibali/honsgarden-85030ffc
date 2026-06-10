@@ -12,6 +12,8 @@ import { useSeo } from '@/hooks/useSeo';
 import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Navigation, Package, Repeat, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
 import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
+import SwishQR from '@/components/egg-sales/SwishQR';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
@@ -38,6 +40,7 @@ export default function PublicEggSaleV3() {
   const [swishConfirm, setSwishConfirm] = useState(false);
   const [bookingConfirm, setBookingConfirm] = useState(false);
   const [subFreq, setSubFreq] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const isMobile = useIsMobile();
   const [subPacks, setSubPacks] = useState('1');
   const [subName, setSubName] = useState('');
   const [subEmail, setSubEmail] = useState('');
@@ -444,6 +447,12 @@ export default function PublicEggSaleV3() {
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Meddelande</span><strong className="truncate max-w-[140px]">{swishMsgFull}</strong></div>
           </div>
+          {!isMobile && swishDeepLink && (
+            <div className="flex flex-col items-center gap-1.5 rounded-xl border bg-white/70 p-3">
+              <SwishQR value={swishDeepLink} size={160} />
+              <p className="text-[11px] text-green-700">Skanna med Swish-appen på din telefon</p>
+            </div>
+          )}
           <div className="flex items-start gap-2 text-xs text-green-700">
             <Clock className="h-4 w-4 shrink-0 mt-0.5" />
             <p>Efter att du betalat via Swish, be säljaren bekräfta mottagningen. Har du inte Swish installerat? Uppgifterna finns kopierade.</p>
