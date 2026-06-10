@@ -267,7 +267,7 @@ export default function Reminders() {
         </Dialog>
       </div>
 
-      <PremiumGate soft feature="push-notiser & hälsohistorik">
+      <PremiumGate soft feature="push-notiser & hälsohistorik" featureKey="reminders">
         <div />
       </PremiumGate>
 
