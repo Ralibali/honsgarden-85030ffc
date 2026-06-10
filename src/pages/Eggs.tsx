@@ -71,6 +71,7 @@ export default function Eggs() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
