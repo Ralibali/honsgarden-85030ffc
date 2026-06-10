@@ -2121,6 +2121,27 @@ export type Database = {
           },
         ]
       }
+      lifecycle_emails_sent: {
+        Row: {
+          email_key: string
+          id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          email_key: string
+          id?: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          email_key?: string
+          id?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       link_glossary: {
         Row: {
           created_at: string
