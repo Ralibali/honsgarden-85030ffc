@@ -27,7 +27,7 @@ interface PremiumGateProps {
 export function PremiumGate({ children, feature, featureKey, blur = true, soft = false, preview = false }: PremiumGateProps) {
   const { user } = useAuth();
   const isPremium = user?.subscription_status === 'premium';
-  const copy = getGateCopy(featureKey);
+  // copy is resolved inside PremiumUpsellCard via getGateCopy(featureKey)
 
   React.useEffect(() => {
     if (isPremium || soft) return;
