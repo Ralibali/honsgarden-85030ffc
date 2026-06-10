@@ -424,6 +424,11 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* ─── Streak-kort ─── */}
+      <StreakCard />
+
+
+
       {/* ─── 2. Insikter (accordion) ─── */}
       <Card className="border-border/50 shadow-sm">
         <CardContent className="p-3 sm:p-4">
