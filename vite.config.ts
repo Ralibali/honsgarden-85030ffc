@@ -20,10 +20,19 @@ export default defineConfig(({ mode }) => {
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectRegister: null,
       devOptions: {
         enabled: false,
       },
       includeAssets: ["favicon.ico", "pwa-192.png", "pwa-512x512.png"],
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,ico,png,jpg,svg,woff2}"],
+        globIgnores: ["**/node_modules/**/*"],
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+      },
       manifest: {
         name: "Hönsgården – Din digitala äggloggare",
         short_name: "Hönsgården",
@@ -55,46 +64,6 @@ export default defineConfig(({ mode }) => {
           },
         ],
       },
-      workbox: {
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-        importScripts: ['/push-sw.js'],
-        globPatterns: ["**/*.{js,css,ico,png,jpg,svg,woff2}"],
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/api/],
-        runtimeCaching: [
-          {
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "html-pages",
-              networkTimeoutSeconds: 3,
-              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: "StaleWhileRevalidate",
-            options: { cacheName: "google-fonts-stylesheets" },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com/,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-webfonts",
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-            },
-          },
-          {
-            urlPattern: /\/blog-images\//,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "blog-images",
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
-            },
-          },
-        ],
-      },
     }),
   ].filter(Boolean),
   define: {
@@ -109,8 +78,9 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-tooltip'],
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          vendor: ["recharts"],
+          ui: ["@radix-ui/react-accordion", "@radix-ui/react-dialog", "@radix-ui/react-tooltip"],
         },
       },
     },
