@@ -96,8 +96,8 @@ export default function EggSalesOverview() {
     const prevStart = new Date(periodStart);
     prevStart.setDate(prevStart.getDate() - RANGE_DAYS);
 
-    let curr = { bookings: 0, packs: 0, value: 0 };
-    let prev = { bookings: 0, packs: 0, value: 0 };
+    const curr = { bookings: 0, packs: 0, value: 0 };
+    const prev = { bookings: 0, packs: 0, value: 0 };
 
     bookings.forEach((b) => {
       if (!b.created_at || b.status === 'cancelled') return;
