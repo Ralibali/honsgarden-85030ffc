@@ -24,10 +24,13 @@ const defaultBenefits = [
   'Agdas Bod Pro med försäljning, kunder och export',
 ];
 
-export default function PlusFeatureGate({ title, description, featureName = 'Plus-funktion', children, benefits = defaultBenefits }: PlusFeatureGateProps) {
+export default function PlusFeatureGate({ title, description, featureName = 'Plus-funktion', featureKey, children, benefits = defaultBenefits }: PlusFeatureGateProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isPlus = user?.subscription_status === 'premium' || user?.is_premium;
+  const copy = getGateCopy(featureKey);
+  const resolvedTitle = copy?.title ?? title;
+  const resolvedDescription = copy?.body ?? description;
 
   if (isPlus) return <>{children}</>;
 
@@ -42,8 +45,9 @@ export default function PlusFeatureGate({ title, description, featureName = 'Plu
             <Badge className="mb-3 bg-warning/15 text-warning border-warning/25">
               <Sparkles className="h-3 w-3 mr-1" /> {featureName}
             </Badge>
-            <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-2">{title}</h1>
-            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">{description}</p>
+            <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-2">{resolvedTitle}</h1>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">{resolvedDescription}</p>
+            <p className="text-xs text-muted-foreground mt-3">Prova sju dagar gratis – sedan 19 kr/mån</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left max-w-2xl mx-auto">
             {benefits.map((benefit) => (
