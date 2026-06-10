@@ -18,6 +18,7 @@ import { Stethoscope, Plus, CheckCircle2, Trash2, Loader2, Filter } from 'lucide
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/EmptyState';
+import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 
 const EVENT_TYPES = [
   { value: 'symptom', label: 'Symtom' },
@@ -331,6 +332,8 @@ export default function Health() {
           ))}
         </div>
       )}
+      <AffiliateProductStrip category="tillskott" title="Tillskott & hälsa" />
     </div>
   );
 }
+

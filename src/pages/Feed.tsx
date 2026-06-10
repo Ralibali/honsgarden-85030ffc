@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
+import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 
 const FEED_CATEGORIES: { value: string; label: string }[] = [
   { value: 'layer', label: 'Värphönsfoder' },
@@ -219,7 +220,9 @@ export default function Feed() {
           </Card>
         </>
       )}
+      <AffiliateProductStrip category="foder" title="Foder & tillbehör" />
     </div>
     </PremiumGate>
   );
 }
+
