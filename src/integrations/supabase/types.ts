@@ -2503,6 +2503,7 @@ export type Database = {
           payment_status: string
           pickup_person_name: string | null
           pickup_person_phone: string | null
+          pickup_reminder_sent_at: string | null
           pickup_slot_id: string | null
           seller_user_id: string
           status: string
@@ -2520,6 +2521,7 @@ export type Database = {
           payment_status?: string
           pickup_person_name?: string | null
           pickup_person_phone?: string | null
+          pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
           seller_user_id: string
           status?: string
@@ -2537,6 +2539,7 @@ export type Database = {
           payment_status?: string
           pickup_person_name?: string | null
           pickup_person_phone?: string | null
+          pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
           seller_user_id?: string
           status?: string
