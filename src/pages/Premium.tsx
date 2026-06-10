@@ -334,6 +334,32 @@ export default function Premium() {
           </div>
         </CardContent>
       </Card>
+
+      {!isPremium && <StickyMobileUpgradeCTA onClick={() => handleCheckout('yearly')} loading={loadingPlan !== null} />}
     </div>
   );
 }
+
+function StickyMobileUpgradeCTA({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.6);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (!visible) return null;
+  return (
+    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden px-4">
+      <Button
+        onClick={onClick}
+        disabled={loading}
+        className="w-full h-12 text-base font-semibold rounded-2xl shadow-[0_8px_30px_-4px_hsl(var(--primary)/0.5)]"
+      >
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+        Prova 7 dagar gratis
+      </Button>
+    </div>
+  );
+}
+
