@@ -37,3 +37,5 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.pickup-reminder]
     verify_jwt = false
+  [functions.trial-email-sequence]
+    verify_jwt = false
