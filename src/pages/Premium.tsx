@@ -185,6 +185,7 @@ export default function Premium() {
       return;
     }
 
+    trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
