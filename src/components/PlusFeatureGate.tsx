@@ -58,7 +58,7 @@ export default function PlusFeatureGate({ title, description, featureName = 'Plu
             ))}
           </div>
           <div className="flex flex-col sm:flex-row justify-center gap-2">
-            <Button className="rounded-xl gap-2" onClick={() => navigate('/app/premium')}>
+            <Button className="rounded-xl gap-2" onClick={() => { trackClick('paywall_click', { metadata: { featureKey: featureKey || null, featureName, variant: 'plus' } }); navigate('/app/premium'); }}>
               Prova Plus <ArrowRight className="h-4 w-4" />
             </Button>
             <Button variant="outline" className="rounded-xl" onClick={() => navigate('/app')}>
