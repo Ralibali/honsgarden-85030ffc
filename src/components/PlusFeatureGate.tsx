@@ -5,11 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { ArrowRight, Check, Crown, Sparkles } from 'lucide-react';
+import { getGateCopy } from '@/components/premium/gateCopy';
+import { trackClick } from '@/hooks/useTracking';
 
 export type PlusFeatureGateProps = {
   title: string;
   description: string;
   featureName?: string;
+  featureKey?: string;
   children: ReactNode;
   benefits?: string[];
 };
