@@ -474,8 +474,8 @@ export default function Dashboard() {
             <InsightRow
               id="weekly"
               icon={TrendingUp}
-              title="Veckosammanfattning"
-              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra` : ''}`}
+              title="Senaste 7 dagarna"
+              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot föregående 7 dagar` : ''}`}
               openIds={openInsights}
               setOpenIds={setOpenInsights}
             >
@@ -483,7 +483,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
                     <p className="text-lg font-bold text-foreground tabular-nums leading-none">{weekEggs}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Veckan</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">7 dagar</p>
                   </div>
                   <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
                     <p className="text-lg font-bold text-foreground tabular-nums leading-none">{eggsPerDay.toFixed(1)}</p>
