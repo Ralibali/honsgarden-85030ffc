@@ -12,6 +12,7 @@ import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
+import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 
 const milestones = [
   { day: 1, label: 'Start', emoji: '🥚' },
@@ -181,7 +182,9 @@ export default function Hatching() {
           );
         })
       )}
+      <AffiliateProductStrip category="klackning" title="Kläckningsutrustning" />
     </div>
     </PremiumGate>
   );
 }
+

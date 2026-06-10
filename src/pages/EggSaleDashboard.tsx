@@ -144,13 +144,47 @@ function BookingsTab({ listing }: { listing: Listing }) {
     return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Inga bokningar ännu.</CardContent></Card>;
   }
 
+  const pricePerPack = Number(listing.price_per_pack || 0);
+  const active = bookings.filter((b) => b.status !== 'cancelled');
+  const totalAmount = active.reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
+  const paidAmount = active
+    .filter((b) => b.payment_status === 'paid')
+    .reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
+  const refundedAmount = active
+    .filter((b) => b.payment_status === 'refunded')
+    .reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
+  const unpaidAmount = Math.max(0, totalAmount - paidAmount - refundedAmount);
+
   return (
     <div className="space-y-2">
+      <Card className="bg-muted/30">
+        <CardContent className="p-3 sm:p-4 grid grid-cols-3 gap-2 text-center">
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Totalt bokat</p>
+            <p className="font-serif text-base sm:text-lg">{kr(totalAmount)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Betalt</p>
+            <p className="font-serif text-base sm:text-lg text-green-700">{kr(paidAmount)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Obetalt</p>
+            <p className="font-serif text-base sm:text-lg text-amber-700">{kr(unpaidAmount)}</p>
+          </div>
+        </CardContent>
+      </Card>
       {bookings.map((b) => {
-        const amount = Number(b.packs || 0) * Number(listing.price_per_pack || 0);
+        const amount = Number(b.packs || 0) * pricePerPack;
         const isPaid = b.payment_status === 'paid';
+        const isRefunded = b.payment_status === 'refunded';
         const isCancelled = b.status === 'cancelled';
         const isPickedUp = b.status === 'picked_up';
+        const payLabel = isRefunded ? 'Återbetald' : isPaid ? 'Betald' : 'Obetald';
+        const payClass = isRefunded
+          ? 'bg-muted text-muted-foreground'
+          : isPaid
+          ? 'bg-green-600 text-white border-transparent'
+          : 'border-amber-400 text-amber-700 bg-amber-50';
         return (
           <Card key={b.id} className={isCancelled ? 'opacity-60' : ''}>
             <CardContent className="p-4 space-y-2.5">
@@ -166,11 +200,12 @@ function BookingsTab({ listing }: { listing: Listing }) {
                 </div>
                 <div className="flex gap-1 flex-wrap">
                   <Badge variant={isCancelled ? 'destructive' : isPickedUp ? 'default' : 'secondary'}>{b.status}</Badge>
-                  <Badge variant={isPaid ? 'default' : 'outline'} className={isPaid ? 'bg-green-600' : ''}>
-                    <Wallet className="h-3 w-3 mr-1" />{isPaid ? 'Betald' : 'Obetald'}
+                  <Badge variant="outline" className={payClass}>
+                    <Wallet className="h-3 w-3 mr-1" />{payLabel}
                   </Badge>
                 </div>
               </div>
+
               {!isCancelled && (
                 <div className="flex gap-1.5 flex-wrap pt-1">
                   <Button size="sm" variant={isPaid ? 'outline' : 'default'} className="h-7 text-xs"

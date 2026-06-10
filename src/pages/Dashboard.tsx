@@ -30,6 +30,7 @@ import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
 import { StreakCard } from '@/components/dashboard/StreakCard';
+import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
 import { CountUp } from '@/components/CountUp';
 import { RingProgress } from '@/components/RingProgress';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
@@ -426,6 +427,7 @@ export default function Dashboard() {
 
       {/* ─── Streak-kort ─── */}
       <StreakCard />
+      <YearReportPromoCard />
 
 
 
