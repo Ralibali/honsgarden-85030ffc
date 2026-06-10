@@ -409,7 +409,18 @@ function HatchSessionsTab() {
   );
 }
 
+import { useSearchParams } from 'react-router-dom';
+import HatchingPage from './Hatching';
+
 export default function Breeding() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') || 'pairs';
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <PremiumGate feature="Avel & kläckning" featureKey="breeding" blur={false}>
       <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
@@ -423,12 +434,14 @@ export default function Breeding() {
           </p>
         </div>
 
-        <Tabs defaultValue="pairs" className="w-full">
-          <TabsList className="grid grid-cols-2 max-w-md">
-            <TabsTrigger value="pairs">Avelspar</TabsTrigger>
-            <TabsTrigger value="hatches">Kläckningar</TabsTrigger>
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="grid grid-cols-3 max-w-xl">
+            <TabsTrigger value="pairs">Avel</TabsTrigger>
+            <TabsTrigger value="hatching">Kläckning</TabsTrigger>
+            <TabsTrigger value="hatches">Kläckningslogg</TabsTrigger>
           </TabsList>
           <TabsContent value="pairs" className="mt-4"><PairsTab /></TabsContent>
+          <TabsContent value="hatching" className="mt-4"><HatchingPage /></TabsContent>
           <TabsContent value="hatches" className="mt-4"><HatchSessionsTab /></TabsContent>
         </Tabs>
       </div>
