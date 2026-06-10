@@ -1321,6 +1321,45 @@ export type Database = {
           },
         ]
       }
+      egg_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          customer: string
+          eggs: number
+          id: string
+          note: string | null
+          paid: boolean
+          sale_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          customer: string
+          eggs?: number
+          id?: string
+          note?: string | null
+          paid?: boolean
+          sale_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer?: string
+          eggs?: number
+          id?: string
+          note?: string | null
+          paid?: boolean
+          sale_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
