@@ -790,9 +790,6 @@ export default function GuideArticle() {
         })()}
       </article>
 
-      <div className="lg:col-span-2 mt-10">
-        <NewsletterSignup />
-      </div>
 
       {toc.length > 0 && (
         <aside className="hidden lg:block">
