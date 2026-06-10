@@ -38,6 +38,7 @@ export default function EggSaleCustomize() {
       title="Designa din säljsida"
       description="Plus-medlemmar kan färgsätta sin Agda-säljsida, byta header och lägga till egna sektioner som 'Om gården', galleri och FAQ."
       featureName="Säljsidans designstudio"
+      featureKey="eggsales"
       benefits={[
         'Egen accentfärg, bakgrund och logo',
         'Hero-bild eller minimalistisk header',
