@@ -493,7 +493,7 @@ export default function Dashboard() {
                     <p className={`text-lg font-bold tabular-nums leading-none ${weekDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
                       {weekDelta > 0 ? '+' : ''}{weekDelta}
                     </p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot förra</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot föregående 7</p>
                   </div>
                 </div>
                 <EggGoalsWidget eggs={eggs} />
