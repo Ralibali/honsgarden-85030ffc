@@ -100,6 +100,7 @@ export default function Eggs() {
     mutationFn: (id: string) => api.deleteEggRecord(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
       toast({ title: 'Äggregistreringen är borttagen' });
     },
   });
