@@ -73,7 +73,59 @@ Deno.serve(async (req) => {
         .eq("date", todayStr);
       if (eggCount && eggCount > 0) { skipped++; continue; }
 
+      // Compute streak anchored from yesterday (we already know nothing is logged today).
+      // Look back 30 days max — same logic as calculateStreakFromEggs in src/lib/api.ts.
+      const stockholmDate = (offset: number) => {
+        const local = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Stockholm" }));
+        local.setDate(local.getDate() - offset);
+        return local.toISOString().slice(0, 10);
+      };
+      const since = stockholmDate(31);
+      const { data: recentEggs } = await supabase
+        .from("egg_logs")
+        .select("date, count")
+        .eq("user_id", p.user_id)
+        .gte("date", since);
+      const dayMap = new Map<string, number>();
+      (recentEggs ?? []).forEach((row: any) => {
+        const cur = dayMap.get(row.date) ?? 0;
+        dayMap.set(row.date, cur + Number(row.count ?? 0));
+      });
+      let streak = 0;
+      for (let i = 1; i <= 365; i++) {
+        const ds = stockholmDate(i);
+        if ((dayMap.get(ds) ?? 0) > 0) streak++;
+        else break;
+      }
+
       const name = (p.display_name || "").split(" ")[0] || "kompis";
+
+      // Streak in danger → send push instead of email
+      if (streak >= 3) {
+        try {
+          const { data: pushSubs } = await supabase
+            .from("push_subscriptions")
+            .select("id")
+            .eq("user_id", p.user_id)
+            .limit(1);
+          if (pushSubs && pushSubs.length > 0) {
+            await supabase.functions.invoke("send-push", {
+              body: {
+                user_ids: [p.user_id],
+                title: `🔥 Din streak på ${streak} dagar är i fara`,
+                body: "Logga dagens ägg innan midnatt så lever den vidare.",
+                url: "/app/eggs",
+                tag: `streak-at-risk-${todayStr}`,
+              },
+            });
+            sent++;
+            continue;
+          }
+        } catch (err) {
+          console.error("streak push failed, falling back to email", p.user_id, err);
+        }
+      }
+
       const subject = "Glöm inte att räkna dagens ägg 🥚";
 
       const html = `<!doctype html><html><body style="margin:0;padding:0;background:#faf8f4;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#2a2a28;">
@@ -118,6 +170,7 @@ Deno.serve(async (req) => {
       console.error("daily-egg-reminder error", p.user_id, err);
     }
   }
+
 
   return new Response(JSON.stringify({ sent, skipped }), {
     headers: { "Content-Type": "application/json" },

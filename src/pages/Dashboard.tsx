@@ -29,6 +29,7 @@ import EggGoalsWidget from '@/components/EggGoalsWidget';
 import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
+import { StreakCard } from '@/components/dashboard/StreakCard';
 import { CountUp } from '@/components/CountUp';
 import { RingProgress } from '@/components/RingProgress';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
@@ -422,6 +423,11 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* ─── Streak-kort ─── */}
+      <StreakCard />
+
+
 
       {/* ─── 2. Insikter (accordion) ─── */}
       <Card className="border-border/50 shadow-sm">

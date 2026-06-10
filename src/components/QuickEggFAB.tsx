@@ -74,6 +74,7 @@ export function QuickEggFAB() {
     },
     onSuccess: (_d, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      queryClient.invalidateQueries({ queryKey: ['streak'] });
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
