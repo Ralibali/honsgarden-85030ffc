@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-react';
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
+import ArticleCta from '@/components/blog/ArticleCta';
+import { useAuth } from '@/hooks/useAuth';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
@@ -214,6 +216,7 @@ function renderContent(
 
 export default function GuideArticle() {
   const { slug } = useParams<{ slug: string }>();
+  const { isAuthenticated } = useAuth();
   const [readingProgress, setReadingProgress] = useState(0);
 
   // Fetch current post
