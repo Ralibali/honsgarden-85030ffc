@@ -578,7 +578,7 @@ export default function HenProfile() {
           </TabsContent>
 
           <TabsContent value="pedigree" className="mt-5">
-            <PremiumGate feature="Stamtavla" blur>
+            <PremiumGate feature="Stamtavla" featureKey="breeding" blur>
               <HenPedigree
                 henId={henId!}
                 henName={hen.name}
