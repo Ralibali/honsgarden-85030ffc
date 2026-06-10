@@ -535,10 +535,31 @@ function ReportsInner() {
   );
 }
 
+import { useSearchParams } from 'react-router-dom';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import SmartFarmReportPage from './SmartFarmReport';
+
 export default function Reports() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'smart' ? 'smart' : 'weekly';
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', v);
+    setSearchParams(next, { replace: true });
+  };
+
   return (
     <PremiumGate feature="Rapporter" featureKey="reports" preview>
-      <ReportsInner />
+      <div className="container max-w-5xl py-6 space-y-4">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="grid grid-cols-2 max-w-md">
+            <TabsTrigger value="weekly">Veckorapport</TabsTrigger>
+            <TabsTrigger value="smart">Smart rapport</TabsTrigger>
+          </TabsList>
+          <TabsContent value="weekly" className="mt-4"><ReportsInner /></TabsContent>
+          <TabsContent value="smart" className="mt-4"><SmartFarmReportPage /></TabsContent>
+        </Tabs>
+      </div>
     </PremiumGate>
   );
 }
