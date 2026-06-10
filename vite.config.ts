@@ -32,15 +32,13 @@ export default defineConfig(({ mode }) => {
         globPatterns: [
           "index.html",
           "**/*.css",
-          "**/*.ico",
           "**/pwa-*.png",
-          "**/*.woff2",
           "**/assets/index-*.js",
           "**/assets/vendor-*",
           "**/assets/ui-*.js",
           "**/assets/AppLayout-*.js",
         ],
-        globIgnores: ["**/push-sw.js", "**/sw.js"],
+        globIgnores: ["**/push-sw.js"],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       },
       manifest: {
