@@ -3682,6 +3682,7 @@ export type Database = {
         Args: { p_advertiser_id: string; p_product_url: string }
         Returns: string
       }
+      cancel_booking_by_token: { Args: { p_token: string }; Returns: Json }
       check_rate_limit: {
         Args: {
           _function_name: string
@@ -3704,6 +3705,7 @@ export type Database = {
         Returns: number
       }
       expire_marketplace_listings: { Args: never; Returns: undefined }
+      get_booking_by_token: { Args: { p_token: string }; Returns: Json }
       get_farm_member_display_names: {
         Args: { _uid: string }
         Returns: {
