@@ -3,32 +3,64 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Crown, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getGateCopy } from '@/components/premium/gateCopy';
+import { trackClick } from '@/hooks/useTracking';
 
 interface PremiumGateProps {
   children: React.ReactNode;
-  /** What feature this gate protects – shown in the upsell */
+  /** What feature this gate protects – shown in the upsell (fallback) */
   feature?: string;
+  /** Contextual copy key (overrides feature). See gateCopy.ts */
+  featureKey?: string;
   /** If true, show blurred preview instead of full block */
   blur?: boolean;
   /** If true, allow content but show a subtle banner on top */
   soft?: boolean;
+  /** If true, render children blurred and locked beneath an overlay (real-data safe variant of blur). */
+  preview?: boolean;
 }
 
 /**
  * Wraps content that requires Premium.
  * Free users see a compelling upsell overlay.
  */
-export function PremiumGate({ children, feature, blur = true, soft = false }: PremiumGateProps) {
+export function PremiumGate({ children, feature, featureKey, blur = true, soft = false, preview = false }: PremiumGateProps) {
   const { user } = useAuth();
   const isPremium = user?.subscription_status === 'premium';
+  // copy is resolved inside PremiumUpsellCard via getGateCopy(featureKey)
+
+  React.useEffect(() => {
+    if (isPremium || soft) return;
+    trackClick('paywall_view', { metadata: { featureKey: featureKey || null, feature: feature || null } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium]);
 
   if (isPremium) return <>{children}</>;
 
   if (soft) {
     return (
       <div className="relative">
-        <PremiumBannerInline feature={feature} />
+        <PremiumBannerInline feature={feature} featureKey={featureKey} />
         {children}
+      </div>
+    );
+  }
+
+  // Preview mode: render children blurred, non-interactive, hidden from a11y, with overlay.
+  if (preview) {
+    return (
+      <div className="relative min-h-[420px]">
+        <div
+          className="pointer-events-none select-none blur-md opacity-60 saturate-50"
+          aria-hidden="true"
+          {...({ inert: '' } as any)}
+        >
+          {children}
+        </div>
+        <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px]" aria-hidden="true" />
+        <div className="absolute inset-0 flex items-start justify-center pt-12 sm:pt-20 px-4 z-10">
+          <PremiumUpsellCard feature={feature} featureKey={featureKey} />
+        </div>
       </div>
     );
   }
@@ -46,14 +78,22 @@ export function PremiumGate({ children, feature, blur = true, soft = false }: Pr
 
       {/* Overlay */}
       <div className={`${blur ? 'absolute inset-0' : ''} flex items-center justify-center z-10`}>
-        <PremiumUpsellCard feature={feature} />
+        <PremiumUpsellCard feature={feature} featureKey={featureKey} />
       </div>
     </div>
   );
 }
 
-function PremiumUpsellCard({ feature }: { feature?: string }) {
+function PremiumUpsellCard({ feature, featureKey }: { feature?: string; featureKey?: string }) {
   const navigate = useNavigate();
+  const copy = getGateCopy(featureKey);
+  const title = copy?.title ?? (feature ? `${feature} kräver Premium` : 'Premium-funktion');
+  const body = copy?.body ?? 'Lås upp alla funktioner med Premium.';
+
+  const handleClick = () => {
+    trackClick('paywall_click', { metadata: { featureKey: featureKey || null, feature: feature || null } });
+    navigate('/app/premium');
+  };
 
   return (
     <div className="max-w-sm w-full mx-auto animate-fade-in-scale">
@@ -62,16 +102,13 @@ function PremiumUpsellCard({ feature }: { feature?: string }) {
           <Crown className="h-7 w-7 text-warning" />
         </div>
         <div>
-          <h3 className="font-serif text-lg text-foreground mb-1">
-            {feature ? `${feature} kräver Premium` : 'Premium-funktion'}
-          </h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Lås upp alla funktioner med Premium. Prova sju dagar gratis – sedan bara 19 kr/mån.
-          </p>
+          <h3 className="font-serif text-lg text-foreground mb-1">{title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
+          <p className="text-xs text-muted-foreground mt-2">Prova sju dagar gratis – sedan 19 kr/mån</p>
         </div>
         <Button
           className="w-full h-11 gap-2 text-sm font-semibold rounded-xl shadow-[0_4px_14px_0_hsl(var(--primary)/0.25)]"
-          onClick={() => navigate('/app/premium')}
+          onClick={handleClick}
         >
           <Sparkles className="h-4 w-4" />
           Prova Premium gratis
@@ -84,21 +121,24 @@ function PremiumUpsellCard({ feature }: { feature?: string }) {
 }
 
 /** Small inline banner for soft gates */
-function PremiumBannerInline({ feature }: { feature?: string }) {
+function PremiumBannerInline({ feature, featureKey }: { feature?: string; featureKey?: string }) {
   const navigate = useNavigate();
+  const copy = getGateCopy(featureKey);
+  const label = copy?.title ?? (feature ? `Lås upp ${feature.toLowerCase()} med Premium` : 'Uppgradera till Premium');
 
   return (
     <button
-      onClick={() => navigate('/app/premium')}
+      onClick={() => {
+        trackClick('paywall_click', { metadata: { featureKey: featureKey || null, feature: feature || null, variant: 'soft' } });
+        navigate('/app/premium');
+      }}
       className="w-full flex items-center gap-3 p-3 mb-4 rounded-xl bg-gradient-to-r from-warning/8 via-accent/5 to-primary/8 border border-warning/15 hover:border-warning/30 transition-all group"
     >
       <div className="w-8 h-8 rounded-lg bg-warning/15 flex items-center justify-center shrink-0">
         <Crown className="h-4 w-4 text-warning" />
       </div>
       <div className="flex-1 text-left">
-        <p className="text-xs font-semibold text-foreground">
-          {feature ? `Lås upp ${feature.toLowerCase()} med Premium` : 'Uppgradera till Premium'}
-        </p>
+        <p className="text-xs font-semibold text-foreground">{label}</p>
         <p className="text-[10px] text-muted-foreground">Sju dagar gratis – sedan 19 kr/mån</p>
       </div>
       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
@@ -116,7 +156,10 @@ export function PremiumNudge() {
 
   return (
     <button
-      onClick={() => navigate('/app/premium')}
+      onClick={() => {
+        trackClick('paywall_click', { metadata: { variant: 'nudge' } });
+        navigate('/app/premium');
+      }}
       className="w-full text-left group animate-fade-in-scale"
     >
       <div className="relative overflow-hidden rounded-2xl border border-warning/20 bg-gradient-to-br from-warning/8 via-accent/5 to-primary/5 p-5 transition-all hover:border-warning/35 hover:shadow-lg">

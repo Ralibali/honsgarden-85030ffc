@@ -537,7 +537,7 @@ function ReportsInner() {
 
 export default function Reports() {
   return (
-    <PremiumGate feature="Rapporter" blur={false}>
+    <PremiumGate feature="Rapporter" featureKey="reports" preview>
       <ReportsInner />
     </PremiumGate>
   );

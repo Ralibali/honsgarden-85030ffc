@@ -7,21 +7,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useSeo } from '@/hooks/useSeo';
+import { trackClick } from '@/hooks/useTracking';
 
 type BillingPlan = 'monthly' | 'yearly';
 
 const premiumFeatures = [
-  'AI-hönsgårdscoach med personliga råd',
-  'AI-veckorapport och tydliga nästa steg',
-  'Avvikelsevarningar när något ändras i flocken',
-  'Avancerad statistik, trender och äggmål',
-  'Foderspårning och kostnad per ägg',
-  'Ekonomi, intäkter, kostnader och export',
-  'Flockhälsa-light och bättre hönsprofiler',
-  'Kläckningskalender med milstolpar',
-  'Smarta påminnelser och dagliga uppgifter',
-  'PDF/CSV-export och rapporter',
-  'Prioriterad support och framtida premiumfunktioner',
+  'Agda AI-coachen — personliga råd om just dina hönor',
+  'Veckorapport varje söndag med tydliga nästa steg',
+  'Vet vad varje ägg kostar — foder, ekonomi och export',
+  'Larm när något avviker i flocken, innan det blir ett problem',
+  'Kläckningskalender som håller koll på alla 21 dagarna',
+  'Full statistik, äggmål, PDF/CSV och alla framtida funktioner',
 ];
 
 const plans: Array<{
@@ -30,22 +26,26 @@ const plans: Array<{
   price: string;
   period: string;
   description: string;
+  subPrice?: string;
   badge?: string;
+  highlighted?: boolean;
 }> = [
+  {
+    id: 'yearly',
+    name: 'Plus årsvis',
+    price: '149 kr',
+    period: '/ år',
+    description: 'Spara 79 kr — motsvarar 12,40 kr/mån',
+    badge: 'Bäst värde',
+    highlighted: true,
+  },
   {
     id: 'monthly',
     name: 'Plus månadsvis',
     price: '19 kr',
     period: '/ månad',
     description: 'Flexibelt abonnemang. Avsluta när du vill.',
-  },
-  {
-    id: 'yearly',
-    name: 'Plus årsvis',
-    price: '149 kr',
-    period: '/ år',
-    description: 'Årsabonnemang med tydligt slutdatum. Inte lifetime.',
-    badge: 'Bäst värde',
+    subPrice: '= mindre än en kartong ägg',
   },
 ];
 
@@ -96,6 +96,12 @@ export default function Premium() {
     noindex: true,
     jsonLd: premiumJsonLd,
   });
+
+  useEffect(() => {
+    trackClick('premium_page_view');
+  }, []);
+
+
 
   useEffect(() => {
     if (searchParams.get('success') !== 'true') return;
@@ -185,6 +191,7 @@ export default function Premium() {
       return;
     }
 
+    trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -258,9 +265,22 @@ export default function Premium() {
         </Card>
       )}
 
-      <section className="grid md:grid-cols-2 gap-4">
+      {!isPremium && (
+        <p className="text-center text-xs text-muted-foreground -mb-2">
+          Används av hönsägare i hela Sverige 🇸🇪
+        </p>
+      )}
+
+      <section className="grid md:grid-cols-2 gap-4 items-stretch">
         {plans.map((plan) => (
-          <Card key={plan.id} className="relative overflow-hidden border-primary/20 shadow-sm">
+          <Card
+            key={plan.id}
+            className={`relative overflow-hidden shadow-sm transition-all ${
+              plan.highlighted
+                ? 'border-2 border-primary shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.35)] md:scale-[1.02] bg-primary/[0.03]'
+                : 'border-primary/20 opacity-95'
+            }`}
+          >
             {plan.badge && (
               <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                 {plan.badge}
@@ -275,12 +295,22 @@ export default function Premium() {
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
-              <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                <span className="pb-1 text-muted-foreground">{plan.period}</span>
+              <div>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="pb-1 text-muted-foreground">{plan.period}</span>
+                </div>
+                {plan.subPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">{plan.subPrice}</p>
+                )}
               </div>
 
-              <Button className="w-full rounded-xl" onClick={() => handleCheckout(plan.id)} disabled={loadingPlan !== null || isPremium}>
+              <Button
+                className="w-full rounded-xl"
+                variant={plan.highlighted ? 'default' : 'outline'}
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loadingPlan !== null || isPremium}
+              >
                 {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isPremium ? 'Premium är aktivt' : `Välj ${plan.id === 'monthly' ? 'månadsplan' : 'årsplan'}`}
               </Button>
@@ -288,6 +318,7 @@ export default function Premium() {
           </Card>
         ))}
       </section>
+
 
       <Card>
         <CardContent className="p-6">
@@ -311,6 +342,32 @@ export default function Premium() {
           </div>
         </CardContent>
       </Card>
+
+      {!isPremium && <StickyMobileUpgradeCTA onClick={() => handleCheckout('yearly')} loading={loadingPlan !== null} />}
     </div>
   );
 }
+
+function StickyMobileUpgradeCTA({ onClick, loading }: { onClick: () => void; loading: boolean }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > window.innerHeight * 0.6);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (!visible) return null;
+  return (
+    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-40 md:hidden px-4">
+      <Button
+        onClick={onClick}
+        disabled={loading}
+        className="w-full h-12 text-base font-semibold rounded-2xl shadow-[0_8px_30px_-4px_hsl(var(--primary)/0.5)]"
+      >
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+        Prova 7 dagar gratis
+      </Button>
+    </div>
+  );
+}
+

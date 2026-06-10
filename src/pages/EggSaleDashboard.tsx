@@ -32,6 +32,7 @@ export default function EggSaleDashboardPage() {
       title="Säljarens kontrollrum"
       description="Hantera tidsluckor, bokningar, betalningar och mallar för dina äggförsäljningar."
       featureName="Säljardashboard"
+      featureKey="eggsales"
       benefits={['Tidsluckor för avhämtning', 'Markera betald/hämtad', 'Sparade mallar för återkommande försäljning', 'Väntelista och recensioner']}
     >
       <Dashboard />
