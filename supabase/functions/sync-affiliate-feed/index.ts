@@ -155,6 +155,15 @@ async function syncAdvertiser(
 }
 
 Deno.serve(async (req) => {
+  const auth = req.headers.get('Authorization') ?? '';
+  const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
+  const provided = auth.replace('Bearer ', '').trim();
+  const okSecret = cronSecret && req.headers.get('x-cron-secret') === cronSecret;
+  const okBearer = cronSecret && provided === cronSecret;
+  if (!okSecret && !okBearer) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+  }
+
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
   const startedAt = new Date().toISOString();
   const url = new URL(req.url);

@@ -5,36 +5,62 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
 
+type BookingPreview = {
+  customer_name: string;
+  packs: number;
+  listing_title: string | null;
+};
+
+type RpcResult = {
+  ok: boolean;
+  reason?: 'invalid' | 'used';
+  customer_name?: string;
+  packs?: number;
+  status?: string;
+  listing_title?: string | null;
+};
+
 export default function CancelBooking() {
   const { token } = useParams<{ token: string }>();
   const [state, setState] = useState<'loading' | 'ready' | 'done' | 'invalid' | 'used' | 'error'>('loading');
-  const [booking, setBooking] = useState<any>(null);
+  const [booking, setBooking] = useState<BookingPreview | null>(null);
   const [errMsg, setErrMsg] = useState('');
 
   useEffect(() => {
     if (!token) { setState('invalid'); return; }
     (async () => {
-      const { data: t, error } = await (supabase as any)
-        .from('egg_sale_booking_tokens')
-        .select('*, public_egg_sale_bookings(id, customer_name, packs, status, listing_id, public_egg_sale_listings(title))')
-        .eq('token', token).maybeSingle();
-      if (error || !t) { setState('invalid'); return; }
-      if (t.used_at) { setState('used'); return; }
-      setBooking(t.public_egg_sale_bookings);
-      setState(t.public_egg_sale_bookings?.status === 'cancelled' ? 'used' : 'ready');
+      const { data, error } = await supabase.rpc('get_booking_by_token', { p_token: token });
+      if (error) { setState('invalid'); return; }
+      const res = (data ?? {}) as RpcResult;
+      if (!res.ok) {
+        setState(res.reason === 'used' ? 'used' : 'invalid');
+        return;
+      }
+      setBooking({
+        customer_name: res.customer_name ?? '',
+        packs: res.packs ?? 0,
+        listing_title: res.listing_title ?? null,
+      });
+      setState('ready');
     })();
   }, [token]);
 
   const doCancel = async () => {
     if (!booking || !token) return;
     setState('loading');
-    try {
-      const { error: e1 } = await (supabase as any).from('public_egg_sale_bookings').update({ status: 'cancelled' }).eq('id', booking.id);
-      if (e1) throw e1;
-      await (supabase as any).from('egg_sale_booking_tokens').update({ used_at: new Date().toISOString() }).eq('token', token);
+    const { data, error } = await supabase.rpc('cancel_booking_by_token', { p_token: token });
+    if (error) {
+      setErrMsg(error.message);
+      setState('error');
+      return;
+    }
+    const res = (data ?? {}) as RpcResult;
+    if (res.ok) {
       setState('done');
-    } catch (e: any) {
-      setErrMsg(e.message);
+    } else if (res.reason === 'used') {
+      setState('used');
+    } else {
+      setErrMsg('Bokningen kunde inte avbokas.');
       setState('error');
     }
   };
@@ -57,7 +83,7 @@ export default function CancelBooking() {
           {state === 'ready' && booking && (<>
             <h1 className="font-serif text-2xl">Avboka bokning</h1>
             <div className="rounded-xl border bg-muted/30 p-4 text-left text-sm space-y-1">
-              <p><strong>Säljsida:</strong> {booking.public_egg_sale_listings?.title || '–'}</p>
+              <p><strong>Säljsida:</strong> {booking.listing_title || '–'}</p>
               <p><strong>Namn:</strong> {booking.customer_name}</p>
               <p><strong>Antal kartor:</strong> {booking.packs}</p>
             </div>
