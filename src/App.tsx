@@ -1,8 +1,11 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import React, { Suspense } from "react";
 import CookieConsent from "./components/CookieConsent";
@@ -90,11 +93,18 @@ const queryClient = new QueryClient({
       staleTime: 60_000,
       refetchOnWindowFocus: false,
       retry: 1,
+      gcTime: 24 * 60 * 60 * 1000, // 24h for persistence to work
     },
   },
 });
 
+const PERSISTED_KEYS = new Set(['eggs', 'hens', 'flocks']);
+const persister = typeof window !== 'undefined'
+  ? createSyncStoragePersister({ storage: window.localStorage, key: 'honsgarden_rq_cache_v1' })
+  : undefined;
+
 const LoadingFallback = () => <SuspenseFallback fullScreen />;
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -211,7 +221,19 @@ const AppRoutes = () => (
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: persister!,
+        maxAge: 24 * 60 * 60 * 1000,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (q) => {
+            const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
+            return typeof key === 'string' && PERSISTED_KEYS.has(key);
+          },
+        },
+      }}
+    >
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -224,8 +246,9 @@ const App = () => (
           </Suspense>
         </AuthProvider>
       </TooltipProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </ErrorBoundary>
 );
 
 export default App;
+

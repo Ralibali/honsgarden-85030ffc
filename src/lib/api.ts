@@ -136,17 +136,32 @@ export async function getEggs(): Promise<EggLog[]> {
   return data ?? [];
 }
 
-export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null }): Promise<EggLog> {
+export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null; client_id?: string }): Promise<EggLog> {
   const userId = await getUserId();
   const insertData: TablesInsert<'egg_logs'> = { date: record.date, count: record.count, user_id: userId };
   if (record.notes) insertData.notes = record.notes;
   if (record.hen_id) insertData.hen_id = record.hen_id;
   if (record.flock_id) insertData.flock_id = record.flock_id;
   if (record.weather) (insertData as any).weather = record.weather;
+  if (record.client_id) (insertData as any).client_id = record.client_id;
   const { data, error } = await supabase.from('egg_logs').insert(insertData).select().single();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Unique violation on (user_id, client_id) — already inserted, treat as success and return existing row.
+    if ((error as any).code === '23505' && record.client_id) {
+      const { data: existing } = await (supabase
+        .from('egg_logs') as any)
+        .select('*')
+        .eq('user_id', userId)
+        .eq('client_id', record.client_id)
+        .maybeSingle();
+      if (existing) return existing as EggLog;
+    }
+    throw new Error(error.message);
+  }
   return data;
 }
+
+
 
 // Snapshot today's weather (current temp + weathercode) for an egg log.
 // Returns null silently on any failure – this is "best effort" enrichment.

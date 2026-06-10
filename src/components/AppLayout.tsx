@@ -10,6 +10,8 @@ import { SuspenseFallback } from '@/components/SuspenseFallback';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
+import OfflineBanner from './OfflineBanner';
+
 
 export default function AppLayout() {
   usePwaInstallTracking();
@@ -67,6 +69,8 @@ export default function AppLayout() {
               <NotificationBell />
             </div>
           </header>
+
+          <OfflineBanner />
 
           <main
             id="main-content"
