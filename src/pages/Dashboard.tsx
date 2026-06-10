@@ -474,8 +474,8 @@ export default function Dashboard() {
             <InsightRow
               id="weekly"
               icon={TrendingUp}
-              title="Veckosammanfattning"
-              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot förra` : ''}`}
+              title="Senaste 7 dagarna"
+              preview={`${weekEggs} ägg · ${eggsPerDay.toFixed(1)}/dag${weekDelta !== 0 ? ` · ${weekDelta > 0 ? '+' : ''}${weekDelta} mot föregående 7 dagar` : ''}`}
               openIds={openInsights}
               setOpenIds={setOpenInsights}
             >
@@ -483,7 +483,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
                     <p className="text-lg font-bold text-foreground tabular-nums leading-none">{weekEggs}</p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Veckan</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">7 dagar</p>
                   </div>
                   <div className="rounded-xl bg-muted/40 border border-border/30 p-3 text-center">
                     <p className="text-lg font-bold text-foreground tabular-nums leading-none">{eggsPerDay.toFixed(1)}</p>
@@ -493,7 +493,7 @@ export default function Dashboard() {
                     <p className={`text-lg font-bold tabular-nums leading-none ${weekDelta >= 0 ? 'text-primary' : 'text-destructive'}`}>
                       {weekDelta > 0 ? '+' : ''}{weekDelta}
                     </p>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot förra</p>
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1.5">Mot föregående 7</p>
                   </div>
                 </div>
                 <EggGoalsWidget eggs={eggs} />
@@ -517,7 +517,7 @@ export default function Dashboard() {
               <InsightRow
                 id="tophen"
                 icon={Award}
-                title="Veckans bästa höna"
+                title="Bästa höna senaste 7 dagarna"
                 preview={`${topHen.name} · ${topHen.count} ägg`}
                 openIds={openInsights}
                 setOpenIds={setOpenInsights}
@@ -525,7 +525,7 @@ export default function Dashboard() {
                 <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 text-center">
                   <Award className="h-7 w-7 text-primary mx-auto mb-2" />
                   <p className="font-serif text-lg text-foreground">{topHen.name}</p>
-                  <p className="text-sm text-muted-foreground mt-1">{topHen.count} ägg denna vecka</p>
+                  <p className="text-sm text-muted-foreground mt-1">{topHen.count} ägg senaste 7 dagarna</p>
                 </div>
               </InsightRow>
             )}

@@ -73,7 +73,7 @@ export default function MobileAppDashboardHero() {
   const hasFeedData = (feedRecords as any[]).length > 0;
 
   const metrics = [
-    { label: 'Ägg idag', value: String(todayEggs), icon: Egg, hint: `${weekEggs} denna vecka`, path: '/app/eggs' },
+    { label: 'Ägg idag', value: String(todayEggs), icon: Egg, hint: `${weekEggs} senaste 7 dagarna`, path: '/app/eggs' },
     { label: 'Hönor', value: String(activeHens), icon: Bird, hint: 'aktiva i flocken', path: '/app/hens' },
     { label: 'Värde', value: `${Math.round(monthValue)} kr`, icon: ReceiptText, hint: 'denna månad', path: '/app/egg-sales' },
     { label: 'Foder', value: hasFeedData ? 'Aktivt' : 'Starta', icon: Wheat, hint: 'kostnad per ägg', path: '/app/feed' },
