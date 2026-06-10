@@ -2,9 +2,9 @@
 
 declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 
 // Push-notifikationer hanteras av separat messaging worker
@@ -16,21 +16,39 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Rensa föråldrade caches
 cleanupOutdatedCaches();
 
-// HTML-navigeringar: NetworkFirst med fallback till precachad index.html
-const navigationHandler = new NetworkFirst({
-  cacheName: "html-pages",
-  networkTimeoutSeconds: 3,
-  plugins: [
-    new ExpirationPlugin({
-      maxEntries: 20,
-      maxAgeSeconds: 60 * 60,
-    }),
-  ],
-});
-
+// SPA-navigation: alla routes servas från precachad index.html
+const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
-  new NavigationRoute(navigationHandler, {
+  new NavigationRoute(handler, {
     denylist: [/^\/~oauth/, /^\/api/],
+  })
+);
+
+// JS-chunks: StaleWhileRevalidate så offline-laddade sidor fungerar
+registerRoute(
+  ({ request }) => request.destination === "script",
+  new StaleWhileRevalidate({
+    cacheName: "js-chunks",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 60 * 60 * 24 * 7,
+      }),
+    ],
+  })
+);
+
+// Bilder: CacheFirst för snabb rendering
+registerRoute(
+  ({ request }) => request.destination === "image",
+  new CacheFirst({
+    cacheName: "images",
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 60 * 60 * 24 * 30,
+      }),
+    ],
   })
 );
 
