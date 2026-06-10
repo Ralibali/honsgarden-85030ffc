@@ -53,7 +53,7 @@ export function PremiumGate({ children, feature, featureKey, blur = true, soft =
         <div
           className="pointer-events-none select-none blur-md opacity-60 saturate-50"
           aria-hidden="true"
-          inert={'' as unknown as boolean}
+          {...({ inert: '' } as any)}
         >
           {children}
         </div>
