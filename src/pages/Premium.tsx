@@ -11,17 +11,12 @@ import { useSeo } from '@/hooks/useSeo';
 type BillingPlan = 'monthly' | 'yearly';
 
 const premiumFeatures = [
-  'AI-hönsgårdscoach med personliga råd',
-  'AI-veckorapport och tydliga nästa steg',
-  'Avvikelsevarningar när något ändras i flocken',
-  'Avancerad statistik, trender och äggmål',
-  'Foderspårning och kostnad per ägg',
-  'Ekonomi, intäkter, kostnader och export',
-  'Flockhälsa-light och bättre hönsprofiler',
-  'Kläckningskalender med milstolpar',
-  'Smarta påminnelser och dagliga uppgifter',
-  'PDF/CSV-export och rapporter',
-  'Prioriterad support och framtida premiumfunktioner',
+  'Agda AI-coachen — personliga råd om just dina hönor',
+  'Veckorapport varje söndag med tydliga nästa steg',
+  'Vet vad varje ägg kostar — foder, ekonomi och export',
+  'Larm när något avviker i flocken, innan det blir ett problem',
+  'Kläckningskalender som håller koll på alla 21 dagarna',
+  'Full statistik, äggmål, PDF/CSV och alla framtida funktioner',
 ];
 
 const plans: Array<{
@@ -30,22 +25,26 @@ const plans: Array<{
   price: string;
   period: string;
   description: string;
+  subPrice?: string;
   badge?: string;
+  highlighted?: boolean;
 }> = [
+  {
+    id: 'yearly',
+    name: 'Plus årsvis',
+    price: '149 kr',
+    period: '/ år',
+    description: 'Spara 79 kr — motsvarar 12,40 kr/mån',
+    badge: 'Bäst värde',
+    highlighted: true,
+  },
   {
     id: 'monthly',
     name: 'Plus månadsvis',
     price: '19 kr',
     period: '/ månad',
     description: 'Flexibelt abonnemang. Avsluta när du vill.',
-  },
-  {
-    id: 'yearly',
-    name: 'Plus årsvis',
-    price: '149 kr',
-    period: '/ år',
-    description: 'Årsabonnemang med tydligt slutdatum. Inte lifetime.',
-    badge: 'Bäst värde',
+    subPrice: '= mindre än en kartong ägg',
   },
 ];
 
