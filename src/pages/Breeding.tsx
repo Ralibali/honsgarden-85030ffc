@@ -411,7 +411,7 @@ function HatchSessionsTab() {
 
 export default function Breeding() {
   return (
-    <PremiumGate feature="Avel & kläckning" blur={false}>
+    <PremiumGate feature="Avel & kläckning" featureKey="breeding" blur={false}>
       <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
         <div>
           <h1 className="font-serif text-2xl text-foreground flex items-center gap-2">
