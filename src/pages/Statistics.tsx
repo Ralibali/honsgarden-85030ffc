@@ -70,7 +70,7 @@ export default function Statistics() {
   const maxFlockEggs = flocks.length > 0 ? Math.max(...flocks.map((f: any) => f.total_eggs), 1) : 1;
 
   return (
-    <PremiumGate feature="Statistik" blur>
+    <PremiumGate feature="Statistik" featureKey="statistics" preview>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Statistik 📊</h1>
