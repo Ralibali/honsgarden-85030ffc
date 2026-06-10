@@ -257,9 +257,22 @@ export default function Premium() {
         </Card>
       )}
 
-      <section className="grid md:grid-cols-2 gap-4">
+      {!isPremium && (
+        <p className="text-center text-xs text-muted-foreground -mb-2">
+          Används av hönsägare i hela Sverige 🇸🇪
+        </p>
+      )}
+
+      <section className="grid md:grid-cols-2 gap-4 items-stretch">
         {plans.map((plan) => (
-          <Card key={plan.id} className="relative overflow-hidden border-primary/20 shadow-sm">
+          <Card
+            key={plan.id}
+            className={`relative overflow-hidden shadow-sm transition-all ${
+              plan.highlighted
+                ? 'border-2 border-primary shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.35)] md:scale-[1.02] bg-primary/[0.03]'
+                : 'border-primary/20 opacity-95'
+            }`}
+          >
             {plan.badge && (
               <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
                 {plan.badge}
@@ -274,12 +287,22 @@ export default function Premium() {
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
-              <div className="flex items-end gap-1">
-                <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                <span className="pb-1 text-muted-foreground">{plan.period}</span>
+              <div>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="pb-1 text-muted-foreground">{plan.period}</span>
+                </div>
+                {plan.subPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">{plan.subPrice}</p>
+                )}
               </div>
 
-              <Button className="w-full rounded-xl" onClick={() => handleCheckout(plan.id)} disabled={loadingPlan !== null || isPremium}>
+              <Button
+                className="w-full rounded-xl"
+                variant={plan.highlighted ? 'default' : 'outline'}
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loadingPlan !== null || isPremium}
+              >
                 {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isPremium ? 'Premium är aktivt' : `Välj ${plan.id === 'monthly' ? 'månadsplan' : 'årsplan'}`}
               </Button>
@@ -287,6 +310,7 @@ export default function Premium() {
           </Card>
         ))}
       </section>
+
 
       <Card>
         <CardContent className="p-6">
