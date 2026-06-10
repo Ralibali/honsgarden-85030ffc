@@ -60,13 +60,20 @@ export function enqueueEggLog(entry: Omit<QueuedEggLog, 'client_id' | 'queued_at
   };
   queue.push(item);
   writeQueue(queue);
+  try {
+    window.dispatchEvent(new Event('honsgarden:queue-changed'));
+  } catch { /* ignore */ }
   return item;
 }
 
 export function removeFromQueue(clientId: string): void {
   const next = readQueue().filter((q) => q.client_id !== clientId);
   writeQueue(next);
+  try {
+    window.dispatchEvent(new Event('honsgarden:queue-changed'));
+  } catch { /* ignore */ }
 }
+
 
 function isNetworkError(err: unknown): boolean {
   if (!err) return false;
