@@ -98,6 +98,12 @@ export default function Premium() {
   });
 
   useEffect(() => {
+    trackClick('premium_page_view');
+  }, []);
+
+
+
+  useEffect(() => {
     if (searchParams.get('success') !== 'true') return;
 
     let cancelled = false;
