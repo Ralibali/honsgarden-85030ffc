@@ -302,21 +302,37 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground mt-1">Hantera ditt konto och din hönsgård</p>
       </div>
 
-      {/* Quick action: import */}
-      <Card className="border-primary/30 shadow-sm card-hover cursor-pointer" onClick={() => navigate('/app/import')}>
-        <CardContent className="p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Upload className="h-5 w-5 text-primary" />
+      {/* Quick actions: import + feedback */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Card className="border-primary/30 shadow-sm card-hover cursor-pointer" onClick={() => navigate('/app/import')}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Upload className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Importera data</p>
+                <p className="text-xs text-muted-foreground">CSV, Excel eller Google Sheets</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Importera data</p>
-              <p className="text-xs text-muted-foreground">Läs in från CSV, Excel eller Google Sheets</p>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </CardContent>
+        </Card>
+        <Card className="border-border/60 shadow-sm card-hover cursor-pointer" onClick={() => navigate('/app/feedback')}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <MessageSquare className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Feedback & ärenden</p>
+                <p className="text-xs text-muted-foreground">Skicka idéer eller felrapport</p>
+              </div>
             </div>
-          </div>
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </CardContent>
-      </Card>
+            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Premium status */}
       <PremiumStatusCard />

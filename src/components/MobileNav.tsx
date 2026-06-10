@@ -6,26 +6,29 @@ import {
   MoreHorizontal,
   Package,
   Syringe,
-  Baby,
   Coins,
   Settings,
   Crown,
   Shield,
   Bot,
-  PieChart,
   ClipboardCheck,
   CalendarDays,
-  Upload,
   ReceiptText,
   Users,
   Newspaper,
   CloudSun,
-  MessageCircle,
-  Sparkles,
+  Stethoscope,
+  Heart,
+  Boxes,
+  FileText,
+  Tag,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 
 const primaryItems = [
@@ -41,40 +44,45 @@ const moreGroups = [
     label: 'Dagligt',
     items: [
       { title: 'Dashboard', url: '/app', icon: Home },
-      { title: 'Smart rapport', url: '/app/smart-report', icon: Sparkles, premium: true },
       { title: 'Logga ägg', url: '/app/eggs', icon: Egg },
       { title: 'Uppgifter', url: '/app/tasks', icon: ClipboardCheck },
       { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
+      { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
     ],
   },
   {
     label: 'Flocken',
     items: [
       { title: 'Hönor', url: '/app/hens', icon: Bird },
-      { title: 'Kläckning', url: '/app/hatching', icon: Baby, premium: true },
-      { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
+      { title: 'Hälsologg', url: '/app/halsa', icon: Stethoscope },
+      { title: 'Avel & kläckning', url: '/app/avel', icon: Heart, premium: true },
       { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },
-      { title: 'Översikt', url: '/app/overview', icon: PieChart, premium: true },
     ],
   },
   {
-    label: 'Ekonomi',
+    label: 'Ekonomi & försäljning',
     items: [
       { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
+      { title: 'Lager', url: '/app/lager', icon: Boxes, premium: true },
       { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
+      { title: 'Marknad', url: '/app/marknad/mina', icon: Tag },
       { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
-      { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
     ],
   },
   {
-    label: 'Mer',
+    label: 'Insikter',
     items: [
-      { title: 'Nyheter', url: '/app/news', icon: Newspaper },
+      { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
+      { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
       { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
+      { title: 'Nyheter', url: '/app/news', icon: Newspaper },
+    ],
+  },
+  {
+    label: 'Övrigt',
+    items: [
       { title: 'Community', url: '/app/community', icon: Users },
       { title: 'Premium', url: '/app/premium', icon: Crown },
-      { title: 'Importera data', url: '/app/import', icon: Upload },
-      { title: 'Feedback', url: '/app/feedback', icon: MessageCircle },
       { title: 'Inställningar', url: '/app/settings', icon: Settings },
     ],
   },
@@ -83,6 +91,7 @@ const moreGroups = [
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
   const isPremium = user?.subscription_status === 'premium';
 
@@ -122,12 +131,26 @@ export function MobileNav() {
                       >
                         <item.icon className="h-5 w-5" />
                         <span className="text-[10px] font-medium text-center leading-tight">{item.title}</span>
-                        {item.premium && !isPremium && <Crown className="absolute top-2 right-2 h-3 w-3 text-warning/70" />}
+                        {(item as any).premium && !isPremium && <Crown className="absolute top-2 right-2 h-3 w-3 text-warning/70" />}
                       </NavLink>
                     ))}
                   </div>
                 </div>
               ))}
+
+              {/* Theme toggle shortcut */}
+              <div className="pt-2 border-t border-border/40">
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm text-foreground hover:bg-muted/50 active:scale-[0.98] transition-all"
+                >
+                  <span className="flex items-center gap-2.5">
+                    {theme === 'dark' ? <Sun className="h-4 w-4 text-warning" /> : <Moon className="h-4 w-4 text-muted-foreground" />}
+                    {theme === 'dark' ? 'Byt till ljust tema' : 'Byt till mörkt tema'}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
