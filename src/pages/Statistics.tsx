@@ -94,6 +94,8 @@ export default function Statistics() {
           <>
             <SmartStatisticsOverview />
 
+            <EggProductionChart />
+
             <FlockBenchmarkCard />
 
             {insights && insights.tips && (() => {
