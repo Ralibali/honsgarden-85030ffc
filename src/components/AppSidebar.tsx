@@ -161,11 +161,23 @@ function NavGroupCollapsible({
           <button
             type="button"
             className="w-full flex items-center justify-between gap-2 text-[10px] text-muted-foreground/70 uppercase tracking-[0.14em] px-5 mt-3 mb-1 font-medium hover:text-muted-foreground"
+            aria-expanded={open}
+            title={open ? `Dölj ${label}` : `Visa ${label} (${visible.length} val)`}
           >
             <SidebarGroupLabel className="p-0 m-0 h-auto text-inherit tracking-inherit">
               {label}
             </SidebarGroupLabel>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+            <span className="flex items-center gap-1.5">
+              {!open && (
+                <span
+                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold leading-none"
+                  aria-label={`${visible.length} dolda val`}
+                >
+                  {visible.length}
+                </span>
+              )}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+            </span>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
