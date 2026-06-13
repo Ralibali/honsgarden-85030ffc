@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -13,7 +15,8 @@ import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
   useDeleteListing, useUpdateListingStatus, type Thread,
 } from '@/hooks/useMarketplace';
-import { categoryEmoji, formatPrice, timeAgo } from '@/lib/marketplace';
+import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function MarketplaceMine() {
   usePageTitle('Mina annonser');
