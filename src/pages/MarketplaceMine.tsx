@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff, Heart, MapPin } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
-  useDeleteListing, useUpdateListingStatus, type Thread,
+  useDeleteListing, useUpdateListingStatus, useFavoriteListings, useToggleFavorite, type Thread,
 } from '@/hooks/useMarketplace';
 import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +46,9 @@ export default function MarketplaceMine() {
           <TabsTrigger value="messages" className="gap-2">
             Meddelanden
             {unreadTotal > 0 && <Badge variant="default" className="h-5 px-1.5">{unreadTotal}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="favorites" className="gap-2">
+            <Heart className="h-3.5 w-3.5" /> Sparade
           </TabsTrigger>
           <TabsTrigger value="alerts" className="gap-2">
             <Bell className="h-3.5 w-3.5" /> Bevakningar
@@ -118,6 +121,11 @@ export default function MarketplaceMine() {
         {/* Meddelanden */}
         <TabsContent value="messages">
           <MessagesPanel threads={threads} loading={tLoading} meId={user?.id} />
+        </TabsContent>
+
+        {/* Sparade */}
+        <TabsContent value="favorites">
+          <FavoritesPanel userId={user?.id} />
         </TabsContent>
 
         {/* Bevakningar */}
