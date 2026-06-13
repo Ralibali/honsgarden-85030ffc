@@ -2255,8 +2255,10 @@ export type Database = {
           postal_code: string | null
           price: number | null
           region: string | null
+          reminded_at: string | null
           search_vector: unknown
           slug: string
+          sold_at: string | null
           status: string
           title: string
           updated_at: string
@@ -2277,8 +2279,10 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           region?: string | null
+          reminded_at?: string | null
           search_vector?: unknown
           slug: string
+          sold_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -2299,8 +2303,10 @@ export type Database = {
           postal_code?: string | null
           price?: number | null
           region?: string | null
+          reminded_at?: string | null
           search_vector?: unknown
           slug?: string
+          sold_at?: string | null
           status?: string
           title?: string
           updated_at?: string
