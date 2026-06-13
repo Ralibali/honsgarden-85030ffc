@@ -224,11 +224,32 @@ export function useDeleteListing() {
 export function useUpdateListingStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { id: string; status: 'active' | 'sold' | 'hidden' }) => {
+    mutationFn: async (input: { id: string; status: 'active' | 'sold' | 'hidden' | 'expired' }) => {
+      const patch: Record<string, unknown> = { status: input.status };
+      if (input.status === 'sold') patch.sold_at = new Date().toISOString();
+      if (input.status === 'active') patch.sold_at = null;
       const { error } = await supabase
         .from('marketplace_listings')
-        .update({ status: input.status })
+        .update(patch)
         .eq('id', input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['marketplace-mine'] });
+      qc.invalidateQueries({ queryKey: ['marketplace-listings'] });
+    },
+  });
+}
+
+export function useRenewListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const newExp = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString();
+      const { error } = await supabase
+        .from('marketplace_listings')
+        .update({ expires_at: newExp, status: 'active', reminded_at: null })
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
