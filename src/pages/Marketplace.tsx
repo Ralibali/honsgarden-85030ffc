@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, MapPin, Plus, Image as ImageIcon, X, Bell } from 'lucide-react';
+import { useState, MouseEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, MapPin, Plus, Image as ImageIcon, X, Bell, Heart } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { useListings, type ListingFilters } from '@/hooks/useMarketplace';
+import { useListings, useFavorites, useToggleFavorite, type ListingFilters } from '@/hooks/useMarketplace';
 import { CATEGORIES, REGIONS, categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeo } from '@/hooks/useSeo';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
 
 export default function Marketplace() {
   usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
@@ -24,11 +25,40 @@ export default function Marketplace() {
   });
 
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
   const [searchInput, setSearchInput] = useState('');
   const [savingAlert, setSavingAlert] = useState(false);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
 
-  const { data: listings = [], isLoading } = useListings(filters);
+  const { data: rawListings = [], isLoading } = useListings(filters);
+  const { data: favoriteIds = new Set<string>() } = useFavorites(user?.id);
+  const toggleFav = useToggleFavorite();
+
+  const listings = onlyFavorites
+    ? rawListings.filter((l) => favoriteIds.has(l.id))
+    : rawListings;
+
+  const handleToggleFavorite = (e: MouseEvent, listingId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/marknad');
+      return;
+    }
+    const isFav = favoriteIds.has(listingId);
+    toggleFav.mutate(
+      { listingId, isFavorite: isFav },
+      {
+        onSuccess: (res) => {
+          if (res.saved) toast.success('Sparad i dina favoriter ❤️');
+          else toast('Borttagen från favoriter');
+        },
+        onError: (err: any) => toast.error('Kunde inte uppdatera', { description: err?.message }),
+      },
+    );
+  };
+
 
   const applySearch = () => setFilters((f) => ({ ...f, search: searchInput.trim() || undefined }));
   const clearAll = () => {
