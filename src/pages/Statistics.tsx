@@ -12,6 +12,7 @@ import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
+import LayingRateCard from '@/components/LayingRateCard';
 
 export default function Statistics() {
   const [showAllInsights, setShowAllInsights] = useState(false);
@@ -95,6 +96,8 @@ export default function Statistics() {
             <SmartStatisticsOverview />
 
             <EggProductionChart />
+
+            <LayingRateCard />
 
             <FlockBenchmarkCard />
 
