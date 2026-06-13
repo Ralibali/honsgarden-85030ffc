@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
-  useDeleteListing, useUpdateListingStatus, useFavoriteListings, useToggleFavorite, type Thread,
+  useDeleteListing, useUpdateListingStatus, useRenewListing, useFavoriteListings, useToggleFavorite, type Thread,
 } from '@/hooks/useMarketplace';
 import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { supabase } from '@/integrations/supabase/client';
