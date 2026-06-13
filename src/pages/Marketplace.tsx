@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Plus, Image as ImageIcon, X } from 'lucide-react';
+import { Search, MapPin, Plus, Image as ImageIcon, X, Bell } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { CATEGORIES, REGIONS, categoryEmoji, categoryLabel, formatPrice, timeAgo
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeo } from '@/hooks/useSeo';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Marketplace() {
   usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
