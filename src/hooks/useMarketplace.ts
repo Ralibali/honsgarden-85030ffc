@@ -258,3 +258,77 @@ export function useReportListing() {
 export async function incrementView(slug: string) {
   try { await supabase.rpc('increment_marketplace_view', { _slug: slug }); } catch {}
 }
+
+/** Användarens sparade annonser. Returnerar tom Set om ej inloggad. */
+export function useFavorites(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['marketplace-favorites', userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<Set<string>> => {
+      if (!userId) return new Set<string>();
+      const { data, error } = await supabase
+        .from('marketplace_favorites')
+        .select('listing_id');
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.listing_id as string));
+    },
+    staleTime: 30_000,
+  });
+}
+
+/** Hämtar fulla annonsobjekt för användarens sparade annonser. */
+export function useFavoriteListings(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['marketplace-favorite-listings', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      if (!userId) return [];
+      const { data: favs, error: fErr } = await supabase
+        .from('marketplace_favorites')
+        .select('listing_id, created_at')
+        .order('created_at', { ascending: false });
+      if (fErr) throw fErr;
+      const ids = (favs ?? []).map((r: any) => r.listing_id as string);
+      if (ids.length === 0) return [] as MarketplaceListing[];
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .select('*')
+        .in('id', ids);
+      if (error) throw error;
+      // Behåll sorteringen från favs (nyast sparat först)
+      const byId = new Map((data ?? []).map((l: any) => [l.id, l as MarketplaceListing]));
+      return ids.map((id) => byId.get(id)).filter(Boolean) as MarketplaceListing[];
+    },
+  });
+}
+
+export function useToggleFavorite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { listingId: string; isFavorite: boolean }) => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) throw new Error('UNAUTHENTICATED');
+      if (input.isFavorite) {
+        const { error } = await supabase
+          .from('marketplace_favorites')
+          .delete()
+          .eq('user_id', uid)
+          .eq('listing_id', input.listingId);
+        if (error) throw error;
+        return { saved: false };
+      } else {
+        const { error } = await supabase
+          .from('marketplace_favorites')
+          .insert({ user_id: uid, listing_id: input.listingId });
+        if (error && (error as any).code !== '23505') throw error;
+        return { saved: true };
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['marketplace-favorites'] });
+      qc.invalidateQueries({ queryKey: ['marketplace-favorite-listings'] });
+    },
+  });
+}
+

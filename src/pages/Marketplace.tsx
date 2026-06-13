@@ -1,19 +1,20 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, MapPin, Plus, Image as ImageIcon, X, Bell } from 'lucide-react';
+import { useState, MouseEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, MapPin, Plus, Image as ImageIcon, X, Bell, Heart } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { useListings, type ListingFilters } from '@/hooks/useMarketplace';
+import { useListings, useFavorites, useToggleFavorite, type ListingFilters } from '@/hooks/useMarketplace';
 import { CATEGORIES, REGIONS, categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeo } from '@/hooks/useSeo';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
 
 export default function Marketplace() {
   usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
@@ -24,11 +25,40 @@ export default function Marketplace() {
   });
 
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
   const [searchInput, setSearchInput] = useState('');
   const [savingAlert, setSavingAlert] = useState(false);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
 
-  const { data: listings = [], isLoading } = useListings(filters);
+  const { data: rawListings = [], isLoading } = useListings(filters);
+  const { data: favoriteIds = new Set<string>() } = useFavorites(user?.id);
+  const toggleFav = useToggleFavorite();
+
+  const listings = onlyFavorites
+    ? rawListings.filter((l) => favoriteIds.has(l.id))
+    : rawListings;
+
+  const handleToggleFavorite = (e: MouseEvent, listingId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/marknad');
+      return;
+    }
+    const isFav = favoriteIds.has(listingId);
+    toggleFav.mutate(
+      { listingId, isFavorite: isFav },
+      {
+        onSuccess: (res) => {
+          if (res.saved) toast.success('Sparad i dina favoriter ❤️');
+          else toast('Borttagen från favoriter');
+        },
+        onError: (err: any) => toast.error('Kunde inte uppdatera', { description: err?.message }),
+      },
+    );
+  };
+
 
   const applySearch = () => setFilters((f) => ({ ...f, search: searchInput.trim() || undefined }));
   const clearAll = () => {
@@ -126,6 +156,26 @@ export default function Marketplace() {
                   <ImageIcon className="h-4 w-4" /> Endast med bild
                 </Button>
               </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={onlyFavorites ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login?redirect=/marknad');
+                      return;
+                    }
+                    setOnlyFavorites((v) => !v);
+                  }}
+                  className="gap-1.5"
+                >
+                  <Heart className={`h-3.5 w-3.5 ${onlyFavorites ? 'fill-current' : ''}`} />
+                  ❤️ Sparade
+                  {favoriteIds.size > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{favoriteIds.size}</Badge>
+                  )}
+                </Button>
+              </div>
               {(hasFilters || canSaveAlert) && (
                 <div className="flex flex-wrap items-center gap-2">
                   {hasFilters && (
@@ -171,7 +221,9 @@ export default function Marketplace() {
           <>
             <p className="text-sm text-muted-foreground mb-4">{listings.length} annonser</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {listings.map((l) => (
+              {listings.map((l) => {
+                const isFav = favoriteIds.has(l.id);
+                return (
                 <Link to={`/marknad/${l.slug}`} key={l.id} className="group">
                   <Card className="overflow-hidden h-full hover:shadow-md transition-shadow border-border/60">
                     <div className="aspect-[4/3] bg-muted relative overflow-hidden">
@@ -188,6 +240,17 @@ export default function Marketplace() {
                       <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur">
                         {categoryEmoji(l.category)} {categoryLabel(l.category)}
                       </Badge>
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleFavorite(e, l.id)}
+                        aria-label={isFav ? 'Ta bort från sparade' : 'Spara annons'}
+                        aria-pressed={isFav}
+                        className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center shadow-sm hover:bg-background transition"
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition ${isFav ? 'fill-destructive text-destructive' : 'text-foreground'}`}
+                        />
+                      </button>
                     </div>
                     <CardContent className="p-4">
                       <h3 className="font-medium text-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors">{l.title}</h3>
@@ -201,7 +264,8 @@ export default function Marketplace() {
                     </CardContent>
                   </Card>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

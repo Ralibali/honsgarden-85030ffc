@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff, Heart, MapPin } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
-  useDeleteListing, useUpdateListingStatus, type Thread,
+  useDeleteListing, useUpdateListingStatus, useFavoriteListings, useToggleFavorite, type Thread,
 } from '@/hooks/useMarketplace';
 import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +46,9 @@ export default function MarketplaceMine() {
           <TabsTrigger value="messages" className="gap-2">
             Meddelanden
             {unreadTotal > 0 && <Badge variant="default" className="h-5 px-1.5">{unreadTotal}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="favorites" className="gap-2">
+            <Heart className="h-3.5 w-3.5" /> Sparade
           </TabsTrigger>
           <TabsTrigger value="alerts" className="gap-2">
             <Bell className="h-3.5 w-3.5" /> Bevakningar
@@ -118,6 +121,11 @@ export default function MarketplaceMine() {
         {/* Meddelanden */}
         <TabsContent value="messages">
           <MessagesPanel threads={threads} loading={tLoading} meId={user?.id} />
+        </TabsContent>
+
+        {/* Sparade */}
+        <TabsContent value="favorites">
+          <FavoritesPanel userId={user?.id} />
         </TabsContent>
 
         {/* Bevakningar */}
@@ -354,3 +362,87 @@ function ThreadView({ thread, meId }: { thread: Thread; meId?: string }) {
     </Card>
   );
 }
+
+function FavoritesPanel({ userId }: { userId?: string }) {
+  const { data: favs = [], isLoading } = useFavoriteListings(userId);
+  const toggle = useToggleFavorite();
+
+  if (!userId) {
+    return (
+      <Card><CardContent className="p-10 text-center">
+        <p className="text-muted-foreground">Logga in för att se sparade annonser.</p>
+      </CardContent></Card>
+    );
+  }
+  if (isLoading) return <p className="text-muted-foreground py-6 text-center">Laddar…</p>;
+  if (favs.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-10 text-center">
+          <Heart className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-muted-foreground mb-2">Du har inga sparade annonser ännu.</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Klicka på hjärtat på en annons i <Link to="/marknad" className="text-primary underline">Marknaden</Link> för att spara den här.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {favs.map((l) => {
+        const inactive = l.status !== 'active';
+        const remove = () =>
+          toggle.mutate(
+            { listingId: l.id, isFavorite: true },
+            { onSuccess: () => toast({ title: 'Borttagen från sparade' }) },
+          );
+        return (
+          <Card key={l.id} className={`overflow-hidden border-border/60 ${inactive ? 'opacity-60' : ''}`}>
+            <Link
+              to={inactive ? '#' : `/marknad/${l.slug}`}
+              onClick={(e) => { if (inactive) e.preventDefault(); }}
+              className="block group"
+            >
+              <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                {l.image_urls?.[0] ? (
+                  <img src={l.image_urls[0]} alt={l.title} loading="lazy" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-4xl">{categoryEmoji(l.category)}</div>
+                )}
+                <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur">
+                  {categoryEmoji(l.category)} {categoryLabel(l.category)}
+                </Badge>
+                {inactive && (
+                  <Badge variant="destructive" className="absolute top-2 right-2">
+                    Ej längre tillgänglig
+                  </Badge>
+                )}
+              </div>
+            </Link>
+            <CardContent className="p-4 space-y-2">
+              <h3 className="font-medium text-foreground line-clamp-2">{l.title}</h3>
+              <p className="font-serif text-lg text-primary">{formatPrice(l.price as any, l.is_giveaway)}</p>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  {l.city || l.region ? <><MapPin className="h-3 w-3" /> {l.city || l.region}</> : null}
+                </span>
+                <span>{timeAgo(l.created_at)}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={remove}
+                className="w-full gap-1.5 text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Ta bort från sparade
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
