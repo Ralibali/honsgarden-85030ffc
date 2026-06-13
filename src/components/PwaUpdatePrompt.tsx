@@ -1,18 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { toast } from 'sonner';
 import { cleanupPreviewServiceWorkers, isPwaRegistrationDisabled, setSwRegistration } from '@/lib/pwaUpdate';
 
 /**
- * Tvingad auto-uppdatering: så fort en ny service worker-version är
- * tillgänglig aktiveras den och sidan laddas om automatiskt. Ingen
- * prompt visas för användaren – de får alltid senaste versionen.
- *
- * - Pollar var 5:e minut samt vid fokus/online-event.
- * - Lyssnar på `controllerchange` som extra säkerhet om en annan flik
- *   triggar uppdateringen först.
+ * Visar en liten toast längst ner när en ny service worker väntar
+ * på att aktiveras. Användaren klickar "Uppdatera" → vi skickar
+ * SKIP_WAITING till waiting-workern och laddar om vid controllerchange.
  */
 export default function PwaUpdatePrompt() {
-  const updateTriggeredRef = useRef(false);
+  const promptShownRef = useRef(false);
+  const reloadingRef = useRef(false);
   const disabled = isPwaRegistrationDisabled();
 
   const { updateServiceWorker } = useRegisterSW({
@@ -33,7 +31,6 @@ export default function PwaUpdatePrompt() {
         });
       };
 
-      // Polla regelbundet så öppna flikar fångar nya deploys snabbt.
       const interval = window.setInterval(check, 5 * 60 * 1000);
       window.addEventListener('focus', check);
       window.addEventListener('online', check);
@@ -45,10 +42,19 @@ export default function PwaUpdatePrompt() {
       };
     },
     onNeedRefresh() {
-      // Auto-aktivera ny SW och ladda om utan att fråga användaren.
-      if (updateTriggeredRef.current) return;
-      updateTriggeredRef.current = true;
-      void updateServiceWorker(true);
+      if (promptShownRef.current) return;
+      promptShownRef.current = true;
+
+      toast('En ny version av Hönsgården 🐔', {
+        description: 'Ladda om för att få de senaste funktionerna och menyvalen.',
+        duration: Infinity,
+        action: {
+          label: 'Uppdatera',
+          onClick: () => {
+            void updateServiceWorker(true);
+          },
+        },
+      });
     },
     onRegisterError(err) {
       console.warn('[PWA] Service worker-registrering misslyckades:', err);
@@ -56,7 +62,21 @@ export default function PwaUpdatePrompt() {
   });
 
   useEffect(() => {
-    if (disabled) void cleanupPreviewServiceWorkers();
+    if (disabled) {
+      void cleanupPreviewServiceWorkers();
+      return;
+    }
+
+    if (!('serviceWorker' in navigator)) return;
+    const onControllerChange = () => {
+      if (reloadingRef.current) return;
+      reloadingRef.current = true;
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+    };
   }, [disabled]);
 
   return null;
