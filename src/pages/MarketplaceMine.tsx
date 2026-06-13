@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
-  useDeleteListing, useUpdateListingStatus, useFavoriteListings, useToggleFavorite, type Thread,
+  useDeleteListing, useUpdateListingStatus, useRenewListing, useFavoriteListings, useToggleFavorite, type Thread,
 } from '@/hooks/useMarketplace';
 import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,7 @@ export default function MarketplaceMine() {
   const { data: threads = [], isLoading: tLoading } = useThreads(user?.id);
   const del = useDeleteListing();
   const updateStatus = useUpdateListingStatus();
+  const renew = useRenewListing();
 
   const unreadTotal = threads.reduce((sum, t) => sum + t.unread_count, 0);
 
@@ -79,8 +80,21 @@ export default function MarketplaceMine() {
                     <Link to={`/marknad/${l.slug}`} className="font-medium text-foreground hover:underline line-clamp-1">{l.title}</Link>
                     <p className="text-sm text-primary">{formatPrice(l.price as any, l.is_giveaway)}</p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <Badge variant={l.status === 'active' ? 'default' : 'secondary'}>{statusLabel(l.status)}</Badge>
+                      {l.status === 'sold' ? (
+                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">SÅLD</Badge>
+                      ) : (
+                        <Badge variant={l.status === 'active' ? 'default' : 'secondary'}>{statusLabel(l.status)}</Badge>
+                      )}
                       <span className="text-xs text-muted-foreground">{l.view_count} visningar · {timeAgo(l.created_at)}</span>
+                      {l.status === 'active' && (() => {
+                        const days = Math.ceil((new Date((l as any).expires_at).getTime() - Date.now()) / (24 * 3600 * 1000));
+                        const warn = days < 7;
+                        return (
+                          <span className={`text-xs ${warn ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                            · {days <= 0 ? 'utgår idag' : `utgår om ${days} dag${days === 1 ? '' : 'ar'}`}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5 shrink-0">
@@ -96,6 +110,16 @@ export default function MarketplaceMine() {
                         Återaktivera
                       </Button>
                     )}
+                    {(l.status === 'active' || l.status === 'expired') && (() => {
+                      const days = Math.ceil((new Date((l as any).expires_at).getTime() - Date.now()) / (24 * 3600 * 1000));
+                      const emphasize = l.status === 'expired' || days < 7;
+                      return (
+                        <Button size="sm" variant={emphasize ? 'default' : 'outline'} className="gap-1 text-xs h-8"
+                          onClick={() => renew.mutate(l.id)}>
+                          Förnya 60 dagar
+                        </Button>
+                      );
+                    })()}
                     {l.status === 'active' ? (
                       <Button size="sm" variant="outline" className="gap-1 text-xs h-8"
                         onClick={() => updateStatus.mutate({ id: l.id, status: 'hidden' })}>
