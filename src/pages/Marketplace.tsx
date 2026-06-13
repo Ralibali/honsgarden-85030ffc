@@ -175,6 +175,7 @@ export default function Marketplace() {
                     <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{favoriteIds.size}</Badge>
                   )}
                 </Button>
+              </div>
               {(hasFilters || canSaveAlert) && (
                 <div className="flex flex-wrap items-center gap-2">
                   {hasFilters && (
