@@ -126,10 +126,34 @@ export default function Marketplace() {
                   <ImageIcon className="h-4 w-4" /> Endast med bild
                 </Button>
               </div>
-              {hasFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1 text-muted-foreground">
-                  <X className="h-3 w-3" /> Rensa filter
-                </Button>
+              {(hasFilters || canSaveAlert) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1 text-muted-foreground">
+                      <X className="h-3 w-3" /> Rensa filter
+                    </Button>
+                  )}
+                  {canSaveAlert && (
+                    isAuthenticated ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={saveAlert}
+                        disabled={savingAlert}
+                        className="gap-1.5"
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                        {savingAlert ? 'Sparar…' : '🔔 Bevaka denna sökning'}
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" size="sm" className="gap-1.5">
+                        <Link to="/login?redirect=/marknad">
+                          <Bell className="h-3.5 w-3.5" /> 🔔 Logga in för att bevaka
+                        </Link>
+                      </Button>
+                    )
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
