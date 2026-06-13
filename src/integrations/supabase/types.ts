@@ -2175,6 +2175,42 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_alerts: {
+        Row: {
+          active: boolean
+          category: string | null
+          created_at: string
+          id: string
+          last_notified_at: string | null
+          region: string | null
+          search_term: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_notified_at?: string | null
+          region?: string | null
+          search_term?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          created_at?: string
+          id?: string
+          last_notified_at?: string | null
+          region?: string | null
+          search_term?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       marketplace_listings: {
         Row: {
           category: string

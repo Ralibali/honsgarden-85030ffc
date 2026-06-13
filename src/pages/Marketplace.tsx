@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Plus, Image as ImageIcon, X } from 'lucide-react';
+import { Search, MapPin, Plus, Image as ImageIcon, X, Bell } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { CATEGORIES, REGIONS, categoryEmoji, categoryLabel, formatPrice, timeAgo
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeo } from '@/hooks/useSeo';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Marketplace() {
   usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
@@ -21,9 +23,10 @@ export default function Marketplace() {
     path: '/marknad',
   });
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
   const [searchInput, setSearchInput] = useState('');
+  const [savingAlert, setSavingAlert] = useState(false);
 
   const { data: listings = [], isLoading } = useListings(filters);
 
@@ -33,6 +36,27 @@ export default function Marketplace() {
     setSearchInput('');
   };
   const hasFilters = !!(filters.search || (filters.category && filters.category !== 'all') || (filters.region && filters.region !== 'all') || filters.hasImage);
+  const canSaveAlert = !!(filters.search || (filters.category && filters.category !== 'all') || (filters.region && filters.region !== 'all'));
+
+  const saveAlert = async () => {
+    if (!isAuthenticated || !user?.id) return;
+    setSavingAlert(true);
+    try {
+      const payload = {
+        user_id: user.id,
+        category: filters.category && filters.category !== 'all' ? filters.category : null,
+        region: filters.region && filters.region !== 'all' ? filters.region : null,
+        search_term: filters.search?.trim() || null,
+      };
+      const { error } = await supabase.from('marketplace_alerts').insert(payload);
+      if (error) throw error;
+      toast.success('Bevakning skapad! Vi mejlar dig när nya annonser matchar.');
+    } catch (e: any) {
+      toast.error('Kunde inte skapa bevakning', { description: e?.message });
+    } finally {
+      setSavingAlert(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,10 +126,34 @@ export default function Marketplace() {
                   <ImageIcon className="h-4 w-4" /> Endast med bild
                 </Button>
               </div>
-              {hasFilters && (
-                <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1 text-muted-foreground">
-                  <X className="h-3 w-3" /> Rensa filter
-                </Button>
+              {(hasFilters || canSaveAlert) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {hasFilters && (
+                    <Button variant="ghost" size="sm" onClick={clearAll} className="gap-1 text-muted-foreground">
+                      <X className="h-3 w-3" /> Rensa filter
+                    </Button>
+                  )}
+                  {canSaveAlert && (
+                    isAuthenticated ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={saveAlert}
+                        disabled={savingAlert}
+                        className="gap-1.5"
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                        {savingAlert ? 'Sparar…' : '🔔 Bevaka denna sökning'}
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" size="sm" className="gap-1.5">
+                        <Link to="/login?redirect=/marknad">
+                          <Bell className="h-3.5 w-3.5" /> 🔔 Logga in för att bevaka
+                        </Link>
+                      </Button>
+                    )
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>

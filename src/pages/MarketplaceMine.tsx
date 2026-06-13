@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, CheckCircle2, Loader2, MessageSquare, Send, Bell, BellOff } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -13,7 +15,8 @@ import {
   useMyListings, useThreads, useThreadMessages, useSendMessage, useMarkRead,
   useDeleteListing, useUpdateListingStatus, type Thread,
 } from '@/hooks/useMarketplace';
-import { categoryEmoji, formatPrice, timeAgo } from '@/lib/marketplace';
+import { categoryEmoji, categoryLabel, formatPrice, timeAgo } from '@/lib/marketplace';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function MarketplaceMine() {
   usePageTitle('Mina annonser');
@@ -43,6 +46,9 @@ export default function MarketplaceMine() {
           <TabsTrigger value="messages" className="gap-2">
             Meddelanden
             {unreadTotal > 0 && <Badge variant="default" className="h-5 px-1.5">{unreadTotal}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-2">
+            <Bell className="h-3.5 w-3.5" /> Bevakningar
           </TabsTrigger>
         </TabsList>
 
@@ -113,7 +119,120 @@ export default function MarketplaceMine() {
         <TabsContent value="messages">
           <MessagesPanel threads={threads} loading={tLoading} meId={user?.id} />
         </TabsContent>
+
+        {/* Bevakningar */}
+        <TabsContent value="alerts">
+          <AlertsPanel userId={user?.id} />
+        </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+type MarketplaceAlert = {
+  id: string;
+  category: string | null;
+  region: string | null;
+  search_term: string | null;
+  active: boolean;
+  created_at: string;
+  last_notified_at: string | null;
+};
+
+function describeAlert(a: MarketplaceAlert): string {
+  const parts: string[] = [];
+  if (a.category) parts.push(categoryLabel(a.category));
+  if (a.region) parts.push(`i ${a.region}`);
+  if (a.search_term) parts.push(`sökord: ${a.search_term}`);
+  return parts.length ? parts.join(', ') : 'Alla nya annonser';
+}
+
+function AlertsPanel({ userId }: { userId?: string }) {
+  const qc = useQueryClient();
+  const { data: alerts = [], isLoading } = useQuery({
+    queryKey: ['marketplace-alerts', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('marketplace_alerts')
+        .select('id, category, region, search_term, active, created_at, last_notified_at')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MarketplaceAlert[];
+    },
+  });
+
+  const toggle = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase.from('marketplace_alerts').update({ active }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['marketplace-alerts', userId] }),
+    onError: (e: any) => toast({ title: 'Kunde inte uppdatera', description: e?.message, variant: 'destructive' }),
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('marketplace_alerts').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['marketplace-alerts', userId] });
+      toast({ title: 'Bevakning borttagen' });
+    },
+    onError: (e: any) => toast({ title: 'Kunde inte ta bort', description: e?.message, variant: 'destructive' }),
+  });
+
+  if (isLoading) return <p className="text-muted-foreground py-6 text-center">Laddar…</p>;
+  if (alerts.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-10 text-center">
+          <Bell className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+          <p className="text-muted-foreground mb-4">Du har inga bevakningar ännu.</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            Sök på <Link to="/marknad" className="text-primary underline">Marknaden</Link> och klicka på 🔔 Bevaka denna sökning så mejlar vi dig när nya annonser matchar.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {alerts.map((a) => (
+        <Card key={a.id}>
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${a.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+              {a.active ? <Bell className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">{describeAlert(a)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Skapad {timeAgo(a.created_at)}
+                {a.last_notified_at && ` · senaste mejl ${timeAgo(a.last_notified_at)}`}
+                {!a.active && ' · pausad'}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Switch
+                checked={a.active}
+                onCheckedChange={(v) => toggle.mutate({ id: a.id, active: v })}
+                aria-label={a.active ? 'Pausa bevakning' : 'Aktivera bevakning'}
+              />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                onClick={() => { if (confirm('Ta bort bevakningen?')) del.mutate(a.id); }}
+                aria-label="Ta bort"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
