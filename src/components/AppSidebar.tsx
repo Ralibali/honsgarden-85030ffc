@@ -81,6 +81,23 @@ function groupKey(label: string) {
   return `sidebar_group_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
 }
 
+const MIGRATION_FLAG = 'sidebar_groups_migrated_v2';
+
+// One-time reset: tidigare användare kan ha "Insikter" kollapsad och tro
+// att Statistik försvunnit. Återställ till öppen en gång.
+if (typeof window !== 'undefined') {
+  try {
+    if (window.localStorage.getItem(MIGRATION_FLAG) !== '1') {
+      if (window.localStorage.getItem('sidebar_group_insikter') === '0') {
+        window.localStorage.removeItem('sidebar_group_insikter');
+      }
+      window.localStorage.setItem(MIGRATION_FLAG, '1');
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 function NavGroupCollapsible({
   label, items, collapsed, isPremium, isAdmin, forceOpen,
 }: { label: string; items: NavItem[]; collapsed: boolean; isPremium: boolean; isAdmin: boolean; forceOpen: boolean }) {
@@ -144,11 +161,23 @@ function NavGroupCollapsible({
           <button
             type="button"
             className="w-full flex items-center justify-between gap-2 text-[10px] text-muted-foreground/70 uppercase tracking-[0.14em] px-5 mt-3 mb-1 font-medium hover:text-muted-foreground"
+            aria-expanded={open}
+            title={open ? `Dölj ${label}` : `Visa ${label} (${visible.length} val)`}
           >
             <SidebarGroupLabel className="p-0 m-0 h-auto text-inherit tracking-inherit">
               {label}
             </SidebarGroupLabel>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+            <span className="flex items-center gap-1.5">
+              {!open && (
+                <span
+                  className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold leading-none"
+                  aria-label={`${visible.length} dolda val`}
+                >
+                  {visible.length}
+                </span>
+              )}
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+            </span>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
