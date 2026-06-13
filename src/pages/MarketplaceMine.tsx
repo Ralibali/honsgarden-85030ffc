@@ -25,6 +25,7 @@ export default function MarketplaceMine() {
   const { data: threads = [], isLoading: tLoading } = useThreads(user?.id);
   const del = useDeleteListing();
   const updateStatus = useUpdateListingStatus();
+  const renew = useRenewListing();
 
   const unreadTotal = threads.reduce((sum, t) => sum + t.unread_count, 0);
 
