@@ -156,6 +156,25 @@ export default function Marketplace() {
                   <ImageIcon className="h-4 w-4" /> Endast med bild
                 </Button>
               </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant={onlyFavorites ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login?redirect=/marknad');
+                      return;
+                    }
+                    setOnlyFavorites((v) => !v);
+                  }}
+                  className="gap-1.5"
+                >
+                  <Heart className={`h-3.5 w-3.5 ${onlyFavorites ? 'fill-current' : ''}`} />
+                  ❤️ Sparade
+                  {favoriteIds.size > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">{favoriteIds.size}</Badge>
+                  )}
+                </Button>
               {(hasFilters || canSaveAlert) && (
                 <div className="flex flex-wrap items-center gap-2">
                   {hasFilters && (
