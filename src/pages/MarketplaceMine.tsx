@@ -47,6 +47,9 @@ export default function MarketplaceMine() {
             Meddelanden
             {unreadTotal > 0 && <Badge variant="default" className="h-5 px-1.5">{unreadTotal}</Badge>}
           </TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-2">
+            <Bell className="h-3.5 w-3.5" /> Bevakningar
+          </TabsTrigger>
         </TabsList>
 
         {/* Annonser */}
