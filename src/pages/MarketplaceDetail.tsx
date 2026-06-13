@@ -175,6 +175,11 @@ export default function MarketplaceDetail() {
               )}
             </CardContent></Card>
 
+            {listing.status === 'sold' && (
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-900 dark:text-emerald-100 p-4 text-center font-medium">
+                ✅ Denna annons är såld
+              </div>
+            )}
             {isOwner ? (
               <Alert>Detta är din egen annons. <Link to="/app/marknad/mina" className="underline">Hantera den här</Link>.</Alert>
             ) : listing.status === 'active' ? (
@@ -182,9 +187,9 @@ export default function MarketplaceDetail() {
                 onClick={() => isAuthenticated ? setMsgOpen(true) : navigate(`/login?redirect=/marknad/${listing.slug}`)}>
                 <MessageSquare className="h-4 w-4" /> Skicka meddelande
               </Button>
-            ) : (
-              <Badge variant="outline" className="w-full justify-center py-3">Annonsen är {listing.status === 'sold' ? 'såld' : 'inte aktiv'}</Badge>
-            )}
+            ) : listing.status !== 'sold' ? (
+              <Badge variant="outline" className="w-full justify-center py-3">Annonsen är inte aktiv</Badge>
+            ) : null}
 
             <div className="flex gap-2">
               <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={handleShare}>
