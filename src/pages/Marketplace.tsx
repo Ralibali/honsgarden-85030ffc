@@ -23,9 +23,10 @@ export default function Marketplace() {
     path: '/marknad',
   });
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
   const [searchInput, setSearchInput] = useState('');
+  const [savingAlert, setSavingAlert] = useState(false);
 
   const { data: listings = [], isLoading } = useListings(filters);
 
@@ -35,6 +36,27 @@ export default function Marketplace() {
     setSearchInput('');
   };
   const hasFilters = !!(filters.search || (filters.category && filters.category !== 'all') || (filters.region && filters.region !== 'all') || filters.hasImage);
+  const canSaveAlert = !!(filters.search || (filters.category && filters.category !== 'all') || (filters.region && filters.region !== 'all'));
+
+  const saveAlert = async () => {
+    if (!isAuthenticated || !user?.id) return;
+    setSavingAlert(true);
+    try {
+      const payload = {
+        user_id: user.id,
+        category: filters.category && filters.category !== 'all' ? filters.category : null,
+        region: filters.region && filters.region !== 'all' ? filters.region : null,
+        search_term: filters.search?.trim() || null,
+      };
+      const { error } = await supabase.from('marketplace_alerts').insert(payload);
+      if (error) throw error;
+      toast.success('Bevakning skapad! Vi mejlar dig när nya annonser matchar.');
+    } catch (e: any) {
+      toast.error('Kunde inte skapa bevakning', { description: e?.message });
+    } finally {
+      setSavingAlert(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
