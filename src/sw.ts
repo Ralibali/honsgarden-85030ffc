@@ -88,6 +88,13 @@ registerRoute(
   })
 );
 
-// Hoppa över waiting direkt och ta över klienter
-self.addEventListener("install", () => self.skipWaiting());
+// Ta över klienter när ny SW aktiveras
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
+
+// Vänta på explicit signal från klienten innan vi byter version,
+// så användaren får se uppdateringsprompten innan reload.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
