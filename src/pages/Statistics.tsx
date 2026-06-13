@@ -100,6 +100,8 @@ export default function Statistics() {
 
             <LayingRateCard />
 
+            <SeasonalityCard />
+
             <FlockBenchmarkCard />
 
             {insights && insights.tips && (() => {
