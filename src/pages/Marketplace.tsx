@@ -221,7 +221,9 @@ export default function Marketplace() {
           <>
             <p className="text-sm text-muted-foreground mb-4">{listings.length} annonser</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {listings.map((l) => (
+              {listings.map((l) => {
+                const isFav = favoriteIds.has(l.id);
+                return (
                 <Link to={`/marknad/${l.slug}`} key={l.id} className="group">
                   <Card className="overflow-hidden h-full hover:shadow-md transition-shadow border-border/60">
                     <div className="aspect-[4/3] bg-muted relative overflow-hidden">
@@ -238,6 +240,17 @@ export default function Marketplace() {
                       <Badge variant="secondary" className="absolute top-2 left-2 bg-background/90 backdrop-blur">
                         {categoryEmoji(l.category)} {categoryLabel(l.category)}
                       </Badge>
+                      <button
+                        type="button"
+                        onClick={(e) => handleToggleFavorite(e, l.id)}
+                        aria-label={isFav ? 'Ta bort från sparade' : 'Spara annons'}
+                        aria-pressed={isFav}
+                        className="absolute top-2 right-2 h-9 w-9 rounded-full bg-background/80 backdrop-blur flex items-center justify-center shadow-sm hover:bg-background transition"
+                      >
+                        <Heart
+                          className={`h-4 w-4 transition ${isFav ? 'fill-destructive text-destructive' : 'text-foreground'}`}
+                        />
+                      </button>
                     </div>
                     <CardContent className="p-4">
                       <h3 className="font-medium text-foreground line-clamp-2 mb-1 group-hover:text-primary transition-colors">{l.title}</h3>
@@ -251,7 +264,8 @@ export default function Marketplace() {
                     </CardContent>
                   </Card>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
