@@ -81,6 +81,23 @@ function groupKey(label: string) {
   return `sidebar_group_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
 }
 
+const MIGRATION_FLAG = 'sidebar_groups_migrated_v2';
+
+// One-time reset: tidigare användare kan ha "Insikter" kollapsad och tro
+// att Statistik försvunnit. Återställ till öppen en gång.
+if (typeof window !== 'undefined') {
+  try {
+    if (window.localStorage.getItem(MIGRATION_FLAG) !== '1') {
+      if (window.localStorage.getItem('sidebar_group_insikter') === '0') {
+        window.localStorage.removeItem('sidebar_group_insikter');
+      }
+      window.localStorage.setItem(MIGRATION_FLAG, '1');
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 function NavGroupCollapsible({
   label, items, collapsed, isPremium, isAdmin, forceOpen,
 }: { label: string; items: NavItem[]; collapsed: boolean; isPremium: boolean; isAdmin: boolean; forceOpen: boolean }) {
