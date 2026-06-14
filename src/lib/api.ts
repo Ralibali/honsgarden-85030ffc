@@ -1317,7 +1317,9 @@ export const api = {
   getProductionForecast,
   getDaylightTempAnalysis,
   getProductionControlData,
+  getDecomposition,
 };
+
 
 
 
