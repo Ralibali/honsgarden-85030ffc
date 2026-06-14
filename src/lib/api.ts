@@ -2084,3 +2084,104 @@ export async function getDaylightTempAnalysis(): Promise<DaylightTempAnalysis> {
     tempInsight,
   };
 }
+
+// ==================== PRODUCTION CONTROL CHART ====================
+
+export interface ControlPoint {
+  date: string;
+  label: string;
+  count: number;
+  mean: number | null;
+  ucl2: number | null;
+  lcl2: number | null;
+  ucl3: number | null;
+  lcl3: number | null;
+  z: number | null;
+  outOf2: boolean;
+  direction: 'above' | 'below' | null;
+}
+
+export interface ProductionControlData {
+  windowSize: number;
+  hasEnoughData: boolean;
+  daysWithData: number;
+  series: ControlPoint[];
+  latest: ControlPoint | null;
+  yesterdayLabel: string | null;
+}
+
+export async function getProductionControlData(windowSize: 14 | 28 = 28): Promise<ProductionControlData> {
+  const res = await supabase.from('egg_logs').select('date, count');
+  const rows = (res.data ?? []) as { date: string; count: number | null }[];
+
+  if (rows.length === 0) {
+    return { windowSize, hasEnoughData: false, daysWithData: 0, series: [], latest: null, yesterdayLabel: null };
+  }
+
+  const dayTotals = new Map<string, number>();
+  for (const r of rows) {
+    if (!r.date) continue;
+    dayTotals.set(r.date, (dayTotals.get(r.date) ?? 0) + (r.count ?? 0));
+  }
+
+  const sorted = Array.from(dayTotals.keys()).sort();
+  const firstDate = new Date(sorted[0] + 'T12:00:00Z');
+  const lastDate = new Date(sorted[sorted.length - 1] + 'T12:00:00Z');
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  const filled: { date: string; count: number }[] = [];
+  for (let t = firstDate.getTime(); t <= lastDate.getTime(); t += DAY_MS) {
+    const d = new Date(t);
+    const key = d.toISOString().slice(0, 10);
+    filled.push({ date: key, count: dayTotals.get(key) ?? 0 });
+  }
+
+  const daysWithData = filled.length;
+  const fmt = new Intl.DateTimeFormat('sv-SE', { day: '2-digit', month: 'short' });
+
+  if (daysWithData < 21) {
+    return { windowSize, hasEnoughData: false, daysWithData, series: [], latest: null, yesterdayLabel: null };
+  }
+
+  const series: ControlPoint[] = filled.map((p, i) => {
+    const start = Math.max(0, i - windowSize);
+    const window = filled.slice(start, i);
+    let mean: number | null = null;
+    let std: number | null = null;
+    if (window.length >= Math.min(windowSize, 7)) {
+      const m = window.reduce((s, x) => s + x.count, 0) / window.length;
+      const varSum = window.reduce((s, x) => s + (x.count - m) ** 2, 0) / window.length;
+      mean = m;
+      std = Math.sqrt(varSum);
+    }
+    const ucl2 = mean != null && std != null ? mean + 2 * std : null;
+    const lcl2 = mean != null && std != null ? Math.max(0, mean - 2 * std) : null;
+    const ucl3 = mean != null && std != null ? mean + 3 * std : null;
+    const lcl3 = mean != null && std != null ? Math.max(0, mean - 3 * std) : null;
+    const z = mean != null && std != null && std > 0 ? (p.count - mean) / std : null;
+    let outOf2 = false;
+    let direction: 'above' | 'below' | null = null;
+    if (z != null) {
+      if (z > 2) { outOf2 = true; direction = 'above'; }
+      else if (z < -2) { outOf2 = true; direction = 'below'; }
+    }
+    return {
+      date: p.date,
+      label: fmt.format(new Date(p.date + 'T12:00:00Z')),
+      count: p.count,
+      mean,
+      ucl2,
+      lcl2,
+      ucl3,
+      lcl3,
+      z,
+      outOf2,
+      direction,
+    };
+  });
+
+  const latest = series[series.length - 1] ?? null;
+  const yesterdayLabel = latest?.label ?? null;
+
+  return { windowSize, hasEnoughData: true, daysWithData, series, latest, yesterdayLabel };
+}
