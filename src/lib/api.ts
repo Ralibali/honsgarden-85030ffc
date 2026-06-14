@@ -1319,7 +1319,107 @@ export const api = {
   getAgeAnalytics,
   getFlockSurvival,
   getFeedEfficiencyTrend,
+  getHatchStatistics,
 };
+
+// ==================== HATCH STATISTICS ====================
+
+export interface HatchSessionPoint {
+  id: string;
+  name: string;
+  setDate: string;
+  label: string;
+  hatchRatePct: number | null;
+  eggsSet: number;
+  eggsHatched: number | null;
+}
+
+export interface HatchStatistics {
+  fertilityRatePct: number | null;
+  hatchRatePct: number | null;
+  hatchOfFertilePct: number | null;
+  survival7dPct: number | null;
+  totalCompleted: number;
+  sessions: HatchSessionPoint[];
+}
+
+// Status-värden som räknas som AVSLUTAD kläckning.
+const COMPLETED_HATCH_STATUSES = new Set([
+  'completed', 'complete', 'done', 'finished',
+  'hatched', 'klar', 'avslutad', 'avslutat',
+]);
+
+export async function getHatchStatistics(): Promise<HatchStatistics> {
+  const { data, error } = await supabase
+    .from('hatch_sessions')
+    .select('id, name, set_date, status, eggs_set, eggs_fertile, eggs_hatched, chicks_survived_7d, actual_hatch_date')
+    .order('set_date', { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const all = (data ?? []) as any[];
+  const completed = all.filter((s) => {
+    const st = (s.status || '').toString().toLowerCase().trim();
+    if (COMPLETED_HATCH_STATUSES.has(st)) return true;
+    // Fallback: behandla som klar om actual_hatch_date eller eggs_hatched satts
+    if (s.actual_hatch_date) return true;
+    if (s.eggs_hatched != null) return true;
+    return false;
+  });
+
+  // Snitt-av-ratios beräknas per session (varje session med giltig nämnare),
+  // sedan medel av ratios – mer rättvist än totalsumma.
+  const avg = (vals: number[]) =>
+    vals.length === 0 ? null : (vals.reduce((s, n) => s + n, 0) / vals.length) * 100;
+
+  const fert: number[] = [];
+  const hatch: number[] = [];
+  const hatchOfFert: number[] = [];
+  const surv: number[] = [];
+
+  for (const s of completed) {
+    const set = Number(s.eggs_set) || 0;
+    const fertile = s.eggs_fertile != null ? Number(s.eggs_fertile) : null;
+    const hatched = s.eggs_hatched != null ? Number(s.eggs_hatched) : null;
+    const survived = s.chicks_survived_7d != null ? Number(s.chicks_survived_7d) : null;
+
+    if (set > 0 && fertile != null) fert.push(fertile / set);
+    if (set > 0 && hatched != null) hatch.push(hatched / set);
+    if (fertile != null && fertile > 0 && hatched != null) hatchOfFert.push(hatched / fertile);
+    if (hatched != null && hatched > 0 && survived != null) surv.push(survived / hatched);
+  }
+
+  const fmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' });
+
+  const sessions: HatchSessionPoint[] = completed
+    .map((s) => {
+      const set = Number(s.eggs_set) || 0;
+      const hatched = s.eggs_hatched != null ? Number(s.eggs_hatched) : null;
+      const rate = set > 0 && hatched != null ? (hatched / set) * 100 : null;
+      const d = s.set_date ? new Date(s.set_date) : null;
+      const dateLabel = d && !isNaN(d.getTime()) ? fmt.format(d) : '';
+      return {
+        id: s.id,
+        name: s.name || 'Kläckning',
+        setDate: s.set_date,
+        label: dateLabel ? `${s.name} (${dateLabel})` : (s.name || dateLabel),
+        hatchRatePct: rate,
+        eggsSet: set,
+        eggsHatched: hatched,
+      };
+    })
+    .sort((a, b) => new Date(a.setDate).getTime() - new Date(b.setDate).getTime());
+
+  return {
+    fertilityRatePct: avg(fert),
+    hatchRatePct: avg(hatch),
+    hatchOfFertilePct: avg(hatchOfFert),
+    survival7dPct: avg(surv),
+    totalCompleted: completed.length,
+    sessions,
+  };
+}
+
 
 // ==================== FEED EFFICIENCY TREND ====================
 
