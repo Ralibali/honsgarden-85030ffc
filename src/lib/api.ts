@@ -1318,7 +1318,124 @@ export const api = {
   getHealthNoteHelp,
   getAgeAnalytics,
   getFlockSurvival,
+  getFeedEfficiencyTrend,
 };
+
+// ==================== FEED EFFICIENCY TREND ====================
+
+export interface FeedMonthPoint {
+  month: string; // YYYY-MM
+  label: string;
+  costPerEgg: number | null;
+  kgPerDozen: number | null;
+  eggs: number;
+  kg: number;
+  cost: number;
+}
+
+export interface FeedTypeStat {
+  type: string;
+  totalCost: number;
+  totalKg: number;
+  costPerKg: number | null;
+}
+
+export interface FeedEfficiencyTrend {
+  months: FeedMonthPoint[];
+  feedTypes: FeedTypeStat[];
+  hasFeedRecords: boolean;
+}
+
+export async function getFeedEfficiencyTrend(): Promise<FeedEfficiencyTrend> {
+  const [feed, eggs] = await Promise.all([
+    supabase.from('feed_records').select('amount_kg, cost, feed_type, brand, date'),
+    supabase.from('egg_logs').select('count, date'),
+  ]);
+
+  const feedRows = (feed.data ?? []) as any[];
+  const eggRows = (eggs.data ?? []) as any[];
+
+  const fmt = new Intl.DateTimeFormat('sv-SE', { month: 'short', year: '2-digit' });
+  const now = new Date();
+
+  const monthKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+  // Build 12-month skeleton
+  const months: { key: string; label: string; date: Date }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: monthKey(d), label: fmt.format(d), date: d });
+  }
+  const monthSet = new Set(months.map((m) => m.key));
+
+  const feedByMonth = new Map<string, { kg: number; cost: number }>();
+  for (const r of feedRows) {
+    if (!r.date) continue;
+    const d = new Date(r.date);
+    if (isNaN(d.getTime())) continue;
+    const k = monthKey(d);
+    if (!monthSet.has(k)) continue;
+    const cur = feedByMonth.get(k) || { kg: 0, cost: 0 };
+    cur.kg += Number(r.amount_kg) || 0;
+    cur.cost += Number(r.cost) || 0;
+    feedByMonth.set(k, cur);
+  }
+
+  const eggsByMonth = new Map<string, number>();
+  for (const e of eggRows) {
+    if (!e.date) continue;
+    const d = new Date(e.date);
+    if (isNaN(d.getTime())) continue;
+    const k = monthKey(d);
+    if (!monthSet.has(k)) continue;
+    eggsByMonth.set(k, (eggsByMonth.get(k) || 0) + (Number(e.count) || 0));
+  }
+
+  const monthsOut: FeedMonthPoint[] = months.map((m) => {
+    const f = feedByMonth.get(m.key) || { kg: 0, cost: 0 };
+    const eggCount = eggsByMonth.get(m.key) || 0;
+    const costPerEgg = eggCount > 0 && f.cost > 0 ? f.cost / eggCount : null;
+    const kgPerDozen = eggCount > 0 && f.kg > 0 ? f.kg / (eggCount / 12) : null;
+    return {
+      month: m.key,
+      label: m.label,
+      costPerEgg,
+      kgPerDozen,
+      eggs: eggCount,
+      kg: f.kg,
+      cost: f.cost,
+    };
+  });
+
+  // Feed types aggregation (all-time)
+  const typeMap = new Map<string, { totalCost: number; totalKg: number }>();
+  for (const r of feedRows) {
+    const t =
+      (r.feed_type && String(r.feed_type).trim()) ||
+      (r.brand && String(r.brand).trim()) ||
+      'Övrigt';
+    const cur = typeMap.get(t) || { totalCost: 0, totalKg: 0 };
+    cur.totalCost += Number(r.cost) || 0;
+    cur.totalKg += Number(r.amount_kg) || 0;
+    typeMap.set(t, cur);
+  }
+  const feedTypes: FeedTypeStat[] = Array.from(typeMap.entries())
+    .map(([type, v]) => ({
+      type,
+      totalCost: v.totalCost,
+      totalKg: v.totalKg,
+      costPerKg: v.totalKg > 0 ? v.totalCost / v.totalKg : null,
+    }))
+    .sort((a, b) => b.totalCost - a.totalCost);
+
+  return {
+    months: monthsOut,
+    feedTypes,
+    hasFeedRecords: feedRows.length > 0,
+  };
+}
+
 
 // ==================== FLOCK SURVIVAL ====================
 
