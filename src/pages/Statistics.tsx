@@ -197,8 +197,11 @@ export default function Statistics() {
 
             <ProductionForecastCard />
 
+            <DaylightRegressionCard />
+
 
             <EggProductionChart />
+
 
             <LayingRateCard />
 
