@@ -14,6 +14,8 @@ import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
 import LayingRateCard from '@/components/LayingRateCard';
 import SeasonalityCard from '@/components/SeasonalityCard';
+import AgeProductionCard from '@/components/AgeProductionCard';
+
 
 export default function Statistics() {
   const [showAllInsights, setShowAllInsights] = useState(false);
@@ -99,6 +101,9 @@ export default function Statistics() {
             <EggProductionChart />
 
             <LayingRateCard />
+
+            <AgeProductionCard />
+
 
             <SeasonalityCard />
 
