@@ -1317,5 +1317,107 @@ export const api = {
   getDashboardAlerts,
   getHealthNoteHelp,
   getAgeAnalytics,
+  getFlockSurvival,
 };
+
+// ==================== FLOCK SURVIVAL ====================
+
+export interface FlockSizePoint {
+  month: string; // YYYY-MM
+  label: string; // sv-SE
+  alive: number;
+}
+
+export interface DeathCauseCount {
+  cause: string;
+  count: number;
+}
+
+export interface FlockSurvival {
+  timeline: FlockSizePoint[];
+  mortalityPct12m: number | null;
+  deaths12m: number;
+  avgFlockSize12m: number;
+  avgLifespanDays: number | null;
+  lossesThisYear: number;
+  causes: DeathCauseCount[];
+  totalDeaths: number;
+}
+
+export async function getFlockSurvival(): Promise<FlockSurvival> {
+  const hens = (await getHens()) as any[];
+
+  const now = new Date();
+  const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const fmt = new Intl.DateTimeFormat('sv-SE', { month: 'short', year: '2-digit' });
+
+  // Build 12 month buckets ending this month
+  const months: { date: Date; key: string; label: string }[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    months.push({ date: d, key, label: fmt.format(d) });
+  }
+
+  // For each month end, count alive = created_at <= monthEnd AND (death_date is null OR death_date > monthEnd)
+  const timeline: FlockSizePoint[] = months.map((m) => {
+    const monthEnd = new Date(m.date.getFullYear(), m.date.getMonth() + 1, 0, 23, 59, 59);
+    let alive = 0;
+    for (const h of hens) {
+      const created = h.created_at ? new Date(h.created_at) : null;
+      if (!created || created > monthEnd) continue;
+      const died = h.death_date ? new Date(h.death_date) : null;
+      if (died && died <= monthEnd) continue;
+      alive += 1;
+    }
+    return { month: m.key, label: m.label, alive };
+  });
+
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  let deaths12m = 0;
+  let lossesThisYear = 0;
+  const lifespans: number[] = [];
+  const causeMap = new Map<string, number>();
+  let totalDeaths = 0;
+
+  for (const h of hens) {
+    if (!h.death_date) continue;
+    totalDeaths += 1;
+    const dd = new Date(h.death_date);
+    if (isNaN(dd.getTime())) continue;
+    if (dd >= twelveMonthsAgo) deaths12m += 1;
+    if (dd.getFullYear() === now.getFullYear()) lossesThisYear += 1;
+    if (h.birth_date) {
+      const bd = new Date(h.birth_date);
+      if (!isNaN(bd.getTime()) && dd > bd) {
+        lifespans.push(Math.floor((dd.getTime() - bd.getTime()) / (24 * 60 * 60 * 1000)));
+      }
+    }
+    const cause = (h.death_cause || '').toString().trim() || 'Okänd';
+    causeMap.set(cause, (causeMap.get(cause) || 0) + 1);
+  }
+
+  const avgFlockSize12m =
+    timeline.reduce((s, p) => s + p.alive, 0) / Math.max(1, timeline.length);
+  const mortalityPct12m =
+    avgFlockSize12m > 0 ? (deaths12m / avgFlockSize12m) * 100 : null;
+  const avgLifespanDays =
+    lifespans.length > 0 ? lifespans.reduce((s, n) => s + n, 0) / lifespans.length : null;
+
+  const causes: DeathCauseCount[] = Array.from(causeMap.entries())
+    .map(([cause, count]) => ({ cause, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    timeline,
+    mortalityPct12m,
+    deaths12m,
+    avgFlockSize12m,
+    avgLifespanDays,
+    lossesThisYear,
+    causes,
+    totalDeaths,
+  };
+}
+
 
