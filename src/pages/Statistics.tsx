@@ -203,8 +203,11 @@ export default function Statistics() {
 
             <ProductionControlChart />
 
+            <SeasonDecompositionCard />
+
 
             <EggProductionChart />
+
 
 
 
