@@ -476,6 +476,8 @@ export default function Statistics() {
             </div>
 
             <HenConsistencyCard />
+
+            <CohortAnalysisCard />
           </>
         )}
 
