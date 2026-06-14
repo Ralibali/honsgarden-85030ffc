@@ -10,6 +10,8 @@ import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
+import ProductionForecastCard from '@/components/ProductionForecastCard';
+
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
 import LayingRateCard from '@/components/LayingRateCard';
@@ -103,6 +105,9 @@ export default function Statistics() {
         ) : (
           <>
             <SmartStatisticsOverview />
+
+            <ProductionForecastCard />
+
 
             <EggProductionChart />
 
