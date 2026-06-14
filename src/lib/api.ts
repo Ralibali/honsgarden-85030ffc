@@ -1143,7 +1143,148 @@ async function deleteEggGoal(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// ==================== AGE ANALYTICS ====================
+
+export interface AgeBucket {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface AgeCurvePoint {
+  ageMonths: number;
+  layingRatePct: number;
+  henDays: number;
+  eggs: number;
+}
+
+export interface AgeAnalytics {
+  ageBuckets: AgeBucket[];
+  totalActive: number;
+  knownAge: number;
+  over3yPct: number;
+  curve: AgeCurvePoint[];
+  attributedEggs: number;
+}
+
+export async function getAgeAnalytics(): Promise<AgeAnalytics> {
+  const [hens, eggs] = await Promise.all([getHens(), getEggs()]);
+
+  const now = new Date();
+  const monthsBetween = (a: Date, b: Date) =>
+    (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()) +
+    (b.getDate() >= a.getDate() ? 0 : -1);
+
+  const activeLaying = (hens as any[]).filter(
+    (h) => h.is_active && (h.hen_type ?? 'hen') === 'hen',
+  );
+
+  const buckets: AgeBucket[] = [
+    { key: '0-6m', label: '0–6 mån', count: 0 },
+    { key: '6-12m', label: '6–12 mån', count: 0 },
+    { key: '1-2y', label: '1–2 år', count: 0 },
+    { key: '2-3y', label: '2–3 år', count: 0 },
+    { key: '3y+', label: '3+ år', count: 0 },
+    { key: 'unknown', label: 'Okänd ålder', count: 0 },
+  ];
+
+  let over3 = 0;
+  let knownAge = 0;
+  for (const h of activeLaying) {
+    if (!h.birth_date) {
+      buckets[5].count += 1;
+      continue;
+    }
+    const bd = new Date(h.birth_date);
+    if (isNaN(bd.getTime())) {
+      buckets[5].count += 1;
+      continue;
+    }
+    knownAge += 1;
+    const m = monthsBetween(bd, now);
+    if (m < 6) buckets[0].count += 1;
+    else if (m < 12) buckets[1].count += 1;
+    else if (m < 24) buckets[2].count += 1;
+    else if (m < 36) buckets[3].count += 1;
+    else {
+      buckets[4].count += 1;
+      over3 += 1;
+    }
+  }
+
+  const over3yPct = activeLaying.length > 0 ? (over3 / activeLaying.length) * 100 : 0;
+
+  // Värpkurva: per åldersmånad (0–36) räkna ägg och höns-dagar.
+  // Vi approximerar höns-dagar per åldersbucket via att räkna antalet
+  // unika (hen, dag)-kombinationer i kurvan: använd alla egg_logs med
+  // hen_id satt, och bygg upp en exponering = för varje höna räkna
+  // antalet dagar i datasetet hon var aktiv per åldersmånad.
+  const henById = new Map<string, any>();
+  for (const h of hens as any[]) henById.set(h.id, h);
+
+  const eggsByBucket = new Map<number, number>();
+  let attributed = 0;
+  for (const e of eggs as any[]) {
+    if (!e.hen_id) continue;
+    const h = henById.get(e.hen_id);
+    if (!h || !h.birth_date) continue;
+    const bd = new Date(h.birth_date);
+    const ed = new Date(e.date);
+    if (isNaN(bd.getTime()) || isNaN(ed.getTime())) continue;
+    const m = monthsBetween(bd, ed);
+    if (m < 0 || m > 60) continue;
+    eggsByBucket.set(m, (eggsByBucket.get(m) || 0) + (e.count || 0));
+    attributed += e.count || 0;
+  }
+
+  // Höns-dagar per åldersmånad: för varje attribuerande höna (med
+  // birth_date), räkna antal dagar mellan max(created_at, birth_date)
+  // och min(now, death_date) och fördela över åldersmånader.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const daysByBucket = new Map<number, number>();
+  for (const h of hens as any[]) {
+    if (!h.birth_date) continue;
+    if ((h.hen_type ?? 'hen') === 'rooster') continue;
+    const bd = new Date(h.birth_date);
+    const created = h.created_at ? new Date(h.created_at) : bd;
+    const start = created > bd ? created : bd;
+    const end = h.death_date ? new Date(h.death_date) : now;
+    if (end <= start) continue;
+    // Walk day by day (cap at ~5 years = 1825 iterations per hen)
+    const totalDays = Math.min(2000, Math.floor((end.getTime() - start.getTime()) / DAY_MS));
+    for (let i = 0; i < totalDays; i++) {
+      const d = new Date(start.getTime() + i * DAY_MS);
+      const m = monthsBetween(bd, d);
+      if (m < 0 || m > 60) continue;
+      daysByBucket.set(m, (daysByBucket.get(m) || 0) + 1);
+    }
+  }
+
+  const curve: AgeCurvePoint[] = [];
+  for (let m = 0; m <= 36; m++) {
+    const eCount = eggsByBucket.get(m) || 0;
+    const dCount = daysByBucket.get(m) || 0;
+    if (dCount === 0) continue;
+    curve.push({
+      ageMonths: m,
+      henDays: dCount,
+      eggs: eCount,
+      layingRatePct: (eCount / dCount) * 100,
+    });
+  }
+
+  return {
+    ageBuckets: buckets,
+    totalActive: activeLaying.length,
+    knownAge,
+    over3yPct,
+    curve,
+    attributedEggs: attributed,
+  };
+}
+
 // Legacy compatibility: export as api object for existing imports
+
 export const api = {
   getHens, createHen, updateHen, deleteHen, getHenProfile, markHenSeen,
   getHenHealthScores, getProductivityAlerts,
