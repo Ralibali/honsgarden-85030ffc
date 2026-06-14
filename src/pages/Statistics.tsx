@@ -19,6 +19,7 @@ import EmptyState from '@/components/EmptyState';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
 import ProductionForecastCard from '@/components/ProductionForecastCard';
+import DaylightRegressionCard from '@/components/DaylightRegressionCard';
 
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
@@ -196,8 +197,11 @@ export default function Statistics() {
 
             <ProductionForecastCard />
 
+            <DaylightRegressionCard />
+
 
             <EggProductionChart />
+
 
             <LayingRateCard />
 
