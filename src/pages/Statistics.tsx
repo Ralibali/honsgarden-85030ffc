@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { downloadPDF, downloadMultiSheetExcel } from '@/lib/exportUtils';
+
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
