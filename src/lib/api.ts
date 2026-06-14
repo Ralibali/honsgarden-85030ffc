@@ -900,11 +900,8 @@ export async function getHensWithEggTotals(): Promise<HenWithEggTotal[]> {
   }));
 }
 
-export async function getAdvancedInsights() { return { insights: [] }; }
-export async function getTrendAnalysis() { return { trends: [] }; }
-export async function getAlerts() { return []; }
-export async function dismissAlert(_id: string) { return {}; }
-export async function getRankingSummary() { return { rank: 1, total: 1 }; }
+
+
 
 /** Flock statistics – egg totals, weekly/monthly breakdown per flock */
 export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unassigned_eggs: number }> {
@@ -970,10 +967,8 @@ export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unass
   return { flocks: flockStats.sort((a, b) => b.total_eggs - a.total_eggs), unassigned_eggs: unassignedTotal };
 }
 
-export async function getFlockHealth() { return {}; }
-export async function getInsights() { return { insights: [] }; }
-export async function getAgdaInboxToday() { return { messages: [] }; }
-export async function markHenSeen(_id: string) { return {}; }
+
+
 
 // ==================== ADMIN ====================
 
@@ -1286,7 +1281,7 @@ export async function getAgeAnalytics(): Promise<AgeAnalytics> {
 // Legacy compatibility: export as api object for existing imports
 
 export const api = {
-  getHens, createHen, updateHen, deleteHen, getHenProfile, markHenSeen,
+  getHens, createHen, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
   getEggs, createEggRecord, deleteEggRecord, fetchEggLogWeatherSnapshot,
@@ -1300,15 +1295,14 @@ export const api = {
   getFlocks, getOrCreateDefaultFlock, createFlock, updateFlock, deleteFlock,
   getReminderSettings, updateReminderSettings,
   getTodayStats, getMonthStats, getYearStats, getSummaryStats,
-  getStatisticsInsights, getAdvancedInsights, getTrendAnalysis,
+  getStatisticsInsights,
   getYesterdaySummary, getFarmToday,
   getWeather,
   getDailyTip,
   getPremiumStatus, createCheckoutSession, cancelSubscription,
-  getAlerts, dismissAlert,
   getStreak, touchStreak,
-  getRankingSummary, getFlockStatistics, getFlockHealth,
-  getInsights, getAgdaInboxToday,
+  getFlockStatistics,
+
   getEggGoals, upsertEggGoal, deleteEggGoal,
   adminCheck, adminStats, adminUsers, adminSubscriptions,
   adminFeedback, adminUpdateFeedbackStatus, adminReplyFeedback, adminDeleteUser, adminUpdateSubscription,

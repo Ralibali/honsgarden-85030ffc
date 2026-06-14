@@ -2,7 +2,15 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird, Download, FileText, FileSpreadsheet } from 'lucide-react';
+import { downloadPDF, downloadMultiSheetExcel } from '@/lib/exportUtils';
+
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -82,13 +90,93 @@ export default function Statistics() {
   const unassignedEggs = (flockStats as any)?.unassigned_eggs || 0;
   const maxFlockEggs = flocks.length > 0 ? Math.max(...flocks.map((f: any) => f.total_eggs), 1) : 1;
 
+  const handleExportPDF = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const summaryRows: string[][] = [
+      ['Totalt ägg', String(summary?.total_eggs ?? '–')],
+      ['Snitt per dag', summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '–'],
+      ['Bästa dag', String(summary?.best_day ?? '–')],
+      ['Produktivitet', summary?.productivity != null ? `${Math.round(summary.productivity)}%` : '–'],
+      ['Kostnad per ägg', costPerEgg > 0 ? `${costPerEgg.toFixed(2)} kr` : '–'],
+      ['Intäkt per ägg', revenuePerEgg > 0 ? `${revenuePerEgg.toFixed(2)} kr` : '–'],
+    ];
+    downloadPDF('Statistik – Sammanfattning', ['Nyckeltal', 'Värde'], summaryRows, `honsgarden-statistik-${today}`);
+
+    if (rankedHens.length > 0) {
+      const henRows = rankedHens.slice(0, 50).map((h: any, i: number) => [
+        String(i + 1),
+        h.name ?? '',
+        h.breed ?? '',
+        String(h.total_eggs ?? 0),
+      ]);
+      setTimeout(() => {
+        downloadPDF('Topplista – Hönor', ['#', 'Namn', 'Ras', 'Totalt ägg'], henRows, `honsgarden-honor-${today}`);
+      }, 500);
+    }
+  };
+
+  const handleExportExcel = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const summaryRows = [
+      { Nyckeltal: 'Totalt ägg', Värde: summary?.total_eggs ?? '' },
+      { Nyckeltal: 'Snitt per dag', Värde: summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '' },
+      { Nyckeltal: 'Bästa dag', Värde: summary?.best_day ?? '' },
+      { Nyckeltal: 'Produktivitet (%)', Värde: summary?.productivity != null ? Math.round(summary.productivity) : '' },
+      { Nyckeltal: 'Kostnad per ägg (kr)', Värde: costPerEgg > 0 ? Number(costPerEgg.toFixed(2)) : '' },
+      { Nyckeltal: 'Intäkt per ägg (kr)', Värde: revenuePerEgg > 0 ? Number(revenuePerEgg.toFixed(2)) : '' },
+      { Nyckeltal: 'Vinst per ägg (kr)', Värde: profitPerEgg !== 0 ? Number(profitPerEgg.toFixed(2)) : '' },
+    ];
+    const henRows = rankedHens.map((h: any) => ({
+      Namn: h.name ?? '',
+      Ras: h.breed ?? '',
+      'Totalt ägg': h.total_eggs ?? 0,
+    }));
+    const flockRows = flocks.map((f: any) => ({
+      Namn: f.name,
+      'Aktiva hönor': f.active_hens,
+      'Totalt ägg': f.total_eggs,
+      Veckan: f.week_eggs,
+      '30 dagar': f.month_eggs,
+      'Snitt per dag': f.avg_per_day,
+    }));
+    downloadMultiSheetExcel(
+      [
+        { name: 'Sammanfattning', rows: summaryRows },
+        { name: 'Hönor', rows: henRows },
+        { name: 'Flockar', rows: flockRows },
+      ],
+      `honsgarden-statistik-${today}`,
+    );
+  };
+
   return (
     <PremiumGate feature="Statistik" featureKey="statistics" preview>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Statistik 📊</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">Förstå din hönsgård på ett enkelt och hjälpsamt sätt</p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Statistik 📊</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Förstå din hönsgård på ett enkelt och hjälpsamt sätt</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="rounded-xl shrink-0">
+                <Download className="h-4 w-4 mr-2" />
+                Exportera
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="rounded-xl">
+              <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                <FileText className="h-4 w-4" />
+                Exportera som PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportera som Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
 
         <AIDeviationAlerts variant="inline" />
 
