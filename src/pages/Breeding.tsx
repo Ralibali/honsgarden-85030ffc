@@ -20,6 +20,7 @@ import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/EmptyState';
 import { PremiumGate } from '@/components/PremiumGate';
+import BreedingAnalysisCard from '@/components/BreedingAnalysisCard';
 
 function PairsTab() {
   const { user } = useAuth();
@@ -444,7 +445,10 @@ export default function Breeding() {
           <TabsContent value="hatching" className="mt-4"><HatchingPage /></TabsContent>
           <TabsContent value="hatches" className="mt-4"><HatchSessionsTab /></TabsContent>
         </Tabs>
+
+        <BreedingAnalysisCard />
       </div>
+
     </PremiumGate>
   );
 }

@@ -1319,7 +1319,9 @@ export const api = {
   getProductionControlData,
   getDecomposition,
   getHenConsistency,
+  getBreedingValues,
 };
+
 
 
 
@@ -2557,4 +2559,198 @@ export async function getHenConsistency(): Promise<HenConsistencyResult> {
       : null;
 
   return { hens: rows, bestConsistencyId, longestStreakId };
+}
+
+// ==================== BREEDING ANALYSIS ====================
+
+export interface BreedingValueRow {
+  parentId: string;
+  parentName: string;
+  parentRole: 'father' | 'mother' | 'both';
+  offspringCount: number;
+  avgEggsPerDay: number;
+  pctVsFlock: number;
+}
+
+export interface InbreedingRow {
+  henId: string;
+  henName: string;
+  fIndex: number; // 0..1
+  commonAncestors: { id: string; name: string; viaFatherDepth: number; viaMotherDepth: number }[];
+}
+
+export interface BreedingAnalysisResult {
+  flockAvgEggsPerDay: number;
+  parents: BreedingValueRow[];
+  hasParentData: boolean;
+  inbreeding: InbreedingRow[];
+  highInbreedingCount: number;
+}
+
+export async function getBreedingValues(): Promise<BreedingAnalysisResult> {
+  const [hensRes, logsRes] = await Promise.all([
+    supabase
+      .from('hens')
+      .select('id, name, father_id, mother_id, birth_date, hen_type, death_date, created_at'),
+    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
+  ]);
+
+  const hens = (hensRes.data ?? []) as {
+    id: string;
+    name: string | null;
+    father_id: string | null;
+    mother_id: string | null;
+    birth_date: string | null;
+    hen_type: string | null;
+    death_date: string | null;
+    created_at: string;
+  }[];
+  const logs = (logsRes.data ?? []) as { hen_id: string; date: string; count: number | null }[];
+
+  const henById = new Map(hens.map((h) => [h.id, h]));
+  const today = new Date();
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  // Aggregate eggs per hen
+  const eggsByHen = new Map<string, number>();
+  for (const l of logs) {
+    eggsByHen.set(l.hen_id, (eggsByHen.get(l.hen_id) ?? 0) + (l.count ?? 0));
+  }
+
+  // For each laying hen: compute eggs per active day
+  function activeDays(hen: typeof hens[number]): number {
+    const startStr = hen.birth_date ?? hen.created_at.slice(0, 10);
+    const start = new Date(startStr + 'T12:00:00Z').getTime();
+    const end = hen.death_date
+      ? new Date(hen.death_date + 'T12:00:00Z').getTime()
+      : today.getTime();
+    return Math.max(1, Math.round((end - start) / DAY_MS));
+  }
+
+  const layingHens = hens.filter((h) => (h.hen_type ?? 'hen') === 'hen');
+  const henEggsPerDay = new Map<string, number>();
+  for (const h of layingHens) {
+    const e = eggsByHen.get(h.id) ?? 0;
+    if (e <= 0) continue;
+    const d = activeDays(h);
+    henEggsPerDay.set(h.id, e / d);
+  }
+
+  const flockVals = Array.from(henEggsPerDay.values());
+  const flockAvgEggsPerDay =
+    flockVals.length > 0 ? flockVals.reduce((s, x) => s + x, 0) / flockVals.length : 0;
+
+  // Group offspring by parent
+  const offspringByParent = new Map<string, { role: 'father' | 'mother'; henId: string }[]>();
+  for (const h of layingHens) {
+    if (!henEggsPerDay.has(h.id)) continue;
+    if (h.father_id) {
+      const arr = offspringByParent.get(h.father_id) ?? [];
+      arr.push({ role: 'father', henId: h.id });
+      offspringByParent.set(h.father_id, arr);
+    }
+    if (h.mother_id) {
+      const arr = offspringByParent.get(h.mother_id) ?? [];
+      arr.push({ role: 'mother', henId: h.id });
+      offspringByParent.set(h.mother_id, arr);
+    }
+  }
+
+  const parents: BreedingValueRow[] = [];
+  for (const [parentId, offspring] of offspringByParent) {
+    if (offspring.length < 2) continue;
+    const parent = henById.get(parentId);
+    if (!parent) continue;
+    const vals = offspring.map((o) => henEggsPerDay.get(o.henId) ?? 0).filter((v) => v > 0);
+    if (vals.length < 2) continue;
+    const avg = vals.reduce((s, x) => s + x, 0) / vals.length;
+    const pct = flockAvgEggsPerDay > 0 ? (avg / flockAvgEggsPerDay - 1) * 100 : 0;
+    const roles = new Set(offspring.map((o) => o.role));
+    const role: BreedingValueRow['parentRole'] =
+      roles.size === 2 ? 'both' : (Array.from(roles)[0] as 'father' | 'mother');
+    parents.push({
+      parentId,
+      parentName: parent.name ?? 'Namnlös',
+      parentRole: role,
+      offspringCount: vals.length,
+      avgEggsPerDay: Math.round(avg * 1000) / 1000,
+      pctVsFlock: Math.round(pct * 10) / 10,
+    });
+  }
+  parents.sort((a, b) => b.pctVsFlock - a.pctVsFlock);
+
+  // Inbreeding via get_hen_ancestors for distinct parent IDs
+  const parentsToFetch = new Set<string>();
+  const henPairs: { hen: typeof hens[number]; fId: string; mId: string }[] = [];
+  for (const h of hens) {
+    if (h.father_id && h.mother_id) {
+      parentsToFetch.add(h.father_id);
+      parentsToFetch.add(h.mother_id);
+      henPairs.push({ hen: h, fId: h.father_id, mId: h.mother_id });
+    }
+  }
+
+  // Cap to avoid heavy load
+  const MAX_PARENTS = 60;
+  const parentList = Array.from(parentsToFetch).slice(0, MAX_PARENTS);
+  const ancestorCache = new Map<string, Map<string, number>>(); // parentId -> (ancestorId -> minDepth)
+
+  for (const pid of parentList) {
+    try {
+      const res = await supabase.rpc('get_hen_ancestors', { _hen_id: pid, _generations: 4 });
+      const rows = (res.data ?? []) as { id: string; depth: number }[];
+      const m = new Map<string, number>();
+      for (const r of rows) {
+        const prev = m.get(r.id);
+        if (prev == null || r.depth < prev) m.set(r.id, r.depth);
+      }
+      ancestorCache.set(pid, m);
+    } catch {
+      ancestorCache.set(pid, new Map());
+    }
+  }
+
+  const inbreeding: InbreedingRow[] = [];
+  for (const { hen, fId, mId } of henPairs) {
+    const fa = ancestorCache.get(fId);
+    const ma = ancestorCache.get(mId);
+    if (!fa || !ma) continue;
+    let F = 0;
+    const common: InbreedingRow['commonAncestors'] = [];
+    for (const [aid, df] of fa) {
+      const dm = ma.get(aid);
+      if (dm == null) continue;
+      // Skip if A is the father or mother themselves (df=0 or dm=0 trivially) -
+      // father appearing in mother's tree means mother descends from father (irregular but real).
+      F += Math.pow(0.5, df + dm + 1);
+      const ancestor = henById.get(aid);
+      common.push({
+        id: aid,
+        name: ancestor?.name ?? 'Namnlös',
+        viaFatherDepth: df,
+        viaMotherDepth: dm,
+      });
+    }
+    if (F > 0) {
+      inbreeding.push({
+        henId: hen.id,
+        henName: hen.name ?? 'Namnlös',
+        fIndex: Math.min(1, F),
+        commonAncestors: common.sort(
+          (a, b) => a.viaFatherDepth + a.viaMotherDepth - (b.viaFatherDepth + b.viaMotherDepth),
+        ),
+      });
+    }
+  }
+  inbreeding.sort((a, b) => b.fIndex - a.fIndex);
+
+  const highInbreedingCount = inbreeding.filter((r) => r.fIndex > 0.125).length;
+
+  return {
+    flockAvgEggsPerDay: Math.round(flockAvgEggsPerDay * 1000) / 1000,
+    parents,
+    hasParentData: parents.length > 0,
+    inbreeding,
+    highInbreedingCount,
+  };
 }
