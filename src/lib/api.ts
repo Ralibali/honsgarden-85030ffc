@@ -1320,7 +1320,9 @@ export const api = {
   getDecomposition,
   getHenConsistency,
   getBreedingValues,
+  getCohortAnalysis,
 };
+
 
 
 
