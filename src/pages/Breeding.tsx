@@ -445,7 +445,10 @@ export default function Breeding() {
           <TabsContent value="hatching" className="mt-4"><HatchingPage /></TabsContent>
           <TabsContent value="hatches" className="mt-4"><HatchSessionsTab /></TabsContent>
         </Tabs>
+
+        <BreedingAnalysisCard />
       </div>
+
     </PremiumGate>
   );
 }
