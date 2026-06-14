@@ -1316,4 +1316,6 @@ export const api = {
   getDashboardCoach,
   getDashboardAlerts,
   getHealthNoteHelp,
+  getAgeAnalytics,
 };
+
