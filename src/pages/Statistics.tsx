@@ -473,8 +473,11 @@ export default function Statistics() {
                 </CardContent>
               </Card>
             </div>
+
+            <HenConsistencyCard />
           </>
         )}
+
       </div>
     </PremiumGate>
   );
