@@ -16,6 +16,8 @@ import LayingRateCard from '@/components/LayingRateCard';
 import SeasonalityCard from '@/components/SeasonalityCard';
 import AgeProductionCard from '@/components/AgeProductionCard';
 import FlockSurvivalCard from '@/components/FlockSurvivalCard';
+import FeedEfficiencyCard from '@/components/FeedEfficiencyCard';
+
 
 
 
@@ -107,6 +109,9 @@ export default function Statistics() {
             <AgeProductionCard />
 
             <FlockSurvivalCard />
+
+            <FeedEfficiencyCard />
+
 
 
 
