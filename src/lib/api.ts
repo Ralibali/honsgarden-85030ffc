@@ -1318,7 +1318,9 @@ export const api = {
   getDaylightTempAnalysis,
   getProductionControlData,
   getDecomposition,
+  getHenConsistency,
 };
+
 
 
 
@@ -2426,4 +2428,133 @@ export async function getDecomposition(): Promise<DecompositionResult> {
     meanLevel,
     verdict,
   };
+}
+
+// ==================== HEN CONSISTENCY ====================
+
+export interface HenConsistencyRow {
+  id: string;
+  name: string;
+  totalEggs: number;
+  daysCovered: number;
+  perWeek: number;
+  cv: number;
+  consistencyIndex: number; // 0..100
+  longestStreak: number;
+  currentStreak: number;
+}
+
+export interface HenConsistencyResult {
+  hens: HenConsistencyRow[];
+  bestConsistencyId: string | null;
+  longestStreakId: string | null;
+}
+
+export async function getHenConsistency(): Promise<HenConsistencyResult> {
+  const [logsRes, hensRes] = await Promise.all([
+    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
+    supabase.from('hens').select('id, name, hen_type, created_at, death_date'),
+  ]);
+
+  const logs = (logsRes.data ?? []) as { hen_id: string; date: string; count: number | null }[];
+  const hens = (hensRes.data ?? []) as {
+    id: string;
+    name: string | null;
+    hen_type: string | null;
+    created_at: string;
+    death_date: string | null;
+  }[];
+
+  const layingHens = hens.filter((h) => (h.hen_type ?? 'hen') === 'hen');
+  const henById = new Map(layingHens.map((h) => [h.id, h]));
+
+  // group logs per hen / day
+  const perHen = new Map<string, Map<string, number>>();
+  for (const l of logs) {
+    if (!henById.has(l.hen_id)) continue;
+    if (!l.date) continue;
+    let m = perHen.get(l.hen_id);
+    if (!m) {
+      m = new Map();
+      perHen.set(l.hen_id, m);
+    }
+    m.set(l.date, (m.get(l.date) ?? 0) + (l.count ?? 0));
+  }
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const todayKey = new Date().toISOString().slice(0, 10);
+
+  const rows: HenConsistencyRow[] = [];
+
+  for (const hen of layingHens) {
+    const dayMap = perHen.get(hen.id);
+    if (!dayMap || dayMap.size < 14) continue;
+
+    const dates = Array.from(dayMap.keys()).sort();
+    const firstHen = new Date(hen.created_at).toISOString().slice(0, 10);
+    const firstLog = dates[0];
+    const startKey = firstLog > firstHen ? firstLog : firstHen;
+    const endKey = hen.death_date ?? todayKey;
+    if (endKey < startKey) continue;
+
+    const startD = new Date(startKey + 'T12:00:00Z').getTime();
+    const endD = new Date(endKey + 'T12:00:00Z').getTime();
+
+    const series: { date: string; count: number }[] = [];
+    for (let t = startD; t <= endD; t += DAY_MS) {
+      const k = new Date(t).toISOString().slice(0, 10);
+      series.push({ date: k, count: dayMap.get(k) ?? 0 });
+    }
+    if (series.length < 14) continue;
+
+    const counts = series.map((s) => s.count);
+    const total = counts.reduce((s, x) => s + x, 0);
+    if (total === 0) continue;
+    const mean = total / counts.length;
+    const variance = counts.reduce((s, x) => s + (x - mean) ** 2, 0) / counts.length;
+    const std = Math.sqrt(variance);
+    const cv = mean > 0 ? std / mean : Infinity;
+
+    // Friendly 0-100 index: CV of 0 -> 100, CV ≥ 1.5 -> 0
+    const consistencyIndex = Math.max(0, Math.min(100, Math.round(100 * (1 - cv / 1.5))));
+
+    let longestStreak = 0;
+    let run = 0;
+    for (const c of counts) {
+      if (c >= 1) {
+        run++;
+        if (run > longestStreak) longestStreak = run;
+      } else {
+        run = 0;
+      }
+    }
+    // Current streak: trailing run of ≥1 ending at end of series
+    let currentStreak = 0;
+    for (let i = counts.length - 1; i >= 0; i--) {
+      if (counts[i] >= 1) currentStreak++;
+      else break;
+    }
+
+    rows.push({
+      id: hen.id,
+      name: hen.name ?? 'Namnlös höna',
+      totalEggs: total,
+      daysCovered: counts.length,
+      perWeek: Math.round((mean * 7) * 10) / 10,
+      cv: Math.round(cv * 1000) / 1000,
+      consistencyIndex,
+      longestStreak,
+      currentStreak,
+    });
+  }
+
+  rows.sort((a, b) => a.cv - b.cv);
+
+  const bestConsistencyId = rows[0]?.id ?? null;
+  const longestStreakId =
+    rows.length > 0
+      ? rows.slice().sort((a, b) => b.longestStreak - a.longestStreak)[0].id
+      : null;
+
+  return { hens: rows, bestConsistencyId, longestStreakId };
 }
