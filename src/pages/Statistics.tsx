@@ -21,6 +21,7 @@ import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
 import ProductionForecastCard from '@/components/ProductionForecastCard';
 import DaylightRegressionCard from '@/components/DaylightRegressionCard';
 import ProductionControlChart from '@/components/ProductionControlChart';
+import SeasonDecompositionCard from '@/components/SeasonDecompositionCard';
 
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
@@ -202,8 +203,11 @@ export default function Statistics() {
 
             <ProductionControlChart />
 
+            <SeasonDecompositionCard />
+
 
             <EggProductionChart />
+
 
 
 

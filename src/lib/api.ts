@@ -1317,7 +1317,9 @@ export const api = {
   getProductionForecast,
   getDaylightTempAnalysis,
   getProductionControlData,
+  getDecomposition,
 };
+
 
 
 
@@ -2186,4 +2188,242 @@ export async function getProductionControlData(windowSize: 14 | 28 = 28): Promis
   const yesterdayLabel = latest?.label ?? null;
 
   return { windowSize, hasEnoughData: true, daysWithData, series, latest, yesterdayLabel };
+}
+
+// ==================== SEASONAL DECOMPOSITION ====================
+
+export interface DecompositionPoint {
+  date: string;
+  label: string;
+  actual: number;
+  trend: number | null;
+  seasonal: number | null;
+  residual: number | null;
+}
+
+export interface MonthSeasonalPoint {
+  month: number; // 1..12
+  label: string;
+  value: number;
+}
+
+export interface WeekdaySeasonalPoint {
+  weekday: number; // 0=Sun..6=Sat
+  label: string;
+  value: number;
+}
+
+export interface DecompositionResult {
+  hasEnoughData: boolean;
+  daysWithData: number;
+  hasMonthSeason: boolean;
+  series: DecompositionPoint[];
+  monthSeasonal: MonthSeasonalPoint[];
+  weekdaySeasonal: WeekdaySeasonalPoint[];
+  trendSlopePerDay: number | null;
+  trendTotalChange: number | null;
+  meanLevel: number | null;
+  verdict: string;
+}
+
+export async function getDecomposition(): Promise<DecompositionResult> {
+  const res = await supabase.from('egg_logs').select('date, count');
+  const rows = (res.data ?? []) as { date: string; count: number | null }[];
+
+  if (rows.length === 0) {
+    return {
+      hasEnoughData: false,
+      daysWithData: 0,
+      hasMonthSeason: false,
+      series: [],
+      monthSeasonal: [],
+      weekdaySeasonal: [],
+      trendSlopePerDay: null,
+      trendTotalChange: null,
+      meanLevel: null,
+      verdict: '',
+    };
+  }
+
+  const dayTotals = new Map<string, number>();
+  for (const r of rows) {
+    if (!r.date) continue;
+    dayTotals.set(r.date, (dayTotals.get(r.date) ?? 0) + (r.count ?? 0));
+  }
+  const sorted = Array.from(dayTotals.keys()).sort();
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const firstD = new Date(sorted[0] + 'T12:00:00Z').getTime();
+  const lastD = new Date(sorted[sorted.length - 1] + 'T12:00:00Z').getTime();
+  const filled: { date: string; d: Date; count: number }[] = [];
+  for (let t = firstD; t <= lastD; t += DAY_MS) {
+    const d = new Date(t);
+    const key = d.toISOString().slice(0, 10);
+    filled.push({ date: key, d, count: dayTotals.get(key) ?? 0 });
+  }
+  const daysWithData = filled.length;
+  const fmt = new Intl.DateTimeFormat('sv-SE', { day: '2-digit', month: 'short' });
+
+  if (daysWithData < 60) {
+    return {
+      hasEnoughData: false,
+      daysWithData,
+      hasMonthSeason: false,
+      series: [],
+      monthSeasonal: [],
+      weekdaySeasonal: [],
+      trendSlopePerDay: null,
+      trendTotalChange: null,
+      meanLevel: null,
+      verdict: '',
+    };
+  }
+
+  // Centered 30-day moving average for trend
+  const TREND_WIN = 30;
+  const half = Math.floor(TREND_WIN / 2);
+  const trend: (number | null)[] = filled.map((_, i) => {
+    const start = i - half;
+    const end = i + half;
+    if (start < 0 || end >= filled.length) return null;
+    let sum = 0;
+    for (let j = start; j <= end; j++) sum += filled[j].count;
+    return sum / (end - start + 1);
+  });
+
+  // Detrended
+  const detrended: (number | null)[] = filled.map((p, i) =>
+    trend[i] == null ? null : p.count - (trend[i] as number),
+  );
+
+  // Weekday seasonal (avg detrended per weekday); fallback to avg deviation from overall mean
+  const overallMean = filled.reduce((s, p) => s + p.count, 0) / filled.length;
+  const weekdayBuckets: number[][] = Array.from({ length: 7 }, () => []);
+  filled.forEach((p, i) => {
+    const wd = p.d.getUTCDay();
+    const val = detrended[i];
+    if (val != null) weekdayBuckets[wd].push(val);
+  });
+  let weekdaySeasonalValues = weekdayBuckets.map((arr) =>
+    arr.length > 0 ? arr.reduce((s, x) => s + x, 0) / arr.length : 0,
+  );
+  // Center weekday seasonal so it sums to 0
+  const wMean = weekdaySeasonalValues.reduce((s, x) => s + x, 0) / 7;
+  weekdaySeasonalValues = weekdaySeasonalValues.map((v) => v - wMean);
+
+  // Month seasonal — only if we have ≥ ~2 years
+  const hasMonthSeason = daysWithData >= 365 * 2 - 30;
+  const monthBuckets: number[][] = Array.from({ length: 12 }, () => []);
+  if (hasMonthSeason) {
+    filled.forEach((p, i) => {
+      const m = p.d.getUTCMonth();
+      const val = detrended[i];
+      if (val != null) monthBuckets[m].push(val);
+    });
+  }
+  let monthSeasonalValues = monthBuckets.map((arr) =>
+    arr.length > 0 ? arr.reduce((s, x) => s + x, 0) / arr.length : 0,
+  );
+  if (hasMonthSeason) {
+    const mMean = monthSeasonalValues.reduce((s, x) => s + x, 0) / 12;
+    monthSeasonalValues = monthSeasonalValues.map((v) => v - mMean);
+  } else {
+    monthSeasonalValues = monthSeasonalValues.map(() => 0);
+  }
+
+  const series: DecompositionPoint[] = filled.map((p, i) => {
+    const wd = p.d.getUTCDay();
+    const m = p.d.getUTCMonth();
+    const seasonal =
+      weekdaySeasonalValues[wd] + (hasMonthSeason ? monthSeasonalValues[m] : 0);
+    const tr = trend[i];
+    const residual = tr == null ? null : p.count - tr - seasonal;
+    return {
+      date: p.date,
+      label: fmt.format(p.d),
+      actual: p.count,
+      trend: tr,
+      seasonal,
+      residual,
+    };
+  });
+
+  // Trend slope via least squares on non-null trend
+  const idx: number[] = [];
+  const vals: number[] = [];
+  trend.forEach((v, i) => {
+    if (v != null) {
+      idx.push(i);
+      vals.push(v);
+    }
+  });
+  let trendSlopePerDay: number | null = null;
+  let trendTotalChange: number | null = null;
+  if (idx.length >= 2) {
+    const n = idx.length;
+    const meanX = idx.reduce((a, b) => a + b, 0) / n;
+    const meanY = vals.reduce((a, b) => a + b, 0) / n;
+    let num = 0;
+    let den = 0;
+    for (let i = 0; i < n; i++) {
+      num += (idx[i] - meanX) * (vals[i] - meanY);
+      den += (idx[i] - meanX) ** 2;
+    }
+    if (den > 0) {
+      trendSlopePerDay = num / den;
+      trendTotalChange = (vals[n - 1] - vals[0]);
+    }
+  }
+
+  const monthNamesShort = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+  const weekdayNamesShort = ['sön', 'mån', 'tis', 'ons', 'tor', 'fre', 'lör'];
+
+  const monthSeasonal: MonthSeasonalPoint[] = monthSeasonalValues.map((value, i) => ({
+    month: i + 1,
+    label: monthNamesShort[i],
+    value: Math.round(value * 100) / 100,
+  }));
+  // Display weekday as mon..sun for readability
+  const weekdayOrder = [1, 2, 3, 4, 5, 6, 0];
+  const weekdaySeasonal: WeekdaySeasonalPoint[] = weekdayOrder.map((wd) => ({
+    weekday: wd,
+    label: weekdayNamesShort[wd],
+    value: Math.round(weekdaySeasonalValues[wd] * 100) / 100,
+  }));
+
+  // Verdict
+  let verdict = '';
+  const meanLevel = overallMean;
+  if (trendSlopePerDay != null) {
+    const pctPerMonth = (trendSlopePerDay * 30) / Math.max(1, overallMean) * 100;
+    const seasonalAmplitude = hasMonthSeason
+      ? Math.max(...monthSeasonalValues) - Math.min(...monthSeasonalValues)
+      : Math.max(...weekdaySeasonalValues) - Math.min(...weekdaySeasonalValues);
+    const trendMagnitude = Math.abs((trendTotalChange ?? 0));
+    const seasonExplainsMost = seasonalAmplitude > trendMagnitude * 0.8;
+
+    if (pctPerMonth < -1.5) {
+      verdict = seasonExplainsMost
+        ? 'Trenden pekar nedåt, men det mesta förklaras av säsong – din flock presterar normalt för årstiden.'
+        : 'Trenden pekar nedåt även när säsongen räknats bort. Värt att titta på foder, ljus och hälsa.';
+    } else if (pctPerMonth > 1.5) {
+      verdict = 'Trenden pekar uppåt – flocken värper allt bättre, även när säsongen räknats bort.';
+    } else {
+      verdict = 'Trenden är stabil. Variationen du ser i siffrorna förklaras främst av säsong och veckodag.';
+    }
+  } else {
+    verdict = 'För tidigt att avgöra trend – fortsätt logga så blir bilden tydligare.';
+  }
+
+  return {
+    hasEnoughData: true,
+    daysWithData,
+    hasMonthSeason,
+    series,
+    monthSeasonal,
+    weekdaySeasonal,
+    trendSlopePerDay,
+    trendTotalChange,
+    meanLevel,
+    verdict,
+  };
 }
