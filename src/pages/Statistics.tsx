@@ -20,6 +20,7 @@ import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import SmartStatisticsOverview from '@/components/SmartStatisticsOverview';
 import ProductionForecastCard from '@/components/ProductionForecastCard';
 import DaylightRegressionCard from '@/components/DaylightRegressionCard';
+import ProductionControlChart from '@/components/ProductionControlChart';
 
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
