@@ -1319,7 +1319,9 @@ export const api = {
   getProductionControlData,
   getDecomposition,
   getHenConsistency,
+  getBreedingValues,
 };
+
 
 
 
