@@ -1828,3 +1828,259 @@ export async function getFlockSurvival(): Promise<FlockSurvival> {
 }
 
 
+
+// ==================== DAYLIGHT & TEMP REGRESSION ====================
+
+export interface DaylightScatterPoint {
+  date: string;
+  label: string;
+  daylightHours: number;
+  eggsPerHen: number;
+  temp?: number | null;
+}
+
+export interface RegressionResult {
+  slope: number;
+  intercept: number;
+  r2: number;
+  n: number;
+  xMin: number;
+  xMax: number;
+}
+
+export interface DaylightTempAnalysis {
+  latitude: number;
+  latitudeSource: 'coop_settings' | 'weather' | 'fallback';
+  daysWithData: number;
+  daylightPoints: DaylightScatterPoint[];
+  tempPoints: DaylightScatterPoint[];
+  daylightRegression: RegressionResult | null;
+  tempRegression: RegressionResult | null;
+  daylightInsight: string | null;
+  tempInsight: string | null;
+}
+
+function linearRegression(xs: number[], ys: number[]): RegressionResult | null {
+  const n = xs.length;
+  if (n < 2) return null;
+  const meanX = xs.reduce((a, b) => a + b, 0) / n;
+  const meanY = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0;
+  let den = 0;
+  let ssTot = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - meanX) * (ys[i] - meanY);
+    den += (xs[i] - meanX) ** 2;
+    ssTot += (ys[i] - meanY) ** 2;
+  }
+  if (den === 0) return null;
+  const slope = num / den;
+  const intercept = meanY - slope * meanX;
+  let ssRes = 0;
+  for (let i = 0; i < n; i++) {
+    const pred = intercept + slope * xs[i];
+    ssRes += (ys[i] - pred) ** 2;
+  }
+  const r2 = ssTot === 0 ? 0 : Math.max(0, Math.min(1, 1 - ssRes / ssTot));
+  return {
+    slope,
+    intercept,
+    r2,
+    n,
+    xMin: Math.min(...xs),
+    xMax: Math.max(...xs),
+  };
+}
+
+function daylightHoursFor(dateISO: string, latitude: number): number {
+  const d = new Date(dateISO + 'T12:00:00Z');
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 0));
+  const diff = d.getTime() - start.getTime();
+  const N = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const delta = 0.4093 * Math.sin((2 * Math.PI * (N - 81)) / 365);
+  const latRad = (latitude * Math.PI) / 180;
+  let cosH = -Math.tan(latRad) * Math.tan(delta);
+  if (cosH > 1) cosH = 1;
+  if (cosH < -1) cosH = -1;
+  return (24 / Math.PI) * Math.acos(cosH);
+}
+
+function extractTemp(weather: any): number | null {
+  if (!weather || typeof weather !== 'object') return null;
+  const cur = weather.current?.temperature_2m;
+  if (typeof cur === 'number') return cur;
+  const max = weather.daily?.temperature_2m_max?.[0];
+  const min = weather.daily?.temperature_2m_min?.[0];
+  if (typeof max === 'number' && typeof min === 'number') return (max + min) / 2;
+  if (typeof max === 'number') return max;
+  if (typeof min === 'number') return min;
+  return null;
+}
+
+function extractLat(weather: any): number | null {
+  if (!weather || typeof weather !== 'object') return null;
+  const candidates = [weather.lat, weather.latitude, weather.location?.lat, weather.location?.latitude];
+  for (const c of candidates) {
+    if (typeof c === 'number' && isFinite(c)) return c;
+  }
+  return null;
+}
+
+export async function getDaylightTempAnalysis(): Promise<DaylightTempAnalysis> {
+  const [eggsRes, hensRes, coopRes] = await Promise.all([
+    supabase.from('egg_logs').select('date, count, weather'),
+    supabase.from('hens').select('created_at, death_date, hen_type'),
+    supabase.from('coop_settings').select('latitude').limit(1),
+  ]);
+
+  const eggs = (eggsRes.data ?? []) as { date: string; count: number | null; weather: any }[];
+  const hens = (hensRes.data ?? []) as { created_at: string; death_date: string | null; hen_type: string | null }[];
+  const coopRow = (coopRes.data ?? [])[0] as { latitude: number | null } | undefined;
+
+  // Resolve latitude
+  let latitude: number;
+  let latitudeSource: DaylightTempAnalysis['latitudeSource'];
+  if (coopRow?.latitude != null && isFinite(Number(coopRow.latitude))) {
+    latitude = Number(coopRow.latitude);
+    latitudeSource = 'coop_settings';
+  } else {
+    let fromWeather: number | null = null;
+    for (const log of eggs) {
+      const lat = extractLat(log.weather);
+      if (lat != null) {
+        fromWeather = lat;
+        break;
+      }
+    }
+    if (fromWeather != null) {
+      latitude = fromWeather;
+      latitudeSource = 'weather';
+    } else {
+      latitude = 59.3;
+      latitudeSource = 'fallback';
+    }
+  }
+
+  // Aggregate eggs per day & keep one weather per day (prefer one with temp)
+  const dayMap = new Map<string, { count: number; weather: any }>();
+  for (const e of eggs) {
+    if (!e.date) continue;
+    const cur = dayMap.get(e.date) ?? { count: 0, weather: null };
+    cur.count += e.count ?? 0;
+    if (cur.weather == null || (extractTemp(cur.weather) == null && extractTemp(e.weather) != null)) {
+      cur.weather = e.weather;
+    }
+    dayMap.set(e.date, cur);
+  }
+
+  const hensList = hens.filter((h) => (h.hen_type ?? 'hen') === 'hen');
+
+  function activeHensOn(dateISO: string): number {
+    const d = new Date(dateISO + 'T23:59:59Z').getTime();
+    let n = 0;
+    for (const h of hensList) {
+      const created = h.created_at ? new Date(h.created_at).getTime() : 0;
+      if (created > d) continue;
+      if (h.death_date) {
+        const dd = new Date(h.death_date + 'T00:00:00Z').getTime();
+        if (dd <= d) continue;
+      }
+      n++;
+    }
+    return n;
+  }
+
+  const fmt = new Intl.DateTimeFormat('sv-SE', { day: '2-digit', month: 'short' });
+
+  const daylightPoints: DaylightScatterPoint[] = [];
+  const tempPoints: DaylightScatterPoint[] = [];
+
+  const sortedDates = Array.from(dayMap.keys()).sort();
+  for (const date of sortedDates) {
+    const { count, weather } = dayMap.get(date)!;
+    const active = activeHensOn(date);
+    if (active <= 0) continue;
+    const eggsPerHen = count / active;
+    const dh = daylightHoursFor(date, latitude);
+    const label = fmt.format(new Date(date + 'T12:00:00Z'));
+    const temp = extractTemp(weather);
+    const point: DaylightScatterPoint = {
+      date,
+      label,
+      daylightHours: Math.round(dh * 100) / 100,
+      eggsPerHen: Math.round(eggsPerHen * 1000) / 1000,
+      temp: temp != null ? Math.round(temp * 10) / 10 : null,
+    };
+    daylightPoints.push(point);
+    if (temp != null) tempPoints.push(point);
+  }
+
+  const MIN = 20;
+
+  const daylightRegression =
+    daylightPoints.length >= MIN
+      ? linearRegression(
+          daylightPoints.map((p) => p.daylightHours),
+          daylightPoints.map((p) => p.eggsPerHen),
+        )
+      : null;
+
+  const tempRegression =
+    tempPoints.length >= MIN
+      ? linearRegression(
+          tempPoints.map((p) => p.temp as number),
+          tempPoints.map((p) => p.eggsPerHen),
+        )
+      : null;
+
+  function pctPerUnit(reg: RegressionResult): number | null {
+    const midX = (reg.xMin + reg.xMax) / 2;
+    const midY = reg.intercept + reg.slope * midX;
+    if (midY <= 0) return null;
+    return (reg.slope / midY) * 100;
+  }
+
+  let daylightInsight: string | null = null;
+  if (daylightRegression) {
+    const pct = pctPerUnit(daylightRegression);
+    if (pct != null) {
+      const abs = Math.abs(pct).toFixed(0);
+      if (pct > 1) {
+        daylightInsight = `Värpningen stiger med ungefär ${abs}% per extra ljustimme – ljuset triggar äggläggningen.`;
+      } else if (pct < -1) {
+        daylightInsight = `Värpningen faller ungefär ${abs}% per förlorad ljustimme – väntat under den mörka årstiden.`;
+      } else {
+        daylightInsight = 'Dagsljuset verkar inte påverka din flock särskilt mycket just nu.';
+      }
+      daylightInsight += ` Förklaringsgrad R²=${daylightRegression.r2.toFixed(2)}.`;
+    }
+  }
+
+  let tempInsight: string | null = null;
+  if (tempRegression) {
+    const pct = pctPerUnit(tempRegression);
+    if (pct != null) {
+      const abs = Math.abs(pct).toFixed(0);
+      if (pct > 1) {
+        tempInsight = `Värmen hjälper – värpningen ökar ungefär ${abs}% per grad varmare.`;
+      } else if (pct < -1) {
+        tempInsight = `Värpningen minskar ungefär ${abs}% per grad varmare – kan vara sommarvärme som stressar.`;
+      } else {
+        tempInsight = 'Temperaturen verkar ha liten effekt på värpningen i din flock.';
+      }
+      tempInsight += ` Förklaringsgrad R²=${tempRegression.r2.toFixed(2)}.`;
+    }
+  }
+
+  return {
+    latitude,
+    latitudeSource,
+    daysWithData: daylightPoints.length,
+    daylightPoints,
+    tempPoints,
+    daylightRegression,
+    tempRegression,
+    daylightInsight,
+    tempInsight,
+  };
+}
