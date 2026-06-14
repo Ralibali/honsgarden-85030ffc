@@ -1315,7 +1315,9 @@ export const api = {
   getFeedEfficiencyTrend,
   getHatchStatistics,
   getProductionForecast,
+  getDaylightTempAnalysis,
 };
+
 
 // ==================== PRODUCTION FORECAST ====================
 
