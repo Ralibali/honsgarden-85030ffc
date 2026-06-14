@@ -1281,7 +1281,7 @@ export async function getAgeAnalytics(): Promise<AgeAnalytics> {
 // Legacy compatibility: export as api object for existing imports
 
 export const api = {
-  getHens, createHen, updateHen, deleteHen, getHenProfile, markHenSeen,
+  getHens, createHen, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
   getEggs, createEggRecord, deleteEggRecord, fetchEggLogWeatherSnapshot,
@@ -1295,15 +1295,14 @@ export const api = {
   getFlocks, getOrCreateDefaultFlock, createFlock, updateFlock, deleteFlock,
   getReminderSettings, updateReminderSettings,
   getTodayStats, getMonthStats, getYearStats, getSummaryStats,
-  getStatisticsInsights, getAdvancedInsights, getTrendAnalysis,
+  getStatisticsInsights,
   getYesterdaySummary, getFarmToday,
   getWeather,
   getDailyTip,
   getPremiumStatus, createCheckoutSession, cancelSubscription,
-  getAlerts, dismissAlert,
   getStreak, touchStreak,
-  getRankingSummary, getFlockStatistics, getFlockHealth,
-  getInsights, getAgdaInboxToday,
+  getFlockStatistics,
+
   getEggGoals, upsertEggGoal, deleteEggGoal,
   adminCheck, adminStats, adminUsers, adminSubscriptions,
   adminFeedback, adminUpdateFeedbackStatus, adminReplyFeedback, adminDeleteUser, adminUpdateSubscription,
