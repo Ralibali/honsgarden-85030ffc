@@ -2754,3 +2754,189 @@ export async function getBreedingValues(): Promise<BreedingAnalysisResult> {
     highInbreedingCount,
   };
 }
+
+// ==================== COHORT ANALYSIS ====================
+
+export interface CohortSeriesPoint {
+  week: number;
+  [cohortKey: string]: number | null;
+}
+
+export interface CohortMeta {
+  key: string;
+  label: string;
+  henCount: number;
+  color: string;
+}
+
+export interface CohortAnalysisResult {
+  cohorts: CohortMeta[];
+  series: CohortSeriesPoint[];
+  maxWeek: number;
+}
+
+export async function getCohortAnalysis(): Promise<CohortAnalysisResult> {
+  const [hensRes, logsRes, sessionsRes] = await Promise.all([
+    supabase
+      .from('hens')
+      .select('id, birth_date, hatch_session_id, hen_type, death_date'),
+    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
+    supabase.from('hatch_sessions').select('id, name'),
+  ]);
+
+  const hens = (hensRes.data ?? []) as {
+    id: string;
+    birth_date: string | null;
+    hatch_session_id: string | null;
+    hen_type: string | null;
+    death_date: string | null;
+  }[];
+  const logs = (logsRes.data ?? []) as { hen_id: string; date: string; count: number | null }[];
+  const sessions = (sessionsRes.data ?? []) as { id: string; name: string | null }[];
+  const sessionName = new Map(sessions.map((s) => [s.id, s.name ?? 'Kläckning']));
+
+  const monthFmt = new Intl.DateTimeFormat('sv-SE', { month: 'long', year: 'numeric' });
+
+  const layingHens = hens.filter(
+    (h) => (h.hen_type ?? 'hen') === 'hen' && h.birth_date,
+  );
+
+  // Cohort assignment
+  type HenInfo = {
+    id: string;
+    birthMs: number;
+    deathMs: number | null;
+    cohortKey: string;
+    cohortLabel: string;
+  };
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const henInfo = new Map<string, HenInfo>();
+  for (const h of layingHens) {
+    const birthMs = new Date(h.birth_date! + 'T12:00:00Z').getTime();
+    let cohortKey: string;
+    let cohortLabel: string;
+    if (h.hatch_session_id) {
+      cohortKey = `s:${h.hatch_session_id}`;
+      cohortLabel = sessionName.get(h.hatch_session_id) ?? 'Kläckning';
+    } else {
+      const ym = h.birth_date!.slice(0, 7);
+      cohortKey = `m:${ym}`;
+      cohortLabel = monthFmt.format(new Date(h.birth_date! + 'T12:00:00Z'));
+      cohortLabel = cohortLabel.charAt(0).toUpperCase() + cohortLabel.slice(1);
+    }
+    henInfo.set(h.id, {
+      id: h.id,
+      birthMs,
+      deathMs: h.death_date ? new Date(h.death_date + 'T12:00:00Z').getTime() : null,
+      cohortKey,
+      cohortLabel,
+    });
+  }
+
+  // Group hens by cohort
+  const cohortHens = new Map<string, HenInfo[]>();
+  for (const info of henInfo.values()) {
+    const arr = cohortHens.get(info.cohortKey) ?? [];
+    arr.push(info);
+    cohortHens.set(info.cohortKey, arr);
+  }
+
+  // Aggregate eggs by (cohort, week)
+  // For each log, age = floor((log.date - birth)/7d)
+  const eggsByCohortWeek = new Map<string, Map<number, number>>();
+  for (const l of logs) {
+    const info = henInfo.get(l.hen_id);
+    if (!info) continue;
+    const logMs = new Date(l.date + 'T12:00:00Z').getTime();
+    const ageDays = Math.floor((logMs - info.birthMs) / DAY_MS);
+    if (ageDays < 0) continue;
+    const week = Math.floor(ageDays / 7);
+    let weeks = eggsByCohortWeek.get(info.cohortKey);
+    if (!weeks) {
+      weeks = new Map();
+      eggsByCohortWeek.set(info.cohortKey, weeks);
+    }
+    weeks.set(week, (weeks.get(week) ?? 0) + (l.count ?? 0));
+  }
+
+  // Filter cohorts: ≥2 hens AND has any eggs logged
+  const today = Date.now();
+  const qualifiedKeys: string[] = [];
+  for (const [key, list] of cohortHens) {
+    if (list.length < 2) continue;
+    const weeks = eggsByCohortWeek.get(key);
+    if (!weeks || weeks.size === 0) continue;
+    let totalEggs = 0;
+    for (const v of weeks.values()) totalEggs += v;
+    if (totalEggs < 5) continue;
+    qualifiedKeys.push(key);
+  }
+
+  // Order cohorts by earliest birth date desc (newest first feels natural; pick earliest first instead)
+  qualifiedKeys.sort((a, b) => {
+    const ha = cohortHens.get(a)!;
+    const hb = cohortHens.get(b)!;
+    const earliestA = Math.min(...ha.map((h) => h.birthMs));
+    const earliestB = Math.min(...hb.map((h) => h.birthMs));
+    return earliestA - earliestB;
+  });
+
+  const palette = [
+    'hsl(var(--primary))',
+    'hsl(35 70% 50%)',
+    'hsl(210 60% 50%)',
+    'hsl(280 50% 55%)',
+    'hsl(0 60% 55%)',
+    'hsl(160 50% 40%)',
+    'hsl(45 80% 45%)',
+    'hsl(250 50% 55%)',
+  ];
+
+  const cohorts: CohortMeta[] = qualifiedKeys.map((key, i) => {
+    const list = cohortHens.get(key)!;
+    const sample = list[0];
+    return {
+      key,
+      label: sample.cohortLabel,
+      henCount: list.length,
+      color: palette[i % palette.length],
+    };
+  });
+
+  // For each week up to max, compute avg eggs per active hen for each cohort
+  let maxWeek = 0;
+  for (const weeks of eggsByCohortWeek.values()) {
+    for (const w of weeks.keys()) if (w > maxWeek) maxWeek = w;
+  }
+
+  // Helper: number of hens in cohort that "had reached" age w AND were still alive at that age week
+  function activeHens(list: HenInfo[], week: number): number {
+    const weekEndMs = (week + 1) * 7 * DAY_MS;
+    let n = 0;
+    for (const h of list) {
+      const reachedMs = h.birthMs + weekEndMs;
+      if (reachedMs > today) continue; // hen hasn't reached this age yet
+      if (h.deathMs != null && h.deathMs < h.birthMs + week * 7 * DAY_MS) continue;
+      n++;
+    }
+    return n;
+  }
+
+  const series: CohortSeriesPoint[] = [];
+  for (let w = 0; w <= maxWeek; w++) {
+    const row: CohortSeriesPoint = { week: w };
+    for (const cohort of cohorts) {
+      const list = cohortHens.get(cohort.key)!;
+      const active = activeHens(list, w);
+      const eggs = eggsByCohortWeek.get(cohort.key)?.get(w) ?? 0;
+      if (active <= 0) {
+        row[cohort.key] = null;
+      } else {
+        row[cohort.key] = Math.round((eggs / active) * 100) / 100;
+      }
+    }
+    series.push(row);
+  }
+
+  return { cohorts, series, maxWeek };
+}
