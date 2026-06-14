@@ -1320,7 +1320,201 @@ export const api = {
   getFlockSurvival,
   getFeedEfficiencyTrend,
   getHatchStatistics,
+  getProductionForecast,
 };
+
+// ==================== PRODUCTION FORECAST ====================
+
+export interface ForecastDailyPoint {
+  date: string; // YYYY-MM-DD
+  label: string;
+  actual: number | null;
+  forecast: number | null;
+}
+
+export interface ProductionForecast {
+  hasEnoughData: boolean;
+  daysWithData: number;
+  avgPerDay: number | null;
+  slopePerDay: number | null;
+  next7Total: number | null;
+  next30Total: number | null;
+  series: ForecastDailyPoint[];
+  todayKey: string;
+  goal: {
+    targetCount: number;
+    period: string;
+    progressEggs: number;
+    reachOnDate: string | null;
+    reachOnLabel: string | null;
+    daysToReach: number | null;
+  } | null;
+}
+
+export async function getProductionForecast(): Promise<ProductionForecast> {
+  const [eggsRes, goalsRes] = await Promise.all([
+    supabase.from('egg_logs').select('date, count'),
+    supabase.from('egg_goals').select('target_count, period, is_active').eq('is_active', true).limit(1),
+  ]);
+
+  const eggs = (eggsRes.data ?? []) as { date: string; count: number | null }[];
+  const goalRow = (goalsRes.data ?? [])[0] as
+    | { target_count: number; period: string; is_active: boolean }
+    | undefined;
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const dayKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const fmt = new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'short' });
+
+  // Aggregate per day
+  const byDay = new Map<string, number>();
+  for (const e of eggs) {
+    if (!e.date) continue;
+    const d = new Date(e.date);
+    if (isNaN(d.getTime())) continue;
+    const k = dayKey(d);
+    byDay.set(k, (byDay.get(k) || 0) + (Number(e.count) || 0));
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = dayKey(today);
+
+  if (byDay.size < 14) {
+    return {
+      hasEnoughData: false,
+      daysWithData: byDay.size,
+      avgPerDay: null,
+      slopePerDay: null,
+      next7Total: null,
+      next30Total: null,
+      series: [],
+      todayKey,
+      goal: null,
+    };
+  }
+
+  // Last 28 days for trend fit (include zero days)
+  const fitStart = new Date(today.getTime() - 27 * DAY_MS);
+  const fitDays: { x: number; y: number; date: Date; key: string }[] = [];
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(fitStart.getTime() + i * DAY_MS);
+    const k = dayKey(d);
+    fitDays.push({ x: i, y: byDay.get(k) || 0, date: d, key: k });
+  }
+
+  // Least squares y = a + b*x
+  const n = fitDays.length;
+  const sumX = fitDays.reduce((s, p) => s + p.x, 0);
+  const sumY = fitDays.reduce((s, p) => s + p.y, 0);
+  const sumXY = fitDays.reduce((s, p) => s + p.x * p.y, 0);
+  const sumXX = fitDays.reduce((s, p) => s + p.x * p.x, 0);
+  const denom = n * sumXX - sumX * sumX;
+  const b = denom !== 0 ? (n * sumXY - sumX * sumY) / denom : 0;
+  const a = (sumY - b * sumX) / n;
+
+  const predict = (x: number) => Math.max(0, a + b * x);
+
+  // Future totals (next7, next30) starting tomorrow (x = 28..)
+  let next7 = 0;
+  for (let i = 0; i < 7; i++) next7 += predict(28 + i);
+  let next30 = 0;
+  for (let i = 0; i < 30; i++) next30 += predict(28 + i);
+
+  const avgPerDay = sumY / n;
+
+  // Build series: last 30 days actual + 14 days forecast
+  const series: ForecastDailyPoint[] = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * DAY_MS);
+    const k = dayKey(d);
+    series.push({
+      date: k,
+      label: fmt.format(d),
+      actual: byDay.get(k) || 0,
+      forecast: null,
+    });
+  }
+  // Today: show both for chart continuity
+  const lastActual = series[series.length - 1];
+  lastActual.forecast = lastActual.actual;
+  for (let i = 1; i <= 14; i++) {
+    const d = new Date(today.getTime() + i * DAY_MS);
+    const k = dayKey(d);
+    series.push({
+      date: k,
+      label: fmt.format(d),
+      actual: null,
+      forecast: Math.round(predict(28 + i - 1) * 10) / 10,
+    });
+  }
+
+  // Goal: how many eggs already logged in the goal's period, and when target is reached
+  let goal: ProductionForecast['goal'] = null;
+  if (goalRow && goalRow.target_count > 0) {
+    const period = (goalRow.period || 'monthly').toLowerCase();
+    let periodStart = new Date(today);
+    if (period === 'weekly') {
+      // ISO-ish: start on Monday
+      const dow = (today.getDay() + 6) % 7;
+      periodStart = new Date(today.getTime() - dow * DAY_MS);
+    } else if (period === 'yearly') {
+      periodStart = new Date(today.getFullYear(), 0, 1);
+    } else {
+      // monthly default
+      periodStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+    let progress = 0;
+    for (const [k, v] of byDay.entries()) {
+      const d = new Date(k);
+      if (d >= periodStart && d <= today) progress += v;
+    }
+    const remaining = Math.max(0, goalRow.target_count - progress);
+    let reachOnDate: string | null = null;
+    let reachOnLabel: string | null = null;
+    let daysToReach: number | null = null;
+    if (remaining === 0) {
+      reachOnDate = todayKey;
+      reachOnLabel = fmt.format(today);
+      daysToReach = 0;
+    } else if (avgPerDay > 0) {
+      // Cumulative forecast from tomorrow
+      let cum = 0;
+      for (let i = 1; i <= 365; i++) {
+        cum += predict(28 + i - 1);
+        if (cum >= remaining) {
+          const d = new Date(today.getTime() + i * DAY_MS);
+          reachOnDate = dayKey(d);
+          reachOnLabel = fmt.format(d);
+          daysToReach = i;
+          break;
+        }
+      }
+    }
+    goal = {
+      targetCount: goalRow.target_count,
+      period,
+      progressEggs: progress,
+      reachOnDate,
+      reachOnLabel,
+      daysToReach,
+    };
+  }
+
+  return {
+    hasEnoughData: true,
+    daysWithData: byDay.size,
+    avgPerDay,
+    slopePerDay: b,
+    next7Total: Math.round(next7),
+    next30Total: Math.round(next30),
+    series,
+    todayKey,
+    goal,
+  };
+}
+
 
 // ==================== HATCH STATISTICS ====================
 
