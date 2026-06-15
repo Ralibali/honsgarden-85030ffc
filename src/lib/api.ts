@@ -1321,6 +1321,7 @@ export const api = {
   getHenConsistency,
   getBreedingValues,
   getCohortAnalysis,
+  getCorrelationMatrix,
 };
 
 
