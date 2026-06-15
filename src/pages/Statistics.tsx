@@ -479,6 +479,8 @@ export default function Statistics() {
             <HenConsistencyCard />
 
             <CohortAnalysisCard />
+
+            <CorrelationMatrixCard />
           </>
         )}
 
