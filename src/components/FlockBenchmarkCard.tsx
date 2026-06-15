@@ -115,14 +115,46 @@ function BenchmarkInner() {
                   {above ? `+${fmt(diff)} över snittet` : diff < -0.001 ? `${fmt(diff)} under snittet` : 'På snittet'}
                 </div>
 
-                {data.user_percentile !== null && (
-                  <p className="text-sm text-foreground leading-relaxed">
-                    Din flock värper bättre än <strong>{data.user_percentile}%</strong> av liknande svenska flockar.
-                  </p>
+                {data.user_percentile !== null && data.user_percentile !== undefined && (
+                  (() => {
+                    const pct = Math.max(0, Math.min(100, Number(data.user_percentile)));
+                    const smallSample = (data.sample_flocks ?? 0) < 20;
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span>Percentilfördelning</span>
+                          <span>0–100</span>
+                        </div>
+                        <div className="relative h-3 rounded-full overflow-hidden bg-gradient-to-r from-muted via-primary/30 to-primary">
+                          <div
+                            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+                            style={{ left: `${pct}%` }}
+                            aria-label={`Din percentil: ${pct}`}
+                          >
+                            <div className="h-5 w-5 rounded-full bg-background border-2 border-primary shadow-md" />
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>Lägst</span>
+                          <span>Median</span>
+                          <span>Topp</span>
+                        </div>
+                        <p className="text-sm text-foreground leading-relaxed pt-1">
+                          Du ligger bättre än <strong>{pct}%</strong> av gårdarna.
+                        </p>
+                        {smallSample && (
+                          <p className="text-[11px] text-warning leading-relaxed">
+                            Litet underlag ({data.sample_flocks} flockar) – jämförelsen blir mer rättvis när fler gårdar loggar.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()
                 )}
                 <p className="text-[11px] text-muted-foreground">
                   Baserat på {data.sample_flocks} svenska flockar · senaste 30 dagarna
                 </p>
+
               </div>
             );
           })()
