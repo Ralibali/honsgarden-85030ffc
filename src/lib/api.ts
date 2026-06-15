@@ -2943,3 +2943,163 @@ export async function getCohortAnalysis(): Promise<CohortAnalysisResult> {
 
   return { cohorts, series, maxWeek };
 }
+
+// ==================== CORRELATION MATRIX ====================
+
+export type CorrelationVar = 'production' | 'temperature' | 'daylight' | 'feed';
+
+export interface CorrelationMatrixResult {
+  variables: { key: CorrelationVar; label: string }[];
+  matrix: (number | null)[][]; // matrix[i][j] = r between variables[i] and variables[j]
+  counts: number[][]; // pairwise overlap count
+  days: number; // total days in combined series
+  latitude: number;
+  latitudeSource: 'coop_settings' | 'weather' | 'fallback';
+  insight: string | null;
+}
+
+function pearson(xs: number[], ys: number[]): number | null {
+  const n = xs.length;
+  if (n < 3) return null;
+  let sx = 0, sy = 0;
+  for (let i = 0; i < n; i++) { sx += xs[i]; sy += ys[i]; }
+  const mx = sx / n, my = sy / n;
+  let num = 0, dx2 = 0, dy2 = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx;
+    const dy = ys[i] - my;
+    num += dx * dy;
+    dx2 += dx * dx;
+    dy2 += dy * dy;
+  }
+  const den = Math.sqrt(dx2 * dy2);
+  if (den === 0) return null;
+  return num / den;
+}
+
+export async function getCorrelationMatrix(): Promise<CorrelationMatrixResult> {
+  const [eggsRes, feedRes, coopRes] = await Promise.all([
+    supabase.from('egg_logs').select('date, count, weather'),
+    supabase.from('feed_records').select('date, amount_kg'),
+    supabase.from('coop_settings').select('latitude').limit(1),
+  ]);
+
+  const eggs = (eggsRes.data ?? []) as { date: string; count: number | null; weather: any }[];
+  const feed = (feedRes.data ?? []) as { date: string; amount_kg: number | null }[];
+  const coopRow = (coopRes.data ?? [])[0] as { latitude: number | null } | undefined;
+
+  let latitude: number;
+  let latitudeSource: CorrelationMatrixResult['latitudeSource'];
+  if (coopRow?.latitude != null && isFinite(Number(coopRow.latitude))) {
+    latitude = Number(coopRow.latitude);
+    latitudeSource = 'coop_settings';
+  } else {
+    let fromWeather: number | null = null;
+    for (const log of eggs) {
+      const lat = extractLat(log.weather);
+      if (lat != null) { fromWeather = lat; break; }
+    }
+    if (fromWeather != null) { latitude = fromWeather; latitudeSource = 'weather'; }
+    else { latitude = 59.3; latitudeSource = 'fallback'; }
+  }
+
+  // Aggregate eggs per day & one weather per day (prefer one with temp)
+  const dayMap = new Map<string, { count: number; weather: any }>();
+  for (const e of eggs) {
+    if (!e.date) continue;
+    const cur = dayMap.get(e.date) ?? { count: 0, weather: null };
+    cur.count += e.count ?? 0;
+    if (cur.weather == null || (extractTemp(cur.weather) == null && extractTemp(e.weather) != null)) {
+      cur.weather = e.weather;
+    }
+    dayMap.set(e.date, cur);
+  }
+
+  // Feed per day (0 default)
+  const feedMap = new Map<string, number>();
+  for (const f of feed) {
+    if (!f.date) continue;
+    feedMap.set(f.date, (feedMap.get(f.date) ?? 0) + (f.amount_kg ?? 0));
+  }
+
+  type Row = { date: string; production: number; temperature: number | null; daylight: number; feed: number };
+  const rows: Row[] = [];
+  for (const date of Array.from(dayMap.keys()).sort()) {
+    const { count, weather } = dayMap.get(date)!;
+    const temp = extractTemp(weather);
+    const dh = daylightHoursFor(date, latitude);
+    // require production + at least temp or daylight (daylight always derivable, so effectively always kept)
+    if (temp == null && dh == null) continue;
+    rows.push({
+      date,
+      production: count,
+      temperature: temp,
+      daylight: dh,
+      feed: feedMap.get(date) ?? 0,
+    });
+  }
+
+  const variables: { key: CorrelationVar; label: string }[] = [
+    { key: 'production', label: 'Produktion' },
+    { key: 'temperature', label: 'Temperatur' },
+    { key: 'daylight', label: 'Dagsljus' },
+    { key: 'feed', label: 'Foder' },
+  ];
+
+  const getVal = (r: Row, k: CorrelationVar): number | null => {
+    if (k === 'production') return r.production;
+    if (k === 'temperature') return r.temperature;
+    if (k === 'daylight') return r.daylight;
+    return r.feed;
+  };
+
+  const MIN = 20;
+  const n = variables.length;
+  const matrix: (number | null)[][] = Array.from({ length: n }, () => Array(n).fill(null));
+  const counts: number[][] = Array.from({ length: n }, () => Array(n).fill(0));
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      if (i === j) { matrix[i][j] = 1; counts[i][j] = rows.length; continue; }
+      const xs: number[] = []; const ys: number[] = [];
+      for (const r of rows) {
+        const a = getVal(r, variables[i].key);
+        const b = getVal(r, variables[j].key);
+        if (a == null || b == null) continue;
+        xs.push(a); ys.push(b);
+      }
+      counts[i][j] = xs.length;
+      matrix[i][j] = xs.length >= MIN ? pearson(xs, ys) : null;
+    }
+  }
+
+  // Strongest off-diagonal pair
+  let insight: string | null = null;
+  let best: { i: number; j: number; r: number } | null = null;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const r = matrix[i][j];
+      if (r == null) continue;
+      if (!best || Math.abs(r) > Math.abs(best.r)) best = { i, j, r };
+    }
+  }
+  if (best && Math.abs(best.r) >= 0.2) {
+    const a = variables[best.i].label.toLowerCase();
+    const b = variables[best.j].label.toLowerCase();
+    const dir = best.r > 0 ? 'följs åt' : 'rör sig åt motsatt håll';
+    const strength = Math.abs(best.r) >= 0.6 ? 'starkt' : Math.abs(best.r) >= 0.4 ? 'tydligt' : 'svagt';
+    insight = `Starkaste samband: ${a} och ${b} ${dir} ${strength} (r=${best.r.toFixed(2)}).`;
+  } else if (best) {
+    insight = 'Inga tydliga samband mellan faktorerna än – samla mer data så blir mönstren tydligare.';
+  }
+
+  return {
+    variables,
+    matrix,
+    counts,
+    days: rows.length,
+    latitude,
+    latitudeSource,
+    insight,
+  };
+}
