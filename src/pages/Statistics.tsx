@@ -24,6 +24,7 @@ import ProductionControlChart from '@/components/ProductionControlChart';
 import SeasonDecompositionCard from '@/components/SeasonDecompositionCard';
 import HenConsistencyCard from '@/components/HenConsistencyCard';
 import CohortAnalysisCard from '@/components/CohortAnalysisCard';
+import CorrelationMatrixCard from '@/components/CorrelationMatrixCard';
 
 import FlockBenchmarkCard from '@/components/FlockBenchmarkCard';
 import EggProductionChart from '@/components/EggProductionChart';
