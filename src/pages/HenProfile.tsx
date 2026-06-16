@@ -152,22 +152,51 @@ export default function HenProfile() {
   });
 
   const healthNoteMutation = useMutation({
-    mutationFn: (payload: { text: string; type: string }) =>
-      api.createHealthLog({
+    mutationFn: async (payload: { text: string; type: string; id?: string | null }) => {
+      if (payload.id) {
+        return api.updateHealthLog(payload.id, { type: payload.type, description: payload.text });
+      }
+      return api.createHealthLog({
         date: new Date().toISOString().split('T')[0],
         type: payload.type,
         description: payload.text,
         hen_id: henId!,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
       queryClient.invalidateQueries({ queryKey: ['health-logs'] });
-      toast({ title: 'Hälsonotering sparad 💚' });
+      toast({ title: editingHealthNoteId ? 'Hälsonotering uppdaterad 💚' : 'Hälsonotering sparad 💚' });
       setHealthNoteOpen(false);
       setHealthNoteText('');
+      setEditingHealthNoteId(null);
     },
     onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara noteringen just nu.', variant: 'destructive' }),
   });
+
+  const deleteHealthNoteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteHealthLog(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
+      queryClient.invalidateQueries({ queryKey: ['health-logs'] });
+      toast({ title: 'Hälsonotering borttagen' });
+    },
+    onError: () => toast({ title: 'Något gick fel', description: 'Kunde inte ta bort noteringen.', variant: 'destructive' }),
+  });
+
+  const startEditingHealthNote = (log: any) => {
+    setEditingHealthNoteId(log.id);
+    setHealthNoteText(log.description || '');
+    setHealthNoteType(log.type || 'observation');
+    setHealthNoteOpen(true);
+  };
+
+  const startNewHealthNote = () => {
+    setEditingHealthNoteId(null);
+    setHealthNoteText('');
+    setHealthNoteType('observation');
+    setHealthNoteOpen(true);
+  };
 
   const followUpReminder = async () => {
     try {
