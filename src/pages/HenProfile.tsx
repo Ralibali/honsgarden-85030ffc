@@ -565,21 +565,46 @@ export default function HenProfile() {
                       size="sm"
                       variant="outline"
                       className="rounded-xl h-8 text-xs gap-1.5"
-                      onClick={() => setHealthNoteOpen(true)}
+                      onClick={startNewHealthNote}
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Ny notering
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    {healthLogs.map((log: any, i: number) => (
-                      <div key={i} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20">
+                    {healthLogs.map((log: any) => (
+                      <div key={log.id} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20 group">
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium bg-muted/60 px-2 py-0.5 rounded-md">
                           {new Date(log.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
                         </span>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           {log.type && <span className="text-[10px] text-primary font-medium uppercase">{log.type}</span>}
-                          <p className="text-xs text-foreground">{log.description || '–'}</p>
+                          <p className="text-xs text-foreground whitespace-pre-wrap break-words">{log.description || '–'}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            onClick={() => startEditingHealthNote(log)}
+                            aria-label="Redigera notering"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if (window.confirm('Ta bort denna hälsonotering?')) {
+                                deleteHealthNoteMutation.mutate(log.id);
+                              }
+                            }}
+                            disabled={deleteHealthNoteMutation.isPending}
+                            aria-label="Ta bort notering"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -592,7 +617,7 @@ export default function HenProfile() {
                 title="Inga hälsonoteringar ännu"
                 description={`När något händer med ${hen.name} kan du samla anteckningar här – till exempel ruggningsperiod, sjukdom, veterinärbesök eller personliga observationer. Hönsgården hjälper dig formulera och påminner om vad du kan hålla koll på.`}
                 actionLabel="Lägg till hälsonotering"
-                onAction={() => setHealthNoteOpen(true)}
+                onAction={startNewHealthNote}
               />
             )}
 
