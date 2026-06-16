@@ -254,7 +254,8 @@ export default function Dashboard() {
   const weekDelta = weekEggs - prevWeekEggs;
   const eggsPerDay = weekEggs / 7;
 
-  const activeHens = (hens as any[]).filter((h: any) => h.is_active).length;
+  const activeHens = (hens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
+  const activeRoosters = (hens as any[]).filter((h: any) => h.is_active && h.hen_type === 'rooster').length;
   const streak = calculateStreak(eggs);
   const topHen = getTopHen(eggs, hens as any[]);
   const seasonal = getSeasonalTip();
@@ -772,7 +773,7 @@ export default function Dashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">Mina hönor</p>
-                  <p className="text-[10px] text-muted-foreground">{activeHens} aktiva</p>
+                  <p className="text-[10px] text-muted-foreground">{activeHens} {activeHens === 1 ? 'höna' : 'hönor'}{activeRoosters > 0 ? ` · ${activeRoosters} ${activeRoosters === 1 ? 'tupp' : 'tuppar'}` : ''}</p>
                 </div>
               </CardContent>
             </Card>

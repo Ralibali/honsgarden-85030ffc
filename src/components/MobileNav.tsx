@@ -24,6 +24,7 @@ import {
   Tag,
   Sun,
   Moon,
+  PieChart,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
@@ -72,6 +73,7 @@ const moreGroups = [
   {
     label: 'Insikter',
     items: [
+      { title: 'Översikt', url: '/app/overview', icon: PieChart },
       { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
       { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
       { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },

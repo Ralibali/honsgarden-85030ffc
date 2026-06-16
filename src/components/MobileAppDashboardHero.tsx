@@ -61,7 +61,8 @@ export default function MobileAppDashboardHero() {
       .reduce((sum, egg) => sum + (egg.count || 0), 0);
   }, [eggs]);
 
-  const activeHens = useMemo(() => (hens as any[]).filter((hen) => hen.is_active !== false).length, [hens]);
+  const activeHens = useMemo(() => (hens as any[]).filter((hen) => hen.is_active !== false && hen.hen_type !== 'rooster').length, [hens]);
+  const activeRoosters = useMemo(() => (hens as any[]).filter((hen) => hen.is_active !== false && hen.hen_type === 'rooster').length, [hens]);
 
   const monthValue = useMemo(() => {
     const now = new Date();
@@ -74,7 +75,7 @@ export default function MobileAppDashboardHero() {
 
   const metrics = [
     { label: 'Ägg idag', value: String(todayEggs), icon: Egg, hint: `${weekEggs} senaste 7 dagarna`, path: '/app/eggs' },
-    { label: 'Hönor', value: String(activeHens), icon: Bird, hint: 'aktiva i flocken', path: '/app/hens' },
+    { label: 'Hönor', value: String(activeHens), icon: Bird, hint: activeRoosters > 0 ? `+ ${activeRoosters} ${activeRoosters === 1 ? 'tupp' : 'tuppar'}` : 'aktiva i flocken', path: '/app/hens' },
     { label: 'Värde', value: `${Math.round(monthValue)} kr`, icon: ReceiptText, hint: 'denna månad', path: '/app/egg-sales' },
     { label: 'Foder', value: hasFeedData ? 'Aktivt' : 'Starta', icon: Wheat, hint: 'kostnad per ägg', path: '/app/feed' },
   ];
