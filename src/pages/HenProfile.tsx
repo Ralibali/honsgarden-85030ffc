@@ -14,6 +14,7 @@ import {
 import {
   ArrowLeft, Egg, Heart, Calendar, TrendingUp, Share2, Edit2, Loader2, Save, X,
   Link2, Facebook, Instagram, Mail, MessageSquare, Plus, BarChart3, Feather, Stethoscope,
+  Trash2, Pencil,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
