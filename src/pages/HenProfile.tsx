@@ -752,11 +752,11 @@ export default function HenProfile() {
               <Button
                 className="flex-1 rounded-xl h-10"
                 disabled={!healthNoteText.trim() || healthNoteMutation.isPending}
-                onClick={() => healthNoteMutation.mutate({ text: healthNoteText.trim(), type: healthNoteType })}
+                onClick={() => healthNoteMutation.mutate({ text: healthNoteText.trim(), type: healthNoteType, id: editingHealthNoteId })}
               >
-                {healthNoteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Spara hälsonotering'}
+                {healthNoteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingHealthNoteId ? 'Spara ändringar' : 'Spara hälsonotering')}
               </Button>
-              <Button variant="outline" className="rounded-xl h-10" onClick={() => setHealthNoteOpen(false)}>
+              <Button variant="outline" className="rounded-xl h-10" onClick={() => { setHealthNoteOpen(false); setEditingHealthNoteId(null); }}>
                 Avbryt
               </Button>
             </div>
