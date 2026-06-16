@@ -3,7 +3,7 @@ import {
   Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe,
   ClipboardCheck, Crown, Shield, Feather, Bot, CalendarDays, Users,
   ReceiptText, Newspaper, CloudSun, Stethoscope, Heart, Boxes, FileText, Tag,
-  ChevronDown, Sun, Moon,
+  ChevronDown, Sun, Moon, PieChart,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -60,6 +60,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Insikter',
     items: [
+      { title: 'Översikt', url: '/app/overview', icon: PieChart },
       { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
       { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
       { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },

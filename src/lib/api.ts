@@ -326,6 +326,19 @@ export async function getHenHealthLogs(henId: string): Promise<HealthLog[]> {
   return data ?? [];
 }
 
+export async function updateHealthLog(id: string, updates: { description?: string | null; type?: string | null; date?: string }): Promise<HealthLog> {
+  await getUserId();
+  const { data, error } = await supabase.from('health_logs').update(updates).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteHealthLog(id: string): Promise<void> {
+  await getUserId();
+  const { error } = await supabase.from('health_logs').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
 // ==================== FEEDBACK ====================
 
 export async function submitFeedback(feedbackData: FeedbackInsert): Promise<Feedback> {
@@ -480,9 +493,18 @@ export async function getFlocks(): Promise<Flock[]> {
 
 export async function getOrCreateDefaultFlock(): Promise<Flock> {
   const userId = await getUserId();
-  const { data: existing } = await supabase.from('flocks').select('*').eq('name', 'Min flock').maybeSingle();
+  const { data: existing } = await supabase
+    .from('flocks')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('name', 'Min flock')
+    .maybeSingle();
   if (existing) return existing;
-  const { data, error } = await supabase.from('flocks').insert({ name: 'Min flock', description: 'Standardflock', user_id: userId }).select().single();
+  const { data, error } = await supabase
+    .from('flocks')
+    .insert({ name: 'Min flock', description: 'Standardflock', user_id: userId })
+    .select()
+    .single();
   if (error) throw new Error(error.message);
   return data;
 }
@@ -1288,7 +1310,7 @@ export const api = {
   getFeedRecords, createFeedRecord, deleteFeedRecord, getFeedInventory, getFeedStatistics,
   getHatchings, createHatching, updateHatching, deleteHatching, getHatchingAlerts,
   getTransactions, createTransaction, deleteTransaction,
-  getHealthLogs, createHealthLog, getHenHealthLogs,
+  getHealthLogs, createHealthLog, getHenHealthLogs, updateHealthLog, deleteHealthLog,
   submitFeedback, getUserFeedback,
   getDailyChores, completeChore, uncompleteChore, createChore, deleteChore, updateChore,
   getCoopSettings, updateCoopSettings,

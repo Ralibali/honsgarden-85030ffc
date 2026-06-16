@@ -14,6 +14,7 @@ import {
 import {
   ArrowLeft, Egg, Heart, Calendar, TrendingUp, Share2, Edit2, Loader2, Save, X,
   Link2, Facebook, Instagram, Mail, MessageSquare, Plus, BarChart3, Feather, Stethoscope,
+  Trash2, Pencil,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -111,6 +112,7 @@ export default function HenProfile() {
   const [healthNoteOpen, setHealthNoteOpen] = useState(false);
   const [healthNoteText, setHealthNoteText] = useState('');
   const [healthNoteType, setHealthNoteType] = useState<string>('observation');
+  const [editingHealthNoteId, setEditingHealthNoteId] = useState<string | null>(null);
   const [parentsOpen, setParentsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -150,22 +152,51 @@ export default function HenProfile() {
   });
 
   const healthNoteMutation = useMutation({
-    mutationFn: (payload: { text: string; type: string }) =>
-      api.createHealthLog({
+    mutationFn: async (payload: { text: string; type: string; id?: string | null }) => {
+      if (payload.id) {
+        return api.updateHealthLog(payload.id, { type: payload.type, description: payload.text });
+      }
+      return api.createHealthLog({
         date: new Date().toISOString().split('T')[0],
         type: payload.type,
         description: payload.text,
         hen_id: henId!,
-      }),
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
       queryClient.invalidateQueries({ queryKey: ['health-logs'] });
-      toast({ title: 'Hälsonotering sparad 💚' });
+      toast({ title: editingHealthNoteId ? 'Hälsonotering uppdaterad 💚' : 'Hälsonotering sparad 💚' });
       setHealthNoteOpen(false);
       setHealthNoteText('');
+      setEditingHealthNoteId(null);
     },
     onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara noteringen just nu.', variant: 'destructive' }),
   });
+
+  const deleteHealthNoteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteHealthLog(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
+      queryClient.invalidateQueries({ queryKey: ['health-logs'] });
+      toast({ title: 'Hälsonotering borttagen' });
+    },
+    onError: () => toast({ title: 'Något gick fel', description: 'Kunde inte ta bort noteringen.', variant: 'destructive' }),
+  });
+
+  const startEditingHealthNote = (log: any) => {
+    setEditingHealthNoteId(log.id);
+    setHealthNoteText(log.description || '');
+    setHealthNoteType(log.type || 'observation');
+    setHealthNoteOpen(true);
+  };
+
+  const startNewHealthNote = () => {
+    setEditingHealthNoteId(null);
+    setHealthNoteText('');
+    setHealthNoteType('observation');
+    setHealthNoteOpen(true);
+  };
 
   const followUpReminder = async () => {
     try {
@@ -534,21 +565,46 @@ export default function HenProfile() {
                       size="sm"
                       variant="outline"
                       className="rounded-xl h-8 text-xs gap-1.5"
-                      onClick={() => setHealthNoteOpen(true)}
+                      onClick={startNewHealthNote}
                     >
                       <Plus className="h-3.5 w-3.5" />
                       Ny notering
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    {healthLogs.map((log: any, i: number) => (
-                      <div key={i} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20">
+                    {healthLogs.map((log: any) => (
+                      <div key={log.id} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20 group">
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium bg-muted/60 px-2 py-0.5 rounded-md">
                           {new Date(log.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
                         </span>
-                        <div>
+                        <div className="flex-1 min-w-0">
                           {log.type && <span className="text-[10px] text-primary font-medium uppercase">{log.type}</span>}
-                          <p className="text-xs text-foreground">{log.description || '–'}</p>
+                          <p className="text-xs text-foreground whitespace-pre-wrap break-words">{log.description || '–'}</p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            onClick={() => startEditingHealthNote(log)}
+                            aria-label="Redigera notering"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if (window.confirm('Ta bort denna hälsonotering?')) {
+                                deleteHealthNoteMutation.mutate(log.id);
+                              }
+                            }}
+                            disabled={deleteHealthNoteMutation.isPending}
+                            aria-label="Ta bort notering"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -561,7 +617,7 @@ export default function HenProfile() {
                 title="Inga hälsonoteringar ännu"
                 description={`När något händer med ${hen.name} kan du samla anteckningar här – till exempel ruggningsperiod, sjukdom, veterinärbesök eller personliga observationer. Hönsgården hjälper dig formulera och påminner om vad du kan hålla koll på.`}
                 actionLabel="Lägg till hälsonotering"
-                onAction={() => setHealthNoteOpen(true)}
+                onAction={startNewHealthNote}
               />
             )}
 
@@ -642,15 +698,17 @@ export default function HenProfile() {
       )}
 
       {/* Health Note Dialog with AI Helper */}
-      <Dialog open={healthNoteOpen} onOpenChange={setHealthNoteOpen}>
+      <Dialog open={healthNoteOpen} onOpenChange={(open) => { setHealthNoteOpen(open); if (!open) { setEditingHealthNoteId(null); setHealthNoteText(''); } }}>
         <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif flex items-center gap-2">
               <Stethoscope className="h-4 w-4 text-primary" />
-              Hälsonotering – {hen.name}
+              {editingHealthNoteId ? 'Redigera hälsonotering' : 'Hälsonotering'} – {hen.name}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Skriv en kort observation. Hönsgården kan hjälpa dig formulera den tydligare och föreslå vad du kan hålla koll på.
+              {editingHealthNoteId
+                ? 'Ändra typ eller text och spara dina justeringar.'
+                : 'Skriv en kort observation. Hönsgården kan hjälpa dig formulera den tydligare och föreslå vad du kan hålla koll på.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -694,11 +752,11 @@ export default function HenProfile() {
               <Button
                 className="flex-1 rounded-xl h-10"
                 disabled={!healthNoteText.trim() || healthNoteMutation.isPending}
-                onClick={() => healthNoteMutation.mutate({ text: healthNoteText.trim(), type: healthNoteType })}
+                onClick={() => healthNoteMutation.mutate({ text: healthNoteText.trim(), type: healthNoteType, id: editingHealthNoteId })}
               >
-                {healthNoteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Spara hälsonotering'}
+                {healthNoteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingHealthNoteId ? 'Spara ändringar' : 'Spara hälsonotering')}
               </Button>
-              <Button variant="outline" className="rounded-xl h-10" onClick={() => setHealthNoteOpen(false)}>
+              <Button variant="outline" className="rounded-xl h-10" onClick={() => { setHealthNoteOpen(false); setEditingHealthNoteId(null); }}>
                 Avbryt
               </Button>
             </div>

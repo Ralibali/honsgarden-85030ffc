@@ -191,7 +191,7 @@ const AppRoutes = () => (
           <Route path="egg-sales/anpassa" element={<EggSaleCustomize />} />
           <Route path="egg-sales/dashboard" element={<EggSaleDashboard />} />
           <Route path="statistics" element={<Statistics />} />
-          <Route path="overview" element={<Navigate to="/app" replace />} />
+          <Route path="overview" element={<Overview />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="feedback" element={<Feedback />} />
           <Route path="premium" element={<Premium />} />
