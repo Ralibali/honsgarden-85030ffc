@@ -698,15 +698,17 @@ export default function HenProfile() {
       )}
 
       {/* Health Note Dialog with AI Helper */}
-      <Dialog open={healthNoteOpen} onOpenChange={setHealthNoteOpen}>
+      <Dialog open={healthNoteOpen} onOpenChange={(open) => { setHealthNoteOpen(open); if (!open) { setEditingHealthNoteId(null); setHealthNoteText(''); } }}>
         <DialogContent className="sm:max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif flex items-center gap-2">
               <Stethoscope className="h-4 w-4 text-primary" />
-              Hälsonotering – {hen.name}
+              {editingHealthNoteId ? 'Redigera hälsonotering' : 'Hälsonotering'} – {hen.name}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Skriv en kort observation. Hönsgården kan hjälpa dig formulera den tydligare och föreslå vad du kan hålla koll på.
+              {editingHealthNoteId
+                ? 'Ändra typ eller text och spara dina justeringar.'
+                : 'Skriv en kort observation. Hönsgården kan hjälpa dig formulera den tydligare och föreslå vad du kan hålla koll på.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
