@@ -1,0 +1,1 @@
+UPDATE public.generated_reports SET status='failed', error_message='Tidigare fel (kolumnnamn). Försök igen.' WHERE status='generating' AND created_at < now() - interval '5 minutes';
