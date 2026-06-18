@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
       .from("generated_reports")
       .update({
         status: "completed",
-        file_url: path,
+        file_path: path,
         file_size_bytes: pdfBytes.length,
         generated_at: new Date().toISOString(),
       })
