@@ -217,6 +217,9 @@ export default function HenProfile() {
 
   const startEditing = () => {
     if (!hen) return;
+    const status: 'active' | 'sold' | 'deceased' = hen.is_active
+      ? 'active'
+      : ((hen as any).death_date ? 'deceased' : 'sold');
     setEditForm({
       name: hen.name || '',
       breed: hen.breed || '',
@@ -224,11 +227,15 @@ export default function HenProfile() {
       birth_date: hen.birth_date || '',
       notes: hen.notes || '',
       flock_id: hen.flock_id || 'none',
+      status,
+      death_date: (hen as any).death_date || '',
+      death_cause: (hen as any).death_cause || '',
     });
     setEditing(true);
   };
 
   const handleSave = () => {
+    const isActive = editForm.status === 'active';
     updateMutation.mutate({
       name: editForm.name,
       breed: editForm.breed || null,
@@ -236,6 +243,9 @@ export default function HenProfile() {
       birth_date: editForm.birth_date || null,
       notes: editForm.notes || null,
       flock_id: editForm.flock_id === 'none' ? null : editForm.flock_id,
+      is_active: isActive,
+      death_date: editForm.status === 'deceased' ? (editForm.death_date || new Date().toISOString().split('T')[0]) : null,
+      death_cause: editForm.status === 'deceased' ? (editForm.death_cause || null) : (editForm.status === 'sold' ? 'Såld' : null),
     });
   };
 
