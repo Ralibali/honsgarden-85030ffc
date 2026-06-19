@@ -384,11 +384,6 @@ export default function HenProfile() {
                 <Label>Personlighet och anteckningar</Label>
                 <Textarea className="mt-1.5 rounded-xl resize-none" rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} placeholder="T.ex. nyfiken, lugn, gillar att ruva eller extra social." />
               </div>
-              <div className="flex gap-2">
-                <Button className="flex-1 rounded-xl h-10 gap-2" onClick={handleSave} disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  Spara
-                </Button>
               <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-3">
                 <div>
                   <Label className="text-sm">Status</Label>
