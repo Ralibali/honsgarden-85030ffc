@@ -106,7 +106,7 @@ export default function HenProfile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', breed: '', color: '', birth_date: '', notes: '', flock_id: 'none' });
+  const [editForm, setEditForm] = useState({ name: '', breed: '', color: '', birth_date: '', notes: '', flock_id: 'none', status: 'active' as 'active' | 'sold' | 'deceased', death_date: '', death_cause: '' });
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [healthNoteOpen, setHealthNoteOpen] = useState(false);
