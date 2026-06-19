@@ -106,7 +106,7 @@ export default function HenProfile() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', breed: '', color: '', birth_date: '', notes: '', flock_id: 'none' });
+  const [editForm, setEditForm] = useState({ name: '', breed: '', color: '', birth_date: '', notes: '', flock_id: 'none', status: 'active' as 'active' | 'sold' | 'deceased', death_date: '', death_cause: '' });
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [healthNoteOpen, setHealthNoteOpen] = useState(false);
@@ -217,6 +217,9 @@ export default function HenProfile() {
 
   const startEditing = () => {
     if (!hen) return;
+    const status: 'active' | 'sold' | 'deceased' = hen.is_active
+      ? 'active'
+      : ((hen as any).death_date ? 'deceased' : 'sold');
     setEditForm({
       name: hen.name || '',
       breed: hen.breed || '',
@@ -224,11 +227,15 @@ export default function HenProfile() {
       birth_date: hen.birth_date || '',
       notes: hen.notes || '',
       flock_id: hen.flock_id || 'none',
+      status,
+      death_date: (hen as any).death_date || '',
+      death_cause: (hen as any).death_cause || '',
     });
     setEditing(true);
   };
 
   const handleSave = () => {
+    const isActive = editForm.status === 'active';
     updateMutation.mutate({
       name: editForm.name,
       breed: editForm.breed || null,
@@ -236,6 +243,9 @@ export default function HenProfile() {
       birth_date: editForm.birth_date || null,
       notes: editForm.notes || null,
       flock_id: editForm.flock_id === 'none' ? null : editForm.flock_id,
+      is_active: isActive,
+      death_date: editForm.status === 'deceased' ? (editForm.death_date || new Date().toISOString().split('T')[0]) : null,
+      death_cause: editForm.status === 'deceased' ? (editForm.death_cause || null) : (editForm.status === 'sold' ? 'Såld' : null),
     });
   };
 
@@ -373,6 +383,34 @@ export default function HenProfile() {
               <div>
                 <Label>Personlighet och anteckningar</Label>
                 <Textarea className="mt-1.5 rounded-xl resize-none" rows={3} value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} placeholder="T.ex. nyfiken, lugn, gillar att ruva eller extra social." />
+              </div>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-3">
+                <div>
+                  <Label className="text-sm">Status</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Markera om {isRooster ? 'tuppen' : 'hönan'} har sålts eller gått bort. Inaktiva {isRooster ? 'tuppar' : 'hönor'} räknas inte med i statistiken.</p>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v as 'active' | 'sold' | 'deceased' })}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">🐔 Aktiv – finns kvar i flocken</SelectItem>
+                      <SelectItem value="sold">📦 Såld eller bortskänkt</SelectItem>
+                      <SelectItem value="deceased">🕊️ Avliden</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editForm.status === 'deceased' && (
+                  <>
+                    <div>
+                      <Label className="text-xs">Datum (valfritt)</Label>
+                      <Input className="mt-1 rounded-xl" type="date" value={editForm.death_date} onChange={(e) => setEditForm({ ...editForm, death_date: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Orsak (valfritt)</Label>
+                      <Input className="mt-1 rounded-xl" value={editForm.death_cause} onChange={(e) => setEditForm({ ...editForm, death_cause: e.target.value })} placeholder="T.ex. ålder, sjukdom, rovdjur" />
+                    </div>
+                  </>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button className="flex-1 rounded-xl h-10 gap-2" onClick={handleSave} disabled={updateMutation.isPending}>
