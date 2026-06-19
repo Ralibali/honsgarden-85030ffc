@@ -389,6 +389,39 @@ export default function HenProfile() {
                   {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Spara
                 </Button>
+              <div className="rounded-xl border border-border/60 bg-muted/30 p-3 space-y-3">
+                <div>
+                  <Label className="text-sm">Status</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Markera om {isRooster ? 'tuppen' : 'hönan'} har sålts eller gått bort. Inaktiva {isRooster ? 'tuppar' : 'hönor'} räknas inte med i statistiken.</p>
+                  <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v as 'active' | 'sold' | 'deceased' })}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">🐔 Aktiv – finns kvar i flocken</SelectItem>
+                      <SelectItem value="sold">📦 Såld eller bortskänkt</SelectItem>
+                      <SelectItem value="deceased">🕊️ Avliden</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {editForm.status === 'deceased' && (
+                  <>
+                    <div>
+                      <Label className="text-xs">Datum (valfritt)</Label>
+                      <Input className="mt-1 rounded-xl" type="date" value={editForm.death_date} onChange={(e) => setEditForm({ ...editForm, death_date: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Orsak (valfritt)</Label>
+                      <Input className="mt-1 rounded-xl" value={editForm.death_cause} onChange={(e) => setEditForm({ ...editForm, death_cause: e.target.value })} placeholder="T.ex. ålder, sjukdom, rovdjur" />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1 rounded-xl h-10 gap-2" onClick={handleSave} disabled={updateMutation.isPending}>
+                  {updateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Spara
+                </Button>
                 <Button variant="outline" className="rounded-xl h-10 gap-2" onClick={() => setEditing(false)}>
                   <X className="h-4 w-4" /> Avbryt
                 </Button>
