@@ -303,6 +303,7 @@ export default function AgdaAdminPanel() {
                     <TableHead>Ort</TableHead>
                     <TableHead className="text-right">Pris/karta</TableHead>
                     <TableHead className="text-right">Lager</TableHead>
+                    <TableHead className="text-right">Besökare</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Uppdaterad</TableHead>
                   </TableRow>
@@ -311,6 +312,7 @@ export default function AgdaAdminPanel() {
                   {filteredListings.map((l) => {
                     const p = profileById[l.user_id];
                     const active = l.is_active && !l.sold_out_manually;
+                    const vs = viewStatsBySlug.get(l.slug || '');
                     return (
                       <TableRow key={l.id}>
                         <TableCell className="max-w-[220px] truncate">
@@ -325,6 +327,9 @@ export default function AgdaAdminPanel() {
                         <TableCell className="text-xs">{l.location || '—'}</TableCell>
                         <TableCell className="text-right tabular-nums">{kr(Number(l.price_per_pack))}</TableCell>
                         <TableCell className="text-right tabular-nums">{l.stock_packs ?? '—'}</TableCell>
+                        <TableCell className="text-right tabular-nums text-xs">
+                          {vs ? <><span className="font-medium">{vs.sessions.size}</span> <span className="text-muted-foreground">/ {vs.views}</span></> : '—'}
+                        </TableCell>
                         <TableCell>
                           {active
                             ? <Badge className="bg-success/15 text-success border-success/20">Aktiv</Badge>
@@ -339,7 +344,7 @@ export default function AgdaAdminPanel() {
                     );
                   })}
                   {filteredListings.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Inga säljsidor</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Inga säljsidor</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
