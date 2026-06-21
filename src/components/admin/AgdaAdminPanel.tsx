@@ -209,56 +209,128 @@ export default function AgdaAdminPanel() {
     : 0;
 
   const kpis = [
-    { icon: Users, label: 'Säljare', value: totals.sellers, bg: 'bg-primary/10', color: 'text-primary' },
-    { icon: Store, label: 'Aktiva sidor', value: totals.activeListings, bg: 'bg-warning/10', color: 'text-warning' },
-    { icon: Eye, label: 'Besökare 90d', value: totals.uniqueVisitors, bg: 'bg-blue-500/10', color: 'text-blue-600' },
-    { icon: Eye, label: 'Sidvisningar', value: totals.views, bg: 'bg-indigo-500/10', color: 'text-indigo-600' },
-    { icon: ShoppingBasket, label: `Bokningar (${conversionRate}%)`, value: totals.bookings, bg: 'bg-accent/10', color: 'text-accent' },
-    { icon: Wallet, label: 'Bekräftat värde', value: kr(totals.revenue), bg: 'bg-success/10', color: 'text-success' },
-  ];
+    { icon: Users, label: 'Säljare', value: totals.sellers, tint: 'primary' },
+    { icon: Store, label: 'Aktiva sidor', value: totals.activeListings, tint: 'warning' },
+    { icon: Eye, label: 'Besökare 90d', value: totals.uniqueVisitors.toLocaleString('sv-SE'), tint: 'info' },
+    { icon: MousePointerClick, label: 'Sidvisningar', value: totals.views.toLocaleString('sv-SE'), tint: 'indigo' },
+    { icon: ShoppingBasket, label: 'Bokningar', value: totals.bookings, sub: `${conversionRate}% konv.`, tint: 'accent' },
+    { icon: Wallet, label: 'Bekräftat värde', value: kr(totals.revenue), tint: 'success' },
+  ] as const;
+
+  const tintMap: Record<string, { bg: string; text: string; ring: string }> = {
+    primary: { bg: 'bg-primary/10', text: 'text-primary', ring: 'ring-primary/20' },
+    warning: { bg: 'bg-warning/10', text: 'text-warning', ring: 'ring-warning/20' },
+    info: { bg: 'bg-blue-500/10', text: 'text-blue-600', ring: 'ring-blue-500/20' },
+    indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-600', ring: 'ring-indigo-500/20' },
+    accent: { bg: 'bg-accent/10', text: 'text-accent-foreground', ring: 'ring-accent/30' },
+    success: { bg: 'bg-success/10', text: 'text-success', ring: 'ring-success/20' },
+  };
+
+  const statusBadge = (b: any) => {
+    if (b.status === 'cancelled') return <Badge variant="outline" className="text-[10px]">Avbokad</Badge>;
+    if (b.status === 'paid' || b.status === 'picked_up') return <Badge className="bg-success/15 text-success border-success/20 text-[10px]">{b.status === 'paid' ? 'Betald' : 'Hämtad'}</Badge>;
+    if (b.status === 'pending') return <Badge className="bg-warning/15 text-warning border-warning/20 text-[10px]">Väntar</Badge>;
+    return <Badge variant="secondary" className="text-[10px]">{b.status}</Badge>;
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-        {kpis.map(({ icon: Icon, label, value, bg, color }) => (
-          <Card key={label} className="border-border/50">
-            <CardContent className="p-2.5 sm:p-3 text-center">
-              <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mx-auto mb-1`}>
-                <Icon className={`h-4 w-4 ${color}`} />
-              </div>
-              <p className="stat-number text-lg sm:text-xl text-foreground tabular-nums">{value}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide leading-tight">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <Store className="h-5 w-5 text-primary" /> Agdas bod
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">Översikt över säljare, sidor och bokningar.</p>
+        </div>
+        {totals.uniqueVisitors > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-full px-3 py-1.5">
+            <TrendingUp className="h-3.5 w-3.5 text-success" />
+            <span>{conversionRate}% av besökare bokar</span>
+          </div>
+        )}
       </div>
 
+      {/* KPIs */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3">
+        {kpis.map(({ icon: Icon, label, value, tint, ...rest }) => {
+          const t = tintMap[tint];
+          const sub = (rest as any).sub as string | undefined;
+          return (
+            <Card key={label} className="border-border/60 hover:border-border transition-colors overflow-hidden">
+              <CardContent className="p-3 sm:p-4">
+                <div className={`w-9 h-9 rounded-xl ${t.bg} ring-1 ${t.ring} flex items-center justify-center mb-2.5`}>
+                  <Icon className={`h-4.5 w-4.5 ${t.text}`} />
+                </div>
+                <p className="text-xl sm:text-2xl font-semibold text-foreground tabular-nums leading-none">{value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">{label}</p>
+                {sub && <p className="text-[10px] text-success mt-0.5 font-medium">{sub}</p>}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Sök på namn, e-post, kund eller säljsida..."
-          className="pl-9"
+          className="pl-10 h-11 bg-background"
         />
       </div>
 
-      <Tabs defaultValue="sellers" className="space-y-3">
+      <Tabs defaultValue="sellers" className="space-y-4">
         <div className="overflow-x-auto -mx-1 px-1">
-          <TabsList className="inline-flex w-auto">
-            <TabsTrigger value="sellers" className="text-xs sm:text-sm">Säljare ({filteredSellers.length})</TabsTrigger>
-            <TabsTrigger value="listings" className="text-xs sm:text-sm">Säljsidor ({filteredListings.length})</TabsTrigger>
-            <TabsTrigger value="bookings" className="text-xs sm:text-sm">Bokningar ({filteredBookings.length})</TabsTrigger>
+          <TabsList className="inline-flex w-auto h-10 p-1 bg-muted/60">
+            <TabsTrigger value="sellers" className="text-xs sm:text-sm px-3 sm:px-4 data-[state=active]:bg-background">
+              Säljare <span className="ml-1.5 text-muted-foreground">{filteredSellers.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="listings" className="text-xs sm:text-sm px-3 sm:px-4 data-[state=active]:bg-background">
+              Säljsidor <span className="ml-1.5 text-muted-foreground">{filteredListings.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="text-xs sm:text-sm px-3 sm:px-4 data-[state=active]:bg-background">
+              Bokningar <span className="ml-1.5 text-muted-foreground">{filteredBookings.length}</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
+        {/* SELLERS */}
+        <TabsContent value="sellers" className="mt-0">
+          {/* Mobile cards */}
+          <div className="grid grid-cols-1 sm:hidden gap-2">
+            {filteredSellers.map((s) => (
+              <Card key={s.user_id} className="cursor-pointer active:scale-[0.99] transition-transform" onClick={() => setDrillSellerId(s.user_id)}>
+                <CardContent className="p-3.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{s.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.email}</p>
+                    </div>
+                    <p className="text-sm font-semibold tabular-nums text-success whitespace-nowrap">{kr(s.revenue)}</p>
+                  </div>
+                  <div className="grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-border/50 text-center">
+                    <div><p className="text-sm font-semibold tabular-nums">{s.activeListings}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Sidor</p></div>
+                    <div><p className="text-sm font-semibold tabular-nums">{s.bookings}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Bokn.</p></div>
+                    <div><p className="text-sm font-semibold tabular-nums">{s.paid}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Betalda</p></div>
+                    <div><p className="text-sm font-semibold tabular-nums">{s.packs}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Kartor</p></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {filteredSellers.length === 0 && (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Inga säljare</CardContent></Card>
+            )}
+          </div>
 
-        <TabsContent value="sellers">
-          <Card>
+          {/* Desktop table */}
+          <Card className="hidden sm:block">
             <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead>Säljare</TableHead>
                     <TableHead className="text-right">Säljsidor</TableHead>
                     <TableHead className="text-right">Aktiva</TableHead>
@@ -280,11 +352,11 @@ export default function AgdaAdminPanel() {
                       <TableCell className="text-right tabular-nums">{s.bookings}</TableCell>
                       <TableCell className="text-right tabular-nums">{s.paid}</TableCell>
                       <TableCell className="text-right tabular-nums">{s.packs}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{kr(s.revenue)}</TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold text-success">{kr(s.revenue)}</TableCell>
                     </TableRow>
                   ))}
                   {filteredSellers.length === 0 && (
-                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-6">Inga säljare</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">Inga säljare</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -292,12 +364,49 @@ export default function AgdaAdminPanel() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="listings">
-          <Card>
+        {/* LISTINGS */}
+        <TabsContent value="listings" className="mt-0">
+          {/* Mobile cards */}
+          <div className="grid grid-cols-1 sm:hidden gap-2">
+            {filteredListings.map((l) => {
+              const p = profileById[l.user_id];
+              const active = l.is_active && !l.sold_out_manually;
+              const vs = viewStatsBySlug.get(l.slug || '');
+              return (
+                <Card key={l.id}>
+                  <CardContent className="p-3.5 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <a href={`/s/${l.slug}`} target="_blank" rel="noreferrer" className="font-medium text-sm text-primary hover:underline truncate flex items-center gap-1 min-w-0">
+                        <span className="truncate">{l.title || '(utan titel)'}</span>
+                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                      </a>
+                      {active ? <Badge className="bg-success/15 text-success border-success/20 text-[10px]">Aktiv</Badge>
+                        : l.sold_out_manually ? <Badge variant="secondary" className="text-[10px]">Slutsåld</Badge>
+                          : <Badge variant="outline" className="text-[10px]">Inaktiv</Badge>}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {p?.display_name || '—'} · {l.location || 'Ingen ort'}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50 text-center">
+                      <div><p className="text-sm font-semibold tabular-nums">{kr(Number(l.price_per_pack))}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Pris</p></div>
+                      <div><p className="text-sm font-semibold tabular-nums">{l.stock_packs ?? '—'}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Lager</p></div>
+                      <div><p className="text-sm font-semibold tabular-nums">{vs ? vs.sessions.size : 0}</p><p className="text-[9px] uppercase text-muted-foreground tracking-wide">Besökare</p></div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {filteredListings.length === 0 && (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Inga säljsidor</CardContent></Card>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden sm:block">
             <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead>Titel</TableHead>
                     <TableHead>Säljare</TableHead>
                     <TableHead>Ort</TableHead>
@@ -316,8 +425,9 @@ export default function AgdaAdminPanel() {
                     return (
                       <TableRow key={l.id}>
                         <TableCell className="max-w-[220px] truncate">
-                          <a href={`/s/${l.slug}`} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                          <a href={`/s/${l.slug}`} target="_blank" rel="noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
                             {l.title || '(utan titel)'}
+                            <ExternalLink className="h-3 w-3 opacity-60" />
                           </a>
                         </TableCell>
                         <TableCell>
@@ -344,7 +454,7 @@ export default function AgdaAdminPanel() {
                     );
                   })}
                   {filteredListings.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Inga säljsidor</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Inga säljsidor</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -352,12 +462,52 @@ export default function AgdaAdminPanel() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="bookings">
-          <Card>
+        {/* BOOKINGS */}
+        <TabsContent value="bookings" className="mt-0">
+          {/* Mobile cards */}
+          <div className="grid grid-cols-1 sm:hidden gap-2">
+            {filteredBookings.map((b) => {
+              const l = listingById[b.listing_id];
+              const p = profileById[b.seller_user_id];
+              const price = Number(l?.price_per_pack || 0);
+              return (
+                <Card key={b.id}>
+                  <CardContent className="p-3.5 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{b.customer_name || 'Kund'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{b.customer_phone || b.customer_email || '—'}</p>
+                      </div>
+                      {statusBadge(b)}
+                    </div>
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
+                      <div className="min-w-0">
+                        <p className="truncate text-foreground">{l?.title || '—'}</p>
+                        <p className="text-muted-foreground truncate">{p?.display_name || '—'}</p>
+                      </div>
+                      <div className="text-right whitespace-nowrap">
+                        <p className="font-semibold tabular-nums">{kr(price * Number(b.packs || 0))}</p>
+                        <p className="text-muted-foreground">{b.packs} kartor</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {b.created_at ? new Date(b.created_at).toLocaleString('sv-SE') : '—'}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {filteredBookings.length === 0 && (
+              <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Inga bokningar</CardContent></Card>
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <Card className="hidden sm:block">
             <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="hover:bg-transparent">
                     <TableHead>Datum</TableHead>
                     <TableHead>Kund</TableHead>
                     <TableHead>Kontakt</TableHead>
@@ -389,17 +539,13 @@ export default function AgdaAdminPanel() {
                           <div className="text-xs text-muted-foreground">{p?.email || '—'}</div>
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{b.packs}</TableCell>
-                        <TableCell className="text-right tabular-nums">{kr(price * Number(b.packs || 0))}</TableCell>
-                        <TableCell>
-                          <Badge variant={b.status === 'cancelled' ? 'outline' : 'secondary'} className="text-[10px]">
-                            {b.status}
-                          </Badge>
-                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">{kr(price * Number(b.packs || 0))}</TableCell>
+                        <TableCell>{statusBadge(b)}</TableCell>
                       </TableRow>
                     );
                   })}
                   {filteredBookings.length === 0 && (
-                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-6">Inga bokningar</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Inga bokningar</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -407,6 +553,7 @@ export default function AgdaAdminPanel() {
           </Card>
         </TabsContent>
       </Tabs>
+
 
       <Dialog open={!!drillSellerId} onOpenChange={(open) => !open && setDrillSellerId(null)}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
