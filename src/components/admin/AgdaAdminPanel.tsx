@@ -159,13 +159,21 @@ export default function AgdaAdminPanel() {
       const price = Number(listingById[b.listing_id]?.price_per_pack || 0);
       return s + price * Number(b.packs || 0);
     }, 0);
+    let totalViews = 0;
+    const uniqueSessions = new Set<string>();
+    viewStatsBySlug.forEach((v) => {
+      totalViews += v.views;
+      v.sessions.forEach((s) => uniqueSessions.add(s));
+    });
     return {
       sellers: sellerStats.length,
       activeListings: listings.filter((l) => l.is_active && !l.sold_out_manually).length,
       bookings: activeBookings.length,
       revenue,
+      views: totalViews,
+      uniqueVisitors: uniqueSessions.size,
     };
-  }, [bookings, listings, listingById, sellerStats]);
+  }, [bookings, listings, listingById, sellerStats, viewStatsBySlug]);
 
   const query = q.trim().toLowerCase();
   const filteredSellers = !query ? sellerStats : sellerStats.filter((s) =>
@@ -196,24 +204,30 @@ export default function AgdaAdminPanel() {
     );
   }
 
+  const conversionRate = totals.uniqueVisitors > 0
+    ? Math.round((totals.bookings / totals.uniqueVisitors) * 1000) / 10
+    : 0;
+
   const kpis = [
     { icon: Users, label: 'Säljare', value: totals.sellers, bg: 'bg-primary/10', color: 'text-primary' },
-    { icon: Store, label: 'Aktiva säljsidor', value: totals.activeListings, bg: 'bg-warning/10', color: 'text-warning' },
-    { icon: ShoppingBasket, label: 'Bokningar', value: totals.bookings, bg: 'bg-accent/10', color: 'text-accent' },
+    { icon: Store, label: 'Aktiva sidor', value: totals.activeListings, bg: 'bg-warning/10', color: 'text-warning' },
+    { icon: Eye, label: 'Besökare 90d', value: totals.uniqueVisitors, bg: 'bg-blue-500/10', color: 'text-blue-600' },
+    { icon: Eye, label: 'Sidvisningar', value: totals.views, bg: 'bg-indigo-500/10', color: 'text-indigo-600' },
+    { icon: ShoppingBasket, label: `Bokningar (${conversionRate}%)`, value: totals.bookings, bg: 'bg-accent/10', color: 'text-accent' },
     { icon: Wallet, label: 'Bekräftat värde', value: kr(totals.revenue), bg: 'bg-success/10', color: 'text-success' },
   ];
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
         {kpis.map(({ icon: Icon, label, value, bg, color }) => (
           <Card key={label} className="border-border/50">
-            <CardContent className="p-3 text-center">
+            <CardContent className="p-2.5 sm:p-3 text-center">
               <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mx-auto mb-1`}>
                 <Icon className={`h-4 w-4 ${color}`} />
               </div>
-              <p className="stat-number text-xl text-foreground">{value}</p>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide">{label}</p>
+              <p className="stat-number text-lg sm:text-xl text-foreground tabular-nums">{value}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide leading-tight">{label}</p>
             </CardContent>
           </Card>
         ))}
@@ -230,11 +244,14 @@ export default function AgdaAdminPanel() {
       </div>
 
       <Tabs defaultValue="sellers" className="space-y-3">
-        <TabsList>
-          <TabsTrigger value="sellers">Säljare ({filteredSellers.length})</TabsTrigger>
-          <TabsTrigger value="listings">Säljsidor ({filteredListings.length})</TabsTrigger>
-          <TabsTrigger value="bookings">Bokningar ({filteredBookings.length})</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-1 px-1">
+          <TabsList className="inline-flex w-auto">
+            <TabsTrigger value="sellers" className="text-xs sm:text-sm">Säljare ({filteredSellers.length})</TabsTrigger>
+            <TabsTrigger value="listings" className="text-xs sm:text-sm">Säljsidor ({filteredListings.length})</TabsTrigger>
+            <TabsTrigger value="bookings" className="text-xs sm:text-sm">Bokningar ({filteredBookings.length})</TabsTrigger>
+          </TabsList>
+        </div>
+
 
         <TabsContent value="sellers">
           <Card>
