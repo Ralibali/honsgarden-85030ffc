@@ -47,6 +47,34 @@ export default function AgdaAdminPanel() {
     },
   });
 
+  const { data: pageViews = [] } = useQuery<{ path: string; session_id: string | null; created_at: string }[]>({
+    queryKey: ['admin-agda-pageviews'],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await (supabase as any)
+        .from('page_views')
+        .select('path, session_id, created_at')
+        .like('path', '/s/%')
+        .gte('created_at', since)
+        .limit(20000);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const viewStatsBySlug = useMemo(() => {
+    const map = new Map<string, { views: number; sessions: Set<string> }>();
+    pageViews.forEach((v) => {
+      const slug = (v.path || '').replace(/^\/s\//, '').split('/')[0];
+      if (!slug) return;
+      const row = map.get(slug) || { views: 0, sessions: new Set<string>() };
+      row.views += 1;
+      if (v.session_id) row.sessions.add(v.session_id);
+      map.set(slug, row);
+    });
+    return map;
+  }, [pageViews]);
+
   const userIds = useMemo(() => {
     const s = new Set<string>();
     listings.forEach((l) => l.user_id && s.add(l.user_id));
