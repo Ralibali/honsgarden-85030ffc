@@ -525,9 +525,25 @@ function StatsTab({ listing }: { listing: Listing }) {
     },
   });
 
+  const { data: views = [] } = useQuery<any[]>({
+    queryKey: ['dash-stats-views', listing.slug],
+    enabled: !!listing.slug,
+    queryFn: async () => {
+      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await (supabase as any)
+        .from('page_views')
+        .select('path, session_id, referrer, device_type, created_at')
+        .eq('path', `/s/${listing.slug}`)
+        .gte('created_at', since)
+        .limit(10000);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const stats = useMemo(() => {
     const price = Number(listing.price_per_pack || 0);
-    const months = new Map<string, { packs: number; revenue: number; count: number }>();
+    const months = new Map<string, { packs: number; revenue: number; count: number; visits: number; sessions: Set<string> }>();
     const customers = new Map<string, { name: string; packs: number; revenue: number; count: number }>();
     let totalPacks = 0, totalRevenue = 0, paidRevenue = 0;
     const now = new Date();
@@ -536,7 +552,7 @@ function StatsTab({ listing }: { listing: Listing }) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       monthsBack.push({ key, label: d.toLocaleDateString('sv-SE', { month: 'short', year: '2-digit' }) });
-      months.set(key, { packs: 0, revenue: 0, count: 0 });
+      months.set(key, { packs: 0, revenue: 0, count: 0, visits: 0, sessions: new Set() });
     }
     for (const b of bookings) {
       const d = new Date(b.created_at);
@@ -556,52 +572,146 @@ function StatsTab({ listing }: { listing: Listing }) {
         customers.set(cKey, c);
       }
     }
-    const topCustomers = [...customers.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
-    const monthsArr = monthsBack.map((m) => ({ ...m, ...months.get(m.key)! }));
-    const maxRev = Math.max(1, ...monthsArr.map((m) => m.revenue));
-    return { monthsArr, topCustomers, totalPacks, totalRevenue, paidRevenue, maxRev, avg: bookings.length > 0 ? totalRevenue / bookings.length : 0 };
-  }, [bookings, listing.price_per_pack]);
 
-  if (bookings.length === 0) {
-    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground"><BarChart3 className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />Ingen försäljningsdata ännu.</CardContent></Card>;
+    const allSessions = new Set<string>();
+    const referrerMap = new Map<string, number>();
+    const deviceMap = new Map<string, number>();
+    const last30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    let views30 = 0;
+    const sessions30 = new Set<string>();
+    for (const v of views) {
+      const t = new Date(v.created_at).getTime();
+      if (v.session_id) allSessions.add(v.session_id);
+      const key = `${new Date(v.created_at).getFullYear()}-${String(new Date(v.created_at).getMonth() + 1).padStart(2, '0')}`;
+      if (months.has(key)) {
+        const m = months.get(key)!;
+        m.visits += 1;
+        if (v.session_id) m.sessions.add(v.session_id);
+      }
+      if (t >= last30) {
+        views30 += 1;
+        if (v.session_id) sessions30.add(v.session_id);
+      }
+      const ref = v.referrer ? new URL(v.referrer, 'http://x').hostname.replace(/^www\./, '') : 'direkt';
+      referrerMap.set(ref, (referrerMap.get(ref) || 0) + 1);
+      const dev = v.device_type || 'okänd';
+      deviceMap.set(dev, (deviceMap.get(dev) || 0) + 1);
+    }
+
+    const monthsArr = monthsBack.map((m) => {
+      const data = months.get(m.key)!;
+      return { ...m, ...data, uniqueVisitors: data.sessions.size };
+    });
+    const maxRev = Math.max(1, ...monthsArr.map((m) => m.revenue));
+    const maxVis = Math.max(1, ...monthsArr.map((m) => m.uniqueVisitors));
+    const topCustomers = [...customers.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+    const topRefs = [...referrerMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const devices = [...deviceMap.entries()].sort((a, b) => b[1] - a[1]);
+    const totalVisits = views.length;
+    const uniqueVisitors = allSessions.size;
+    const conversion = uniqueVisitors > 0 ? (bookings.length / uniqueVisitors) * 100 : 0;
+
+    return {
+      monthsArr, topCustomers, totalPacks, totalRevenue, paidRevenue, maxRev, maxVis,
+      avg: bookings.length > 0 ? totalRevenue / bookings.length : 0,
+      totalVisits, uniqueVisitors, conversion, views30, uniqueVisitors30: sessions30.size,
+      topRefs, devices,
+    };
+  }, [bookings, views, listing.price_per_pack]);
+
+  const hasData = bookings.length > 0 || views.length > 0;
+  if (!hasData) {
+    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground"><BarChart3 className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />Ingen försäljnings- eller besöksdata ännu.</CardContent></Card>;
   }
 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total intäkt</p><p className="text-xl font-bold text-primary">{kr(stats.totalRevenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Betalt</p><p className="text-xl font-bold text-green-600">{kr(stats.paidRevenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Kartor sålda</p><p className="text-xl font-bold">{stats.totalPacks}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Snitt/bokning</p><p className="text-xl font-bold">{kr(stats.avg)}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total intäkt</p><p className="text-xl font-bold text-primary tabular-nums">{kr(stats.totalRevenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Betalt</p><p className="text-xl font-bold text-green-600 tabular-nums">{kr(stats.paidRevenue)}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Kartor sålda</p><p className="text-xl font-bold tabular-nums">{stats.totalPacks}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Snitt/bokning</p><p className="text-xl font-bold tabular-nums">{kr(stats.avg)}</p></CardContent></Card>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Besökare (90d)</p><p className="text-xl font-bold text-blue-600 tabular-nums">{stats.uniqueVisitors}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Sidvisningar</p><p className="text-xl font-bold tabular-nums">{stats.totalVisits}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Senaste 30 d</p><p className="text-xl font-bold tabular-nums">{stats.uniqueVisitors30}</p><p className="text-[10px] text-muted-foreground">unika · {stats.views30} visn.</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Konvertering</p><p className="text-xl font-bold text-amber-600 tabular-nums">{stats.conversion.toFixed(1)}%</p><p className="text-[10px] text-muted-foreground">bokn./besökare</p></CardContent></Card>
       </div>
 
       <Card>
         <CardContent className="p-4 space-y-3">
-          <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Intäkt senaste 6 månaderna</h3>
-          <div className="space-y-2">
+          <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Intäkt &amp; besökare senaste 6 månaderna</h3>
+          <div className="space-y-3">
             {stats.monthsArr.map((m) => (
               <div key={m.key} className="space-y-1">
-                <div className="flex justify-between text-xs"><span className="text-muted-foreground">{m.label}</span><span className="font-medium tabular-nums">{kr(m.revenue)} · {m.count} bokn.</span></div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">{m.label}</span>
+                  <span className="font-medium tabular-nums">{kr(m.revenue)} · {m.count} bokn. · {m.uniqueVisitors} besök.</span>
+                </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary transition-all" style={{ width: `${(m.revenue / stats.maxRev) * 100}%` }} /></div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-blue-500/60 transition-all" style={{ width: `${(m.uniqueVisitors / stats.maxVis) * 100}%` }} /></div>
               </div>
             ))}
+          </div>
+          <div className="flex gap-3 text-[10px] text-muted-foreground pt-1">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Intäkt</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500/60" /> Unika besökare</span>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <h3 className="font-serif text-base flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Bästa kunder</h3>
-          <div className="space-y-1.5">
-            {stats.topCustomers.map((c, i) => (
-              <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/40 last:border-0">
-                <span className="font-medium">{i + 1}. {c.name}</span>
-                <span className="text-xs text-muted-foreground tabular-nums">{c.count} bokn. · {c.packs} kartor · <strong className="text-foreground">{kr(c.revenue)}</strong></span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {(stats.topRefs.length > 0 || stats.devices.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {stats.topRefs.length > 0 && (
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Varifrån besökarna kommer</h3>
+                <div className="space-y-1">
+                  {stats.topRefs.map(([ref, count]) => (
+                    <div key={ref} className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0">
+                      <span className="truncate">{ref}</span>
+                      <span className="text-muted-foreground tabular-nums">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          {stats.devices.length > 0 && (
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Enheter</h3>
+                <div className="space-y-1">
+                  {stats.devices.map(([dev, count]) => (
+                    <div key={dev} className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0">
+                      <span className="capitalize">{dev}</span>
+                      <span className="text-muted-foreground tabular-nums">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {stats.topCustomers.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="font-serif text-base flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Bästa kunder</h3>
+            <div className="space-y-1.5">
+              {stats.topCustomers.map((c, i) => (
+                <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/40 last:border-0">
+                  <span className="font-medium">{i + 1}. {c.name}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{c.count} bokn. · {c.packs} kartor · <strong className="text-foreground">{kr(c.revenue)}</strong></span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
