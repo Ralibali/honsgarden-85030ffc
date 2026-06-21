@@ -56,6 +56,10 @@ export default function CancelBooking() {
     }
     const res = (data ?? {}) as RpcResult;
     if (res.ok) {
+      // Notifiera säljaren (icke-blockerande)
+      supabase.functions.invoke('notify-seller-booking-change', {
+        body: { token, event: 'cancelled' },
+      }).catch((e) => console.warn('notify-seller-booking-change failed', e));
       setState('done');
     } else if (res.reason === 'used') {
       setState('used');
