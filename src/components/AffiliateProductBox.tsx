@@ -1,117 +1,203 @@
-import { useMemo } from 'react';
-import { ExternalLink, ShoppingBag } from 'lucide-react';
-import { matchProductsForArticle } from '@/data/affiliateProducts';
-import { AffiliateLink } from '@/components/AffiliateLink';
-import { useLiveBySku, skuFromTrackingUrl, priceToNumber } from '@/hooks/useAffiliateProducts';
+import { useLayoutEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { InlineAffiliateCard } from '@/components/affiliate/InlineAffiliateCard';
+import { useAffiliateArticleProfile } from '@/hooks/useAffiliateArticleProfile';
+import { useSmartAffiliateCatalog } from '@/hooks/useSmartAffiliateCatalog';
+import {
+  matchSmartProducts,
+  type ArticleContext,
+  type SmartAffiliateProduct,
+} from '@/lib/smartAffiliate';
 
 interface Props {
   slug: string;
   title: string;
-  /** HTML eller text – används för keyword-matchning. */
   content: string;
   limit?: number;
 }
 
+interface Placement {
+  id: string;
+  slot: HTMLDivElement;
+  product: SmartAffiliateProduct;
+  sectionTitle: string;
+}
+
+const BLOCKED_SECTIONS = /vanliga frågor|faq|sammanfattning|slutsats|källor|referenser|läs också|relaterade artiklar/i;
+
+function plainText(value: string): string {
+  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function wordCount(value: string): number {
+  const text = plainText(value);
+  return text ? text.split(/\s+/).length : 0;
+}
+
+function sectionAfterHeading(heading: HTMLElement): HTMLElement[] {
+  const elements: HTMLElement[] = [];
+  let node = heading.nextElementSibling as HTMLElement | null;
+  while (node && !node.matches('h2, h3')) {
+    elements.push(node);
+    node = node.nextElementSibling as HTMLElement | null;
+  }
+  return elements;
+}
+
+function sectionTarget(heading: HTMLElement, elements: HTMLElement[]): HTMLElement {
+  const readableBlocks = elements.filter((element) =>
+    element.matches('p, ul, ol, blockquote, table, figure, .overflow-x-auto'),
+  );
+  return readableBlocks[Math.min(1, readableBlocks.length - 1)] || elements[0] || heading;
+}
+
+function createSlot(id: string, target: HTMLElement): HTMLDivElement {
+  const slot = document.createElement('div');
+  slot.dataset.smartAffiliateSlot = id;
+  slot.className = 'not-prose';
+  target.insertAdjacentElement('afterend', slot);
+  return slot;
+}
+
+function desiredBlockCount(
+  content: string,
+  tier: 'normal' | 'strong' | 'hot',
+  profileMax: number,
+  requestedLimit?: number,
+): number {
+  const words = wordCount(content);
+  const natural = words < 650 ? 1 : words < 1200 ? 2 : words < 1900 ? 3 : 4;
+  let desired = Math.min(natural, 2);
+  if (tier === 'strong') desired = Math.max(3, natural);
+  if (tier === 'hot') desired = Math.max(5, natural);
+  const explicitLimit = requestedLimit == null ? 5 : Math.max(0, requestedLimit);
+  return Math.min(5, profileMax, explicitLimit, desired);
+}
+
+function previousHeading(target: HTMLElement, article: HTMLElement, fallback: string): string {
+  const headings = Array.from(article.querySelectorAll<HTMLElement>('.prose-custom h2, .prose-custom h3'));
+  let previous = fallback;
+  for (const heading of headings) {
+    if (heading.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      previous = heading.textContent?.trim() || previous;
+      continue;
+    }
+    break;
+  }
+  return previous;
+}
+
 /**
- * Visar 1–3 kontextuellt relevanta affiliate-produkter i botten av ett blogginlägg.
- * Matchningen sker på den kurerade statiska katalogen (keywords), men pris och
- * lagerstatus overlay:as från DB-katalogen (feed-synken) när produkten finns där.
- * Slutsålda produkter döljs. Renderar inget om inga produkter matchar.
+ * Smart affiliate-motor för bloggen. Produktkorten placeras i relevanta avsnitt
+ * med React-portaler och fungerar därför automatiskt för både gamla artiklar
+ * och nya artiklar som synkas från Soro.
  */
-export function AffiliateProductBox({ slug, title, content, limit = 3 }: Props) {
-  const liveBySku = useLiveBySku();
+export function AffiliateProductBox({ slug, title, content, limit }: Props) {
+  const catalog = useSmartAffiliateCatalog();
+  const profile = useAffiliateArticleProfile(slug);
+  const [placements, setPlacements] = useState<Placement[]>([]);
 
-  const products = useMemo(() => {
-    const matched = matchProductsForArticle(slug, title, content, limit + 3);
-    const merged = matched.map((p) => {
-      const live = liveBySku.get(skuFromTrackingUrl(p.trackingUrl) ?? '');
-      if (!live) return p;
-      return {
-        ...p,
-        price: live.price || p.price,
-        priceOriginal: live.priceOriginal,
-        inStock: live.inStock,
-        trackingUrl: live.trackingUrl || p.trackingUrl,
-        imageUrl: live.imageUrl || p.imageUrl,
-      };
-    });
-    return merged.filter((p) => p.inStock !== false).slice(0, limit);
-  }, [slug, title, content, limit, liveBySku]);
+  const maxBlocks = useMemo(
+    () => desiredBlockCount(content, profile.tier, profile.maxBlocks, limit),
+    [content, limit, profile.maxBlocks, profile.tier],
+  );
 
-  if (products.length === 0) return null;
+  useLayoutEffect(() => {
+    const article = document.querySelector<HTMLElement>('main article');
+    if (!article || catalog.length === 0 || maxBlocks <= 0) {
+      setPlacements([]);
+      return undefined;
+    }
+
+    article.querySelectorAll<HTMLElement>('[data-smart-affiliate-slot]').forEach((slot) => slot.remove());
+
+    const createdSlots: HTMLDivElement[] = [];
+    const nextPlacements: Placement[] = [];
+    const usedProductIds = new Set<string>();
+    const usedTargets = new Set<HTMLElement>();
+    const headings = Array.from(article.querySelectorAll<HTMLElement>('.prose-custom h2, .prose-custom h3'));
+    const firstAllowedHeading = Math.max(0, Math.floor(headings.length * 0.2));
+    const minimumHeadingGap = profile.tier === 'normal' ? 2 : 1;
+    let lastHeadingIndex = -10;
+
+    for (let index = firstAllowedHeading; index < headings.length && nextPlacements.length < maxBlocks; index += 1) {
+      if (index - lastHeadingIndex < minimumHeadingGap) continue;
+      const heading = headings[index];
+      const sectionTitle = heading.textContent?.trim() || title;
+      if (BLOCKED_SECTIONS.test(sectionTitle)) continue;
+
+      const sectionElements = sectionAfterHeading(heading);
+      const sectionText = [sectionTitle, ...sectionElements.map((element) => element.textContent || '')].join(' ');
+      if (wordCount(sectionText) < 35) continue;
+
+      const context: ArticleContext = { slug, title, heading: sectionTitle, text: sectionText };
+      const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+      if (!product) continue;
+
+      const target = sectionTarget(heading, sectionElements);
+      if (usedTargets.has(target)) continue;
+
+      const id = `smart-affiliate-${slug}-${index}`;
+      const slot = createSlot(id, target);
+      createdSlots.push(slot);
+      usedTargets.add(target);
+      usedProductIds.add(product.id);
+      nextPlacements.push({ id, slot, product, sectionTitle });
+      lastHeadingIndex = index;
+    }
+
+    if (nextPlacements.length < maxBlocks) {
+      const paragraphs = Array.from(article.querySelectorAll<HTMLElement>('.prose-custom p'))
+        .filter((paragraph) => wordCount(paragraph.textContent || '') >= 24);
+      const preferredFractions = [0.32, 0.52, 0.7, 0.84];
+
+      for (let fallbackIndex = 0; fallbackIndex < preferredFractions.length && nextPlacements.length < maxBlocks; fallbackIndex += 1) {
+        if (paragraphs.length === 0) break;
+        const paragraphIndex = Math.min(
+          paragraphs.length - 1,
+          Math.max(0, Math.floor(paragraphs.length * preferredFractions[fallbackIndex])),
+        );
+        const target = paragraphs[paragraphIndex];
+        if (usedTargets.has(target)) continue;
+
+        const sectionTitle = previousHeading(target, article, title);
+        const context: ArticleContext = {
+          slug,
+          title,
+          heading: sectionTitle,
+          text: `${sectionTitle} ${target.textContent?.trim() || ''}`,
+        };
+        const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+        if (!product) continue;
+
+        const id = `smart-affiliate-${slug}-fallback-${fallbackIndex}`;
+        const slot = createSlot(id, target);
+        createdSlots.push(slot);
+        usedTargets.add(target);
+        usedProductIds.add(product.id);
+        nextPlacements.push({ id, slot, product, sectionTitle });
+      }
+    }
+
+    setPlacements(nextPlacements);
+    return () => createdSlots.forEach((slot) => slot.remove());
+  }, [catalog, content, maxBlocks, profile.tier, slug, title]);
 
   return (
-    <aside
-      className="my-10 rounded-2xl border border-border bg-gradient-to-br from-card to-secondary/30 p-5 sm:p-6"
-      aria-label="Rekommenderade produkter"
-    >
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <ShoppingBag className="h-4 w-4 text-primary" />
-          <h3 className="font-serif text-base sm:text-lg text-foreground m-0">
-            Utvalt för dig som har höns
-          </h3>
-        </div>
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">
-          Annons
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {products.map((p) => {
-          const orig = p.priceOriginal && p.priceOriginal > (priceToNumber(p.price) ?? 0) ? p.priceOriginal : null;
-          return (
-            <AffiliateLink
-              key={p.id}
-              href={p.trackingUrl}
-              productId={p.id}
-              advertiser={p.advertiser}
-              source="product_box"
-              slug={slug}
-              className="group flex sm:flex-col items-stretch gap-3 rounded-xl border border-border/60 bg-background overflow-hidden hover:border-primary/40 hover:shadow-md transition-all"
-            >
-              <div className="relative w-24 sm:w-full aspect-square sm:aspect-[4/3] bg-muted shrink-0 overflow-hidden">
-                {orig && (
-                  <span className="absolute top-1 left-1 z-10 rounded-full bg-destructive text-destructive-foreground text-[10px] font-semibold px-1.5 py-0.5">
-                    Rea
-                  </span>
-                )}
-                <img
-                  src={p.imageUrl}
-                  alt={p.name}
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                  crossOrigin="anonymous"
-                  className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              </div>
-              <div className="flex-1 min-w-0 p-3 sm:pt-0 flex flex-col">
-                <p className="text-xs font-medium text-foreground line-clamp-2 mb-1">{p.name}</p>
-                <p className="text-sm font-semibold text-primary mb-2">
-                  {p.price}
-                  {orig && (
-                    <span className="ml-1.5 text-[11px] font-normal line-through text-muted-foreground">
-                      {orig.toLocaleString('sv-SE')} kr
-                    </span>
-                  )}
-                </p>
-                <span className="mt-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground group-hover:text-primary transition-colors">
-                  Visa hos {p.advertiser === 'p-lindberg' ? 'P. Lindberg' : 'Bonden.se'}
-                  <ExternalLink className="h-2.5 w-2.5 group-hover:translate-x-0.5 transition-transform" />
-                </span>
-              </div>
-            </AffiliateLink>
-          );
-        })}
-      </div>
-
-      <p className="text-[10px] text-muted-foreground text-center mt-4 mb-0">
-        Affiliatelänkar – vi kan få en liten ersättning vid köp, utan extra kostnad för dig.
-      </p>
-    </aside>
+    <>
+      {placements.map((placement) => {
+        if (!placement.slot.isConnected) return null;
+        return createPortal(
+          <InlineAffiliateCard
+            product={placement.product}
+            slug={slug}
+            sectionTitle={placement.sectionTitle}
+          />,
+          placement.slot,
+          placement.id,
+        );
+      })}
+    </>
   );
 }
 
