@@ -190,6 +190,25 @@ export default function PublicEggSaleV3() {
       }
       const { error } = await (supabase as any).from('public_egg_sale_bookings').insert(payload);
       if (error) throw error;
+      // Notify the seller by email — fire and forget, never block the booking.
+      try {
+        await supabase.functions.invoke('notify-seller-booking', {
+          body: {
+            listing_id: listing.id,
+            seller_user_id: listing.user_id,
+            customer_name: payload.customer_name,
+            customer_email: payload.customer_email,
+            customer_phone: payload.customer_phone,
+            customer_message: payload.customer_message,
+            packs: payload.packs,
+            pickup_slot_id: payload.pickup_slot_id ?? null,
+            pickup_person_name: payload.pickup_person_name ?? null,
+            pickup_person_phone: payload.pickup_person_phone ?? null,
+          },
+        });
+      } catch (notifyErr) {
+        console.warn('notify-seller-booking failed (non-blocking)', notifyErr);
+      }
     },
     onSuccess: async () => {
       setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
