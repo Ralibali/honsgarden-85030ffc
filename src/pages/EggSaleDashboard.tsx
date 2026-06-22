@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
 import PriceTiersEditor from '@/components/egg-sales/PriceTiersEditor';
+import BulkPriceTiersPanel from '@/components/egg-sales/BulkPriceTiersPanel';
 import { getOrderTotal, normalizeTiers } from '@/lib/eggSalePricing';
 import {
   AlertTriangle,
@@ -116,7 +117,10 @@ function Dashboard() {
         </TabsList>
         <TabsContent value="bookings"><BookingsBoard listing={listing} /></TabsContent>
         <TabsContent value="slots"><SlotsPanel listing={listing} /></TabsContent>
-        <TabsContent value="prices"><PriceTiersEditor listing={listing as any} /></TabsContent>
+        <TabsContent value="prices" className="space-y-4">
+          <PriceTiersEditor listing={listing as any} />
+          {listings.length > 1 && <BulkPriceTiersPanel listings={listings as any} />}
+        </TabsContent>
         <TabsContent value="waitlist"><WaitlistPanel listing={listing} /></TabsContent>
         <TabsContent value="subscriptions"><SubscriptionsPanel listing={listing} /></TabsContent>
         <TabsContent value="stats"><StatsPanel listing={listing} /></TabsContent>
