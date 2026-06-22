@@ -97,6 +97,7 @@ export type Database = {
           path: string | null
           product_id: string | null
           referer: string | null
+          section_title: string | null
           session_id: string | null
           slug: string | null
           source: string
@@ -113,6 +114,7 @@ export type Database = {
           path?: string | null
           product_id?: string | null
           referer?: string | null
+          section_title?: string | null
           session_id?: string | null
           slug?: string | null
           source: string
@@ -129,6 +131,52 @@ export type Database = {
           path?: string | null
           product_id?: string | null
           referer?: string | null
+          section_title?: string | null
+          session_id?: string | null
+          slug?: string | null
+          source?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_impressions: {
+        Row: {
+          advertiser: string
+          created_at: string
+          id: string
+          path: string | null
+          product_id: string | null
+          referer: string | null
+          section_title: string | null
+          session_id: string | null
+          slug: string | null
+          source: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          advertiser: string
+          created_at?: string
+          id?: string
+          path?: string | null
+          product_id?: string | null
+          referer?: string | null
+          section_title?: string | null
+          session_id?: string | null
+          slug?: string | null
+          source: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          advertiser?: string
+          created_at?: string
+          id?: string
+          path?: string | null
+          product_id?: string | null
+          referer?: string | null
+          section_title?: string | null
           session_id?: string | null
           slug?: string | null
           source?: string
