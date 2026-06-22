@@ -4183,6 +4183,13 @@ export type Database = {
         Args: { p_listing_id: string }
         Returns: number
       }
+      get_public_egg_sale_social_proof: {
+        Args: { p_listing_id: string }
+        Returns: {
+          bookings_today: number
+          last_booked_at: string
+        }[]
+      }
       get_user_farm_ids: { Args: { _uid: string }; Returns: string[] }
       get_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       grant_premium_days: {
