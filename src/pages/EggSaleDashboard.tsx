@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
+import PriceTiersEditor from '@/components/egg-sales/PriceTiersEditor';
+import { getOrderTotal, normalizeTiers } from '@/lib/eggSalePricing';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -29,6 +31,7 @@ import {
   Play,
   Plus,
   Repeat,
+  Tag,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -103,15 +106,17 @@ function Dashboard() {
       {listings.length > 1 && <Card><CardContent className="flex flex-wrap gap-2 p-3">{listings.map((item) => <Button key={item.id} size="sm" variant={item.id === listing.id ? 'default' : 'outline'} onClick={() => setSelectedId(item.id)}>{item.title || 'Säljsida'}</Button>)}</CardContent></Card>}
 
       <Tabs defaultValue="bookings">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Bokningar</span></TabsTrigger>
           <TabsTrigger value="slots"><Calendar className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Tider</span></TabsTrigger>
+          <TabsTrigger value="prices"><Tag className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Priser</span></TabsTrigger>
           <TabsTrigger value="waitlist"><Users className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Väntelista</span></TabsTrigger>
           <TabsTrigger value="subscriptions"><Repeat className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Abonnemang</span></TabsTrigger>
           <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Statistik</span></TabsTrigger>
         </TabsList>
         <TabsContent value="bookings"><BookingsBoard listing={listing} /></TabsContent>
         <TabsContent value="slots"><SlotsPanel listing={listing} /></TabsContent>
+        <TabsContent value="prices"><PriceTiersEditor listing={listing as any} /></TabsContent>
         <TabsContent value="waitlist"><WaitlistPanel listing={listing} /></TabsContent>
         <TabsContent value="subscriptions"><SubscriptionsPanel listing={listing} /></TabsContent>
         <TabsContent value="stats"><StatsPanel listing={listing} /></TabsContent>
@@ -203,7 +208,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
           <p className="text-xs text-muted-foreground">Påminnelser går ut automatiskt 2 dagar efter hämtning och sedan varannan dag (max 4 ggr). Du kan också skicka manuellt.</p>
           <div className="space-y-2">
             {unpaidPickups.map((b) => {
-              const amount = Math.round(Number(b.packs || 0) * Number(listing.price_per_pack || 0));
+              const amount = getOrderTotal(Number(b.packs || 0), normalizeTiers(listing.price_tiers), Number(listing.price_per_pack || 0));
               const reminders = Number(b.payment_reminder_count || 0);
               const lastSent = b.payment_reminder_last_sent_at;
               const token = b.egg_sale_booking_tokens?.token;
@@ -258,7 +263,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
       {STATUS_COLUMNS.map((column) => <section key={column.key} className="min-h-40 rounded-2xl border bg-muted/20 p-2.5"><div className="mb-2 flex items-center justify-between"><h3 className="font-serif">{column.label}</h3><Badge variant="secondary">{groups[column.key].length}</Badge></div><div className="space-y-2">{groups[column.key].map((booking: Row) => {
         const token = booking.egg_sale_booking_tokens?.token;
         const url = token ? `${window.location.origin}/bestallning/${token}` : null;
-        return <Card key={booking.id}><CardContent className="space-y-2 p-3"><div className="flex gap-2"><Checkbox checked={selected.has(booking.id)} onCheckedChange={() => toggle(booking.id)} /><div className="min-w-0"><p className="truncate text-sm font-medium">{booking.customer_name}</p><p className="text-xs text-muted-foreground">{booking.packs} kartor · {kr(Number(booking.packs) * Number(listing.price_per_pack || 0))}</p><p className="text-xs text-muted-foreground">{dt(booking.egg_sale_pickup_slots?.starts_at)}</p></div></div>{booking.customer_message && <p className="line-clamp-2 text-xs italic text-muted-foreground">”{booking.customer_message}”</p>}<BookingStatusActions bookingId={booking.id} status={column.key} busy={update.isPending} onChange={(id, status, paymentStatus) => update.mutate({ ids: [id], status, paymentStatus })} />{url && <div className="flex gap-1"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigator.clipboard.writeText(url).then(() => toast({ title: 'Orderlänken är kopierad' }))}><Copy className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-7 w-7" asChild><a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button></div>}</CardContent></Card>;
+        return <Card key={booking.id}><CardContent className="space-y-2 p-3"><div className="flex gap-2"><Checkbox checked={selected.has(booking.id)} onCheckedChange={() => toggle(booking.id)} /><div className="min-w-0"><p className="truncate text-sm font-medium">{booking.customer_name}</p><p className="text-xs text-muted-foreground">{booking.packs} kartor · {kr(getOrderTotal(Number(booking.packs || 0), normalizeTiers(listing.price_tiers), Number(listing.price_per_pack || 0)))}</p><p className="text-xs text-muted-foreground">{dt(booking.egg_sale_pickup_slots?.starts_at)}</p></div></div>{booking.customer_message && <p className="line-clamp-2 text-xs italic text-muted-foreground">”{booking.customer_message}”</p>}<BookingStatusActions bookingId={booking.id} status={column.key} busy={update.isPending} onChange={(id, status, paymentStatus) => update.mutate({ ids: [id], status, paymentStatus })} />{url && <div className="flex gap-1"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigator.clipboard.writeText(url).then(() => toast({ title: 'Orderlänken är kopierad' }))}><Copy className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-7 w-7" asChild><a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button></div>}</CardContent></Card>;
       })}</div></section>)}
     </div>
   </div>;
@@ -323,7 +328,9 @@ function SubscriptionsPanel({ listing }: { listing: Row }) {
 function StatsPanel({ listing }: { listing: Row }) {
   const { data: bookings = [] } = useQuery<Row[]>({ queryKey: ['dash-stats-bookings', listing.id], queryFn: async () => { const { data } = await (supabase as any).from('public_egg_sale_bookings').select('status,payment_status,packs,created_at').eq('listing_id', listing.id); return data || []; } });
   const active = bookings.filter((booking) => !['cancelled', 'refunded'].includes(booking.status));
-  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.price_per_pack || 0), 0);
+  const tiers = normalizeTiers(listing.price_tiers);
+  const fallback = Number(listing.price_per_pack || 0);
+  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + getOrderTotal(Number(booking.packs || 0), tiers, fallback), 0);
   const eggs = active.filter((booking) => booking.status === 'picked_up').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.eggs_per_pack || 0), 0);
   return <div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Bokningar</p><p className="font-serif text-3xl">{bookings.length}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Betald omsättning</p><p className="font-serif text-3xl">{kr(revenue)}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Hämtade ägg</p><p className="font-serif text-3xl">{eggs}</p></CardContent></Card></div>;
 }

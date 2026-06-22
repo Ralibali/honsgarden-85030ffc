@@ -14,6 +14,7 @@ import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme'
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 import SwishQR from '@/components/egg-sales/SwishQR';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { formatTierRange, getPricePerPack, normalizeTiers } from '@/lib/eggSalePricing';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
@@ -160,14 +161,25 @@ export default function PublicEggSaleV3() {
   const isSoldOut = sale.soldOut || remaining <= 0;
   const swishText = sale.swish ? `Swish: ${sale.swish}${sale.swishName ? ` (${sale.swishName})` : ''}\nMeddelande: ${sale.swishMsg}` : 'Kontakta säljaren för betalningsinformation.';
   const shareText = `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
-  const priceRows = [sale.p6 ? { label: '6-pack', price: sale.p6 } : null, { label: `${sale.size}-pack`, price: sale.p12 || `${sale.price} kr` }, sale.p30 ? { label: '30-pack', price: sale.p30 } : null].filter(Boolean) as { label: string; price: string }[];
+  const tiers = useMemo(() => normalizeTiers(listing?.price_tiers), [listing?.price_tiers]);
+  const tierRows = useMemo(
+    () => tiers.map((t) => ({ label: formatTierRange(t), price: `${t.price_per_pack} kr / karta` })),
+    [tiers],
+  );
+  const sizeRows = [
+    sale.p6 ? { label: '6-pack', price: sale.p6 } : null,
+    { label: `${sale.size}-pack`, price: sale.p12 || `${sale.price} kr` },
+    sale.p30 ? { label: '30-pack', price: sale.p30 } : null,
+  ].filter(Boolean) as { label: string; price: string }[];
+  const priceRows = tierRows.length ? tierRows : sizeRows;
 
   const parseKr = (v: unknown) => {
     const n = Number(String(v ?? '').replace(/[^\d.,-]/g, '').replace(',', '.'));
     return Number.isFinite(n) && n > 0 ? n : 0;
   };
-  const pricePerPack = parseKr(sale.p12) || parseKr(sale.price);
+  const basePricePerPack = parseKr(sale.p12) || parseKr(sale.price);
   const packCount = Math.max(1, Number(packs) || 1);
+  const pricePerPack = tiers.length ? getPricePerPack(packCount, tiers, basePricePerPack) : basePricePerPack;
   const swishAmount = Math.round(packCount * pricePerPack);
   const swishMsgFull = `${sale.swishMsg || 'Ägg'} ${packCount}x${sale.size}-pack`.slice(0, 50);
   const swishPayee = (sale.swish || '').replace(/\D/g, '');

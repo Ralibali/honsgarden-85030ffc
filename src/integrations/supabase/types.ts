@@ -2927,6 +2927,7 @@ export type Database = {
           packs_available: number
           pickup_info: string | null
           price_per_pack: number
+          price_tiers: Json
           regular_customer_threshold: number
           reserved_packs: number
           sections: Json
@@ -2967,6 +2968,7 @@ export type Database = {
           packs_available?: number
           pickup_info?: string | null
           price_per_pack?: number
+          price_tiers?: Json
           regular_customer_threshold?: number
           reserved_packs?: number
           sections?: Json
@@ -3007,6 +3009,7 @@ export type Database = {
           packs_available?: number
           pickup_info?: string | null
           price_per_pack?: number
+          price_tiers?: Json
           regular_customer_threshold?: number
           reserved_packs?: number
           sections?: Json
