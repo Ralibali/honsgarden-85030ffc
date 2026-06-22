@@ -328,7 +328,9 @@ function SubscriptionsPanel({ listing }: { listing: Row }) {
 function StatsPanel({ listing }: { listing: Row }) {
   const { data: bookings = [] } = useQuery<Row[]>({ queryKey: ['dash-stats-bookings', listing.id], queryFn: async () => { const { data } = await (supabase as any).from('public_egg_sale_bookings').select('status,payment_status,packs,created_at').eq('listing_id', listing.id); return data || []; } });
   const active = bookings.filter((booking) => !['cancelled', 'refunded'].includes(booking.status));
-  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.price_per_pack || 0), 0);
+  const tiers = normalizeTiers(listing.price_tiers);
+  const fallback = Number(listing.price_per_pack || 0);
+  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + getOrderTotal(Number(booking.packs || 0), tiers, fallback), 0);
   const eggs = active.filter((booking) => booking.status === 'picked_up').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.eggs_per_pack || 0), 0);
   return <div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Bokningar</p><p className="font-serif text-3xl">{bookings.length}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Betald omsättning</p><p className="font-serif text-3xl">{kr(revenue)}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Hämtade ägg</p><p className="font-serif text-3xl">{eggs}</p></CardContent></Card></div>;
 }
