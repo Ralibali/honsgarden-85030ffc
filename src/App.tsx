@@ -163,6 +163,7 @@ const AppRoutes = () => (
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<PublicReview />} />
         <Route path="/avboka/:token" element={<CancelBooking />} />
+        <Route path="/bestallning/:token" element={<OrderPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/reset-password" element={<ResetPassword />} />
