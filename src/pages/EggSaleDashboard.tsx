@@ -31,6 +31,7 @@ import {
   Play,
   Plus,
   Repeat,
+  Tag,
   Users,
   Wallet,
 } from 'lucide-react';
