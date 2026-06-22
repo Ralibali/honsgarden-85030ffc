@@ -8,6 +8,7 @@ interface Props extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> {
   advertiser: string;
   source: AffiliateClickSource;
   slug?: string | null;
+  sectionTitle?: string | null;
 }
 
 /**
