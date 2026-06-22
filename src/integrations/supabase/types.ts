@@ -2823,6 +2823,7 @@ export type Database = {
           pickup_reminder_sent_at: string | null
           pickup_slot_id: string | null
           refunded_at: string | null
+          review_request_sent_at: string | null
           seller_user_id: string
           status: string
           updated_at: string
@@ -2848,6 +2849,7 @@ export type Database = {
           pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
           refunded_at?: string | null
+          review_request_sent_at?: string | null
           seller_user_id: string
           status?: string
           updated_at?: string
@@ -2873,6 +2875,7 @@ export type Database = {
           pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
           refunded_at?: string | null
+          review_request_sent_at?: string | null
           seller_user_id?: string
           status?: string
           updated_at?: string
