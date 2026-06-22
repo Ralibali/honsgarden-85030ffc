@@ -26,6 +26,25 @@ interface Placement {
 
 const BLOCKED_SECTIONS = /vanliga frågor|faq|sammanfattning|slutsats|källor|referenser|läs också|relaterade artiklar/i;
 
+function hashString(value: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function rotationSeed(...parts: Array<string | number>): number {
+  const day = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+  return hashString(`${day}|${parts.join('|')}`);
+}
+
+function pickRotated<T>(candidates: T[], seed: number): T | undefined {
+  if (candidates.length === 0) return undefined;
+  return candidates[seed % candidates.length];
+}
+
 function plainText(value: string): string {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
@@ -127,7 +146,8 @@ function AffiliateProductBoxContent({ slug, title, content, limit }: Props) {
       if (wordCount(sectionText) < 35) continue;
 
       const context: ArticleContext = { slug, title, heading: sectionTitle, text: sectionText };
-      const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+      const candidates = matchSmartProducts(catalog, context, 5, usedProductIds);
+      const product = pickRotated(candidates, rotationSeed(slug, sectionTitle, index));
       if (!product) continue;
 
       const target = sectionTarget(heading, sectionElements);
@@ -163,7 +183,8 @@ function AffiliateProductBoxContent({ slug, title, content, limit }: Props) {
           heading: sectionTitle,
           text: `${sectionTitle} ${target.textContent?.trim() || ''}`,
         };
-        const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+        const candidates = matchSmartProducts(catalog, context, 5, usedProductIds);
+        const product = pickRotated(candidates, rotationSeed(slug, 'fallback', fallbackIndex));
         if (!product) continue;
 
         const id = `smart-affiliate-${slug}-fallback-${fallbackIndex}`;
