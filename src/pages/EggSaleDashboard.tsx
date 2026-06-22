@@ -6,21 +6,44 @@ import { toast } from '@/hooks/use-toast';
 import PlusFeatureGate from '@/components/PlusFeatureGate';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, BarChart3, BookmarkPlus, Calendar, CheckCircle2, Clock, FileText, Loader2, PackageCheck, Pause, Play, Plus, Repeat, Trash2, Wallet, Users } from 'lucide-react';
+import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
+import {
+  ArrowLeft,
+  BarChart3,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Copy,
+  ExternalLink,
+  Loader2,
+  PackageCheck,
+  Pause,
+  Play,
+  Plus,
+  Repeat,
+  Users,
+  Wallet,
+} from 'lucide-react';
 
-type Listing = any;
-type Booking = any;
-type Slot = any;
-type Template = any;
+type Row = Record<string, any>;
 
-const kr = (n: any) => `${Math.round(Number(n || 0))} kr`;
-const dt = (s: string) => new Date(s).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
+const STATUS_COLUMNS = [
+  { key: 'reserved', label: 'Ny' },
+  { key: 'confirmed', label: 'Bekräftad' },
+  { key: 'paid', label: 'Betald' },
+  { key: 'packed', label: 'Packad' },
+  { key: 'picked_up', label: 'Hämtad' },
+] as const;
 
-async function uid() {
+const kr = (value: unknown) => `${Math.round(Number(value || 0))} kr`;
+const dt = (value?: string | null) => value ? new Date(value).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }) : 'Ingen tid vald';
+
+async function currentUserId() {
   const { data } = await supabase.auth.getUser();
   if (!data.user) throw new Error('Inte inloggad');
   return data.user.id;
@@ -30,10 +53,10 @@ export default function EggSaleDashboardPage() {
   return (
     <PlusFeatureGate
       title="Säljarens kontrollrum"
-      description="Hantera tidsluckor, bokningar, betalningar och mallar för dina äggförsäljningar."
+      description="Hantera bokningar, tider, väntelista och abonnemang."
       featureName="Säljardashboard"
       featureKey="eggsales"
-      benefits={['Tidsluckor för avhämtning', 'Markera betald/hämtad', 'Sparade mallar för återkommande försäljning', 'Väntelista och recensioner']}
+      benefits={['Bokningsflöde', 'Massåtgärder', 'Orderlänkar', 'Väntelista och abonnemang']}
     >
       <Dashboard />
     </PlusFeatureGate>
@@ -42,676 +65,151 @@ export default function EggSaleDashboardPage() {
 
 function Dashboard() {
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  const { data: listings = [], isLoading } = useQuery<Listing[]>({
+  const { data: listings = [], isLoading } = useQuery<Row[]>({
     queryKey: ['dashboard-listings'],
     queryFn: async () => {
-      const u = await uid();
+      const userId = await currentUserId();
       const { data, error } = await (supabase as any)
-        .from('public_egg_sale_listings').select('*').eq('user_id', u).order('updated_at', { ascending: false });
+        .from('public_egg_sale_listings')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
   });
 
   useEffect(() => {
-    if (!selectedId && listings.length > 0) setSelectedId(listings[0].id);
+    if (!selectedId && listings[0]) setSelectedId(listings[0].id);
   }, [listings, selectedId]);
 
-  const current = listings.find((l) => l.id === selectedId) || null;
+  if (isLoading) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div>;
+  if (!listings.length) return <Card><CardContent className="p-8 text-center"><p className="mb-3">Du har ingen säljsida ännu.</p><Button onClick={() => navigate('/app/egg-sales')}>Skapa säljsida</Button></CardContent></Card>;
 
-  if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-
-  if (listings.length === 0) {
-    return (
-      <div className="max-w-2xl mx-auto py-10">
-        <Card><CardContent className="p-6 text-center space-y-3">
-          <FileText className="h-10 w-10 mx-auto text-muted-foreground" />
-          <h1 className="font-serif text-2xl">Inga säljsidor ännu</h1>
-          <p className="text-sm text-muted-foreground">Skapa en säljsida i Agdas bod först.</p>
-          <Button onClick={() => navigate('/app/egg-sales')}>Till Agdas bod</Button>
-        </CardContent></Card>
-      </div>
-    );
-  }
+  const listing = listings.find((item) => item.id === selectedId) || listings[0];
 
   return (
-    <div className="max-w-5xl mx-auto pb-12 space-y-4">
+    <div className="mx-auto max-w-7xl space-y-4 pb-12">
       <div>
-        <Button variant="ghost" size="sm" className="gap-1 mb-1" onClick={() => navigate('/app/egg-sales')}><ArrowLeft className="h-4 w-4" /> Tillbaka</Button>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/app/egg-sales')}><ArrowLeft className="mr-1 h-4 w-4" />Tillbaka</Button>
         <h1 className="font-serif text-3xl">Säljarens kontrollrum</h1>
-        <p className="text-sm text-muted-foreground">Hantera bokningar, tidsluckor, betalningar och mallar.</p>
+        <p className="text-sm text-muted-foreground">Från ny bokning till betald och hämtad.</p>
       </div>
 
-      {listings.length > 1 && (
-        <Card><CardContent className="p-3 flex flex-wrap gap-2">
-          {listings.map((l) => (
-            <Button key={l.id} size="sm" variant={l.id === selectedId ? 'default' : 'outline'} onClick={() => setSelectedId(l.id)}>{l.title || 'Säljsida'}</Button>
-          ))}
-        </CardContent></Card>
-      )}
+      {listings.length > 1 && <Card><CardContent className="flex flex-wrap gap-2 p-3">{listings.map((item) => <Button key={item.id} size="sm" variant={item.id === listing.id ? 'default' : 'outline'} onClick={() => setSelectedId(item.id)}>{item.title || 'Säljsida'}</Button>)}</CardContent></Card>}
 
-      {current && (
-        <Tabs defaultValue="bookings" className="space-y-3">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Bokningar</span></TabsTrigger>
-            <TabsTrigger value="slots"><Calendar className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Tider</span></TabsTrigger>
-            <TabsTrigger value="waitlist"><Users className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Väntelista</span></TabsTrigger>
-            <TabsTrigger value="subs"><Repeat className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Abonnemang</span></TabsTrigger>
-            <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Statistik</span></TabsTrigger>
-            <TabsTrigger value="templates"><BookmarkPlus className="h-4 w-4 sm:mr-1.5" /><span className="hidden sm:inline">Mallar</span></TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="bookings"><BookingsTab listing={current} /></TabsContent>
-          <TabsContent value="slots"><SlotsTab listing={current} /></TabsContent>
-          <TabsContent value="waitlist"><WaitlistTab listing={current} /></TabsContent>
-          <TabsContent value="subs"><SubscriptionsTab listing={current} /></TabsContent>
-          <TabsContent value="stats"><StatsTab listing={current} /></TabsContent>
-          <TabsContent value="templates"><TemplatesTab listing={current} onApply={() => qc.invalidateQueries({ queryKey: ['dashboard-listings'] })} /></TabsContent>
-        </Tabs>
-      )}
+      <Tabs defaultValue="bookings">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Bokningar</span></TabsTrigger>
+          <TabsTrigger value="slots"><Calendar className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Tider</span></TabsTrigger>
+          <TabsTrigger value="waitlist"><Users className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Väntelista</span></TabsTrigger>
+          <TabsTrigger value="subscriptions"><Repeat className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Abonnemang</span></TabsTrigger>
+          <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Statistik</span></TabsTrigger>
+        </TabsList>
+        <TabsContent value="bookings"><BookingsBoard listing={listing} /></TabsContent>
+        <TabsContent value="slots"><SlotsPanel listing={listing} /></TabsContent>
+        <TabsContent value="waitlist"><WaitlistPanel listing={listing} /></TabsContent>
+        <TabsContent value="subscriptions"><SubscriptionsPanel listing={listing} /></TabsContent>
+        <TabsContent value="stats"><StatsPanel listing={listing} /></TabsContent>
+      </Tabs>
     </div>
   );
 }
 
-function BookingsTab({ listing }: { listing: Listing }) {
+function BookingsBoard({ listing }: { listing: Row }) {
   const qc = useQueryClient();
-  const { data: bookings = [] } = useQuery<Booking[]>({
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const { data: bookings = [], isLoading } = useQuery<Row[]>({
     queryKey: ['dash-bookings', listing.id],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from('public_egg_sale_bookings').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false });
+        .from('public_egg_sale_bookings')
+        .select('*, egg_sale_pickup_slots(starts_at, ends_at, label), egg_sale_booking_tokens(token)')
+        .eq('listing_id', listing.id)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 30_000,
-  });
-
-  const updateBooking = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
-      const { error } = await (supabase as any).from('public_egg_sale_bookings').update(patch).eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Uppdaterat' });
-      qc.invalidateQueries({ queryKey: ['dash-bookings', listing.id] });
-    },
-    onError: (e: any) => toast({ title: 'Kunde inte uppdatera', description: e.message, variant: 'destructive' }),
-  });
-
-  if (bookings.length === 0) {
-    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Inga bokningar ännu.</CardContent></Card>;
-  }
-
-  const pricePerPack = Number(listing.price_per_pack || 0);
-  const active = bookings.filter((b) => b.status !== 'cancelled');
-  const totalAmount = active.reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
-  const paidAmount = active
-    .filter((b) => b.payment_status === 'paid')
-    .reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
-  const refundedAmount = active
-    .filter((b) => b.payment_status === 'refunded')
-    .reduce((s, b) => s + Number(b.packs || 0) * pricePerPack, 0);
-  const unpaidAmount = Math.max(0, totalAmount - paidAmount - refundedAmount);
-
-  return (
-    <div className="space-y-2">
-      <Card className="bg-muted/30">
-        <CardContent className="p-3 sm:p-4 grid grid-cols-3 gap-2 text-center">
-          <div>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Totalt bokat</p>
-            <p className="font-serif text-base sm:text-lg">{kr(totalAmount)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Betalt</p>
-            <p className="font-serif text-base sm:text-lg text-green-700">{kr(paidAmount)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Obetalt</p>
-            <p className="font-serif text-base sm:text-lg text-amber-700">{kr(unpaidAmount)}</p>
-          </div>
-        </CardContent>
-      </Card>
-      {bookings.map((b) => {
-        const amount = Number(b.packs || 0) * pricePerPack;
-        const isPaid = b.payment_status === 'paid';
-        const isRefunded = b.payment_status === 'refunded';
-        const isCancelled = b.status === 'cancelled';
-        const isPickedUp = b.status === 'picked_up';
-        const payLabel = isRefunded ? 'Återbetald' : isPaid ? 'Betald' : 'Obetald';
-        const payClass = isRefunded
-          ? 'bg-muted text-muted-foreground'
-          : isPaid
-          ? 'bg-green-600 text-white border-transparent'
-          : 'border-amber-400 text-amber-700 bg-amber-50';
-        return (
-          <Card key={b.id} className={isCancelled ? 'opacity-60' : ''}>
-            <CardContent className="p-4 space-y-2.5">
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                <div className="min-w-0">
-                  <p className="font-medium">{b.customer_name} <span className="text-xs text-muted-foreground">· {b.packs} kartor · {kr(amount)}</span></p>
-                  <p className="text-xs text-muted-foreground">{b.customer_phone || '–'} · {b.customer_email || '–'}</p>
-                  <p className="text-xs text-muted-foreground">{dt(b.created_at)}</p>
-                  {(b.pickup_person_name || b.pickup_person_phone) && (
-                    <p className="text-xs text-amber-700 mt-1">📦 Hämtas av: {b.pickup_person_name || '?'} {b.pickup_person_phone && `(${b.pickup_person_phone})`}</p>
-                  )}
-                  {b.customer_message && <p className="text-xs italic text-muted-foreground mt-1">"{b.customer_message}"</p>}
-                </div>
-                <div className="flex gap-1 flex-wrap">
-                  <Badge variant={isCancelled ? 'destructive' : isPickedUp ? 'default' : 'secondary'}>{b.status}</Badge>
-                  <Badge variant="outline" className={payClass}>
-                    <Wallet className="h-3 w-3 mr-1" />{payLabel}
-                  </Badge>
-                </div>
-              </div>
-
-              {!isCancelled && (
-                <div className="flex gap-1.5 flex-wrap pt-1">
-                  <Button size="sm" variant={isPaid ? 'outline' : 'default'} className="h-7 text-xs"
-                    onClick={() => updateBooking.mutate({ id: b.id, patch: { payment_status: isPaid ? 'unpaid' : 'paid' } })}>
-                    <Wallet className="h-3 w-3 mr-1" />{isPaid ? 'Markera obetald' : 'Markera betald'}
-                  </Button>
-                  {!isPickedUp && (
-                    <Button size="sm" variant="outline" className="h-7 text-xs"
-                      onClick={() => updateBooking.mutate({ id: b.id, patch: { status: 'picked_up' } })}>
-                      <CheckCircle2 className="h-3 w-3 mr-1" />Markera hämtad
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" className="h-7 text-xs text-destructive"
-                    onClick={() => { if (confirm('Avboka denna bokning?')) updateBooking.mutate({ id: b.id, patch: { status: 'cancelled' } }); }}>
-                    Avboka
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-function SlotsTab({ listing }: { listing: Listing }) {
-  const qc = useQueryClient();
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('12:00');
-  const [maxBookings, setMaxBookings] = useState('5');
-  const [label, setLabel] = useState('');
-
-  const { data: slots = [] } = useQuery<Slot[]>({
-    queryKey: ['dash-slots', listing.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('egg_sale_pickup_slots').select('*').eq('listing_id', listing.id).order('starts_at', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const create = useMutation({
-    mutationFn: async () => {
-      if (!date || !startTime || !endTime) throw new Error('Välj datum och tid');
-      const starts = new Date(`${date}T${startTime}:00`);
-      const ends = new Date(`${date}T${endTime}:00`);
-      if (ends <= starts) throw new Error('Sluttid måste vara efter starttid');
-      const u = await uid();
-      const { error } = await (supabase as any).from('egg_sale_pickup_slots').insert({
-        listing_id: listing.id, seller_user_id: u,
-        starts_at: starts.toISOString(), ends_at: ends.toISOString(),
-        max_bookings: Math.max(1, Number(maxBookings) || 1), label: label.trim() || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Tidslucka skapad' });
-      setDate(''); setLabel('');
-      qc.invalidateQueries({ queryKey: ['dash-slots', listing.id] });
-    },
-    onError: (e: any) => toast({ title: 'Kunde inte skapa', description: e.message, variant: 'destructive' }),
-  });
-
-  const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from('egg_sale_pickup_slots').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Borttagen' });
-      qc.invalidateQueries({ queryKey: ['dash-slots', listing.id] });
-    },
-  });
-
-  return (
-    <div className="space-y-3">
-      <Card><CardContent className="p-4 space-y-3">
-        <h3 className="font-serif text-lg flex items-center gap-2"><Plus className="h-4 w-4 text-primary" /> Ny tidslucka</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          <div className="col-span-2"><Label className="text-xs">Datum</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-          <div><Label className="text-xs">Från</Label><Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} /></div>
-          <div><Label className="text-xs">Till</Label><Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} /></div>
-          <div><Label className="text-xs">Max bokningar</Label><Input type="number" min="1" value={maxBookings} onChange={(e) => setMaxBookings(e.target.value)} /></div>
-        </div>
-        <Input placeholder="Etikett (valfri), t.ex. Lördagsmarknad" value={label} onChange={(e) => setLabel(e.target.value)} />
-        <Button onClick={() => create.mutate()} disabled={create.isPending} className="w-full"><Plus className="h-4 w-4 mr-1" /> Skapa tidslucka</Button>
-      </CardContent></Card>
-
-      {slots.length === 0 ? (
-        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Inga tidsluckor ännu. Köpare bokar då utan specifik tid.</CardContent></Card>
-      ) : (
-        <div className="space-y-2">
-          {slots.map((s) => {
-            const full = s.current_bookings >= s.max_bookings;
-            return (
-              <Card key={s.id}>
-                <CardContent className="p-3 flex items-center justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-sm flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-primary" />
-                      {dt(s.starts_at)} – {new Date(s.ends_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    {s.label && <p className="text-xs text-muted-foreground">{s.label}</p>}
-                    <p className="text-xs text-muted-foreground">{s.current_bookings}/{s.max_bookings} bokade {full && <Badge variant="destructive" className="ml-1">Fullt</Badge>}</p>
-                  </div>
-                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm('Ta bort tidslucka?')) remove.mutate(s.id); }}><Trash2 className="h-4 w-4" /></Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function WaitlistTab({ listing }: { listing: Listing }) {
-  const { data: entries = [] } = useQuery<any[]>({
-    queryKey: ['dash-waitlist', listing.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('egg_sale_waitlist').select('*').eq('listing_id', listing.id).order('created_at', { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  if (entries.length === 0) {
-    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Inga personer på väntelistan.</CardContent></Card>;
-  }
-
-  return (
-    <div className="space-y-2">
-      {entries.map((e) => (
-        <Card key={e.id}>
-          <CardContent className="p-3">
-            <p className="font-medium text-sm">{e.customer_name} {e.notified_at && <Badge variant="secondary" className="ml-1">Notifierad</Badge>}</p>
-            <p className="text-xs text-muted-foreground">{e.customer_email || '–'} · {e.customer_phone || '–'} · vill ha {e.packs_wanted} kartor</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function TemplatesTab({ listing, onApply }: { listing: Listing; onApply: () => void }) {
-  const qc = useQueryClient();
-  const [name, setName] = useState('');
-
-  const { data: templates = [] } = useQuery<Template[]>({
-    queryKey: ['dash-templates'],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('egg_sale_templates').select('*').order('updated_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  const save = useMutation({
-    mutationFn: async () => {
-      if (!name.trim()) throw new Error('Ge mallen ett namn');
-      const u = await uid();
-      const snapshot = {
-        title: listing.title, description: listing.description, image_url: listing.image_url,
-        eggs_per_pack: listing.eggs_per_pack, price_per_pack: listing.price_per_pack,
-        p6_price: listing.p6_price, p12_price: listing.p12_price, p30_price: listing.p30_price,
-        pickup_info: listing.pickup_info, contact_info: listing.contact_info,
-        swish_number: listing.swish_number, swish_name: listing.swish_name, swish_message: listing.swish_message,
-        theme: listing.theme, sections: listing.sections, stock_packs: listing.stock_packs,
-      };
-      const { error } = await (supabase as any).from('egg_sale_templates').insert({ user_id: u, name: name.trim(), snapshot });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast({ title: 'Mall sparad' }); setName('');
-      qc.invalidateQueries({ queryKey: ['dash-templates'] });
-    },
-    onError: (e: any) => toast({ title: 'Kunde inte spara', description: e.message, variant: 'destructive' }),
-  });
-
-  const apply = useMutation({
-    mutationFn: async (tpl: Template) => {
-      const { error } = await (supabase as any).from('public_egg_sale_listings').update(tpl.snapshot).eq('id', listing.id);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast({ title: 'Mall tillämpad på säljsidan' }); onApply(); },
-    onError: (e: any) => toast({ title: 'Kunde inte tillämpa', description: e.message, variant: 'destructive' }),
-  });
-
-  const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from('egg_sale_templates').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dash-templates'] }),
-  });
-
-  return (
-    <div className="space-y-3">
-      <Card><CardContent className="p-4 space-y-3">
-        <h3 className="font-serif text-lg flex items-center gap-2"><BookmarkPlus className="h-4 w-4 text-primary" /> Spara aktuell sida som mall</h3>
-        <p className="text-xs text-muted-foreground">Du kan återanvända pris, text, bild och tema senare.</p>
-        <div className="flex gap-2">
-          <Input placeholder="Mallnamn, t.ex. 'Lördagsförsäljning'" value={name} onChange={(e) => setName(e.target.value)} />
-          <Button onClick={() => save.mutate()} disabled={save.isPending}><BookmarkPlus className="h-4 w-4 mr-1" /> Spara</Button>
-        </div>
-      </CardContent></Card>
-
-      {templates.length === 0 ? (
-        <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">Inga sparade mallar.</CardContent></Card>
-      ) : (
-        <div className="space-y-2">
-          {templates.map((t) => (
-            <Card key={t.id}>
-              <CardContent className="p-3 flex items-center justify-between gap-2">
-                <div>
-                  <p className="font-medium text-sm">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{dt(t.updated_at)}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button size="sm" variant="outline" onClick={() => { if (confirm(`Tillämpa "${t.name}" på "${listing.title}"? Detta skriver över aktuella värden.`)) apply.mutate(t); }}>Tillämpa</Button>
-                  <Button size="icon" variant="ghost" className="text-destructive" onClick={() => { if (confirm('Ta bort mall?')) remove.mutate(t.id); }}><Trash2 className="h-4 w-4" /></Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SubscriptionsTab({ listing }: { listing: Listing }) {
-  const qc = useQueryClient();
-  const { data: subs = [] } = useQuery<any[]>({
-    queryKey: ['dash-subs', listing.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('egg_sale_subscriptions').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
+    refetchInterval: 30000,
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
-      const { error } = await (supabase as any).from('egg_sale_subscriptions').update(patch).eq('id', id);
-      if (error) throw error;
+    mutationFn: async ({ ids, status, paymentStatus }: { ids: string[]; status: string; paymentStatus?: string }) => {
+      const now = new Date().toISOString();
+      for (const id of ids) {
+        const patch: Row = { status, updated_at: now };
+        const stamp: Row = { confirmed: 'confirmed_at', paid: 'paid_at', packed: 'packed_at', picked_up: 'picked_up_at', cancelled: 'cancelled_at', no_show: 'no_show_at', refunded: 'refunded_at' };
+        if (stamp[status]) patch[stamp[status]] = now;
+        if (paymentStatus) patch.payment_status = paymentStatus;
+        const { error } = await (supabase as any).from('public_egg_sale_bookings').update(patch).eq('id', id).eq('listing_id', listing.id);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast({ title: 'Uppdaterat' }); qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }); },
+    onSuccess: () => {
+      setSelected(new Set());
+      qc.invalidateQueries({ queryKey: ['dash-bookings', listing.id] });
+      toast({ title: 'Bokningarna är uppdaterade' });
+    },
+    onError: (error: Error) => toast({ title: 'Kunde inte uppdatera', description: error.message, variant: 'destructive' }),
   });
 
-  const remove = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from('egg_sale_subscriptions').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => { toast({ title: 'Borttaget' }); qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }); },
-  });
+  const groups = useMemo(() => {
+    const result: Row = Object.fromEntries(STATUS_COLUMNS.map((column) => [column.key, []]));
+    for (const booking of bookings) {
+      let key = booking.status || 'reserved';
+      if (booking.payment_status === 'paid' && ['reserved', 'confirmed'].includes(key)) key = 'paid';
+      if (result[key]) result[key].push(booking);
+    }
+    return result;
+  }, [bookings]);
 
-  if (subs.length === 0) {
-    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground space-y-2"><Repeat className="h-8 w-8 mx-auto text-muted-foreground/50" /><p>Inga abonnemang ännu.</p><p className="text-xs">Köpare kan starta abonnemang direkt från din säljsida.</p></CardContent></Card>;
-  }
+  const selectedIds = Array.from(selected);
+  const toggle = (id: string) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
-  const freqLabel = (f: string) => f === 'weekly' ? 'Varje vecka' : f === 'biweekly' ? 'Varannan vecka' : 'Varje månad';
+  if (isLoading) return <Card><CardContent className="p-6">Laddar bokningar…</CardContent></Card>;
 
-  return (
-    <div className="space-y-2">
-      {subs.map((s) => {
-        const active = s.status === 'active';
-        return (
-          <Card key={s.id} className={active ? '' : 'opacity-60'}>
-            <CardContent className="p-4 space-y-2.5">
-              <div className="flex items-start justify-between gap-2 flex-wrap">
-                <div className="min-w-0">
-                  <p className="font-medium">{s.customer_name} <span className="text-xs text-muted-foreground">· {s.packs} kartor · {freqLabel(s.frequency)}</span></p>
-                  <p className="text-xs text-muted-foreground">{s.customer_email} · {s.customer_phone || '–'}</p>
-                  <p className="text-xs text-muted-foreground">Nästa leverans: {dt(s.next_run_at)} · Skickade: {s.total_bookings}</p>
-                </div>
-                <Badge variant={active ? 'default' : 'secondary'}>{s.status}</Badge>
-              </div>
-              <div className="flex gap-1.5 flex-wrap pt-1">
-                {active ? (
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => update.mutate({ id: s.id, patch: { status: 'paused' } })}>
-                    <Pause className="h-3 w-3 mr-1" />Pausa
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => update.mutate({ id: s.id, patch: { status: 'active' } })}>
-                    <Play className="h-3 w-3 mr-1" />Återuppta
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive" onClick={() => { if (confirm('Avsluta abonnemang?')) remove.mutate(s.id); }}>
-                  <Trash2 className="h-3 w-3 mr-1" />Avsluta
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+  return <div className="space-y-3">
+    {selectedIds.length > 0 && <Card><CardContent className="flex flex-wrap items-center gap-2 p-3"><Badge>{selectedIds.length} valda</Badge><Button size="sm" variant="outline" onClick={() => update.mutate({ ids: selectedIds, status: 'packed' })}>Markera packade</Button><Button size="sm" onClick={() => update.mutate({ ids: selectedIds, status: 'picked_up' })}>Markera hämtade</Button></CardContent></Card>}
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      {STATUS_COLUMNS.map((column) => <section key={column.key} className="min-h-40 rounded-2xl border bg-muted/20 p-2.5"><div className="mb-2 flex items-center justify-between"><h3 className="font-serif">{column.label}</h3><Badge variant="secondary">{groups[column.key].length}</Badge></div><div className="space-y-2">{groups[column.key].map((booking: Row) => {
+        const token = booking.egg_sale_booking_tokens?.token;
+        const url = token ? `${window.location.origin}/bestallning/${token}` : null;
+        return <Card key={booking.id}><CardContent className="space-y-2 p-3"><div className="flex gap-2"><Checkbox checked={selected.has(booking.id)} onCheckedChange={() => toggle(booking.id)} /><div className="min-w-0"><p className="truncate text-sm font-medium">{booking.customer_name}</p><p className="text-xs text-muted-foreground">{booking.packs} kartor · {kr(Number(booking.packs) * Number(listing.price_per_pack || 0))}</p><p className="text-xs text-muted-foreground">{dt(booking.egg_sale_pickup_slots?.starts_at)}</p></div></div>{booking.customer_message && <p className="line-clamp-2 text-xs italic text-muted-foreground">”{booking.customer_message}”</p>}<BookingStatusActions bookingId={booking.id} status={column.key} busy={update.isPending} onChange={(id, status, paymentStatus) => update.mutate({ ids: [id], status, paymentStatus })} />{url && <div className="flex gap-1"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigator.clipboard.writeText(url).then(() => toast({ title: 'Orderlänken är kopierad' }))}><Copy className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-7 w-7" asChild><a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button></div>}</CardContent></Card>;
+      })}</div></section>)}
     </div>
-  );
+  </div>;
 }
 
-function StatsTab({ listing }: { listing: Listing }) {
-  const { data: bookings = [] } = useQuery<any[]>({
-    queryKey: ['dash-stats-bookings', listing.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('public_egg_sale_bookings').select('*').eq('listing_id', listing.id).neq('status', 'cancelled');
-      if (error) throw error;
-      return data || [];
-    },
-  });
+function SlotsPanel({ listing }: { listing: Row }) {
+  const qc = useQueryClient();
+  const [date, setDate] = useState('');
+  const [from, setFrom] = useState('09:00');
+  const [to, setTo] = useState('12:00');
+  const [max, setMax] = useState('5');
+  const { data: slots = [] } = useQuery<Row[]>({ queryKey: ['dash-slots', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_pickup_slots').select('*').eq('listing_id', listing.id).order('starts_at'); if (error) throw error; return data || []; } });
+  const create = useMutation({ mutationFn: async () => { const userId = await currentUserId(); const { error } = await (supabase as any).from('egg_sale_pickup_slots').insert({ listing_id: listing.id, seller_user_id: userId, starts_at: new Date(`${date}T${from}`).toISOString(), ends_at: new Date(`${date}T${to}`).toISOString(), max_bookings: Math.max(1, Number(max)) }); if (error) throw error; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['dash-slots', listing.id] }); toast({ title: 'Tiden är skapad' }); } });
+  return <div className="space-y-3"><Card><CardContent className="grid gap-2 p-4 sm:grid-cols-4"><div><Label>Datum</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div><div><Label>Från</Label><Input type="time" value={from} onChange={(e) => setFrom(e.target.value)} /></div><div><Label>Till</Label><Input type="time" value={to} onChange={(e) => setTo(e.target.value)} /></div><div><Label>Max bokningar</Label><Input type="number" min="1" value={max} onChange={(e) => setMax(e.target.value)} /></div><Button className="sm:col-span-4" disabled={!date || create.isPending} onClick={() => create.mutate()}><Plus className="mr-1 h-4 w-4" />Skapa tid</Button></CardContent></Card>{slots.map((slot) => <Card key={slot.id}><CardContent className="flex justify-between p-3"><span><Clock className="mr-1 inline h-4 w-4" />{dt(slot.starts_at)} · {slot.current_bookings}/{slot.max_bookings}</span><Badge variant={slot.current_bookings >= slot.max_bookings ? 'destructive' : 'secondary'}>{slot.current_bookings >= slot.max_bookings ? 'Full' : 'Ledig'}</Badge></CardContent></Card>)}</div>;
+}
 
-  const { data: views = [] } = useQuery<any[]>({
-    queryKey: ['dash-stats-views', listing.slug],
-    enabled: !!listing.slug,
-    queryFn: async () => {
-      const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-      const { data, error } = await (supabase as any)
-        .from('page_views')
-        .select('path, session_id, referrer, device_type, created_at')
-        .eq('path', `/s/${listing.slug}`)
-        .gte('created_at', since)
-        .limit(10000);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+function WaitlistPanel({ listing }: { listing: Row }) {
+  const qc = useQueryClient();
+  const { data: entries = [] } = useQuery<Row[]>({ queryKey: ['dash-waitlist', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_waitlist').select('*').eq('listing_id', listing.id).order('created_at'); if (error) throw error; return data || []; } });
+  const offer = useMutation({ mutationFn: async () => { const { data, error } = await (supabase as any).rpc('create_next_waitlist_offer', { p_listing_id: listing.id, p_packs: 1 }); if (error) throw error; return data; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['dash-waitlist', listing.id] }); toast({ title: 'Erbjudandet är skapat', description: 'Det gäller i 45 minuter.' }); }, onError: (error: Error) => toast({ title: 'Kunde inte skapa erbjudande', description: error.message, variant: 'destructive' }) });
+  return <div className="space-y-3"><Button onClick={() => offer.mutate()} disabled={offer.isPending || !entries.some((entry) => !entry.status || entry.status === 'waiting')}>Erbjud nästa person ägg</Button>{entries.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Väntelistan är tom.</CardContent></Card> : entries.map((entry, index) => <Card key={entry.id}><CardContent className="flex items-start justify-between gap-3 p-4"><div><p className="font-medium">{index + 1}. {entry.customer_name}</p><p className="text-xs text-muted-foreground">{entry.packs_wanted} kartor · {entry.customer_email || entry.customer_phone || 'Ingen kontaktuppgift'}</p>{entry.offer_expires_at && <p className="text-xs text-amber-700">Erbjudande till {dt(entry.offer_expires_at)}</p>}</div><Badge variant="outline">{entry.status || 'waiting'}</Badge></CardContent></Card>)}</div>;
+}
 
-  const stats = useMemo(() => {
-    const price = Number(listing.price_per_pack || 0);
-    const months = new Map<string, { packs: number; revenue: number; count: number; visits: number; sessions: Set<string> }>();
-    const customers = new Map<string, { name: string; packs: number; revenue: number; count: number }>();
-    let totalPacks = 0, totalRevenue = 0, paidRevenue = 0;
-    const now = new Date();
-    const monthsBack: { key: string; label: string }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      monthsBack.push({ key, label: d.toLocaleDateString('sv-SE', { month: 'short', year: '2-digit' }) });
-      months.set(key, { packs: 0, revenue: 0, count: 0, visits: 0, sessions: new Set() });
-    }
-    for (const b of bookings) {
-      const d = new Date(b.created_at);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const rev = Number(b.packs || 0) * price;
-      totalPacks += Number(b.packs || 0);
-      totalRevenue += rev;
-      if (b.payment_status === 'paid') paidRevenue += rev;
-      if (months.has(key)) {
-        const m = months.get(key)!;
-        m.packs += Number(b.packs || 0); m.revenue += rev; m.count += 1;
-      }
-      const cKey = (b.customer_email || b.customer_phone || b.customer_name || '').toLowerCase();
-      if (cKey) {
-        const c = customers.get(cKey) || { name: b.customer_name, packs: 0, revenue: 0, count: 0 };
-        c.packs += Number(b.packs || 0); c.revenue += rev; c.count += 1;
-        customers.set(cKey, c);
-      }
-    }
+function SubscriptionsPanel({ listing }: { listing: Row }) {
+  const qc = useQueryClient();
+  const { data: subscriptions = [] } = useQuery<Row[]>({ queryKey: ['dash-subs', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_subscriptions').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false }); if (error) throw error; return data || []; } });
+  const update = useMutation({ mutationFn: async ({ id, patch }: { id: string; patch: Row }) => { const { error } = await (supabase as any).from('egg_sale_subscriptions').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id).eq('listing_id', listing.id); if (error) throw error; }, onSuccess: () => qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }) });
+  return <div className="space-y-2">{subscriptions.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Inga abonnemang ännu.</CardContent></Card> : subscriptions.map((subscription) => <Card key={subscription.id}><CardContent className="space-y-2 p-4"><div className="flex justify-between gap-2"><div><p className="font-medium">{subscription.customer_name}</p><p className="text-xs text-muted-foreground">{subscription.packs} kartor · {subscription.frequency} · nästa {dt(subscription.next_run_at)}</p></div><Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>{subscription.status}</Badge></div><div className="flex flex-wrap gap-2">{subscription.status === 'active' ? <Button size="sm" variant="outline" onClick={() => update.mutate({ id: subscription.id, patch: { status: 'paused', paused_until: null } })}><Pause className="mr-1 h-3.5 w-3.5" />Pausa</Button> : <Button size="sm" onClick={() => update.mutate({ id: subscription.id, patch: { status: 'active', paused_until: null, skip_next: false } })}><Play className="mr-1 h-3.5 w-3.5" />Aktivera</Button>}<Button size="sm" variant="outline" onClick={() => update.mutate({ id: subscription.id, patch: { skip_next: true } })}>Hoppa över nästa</Button></div></CardContent></Card>)}</div>;
+}
 
-    const allSessions = new Set<string>();
-    const referrerMap = new Map<string, number>();
-    const deviceMap = new Map<string, number>();
-    const last30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    let views30 = 0;
-    const sessions30 = new Set<string>();
-    for (const v of views) {
-      const t = new Date(v.created_at).getTime();
-      if (v.session_id) allSessions.add(v.session_id);
-      const key = `${new Date(v.created_at).getFullYear()}-${String(new Date(v.created_at).getMonth() + 1).padStart(2, '0')}`;
-      if (months.has(key)) {
-        const m = months.get(key)!;
-        m.visits += 1;
-        if (v.session_id) m.sessions.add(v.session_id);
-      }
-      if (t >= last30) {
-        views30 += 1;
-        if (v.session_id) sessions30.add(v.session_id);
-      }
-      const ref = v.referrer ? new URL(v.referrer, 'http://x').hostname.replace(/^www\./, '') : 'direkt';
-      referrerMap.set(ref, (referrerMap.get(ref) || 0) + 1);
-      const dev = v.device_type || 'okänd';
-      deviceMap.set(dev, (deviceMap.get(dev) || 0) + 1);
-    }
-
-    const monthsArr = monthsBack.map((m) => {
-      const data = months.get(m.key)!;
-      return { ...m, ...data, uniqueVisitors: data.sessions.size };
-    });
-    const maxRev = Math.max(1, ...monthsArr.map((m) => m.revenue));
-    const maxVis = Math.max(1, ...monthsArr.map((m) => m.uniqueVisitors));
-    const topCustomers = [...customers.values()].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
-    const topRefs = [...referrerMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const devices = [...deviceMap.entries()].sort((a, b) => b[1] - a[1]);
-    const totalVisits = views.length;
-    const uniqueVisitors = allSessions.size;
-    const conversion = uniqueVisitors > 0 ? (bookings.length / uniqueVisitors) * 100 : 0;
-
-    return {
-      monthsArr, topCustomers, totalPacks, totalRevenue, paidRevenue, maxRev, maxVis,
-      avg: bookings.length > 0 ? totalRevenue / bookings.length : 0,
-      totalVisits, uniqueVisitors, conversion, views30, uniqueVisitors30: sessions30.size,
-      topRefs, devices,
-    };
-  }, [bookings, views, listing.price_per_pack]);
-
-  const hasData = bookings.length > 0 || views.length > 0;
-  if (!hasData) {
-    return <Card><CardContent className="p-6 text-center text-sm text-muted-foreground"><BarChart3 className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />Ingen försäljnings- eller besöksdata ännu.</CardContent></Card>;
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Total intäkt</p><p className="text-xl font-bold text-primary tabular-nums">{kr(stats.totalRevenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Betalt</p><p className="text-xl font-bold text-green-600 tabular-nums">{kr(stats.paidRevenue)}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Kartor sålda</p><p className="text-xl font-bold tabular-nums">{stats.totalPacks}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Snitt/bokning</p><p className="text-xl font-bold tabular-nums">{kr(stats.avg)}</p></CardContent></Card>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Besökare (90d)</p><p className="text-xl font-bold text-blue-600 tabular-nums">{stats.uniqueVisitors}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Sidvisningar</p><p className="text-xl font-bold tabular-nums">{stats.totalVisits}</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Senaste 30 d</p><p className="text-xl font-bold tabular-nums">{stats.uniqueVisitors30}</p><p className="text-[10px] text-muted-foreground">unika · {stats.views30} visn.</p></CardContent></Card>
-        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Konvertering</p><p className="text-xl font-bold text-amber-600 tabular-nums">{stats.conversion.toFixed(1)}%</p><p className="text-[10px] text-muted-foreground">bokn./besökare</p></CardContent></Card>
-      </div>
-
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Intäkt &amp; besökare senaste 6 månaderna</h3>
-          <div className="space-y-3">
-            {stats.monthsArr.map((m) => (
-              <div key={m.key} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">{m.label}</span>
-                  <span className="font-medium tabular-nums">{kr(m.revenue)} · {m.count} bokn. · {m.uniqueVisitors} besök.</span>
-                </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary transition-all" style={{ width: `${(m.revenue / stats.maxRev) * 100}%` }} /></div>
-                <div className="h-1.5 rounded-full bg-muted overflow-hidden"><div className="h-full bg-blue-500/60 transition-all" style={{ width: `${(m.uniqueVisitors / stats.maxVis) * 100}%` }} /></div>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-3 text-[10px] text-muted-foreground pt-1">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Intäkt</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500/60" /> Unika besökare</span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {(stats.topRefs.length > 0 || stats.devices.length > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {stats.topRefs.length > 0 && (
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Varifrån besökarna kommer</h3>
-                <div className="space-y-1">
-                  {stats.topRefs.map(([ref, count]) => (
-                    <div key={ref} className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0">
-                      <span className="truncate">{ref}</span>
-                      <span className="text-muted-foreground tabular-nums">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          {stats.devices.length > 0 && (
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h3 className="font-serif text-base flex items-center gap-2"><BarChart3 className="h-4 w-4 text-primary" /> Enheter</h3>
-                <div className="space-y-1">
-                  {stats.devices.map(([dev, count]) => (
-                    <div key={dev} className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0">
-                      <span className="capitalize">{dev}</span>
-                      <span className="text-muted-foreground tabular-nums">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {stats.topCustomers.length > 0 && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-serif text-base flex items-center gap-2"><Users className="h-4 w-4 text-primary" /> Bästa kunder</h3>
-            <div className="space-y-1.5">
-              {stats.topCustomers.map((c, i) => (
-                <div key={i} className="flex items-center justify-between text-sm py-1.5 border-b border-border/40 last:border-0">
-                  <span className="font-medium">{i + 1}. {c.name}</span>
-                  <span className="text-xs text-muted-foreground tabular-nums">{c.count} bokn. · {c.packs} kartor · <strong className="text-foreground">{kr(c.revenue)}</strong></span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+function StatsPanel({ listing }: { listing: Row }) {
+  const { data: bookings = [] } = useQuery<Row[]>({ queryKey: ['dash-stats-bookings', listing.id], queryFn: async () => { const { data } = await (supabase as any).from('public_egg_sale_bookings').select('status,payment_status,packs,created_at').eq('listing_id', listing.id); return data || []; } });
+  const active = bookings.filter((booking) => !['cancelled', 'refunded'].includes(booking.status));
+  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.price_per_pack || 0), 0);
+  const eggs = active.filter((booking) => booking.status === 'picked_up').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.eggs_per_pack || 0), 0);
+  return <div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Bokningar</p><p className="font-serif text-3xl">{bookings.length}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Betald omsättning</p><p className="font-serif text-3xl">{kr(revenue)}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Hämtade ägg</p><p className="font-serif text-3xl">{eggs}</p></CardContent></Card></div>;
 }
