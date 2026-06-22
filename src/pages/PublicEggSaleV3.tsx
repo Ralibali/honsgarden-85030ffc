@@ -70,6 +70,18 @@ export default function PublicEggSaleV3() {
     staleTime: 15_000,
   });
 
+  const { data: socialProof } = useQuery<{ bookings_today: number; last_booked_at: string | null }>({
+    queryKey: ['public-egg-sale-social-proof-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc('get_public_egg_sale_social_proof', { p_listing_id: listing.id });
+      if (error) return { bookings_today: 0, last_booked_at: null };
+      const row = Array.isArray(data) ? data[0] : data;
+      return { bookings_today: Number(row?.bookings_today) || 0, last_booked_at: row?.last_booked_at || null };
+    },
+    staleTime: 30_000,
+  });
+
   const { data: publicReviews = [] } = useQuery({
     queryKey: ['public-egg-sale-reviews-v3', listing?.id],
     enabled: Boolean(listing?.id),
