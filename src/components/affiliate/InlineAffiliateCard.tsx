@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, ImageOff, ShoppingBag, Sparkles } from 'lucide-react';
 import { AffiliateLink } from '@/components/AffiliateLink';
+import { trackAffiliateImpression } from '@/lib/affiliateTracking';
 import {
   affiliateAdvertiserName,
   affiliateReason,
