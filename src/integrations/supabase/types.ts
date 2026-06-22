@@ -4033,7 +4033,80 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_due_egg_subscriptions: {
+        Args: { p_limit?: number }
+        Returns: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          consecutive_failures: number
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          frequency: string
+          id: string
+          last_booking_id: string | null
+          last_error: string | null
+          listing_id: string
+          next_run_at: string
+          notes: string | null
+          packs: number
+          paused_until: string | null
+          pickup_slot_id: string | null
+          preferred_weekday: number | null
+          seller_user_id: string
+          skip_next: boolean
+          status: string
+          total_bookings: number
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "egg_sale_subscriptions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      claim_egg_notifications: {
+        Args: { p_limit?: number }
+        Returns: {
+          attempts: number
+          booking_id: string | null
+          created_at: string
+          data: Json
+          deliver_after: string
+          delivered_at: string | null
+          destination: string | null
+          error_message: string | null
+          id: string
+          kind: string
+          listing_id: string | null
+          state: string
+          unique_key: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "egg_sale_notification_queue"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       cleanup_old_client_error_logs: { Args: never; Returns: undefined }
+      complete_egg_notification: {
+        Args: { p_error?: string; p_id: string }
+        Returns: undefined
+      }
+      complete_egg_subscription_run: {
+        Args: {
+          p_booking_id?: string
+          p_error?: string
+          p_id: string
+          p_next_run_at?: string
+          p_ok: boolean
+        }
+        Returns: undefined
+      }
       count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
       create_next_waitlist_offer: {
@@ -4149,6 +4222,10 @@ export type Database = {
       set_lifetime_premium: {
         Args: { _is_lifetime: boolean; _user_id: string }
         Returns: undefined
+      }
+      transition_egg_booking_status: {
+        Args: { p_booking_id: string; p_new_status: string; p_note?: string }
+        Returns: Json
       }
       unaccent: { Args: { "": string }; Returns: string }
     }
