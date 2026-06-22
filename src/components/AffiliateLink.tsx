@@ -26,6 +26,7 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
     advertiser,
     source,
     slug,
+    sectionTitle,
     rel,
     target,
     onMouseDown,
@@ -44,6 +45,7 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
       advertiser,
       source,
       slug: slug ?? null,
+      section_title: sectionTitle ?? null,
       href,
     });
   };
