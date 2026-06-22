@@ -113,6 +113,7 @@ export function InlineAffiliateCard({
         advertiser={product.advertiser}
         source="product_box"
         slug={slug}
+        sectionTitle={sectionTitle ?? null}
         className="group grid overflow-hidden bg-background/70 transition-colors hover:bg-background sm:grid-cols-[190px_1fr]"
       >
         <span className="relative block min-h-48 bg-white/80 sm:min-h-full">
