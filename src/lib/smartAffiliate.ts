@@ -199,13 +199,56 @@ export function affiliateReason(product: SmartAffiliateProduct): string {
   return CATEGORY_REASONS[product.category] ?? 'Ett produktförslag som matchar innehållet i det här avsnittet.';
 }
 
+const ADVERTISER_NAMES: Record<string, string> = {
+  'p-lindberg': 'P. Lindberg',
+  plindberg: 'P. Lindberg',
+  bonden: 'Bonden.se',
+  'by-benson': 'By Benson',
+  bybenson: 'By Benson',
+  dintradgard: 'DinTrädgård',
+  'din-tradgard': 'DinTrädgård',
+  granngarden: 'Granngården',
+  jula: 'Jula',
+  biltema: 'Biltema',
+  clasohlson: 'Clas Ohlson',
+  hornbach: 'Hornbach',
+  bauhaus: 'Bauhaus',
+  byggmax: 'Byggmax',
+  k_rauta: 'K-Rauta',
+  blomsterlandet: 'Blomsterlandet',
+  amazon: 'Amazon',
+};
+
+function prettifyAdvertiserSlug(slug: string): string {
+  return slug
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
+}
+
+function advertiserFromUrl(url?: string): string | null {
+  if (!url) return null;
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    const root = host.split('.').slice(-2, -1)[0] ?? host;
+    const key = root.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (ADVERTISER_NAMES[key]) return ADVERTISER_NAMES[key];
+    return prettifyAdvertiserSlug(root);
+  } catch {
+    return null;
+  }
+}
+
 export function affiliateAdvertiserName(product: SmartAffiliateProduct): string {
-  if (product.advertiserName) return product.advertiserName;
-  const names: Record<string, string> = {
-    'p-lindberg': 'P. Lindberg',
-    bonden: 'Bonden.se',
-    'by-benson': 'By Benson',
-    dintradgard: 'DinTrädgård',
-  };
-  return names[product.advertiser] ?? product.advertiser;
+  if (product.advertiserName && product.advertiserName.toLowerCase() !== 'unknown') {
+    return product.advertiserName;
+  }
+  const slugKey = (product.advertiser || '').toLowerCase();
+  if (slugKey && slugKey !== 'unknown' && ADVERTISER_NAMES[slugKey]) {
+    return ADVERTISER_NAMES[slugKey];
+  }
+  const fromUrl = advertiserFromUrl(product.trackingUrl) ?? advertiserFromUrl(product.productUrl);
+  if (fromUrl) return fromUrl;
+  if (slugKey && slugKey !== 'unknown') return prettifyAdvertiserSlug(slugKey);
+  return 'butiken';
 }
