@@ -208,7 +208,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
           <p className="text-xs text-muted-foreground">Påminnelser går ut automatiskt 2 dagar efter hämtning och sedan varannan dag (max 4 ggr). Du kan också skicka manuellt.</p>
           <div className="space-y-2">
             {unpaidPickups.map((b) => {
-              const amount = Math.round(Number(b.packs || 0) * Number(listing.price_per_pack || 0));
+              const amount = getOrderTotal(Number(b.packs || 0), normalizeTiers(listing.price_tiers), Number(listing.price_per_pack || 0));
               const reminders = Number(b.payment_reminder_count || 0);
               const lastSent = b.payment_reminder_last_sent_at;
               const token = b.egg_sale_booking_tokens?.token;
