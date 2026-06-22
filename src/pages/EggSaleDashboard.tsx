@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
 import PriceTiersEditor from '@/components/egg-sales/PriceTiersEditor';
+import BulkPriceTiersPanel from '@/components/egg-sales/BulkPriceTiersPanel';
 import { getOrderTotal, normalizeTiers } from '@/lib/eggSalePricing';
 import {
   AlertTriangle,
