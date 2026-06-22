@@ -1061,6 +1061,53 @@ export type Database = {
           },
         ]
       }
+      egg_sale_booking_events: {
+        Row: {
+          actor: string
+          booking_id: string
+          created_at: string
+          event_type: string
+          id: string
+          listing_id: string | null
+          metadata: Json | null
+          new_status: string | null
+          old_status: string | null
+          seller_user_id: string | null
+        }
+        Insert: {
+          actor?: string
+          booking_id: string
+          created_at?: string
+          event_type: string
+          id?: string
+          listing_id?: string | null
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          seller_user_id?: string | null
+        }
+        Update: {
+          actor?: string
+          booking_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          listing_id?: string | null
+          metadata?: Json | null
+          new_status?: string | null
+          old_status?: string | null
+          seller_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_booking_events_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       egg_sale_booking_tokens: {
         Row: {
           booking_id: string
@@ -2635,6 +2682,8 @@ export type Database = {
       }
       public_egg_sale_bookings: {
         Row: {
+          cancelled_at: string | null
+          confirmed_at: string | null
           created_at: string
           customer_email: string | null
           customer_message: string | null
@@ -2642,17 +2691,24 @@ export type Database = {
           customer_phone: string | null
           id: string
           listing_id: string
+          no_show_at: string | null
+          packed_at: string | null
           packs: number
+          paid_at: string | null
           payment_status: string
+          picked_up_at: string | null
           pickup_person_name: string | null
           pickup_person_phone: string | null
           pickup_reminder_sent_at: string | null
           pickup_slot_id: string | null
+          refunded_at: string | null
           seller_user_id: string
           status: string
           updated_at: string
         }
         Insert: {
+          cancelled_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_message?: string | null
@@ -2660,17 +2716,24 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           listing_id: string
+          no_show_at?: string | null
+          packed_at?: string | null
           packs?: number
+          paid_at?: string | null
           payment_status?: string
+          picked_up_at?: string | null
           pickup_person_name?: string | null
           pickup_person_phone?: string | null
           pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
+          refunded_at?: string | null
           seller_user_id: string
           status?: string
           updated_at?: string
         }
         Update: {
+          cancelled_at?: string | null
+          confirmed_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_message?: string | null
@@ -2678,12 +2741,17 @@ export type Database = {
           customer_phone?: string | null
           id?: string
           listing_id?: string
+          no_show_at?: string | null
+          packed_at?: string | null
           packs?: number
+          paid_at?: string | null
           payment_status?: string
+          picked_up_at?: string | null
           pickup_person_name?: string | null
           pickup_person_phone?: string | null
           pickup_reminder_sent_at?: string | null
           pickup_slot_id?: string | null
+          refunded_at?: string | null
           seller_user_id?: string
           status?: string
           updated_at?: string
@@ -3829,6 +3897,7 @@ export type Database = {
         Returns: string
       }
       cancel_booking_by_token: { Args: { p_token: string }; Returns: Json }
+      cancel_order_by_token: { Args: { p_token: string }; Returns: Json }
       check_rate_limit: {
         Args: {
           _function_name: string
@@ -3885,6 +3954,7 @@ export type Database = {
           relation: string
         }[]
       }
+      get_order_by_token: { Args: { p_token: string }; Returns: Json }
       get_public_egg_sale_reserved_packs: {
         Args: { p_listing_id: string }
         Returns: number
@@ -3910,6 +3980,7 @@ export type Database = {
         Returns: undefined
       }
       is_verified_egg_seller: { Args: { _seller_id: string }; Returns: boolean }
+      list_pickup_slots_by_token: { Args: { p_token: string }; Returns: Json }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -3930,6 +4001,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      reschedule_order_by_token: {
+        Args: { p_new_slot_id: string; p_token: string }
+        Returns: Json
       }
       seo_public_routes_enabled: { Args: never; Returns: boolean }
       set_lifetime_premium: {
