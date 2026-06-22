@@ -18,6 +18,19 @@ import { useIsMobile } from '@/hooks/use-mobile';
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
 function asKr(v: unknown, fallback = '') { const n = Number(v); return Number.isFinite(n) && n > 0 ? `${Math.round(n)} kr` : fallback; }
+function formatRelativeSv(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMin = Math.max(0, Math.floor((Date.now() - then) / 60000));
+  if (diffMin < 1) return 'nyss';
+  if (diffMin < 60) return `${diffMin} min sedan`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} ${diffH === 1 ? 'timme' : 'timmar'} sedan`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD} ${diffD === 1 ? 'dag' : 'dagar'} sedan`;
+  const diffW = Math.floor(diffD / 7);
+  return `${diffW} ${diffW === 1 ? 'vecka' : 'veckor'} sedan`;
+}
 
 export default function PublicEggSaleV3() {
   const [params] = useSearchParams();
@@ -68,6 +81,18 @@ export default function PublicEggSaleV3() {
       return Number(data) || 0;
     },
     staleTime: 15_000,
+  });
+
+  const { data: socialProof } = useQuery<{ bookings_today: number; last_booked_at: string | null }>({
+    queryKey: ['public-egg-sale-social-proof-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc('get_public_egg_sale_social_proof', { p_listing_id: listing.id });
+      if (error) return { bookings_today: 0, last_booked_at: null };
+      const row = Array.isArray(data) ? data[0] : data;
+      return { bookings_today: Number(row?.bookings_today) || 0, last_booked_at: row?.last_booked_at || null };
+    },
+    staleTime: 30_000,
   });
 
   const { data: publicReviews = [] } = useQuery({
@@ -521,7 +546,17 @@ export default function PublicEggSaleV3() {
           <InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} />
         </div>
         {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
-        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p>{mapsDirectionsUrl && (<a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-1.5"><Navigation className="h-3.5 w-3.5" /> Vägbeskrivning i Google Maps</a>)}</Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
+        {(socialProof && (socialProof.bookings_today > 0 || socialProof.last_booked_at)) && (
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground -mt-1">
+            {socialProof.bookings_today > 0 && (
+              <span>🔥 {socialProof.bookings_today} {socialProof.bookings_today === 1 ? 'bokning' : 'bokningar'} idag</span>
+            )}
+            {socialProof.last_booked_at && (
+              <span>Senast bokad {formatRelativeSv(socialProof.last_booked_at)}</span>
+            )}
+          </div>
+        )}
+        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p>{listing?.latitude && listing?.longitude && (<div className="mt-2 rounded-xl border overflow-hidden aspect-video bg-muted"><iframe title="Karta till hämtning" src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(listing.longitude)-0.01}%2C${Number(listing.latitude)-0.01}%2C${Number(listing.longitude)+0.01}%2C${Number(listing.latitude)+0.01}&layer=mapnik&marker=${Number(listing.latitude)}%2C${Number(listing.longitude)}`} className="w-full h-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>)}{mapsDirectionsUrl && (<a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-1.5"><Navigation className="h-3.5 w-3.5" /> Vägbeskrivning i Google Maps</a>)}</Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
         <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p>{sale.swish && pricePerPack > 0 && (<div className="mt-2 flex items-center justify-between rounded-xl border bg-background/70 px-3 py-2"><div className="text-xs text-muted-foreground">Att betala för {packCount} × {sale.size}-pack</div><div className="font-serif text-lg">{swishAmount} kr</div></div>)}</Row>{sale.swish && (<div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Button className="w-full rounded-xl" onClick={openSwish} disabled={!swishAmount}><Wallet className="h-4 w-4 mr-2" /> Öppna Swish ({swishAmount} kr)</Button><Button variant="outline" className="w-full rounded-xl" onClick={() => copy(`${swishText}\nBelopp: ${swishAmount} kr`)}><Copy className="h-4 w-4 mr-2" /> Kopiera uppgifter</Button></div>)}{sale.swish && <p className="text-[11px] text-muted-foreground">Beloppet räknas ut från antal kartor du valt ovan. Du kan justera summan i Swish innan du godkänner.</p>}</CardContent></Card>
         {listing?.id && (
           <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">
