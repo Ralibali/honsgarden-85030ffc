@@ -4123,6 +4123,18 @@ export type Database = {
         Returns: number
       }
       expire_marketplace_listings: { Args: never; Returns: undefined }
+      get_affiliate_article_profile: {
+        Args: { p_slug: string }
+        Returns: {
+          article_count: number
+          max_blocks: number
+          percentile: number
+          rank_30d: number
+          tier: string
+          unique_visitors_30d: number
+          views_30d: number
+        }[]
+      }
       get_booking_by_token: { Args: { p_token: string }; Returns: Json }
       get_farm_member_display_names: {
         Args: { _uid: string }
