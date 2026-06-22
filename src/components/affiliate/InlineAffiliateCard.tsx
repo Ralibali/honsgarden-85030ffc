@@ -47,8 +47,44 @@ export function InlineAffiliateCard({
       && product.priceOriginal > 0,
   );
 
+  const containerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      trackAffiliateImpression({
+        product_id: product.id,
+        advertiser: product.advertiser,
+        source: 'product_box',
+        slug,
+        section_title: sectionTitle ?? null,
+      });
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            trackAffiliateImpression({
+              product_id: product.id,
+              advertiser: product.advertiser,
+              source: 'product_box',
+              slug,
+              section_title: sectionTitle ?? null,
+            });
+            observer.disconnect();
+            break;
+          }
+        }
+      },
+      { threshold: [0, 0.5, 1] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [product.id, product.advertiser, slug, sectionTitle]);
+
   return (
     <aside
+      ref={containerRef as React.RefObject<HTMLElement>}
       className="my-8 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-secondary/25 shadow-sm"
       aria-label={`Produktförslag: ${product.name}`}
     >
