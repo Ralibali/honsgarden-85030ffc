@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
+import PriceTiersEditor from '@/components/egg-sales/PriceTiersEditor';
+import { getOrderTotal, normalizeTiers } from '@/lib/eggSalePricing';
 import {
   AlertTriangle,
   ArrowLeft,
