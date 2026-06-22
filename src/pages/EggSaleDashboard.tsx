@@ -194,16 +194,47 @@ function SlotsPanel({ listing }: { listing: Row }) {
 
 function WaitlistPanel({ listing }: { listing: Row }) {
   const qc = useQueryClient();
-  const { data: entries = [] } = useQuery<Row[]>({ queryKey: ['dash-waitlist', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_waitlist').select('*').eq('listing_id', listing.id).order('created_at'); if (error) throw error; return data || []; } });
-  const offer = useMutation({ mutationFn: async () => { const { data, error } = await (supabase as any).rpc('create_next_waitlist_offer', { p_listing_id: listing.id, p_packs: 1 }); if (error) throw error; return data; }, onSuccess: () => { qc.invalidateQueries({ queryKey: ['dash-waitlist', listing.id] }); toast({ title: 'Erbjudandet är skapat', description: 'Det gäller i 45 minuter.' }); }, onError: (error: Error) => toast({ title: 'Kunde inte skapa erbjudande', description: error.message, variant: 'destructive' }) });
-  return <div className="space-y-3"><Button onClick={() => offer.mutate()} disabled={offer.isPending || !entries.some((entry) => !entry.status || entry.status === 'waiting')}>Erbjud nästa person ägg</Button>{entries.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Väntelistan är tom.</CardContent></Card> : entries.map((entry, index) => <Card key={entry.id}><CardContent className="flex items-start justify-between gap-3 p-4"><div><p className="font-medium">{index + 1}. {entry.customer_name}</p><p className="text-xs text-muted-foreground">{entry.packs_wanted} kartor · {entry.customer_email || entry.customer_phone || 'Ingen kontaktuppgift'}</p>{entry.offer_expires_at && <p className="text-xs text-amber-700">Erbjudande till {dt(entry.offer_expires_at)}</p>}</div><Badge variant="outline">{entry.status || 'waiting'}</Badge></CardContent></Card>)}</div>;
+  const { data: entries = [], error: entriesError } = useQuery<Row[]>({ queryKey: ['dash-waitlist', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_waitlist').select('*').eq('listing_id', listing.id).order('created_at'); if (error) throw error; return data || []; } });
+  const offer = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await (supabase as any).rpc('create_next_waitlist_offer', { p_listing_id: listing.id, p_packs: 1 });
+      if (error) throw error;
+      if (data && data.ok === false) {
+        if (data.reason === 'empty') throw new Error('Det finns ingen i kö att erbjuda just nu.');
+        throw new Error(data.reason || 'Erbjudandet kunde inte skapas.');
+      }
+      return data;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['dash-waitlist', listing.id] }); toast({ title: 'Erbjudandet är skapat', description: 'Det gäller i 45 minuter.' }); },
+    onError: (error: Error) => toast({ title: 'Kunde inte skapa erbjudande', description: error.message, variant: 'destructive' })
+  });
+  const hasWaiting = entries.some((entry) => !entry.status || entry.status === 'waiting');
+  return <div className="space-y-3">{entriesError && <Card><CardContent className="p-4 text-sm text-destructive">Kunde inte ladda väntelistan. Försök igen om en stund.</CardContent></Card>}<Button onClick={() => offer.mutate()} disabled={offer.isPending || !hasWaiting}>{offer.isPending ? 'Skapar erbjudande…' : 'Erbjud nästa person ägg'}</Button>{entries.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Väntelistan är tom.</CardContent></Card> : entries.map((entry, index) => <Card key={entry.id}><CardContent className="flex items-start justify-between gap-3 p-4"><div><p className="font-medium">{index + 1}. {entry.customer_name ?? 'Okänd'}</p><p className="text-xs text-muted-foreground">{entry.packs_wanted ?? 0} kartor · {entry.customer_email || entry.customer_phone || 'Ingen kontaktuppgift'}</p>{entry.offer_expires_at && <p className="text-xs text-amber-700">Erbjudande till {dt(entry.offer_expires_at)}</p>}</div><Badge variant="outline">{entry.status || 'waiting'}</Badge></CardContent></Card>)}</div>;
 }
 
 function SubscriptionsPanel({ listing }: { listing: Row }) {
   const qc = useQueryClient();
-  const { data: subscriptions = [] } = useQuery<Row[]>({ queryKey: ['dash-subs', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_subscriptions').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false }); if (error) throw error; return data || []; } });
-  const update = useMutation({ mutationFn: async ({ id, patch }: { id: string; patch: Row }) => { const { error } = await (supabase as any).from('egg_sale_subscriptions').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id).eq('listing_id', listing.id); if (error) throw error; }, onSuccess: () => qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }) });
-  return <div className="space-y-2">{subscriptions.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Inga abonnemang ännu.</CardContent></Card> : subscriptions.map((subscription) => <Card key={subscription.id}><CardContent className="space-y-2 p-4"><div className="flex justify-between gap-2"><div><p className="font-medium">{subscription.customer_name}</p><p className="text-xs text-muted-foreground">{subscription.packs} kartor · {subscription.frequency} · nästa {dt(subscription.next_run_at)}</p></div><Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>{subscription.status}</Badge></div><div className="flex flex-wrap gap-2">{subscription.status === 'active' ? <Button size="sm" variant="outline" onClick={() => update.mutate({ id: subscription.id, patch: { status: 'paused', paused_until: null } })}><Pause className="mr-1 h-3.5 w-3.5" />Pausa</Button> : <Button size="sm" onClick={() => update.mutate({ id: subscription.id, patch: { status: 'active', paused_until: null, skip_next: false } })}><Play className="mr-1 h-3.5 w-3.5" />Aktivera</Button>}<Button size="sm" variant="outline" onClick={() => update.mutate({ id: subscription.id, patch: { skip_next: true } })}>Hoppa över nästa</Button></div></CardContent></Card>)}</div>;
+  const { data: subscriptions = [], error: subsError } = useQuery<Row[]>({ queryKey: ['dash-subs', listing.id], queryFn: async () => { const { data, error } = await (supabase as any).from('egg_sale_subscriptions').select('*').eq('listing_id', listing.id).order('created_at', { ascending: false }); if (error) throw error; return data || []; } });
+  const action = useMutation({
+    mutationFn: async ({ id, kind }: { id: string; kind: 'pause' | 'resume' | 'cancel' | 'skip' }) => {
+      if (kind === 'pause') {
+        const { error } = await (supabase as any).rpc('pause_egg_subscription', { p_subscription_id: id, p_paused_until: null });
+        if (error) throw error;
+      } else if (kind === 'resume') {
+        const { error } = await (supabase as any).rpc('resume_egg_subscription', { p_subscription_id: id });
+        if (error) throw error;
+      } else if (kind === 'cancel') {
+        const { error } = await (supabase as any).rpc('cancel_egg_subscription', { p_subscription_id: id, p_reason: null });
+        if (error) throw error;
+      } else {
+        const { error } = await (supabase as any).from('egg_sale_subscriptions').update({ skip_next: true, updated_at: new Date().toISOString() }).eq('id', id).eq('listing_id', listing.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['dash-subs', listing.id] }),
+    onError: (error: Error) => toast({ title: 'Kunde inte uppdatera abonnemanget', description: error.message, variant: 'destructive' })
+  });
+  return <div className="space-y-2">{subsError && <Card><CardContent className="p-4 text-sm text-destructive">Kunde inte ladda abonnemangen. Försök igen om en stund.</CardContent></Card>}{subscriptions.length === 0 ? <Card><CardContent className="p-6 text-center text-muted-foreground">Inga abonnemang ännu.</CardContent></Card> : subscriptions.map((subscription) => <Card key={subscription.id}><CardContent className="space-y-2 p-4"><div className="flex justify-between gap-2"><div><p className="font-medium">{subscription.customer_name ?? 'Okänd'}</p><p className="text-xs text-muted-foreground">{subscription.packs ?? 0} kartor · {subscription.frequency ?? '—'} · nästa {subscription.next_run_at ? dt(subscription.next_run_at) : '—'}</p>{subscription.skip_next && <p className="text-xs text-amber-700">Hoppar över nästa</p>}</div><Badge variant={subscription.status === 'active' ? 'default' : 'secondary'}>{subscription.status ?? 'okänd'}</Badge></div><div className="flex flex-wrap gap-2">{subscription.status === 'active' ? <Button size="sm" variant="outline" disabled={action.isPending} onClick={() => action.mutate({ id: subscription.id, kind: 'pause' })}><Pause className="mr-1 h-3.5 w-3.5" />Pausa</Button> : subscription.status !== 'cancelled' && <Button size="sm" disabled={action.isPending} onClick={() => action.mutate({ id: subscription.id, kind: 'resume' })}><Play className="mr-1 h-3.5 w-3.5" />Aktivera</Button>}{subscription.status !== 'cancelled' && <><Button size="sm" variant="outline" disabled={action.isPending || !!subscription.skip_next} onClick={() => action.mutate({ id: subscription.id, kind: 'skip' })}>Hoppa över nästa</Button><Button size="sm" variant="ghost" disabled={action.isPending} onClick={() => action.mutate({ id: subscription.id, kind: 'cancel' })}>Avsluta</Button></>}</div></CardContent></Card>)}</div>;
 }
 
 function StatsPanel({ listing }: { listing: Row }) {
