@@ -18,6 +18,19 @@ import { useIsMobile } from '@/hooks/use-mobile';
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
 function asKr(v: unknown, fallback = '') { const n = Number(v); return Number.isFinite(n) && n > 0 ? `${Math.round(n)} kr` : fallback; }
+function formatRelativeSv(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMin = Math.max(0, Math.floor((Date.now() - then) / 60000));
+  if (diffMin < 1) return 'nyss';
+  if (diffMin < 60) return `${diffMin} min sedan`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} ${diffH === 1 ? 'timme' : 'timmar'} sedan`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD} ${diffD === 1 ? 'dag' : 'dagar'} sedan`;
+  const diffW = Math.floor(diffD / 7);
+  return `${diffW} ${diffW === 1 ? 'vecka' : 'veckor'} sedan`;
+}
 
 export default function PublicEggSaleV3() {
   const [params] = useSearchParams();
