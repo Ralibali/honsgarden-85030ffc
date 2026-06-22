@@ -4013,6 +4013,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       build_affiliate_url: {
         Args: { p_advertiser_id: string; p_product_url: string }
         Returns: string
@@ -4031,6 +4032,10 @@ export type Database = {
       cleanup_old_client_error_logs: { Args: never; Returns: undefined }
       count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
+      create_next_waitlist_offer: {
+        Args: { p_listing_id: string; p_packs?: number }
+        Returns: Json
+      }
       deactivate_expired_simple_listings: { Args: never; Returns: undefined }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -4081,6 +4086,7 @@ export type Database = {
         Returns: number
       }
       get_user_farm_ids: { Args: { _uid: string }; Returns: string[] }
+      get_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       grant_premium_days: {
         Args: { _days: number; _user_id: string }
         Returns: undefined
