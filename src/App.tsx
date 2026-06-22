@@ -62,6 +62,9 @@ const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
 const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
 const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
+const Bestallning = lazyWithRetry(() => import("./pages/Bestallning"));
+const WaitlistOffer = lazyWithRetry(() => import("./pages/WaitlistOffer"));
+const RecurringOrderPortal = lazyWithRetry(() => import("./pages/RecurringOrderPortal"));
 const News = lazyWithRetry(() => import("./pages/News"));
 const Weather = lazyWithRetry(() => import("./pages/Weather"));
 const WeatherHistoryDetail = lazyWithRetry(() => import("./pages/WeatherHistoryDetail"));
@@ -80,7 +83,6 @@ const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 
-
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
   const target = slug ? `/blogg/${slug}` : '/blogg';
@@ -93,7 +95,7 @@ const queryClient = new QueryClient({
       staleTime: 60_000,
       refetchOnWindowFocus: false,
       retry: 1,
-      gcTime: 24 * 60 * 60 * 1000, // 24h for persistence to work
+      gcTime: 24 * 60 * 60 * 1000,
     },
   },
 });
@@ -105,7 +107,6 @@ const persister = typeof window !== 'undefined'
 
 const LoadingFallback = () => <SuspenseFallback fullScreen />;
 
-
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   if (loading) return <LoadingFallback />;
@@ -116,14 +117,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function CacheClearer() {
   const { user } = useAuth();
   const prevUserId = React.useRef<string | null>(user?.id ?? null);
-
   React.useEffect(() => {
     if (user?.id !== prevUserId.current) {
       queryClient.clear();
       prevUserId.current = user?.id ?? null;
     }
   }, [user?.id]);
-
   return null;
 }
 
@@ -162,6 +161,9 @@ const AppRoutes = () => (
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<PublicReview />} />
         <Route path="/avboka/:token" element={<CancelBooking />} />
+        <Route path="/bestallning/:token" element={<Bestallning />} />
+        <Route path="/vantelista/:token" element={<WaitlistOffer />} />
+        <Route path="/abonnemang/:token" element={<RecurringOrderPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -251,4 +253,3 @@ const App = () => (
 );
 
 export default App;
-
