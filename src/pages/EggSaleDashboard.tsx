@@ -106,15 +106,17 @@ function Dashboard() {
       {listings.length > 1 && <Card><CardContent className="flex flex-wrap gap-2 p-3">{listings.map((item) => <Button key={item.id} size="sm" variant={item.id === listing.id ? 'default' : 'outline'} onClick={() => setSelectedId(item.id)}>{item.title || 'Säljsida'}</Button>)}</CardContent></Card>}
 
       <Tabs defaultValue="bookings">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="bookings"><PackageCheck className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Bokningar</span></TabsTrigger>
           <TabsTrigger value="slots"><Calendar className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Tider</span></TabsTrigger>
+          <TabsTrigger value="prices"><Tag className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Priser</span></TabsTrigger>
           <TabsTrigger value="waitlist"><Users className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Väntelista</span></TabsTrigger>
           <TabsTrigger value="subscriptions"><Repeat className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Abonnemang</span></TabsTrigger>
           <TabsTrigger value="stats"><BarChart3 className="h-4 w-4 sm:mr-1" /><span className="hidden sm:inline">Statistik</span></TabsTrigger>
         </TabsList>
         <TabsContent value="bookings"><BookingsBoard listing={listing} /></TabsContent>
         <TabsContent value="slots"><SlotsPanel listing={listing} /></TabsContent>
+        <TabsContent value="prices"><PriceTiersEditor listing={listing as any} /></TabsContent>
         <TabsContent value="waitlist"><WaitlistPanel listing={listing} /></TabsContent>
         <TabsContent value="subscriptions"><SubscriptionsPanel listing={listing} /></TabsContent>
         <TabsContent value="stats"><StatsPanel listing={listing} /></TabsContent>
