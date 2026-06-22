@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { InlineAffiliateCard } from '@/components/affiliate/InlineAffiliateCard';
+import { AffiliateSafetyBoundary } from '@/components/AffiliateSafetyBoundary';
 import { useAffiliateArticleProfile } from '@/hooks/useAffiliateArticleProfile';
 import { useSmartAffiliateCatalog } from '@/hooks/useSmartAffiliateCatalog';
 import {
@@ -87,12 +88,7 @@ function previousHeading(target: HTMLElement, article: HTMLElement, fallback: st
   return previous;
 }
 
-/**
- * Smart affiliate-motor för bloggen. Produktkorten placeras i relevanta avsnitt
- * med React-portaler och fungerar därför automatiskt för både gamla artiklar
- * och nya artiklar som synkas från Soro.
- */
-export function AffiliateProductBox({ slug, title, content, limit }: Props) {
+function AffiliateProductBoxContent({ slug, title, content, limit }: Props) {
   const catalog = useSmartAffiliateCatalog();
   const profile = useAffiliateArticleProfile(slug);
   const [placements, setPlacements] = useState<Placement[]>([]);
@@ -198,6 +194,18 @@ export function AffiliateProductBox({ slug, title, content, limit }: Props) {
         );
       })}
     </>
+  );
+}
+
+/**
+ * Smart affiliate-motor för bloggen. Fel i produktdelen fångas lokalt,
+ * så att själva bloggartikeln alltid fortsätter visas.
+ */
+export function AffiliateProductBox(props: Props) {
+  return (
+    <AffiliateSafetyBoundary>
+      <AffiliateProductBoxContent {...props} />
+    </AffiliateSafetyBoundary>
   );
 }
 
