@@ -62,6 +62,7 @@ const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
 const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
 const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
+const OrderPortal = lazyWithRetry(() => import("./pages/OrderPortal"));
 const News = lazyWithRetry(() => import("./pages/News"));
 const Weather = lazyWithRetry(() => import("./pages/Weather"));
 const WeatherHistoryDetail = lazyWithRetry(() => import("./pages/WeatherHistoryDetail"));
