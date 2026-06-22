@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ExternalLink, ImageOff, ShoppingBag, Sparkles } from 'lucide-react';
 import { AffiliateLink } from '@/components/AffiliateLink';
+import { trackAffiliateImpression } from '@/lib/affiliateTracking';
 import {
   affiliateAdvertiserName,
   affiliateReason,
@@ -46,8 +47,44 @@ export function InlineAffiliateCard({
       && product.priceOriginal > 0,
   );
 
+  const containerRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      trackAffiliateImpression({
+        product_id: product.id,
+        advertiser: product.advertiser,
+        source: 'product_box',
+        slug,
+        section_title: sectionTitle ?? null,
+      });
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            trackAffiliateImpression({
+              product_id: product.id,
+              advertiser: product.advertiser,
+              source: 'product_box',
+              slug,
+              section_title: sectionTitle ?? null,
+            });
+            observer.disconnect();
+            break;
+          }
+        }
+      },
+      { threshold: [0, 0.5, 1] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [product.id, product.advertiser, slug, sectionTitle]);
+
   return (
     <aside
+      ref={containerRef as React.RefObject<HTMLElement>}
       className="my-8 overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-card via-card to-secondary/25 shadow-sm"
       aria-label={`Produktförslag: ${product.name}`}
     >
@@ -76,6 +113,7 @@ export function InlineAffiliateCard({
         advertiser={product.advertiser}
         source="product_box"
         slug={slug}
+        sectionTitle={sectionTitle ?? null}
         className="group grid overflow-hidden bg-background/70 transition-colors hover:bg-background sm:grid-cols-[190px_1fr]"
       >
         <span className="relative block min-h-48 bg-white/80 sm:min-h-full">

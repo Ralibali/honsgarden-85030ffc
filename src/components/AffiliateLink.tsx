@@ -8,6 +8,7 @@ interface Props extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> {
   advertiser: string;
   source: AffiliateClickSource;
   slug?: string | null;
+  sectionTitle?: string | null;
 }
 
 /**
@@ -25,6 +26,7 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
     advertiser,
     source,
     slug,
+    sectionTitle,
     rel,
     target,
     onMouseDown,
@@ -43,6 +45,7 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
       advertiser,
       source,
       slug: slug ?? null,
+      section_title: sectionTitle ?? null,
       href,
     });
   };
