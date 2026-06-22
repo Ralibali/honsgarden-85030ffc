@@ -4019,6 +4019,10 @@ export type Database = {
         Returns: string
       }
       cancel_booking_by_token: { Args: { p_token: string }; Returns: Json }
+      cancel_egg_subscription: {
+        Args: { p_reason?: string; p_subscription_id: string }
+        Returns: Json
+      }
       cancel_order_by_token: { Args: { p_token: string }; Returns: Json }
       check_rate_limit: {
         Args: {
@@ -4117,6 +4121,10 @@ export type Database = {
         }
         Returns: number
       }
+      pause_egg_subscription: {
+        Args: { p_paused_until?: string; p_subscription_id: string }
+        Returns: Json
+      }
       process_referral: {
         Args: { _new_user_id: string; _referral_code: string }
         Returns: boolean
@@ -4131,6 +4139,10 @@ export type Database = {
       }
       reschedule_order_by_token: {
         Args: { p_new_slot_id: string; p_token: string }
+        Returns: Json
+      }
+      resume_egg_subscription: {
+        Args: { p_subscription_id: string }
         Returns: Json
       }
       seo_public_routes_enabled: { Args: never; Returns: boolean }
