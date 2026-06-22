@@ -146,7 +146,8 @@ function AffiliateProductBoxContent({ slug, title, content, limit }: Props) {
       if (wordCount(sectionText) < 35) continue;
 
       const context: ArticleContext = { slug, title, heading: sectionTitle, text: sectionText };
-      const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+      const candidates = matchSmartProducts(catalog, context, 5, usedProductIds);
+      const product = pickRotated(candidates, rotationSeed(slug, sectionTitle, index));
       if (!product) continue;
 
       const target = sectionTarget(heading, sectionElements);
