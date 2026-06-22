@@ -117,7 +117,10 @@ function Dashboard() {
         </TabsList>
         <TabsContent value="bookings"><BookingsBoard listing={listing} /></TabsContent>
         <TabsContent value="slots"><SlotsPanel listing={listing} /></TabsContent>
-        <TabsContent value="prices"><PriceTiersEditor listing={listing as any} /></TabsContent>
+        <TabsContent value="prices" className="space-y-4">
+          <PriceTiersEditor listing={listing as any} />
+          {listings.length > 1 && <BulkPriceTiersPanel listings={listings as any} />}
+        </TabsContent>
         <TabsContent value="waitlist"><WaitlistPanel listing={listing} /></TabsContent>
         <TabsContent value="subscriptions"><SubscriptionsPanel listing={listing} /></TabsContent>
         <TabsContent value="stats"><StatsPanel listing={listing} /></TabsContent>
