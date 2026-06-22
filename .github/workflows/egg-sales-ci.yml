@@ -1,0 +1,35 @@
+name: Agdas bod CI
+
+on:
+  push:
+    branches:
+      - egg-sales-router-stage
+      - main
+  pull_request:
+    paths:
+      - 'src/pages/Egg**'
+      - 'src/pages/PublicEggSaleV3.tsx'
+      - 'src/components/egg-sales/**'
+      - 'src/lib/egg**'
+      - 'supabase/migrations/**egg_sales**'
+      - 'supabase/functions/process-egg-sale-notifications/**'
+      - 'src/App.tsx'
+      - '.github/workflows/egg-sales-ci.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
