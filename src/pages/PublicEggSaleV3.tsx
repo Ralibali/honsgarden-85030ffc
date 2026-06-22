@@ -14,6 +14,7 @@ import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme'
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 import SwishQR from '@/components/egg-sales/SwishQR';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { formatTierRange, getPricePerPack, normalizeTiers } from '@/lib/eggSalePricing';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
 function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
