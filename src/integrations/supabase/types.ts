@@ -1140,6 +1140,72 @@ export type Database = {
           },
         ]
       }
+      egg_sale_notification_queue: {
+        Row: {
+          attempts: number
+          booking_id: string | null
+          created_at: string
+          data: Json
+          deliver_after: string
+          delivered_at: string | null
+          destination: string | null
+          error_message: string | null
+          id: string
+          kind: string
+          listing_id: string | null
+          state: string
+          unique_key: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          deliver_after?: string
+          delivered_at?: string | null
+          destination?: string | null
+          error_message?: string | null
+          id?: string
+          kind: string
+          listing_id?: string | null
+          state?: string
+          unique_key: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          booking_id?: string | null
+          created_at?: string
+          data?: Json
+          deliver_after?: string
+          delivered_at?: string | null
+          destination?: string | null
+          error_message?: string | null
+          id?: string
+          kind?: string
+          listing_id?: string | null
+          state?: string
+          unique_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "egg_sale_notification_queue_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "egg_sale_notification_queue_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       egg_sale_pickup_slots: {
         Row: {
           created_at: string
@@ -1288,6 +1354,9 @@ export type Database = {
       }
       egg_sale_subscriptions: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          consecutive_failures: number
           created_at: string
           customer_email: string
           customer_name: string
@@ -1295,16 +1364,24 @@ export type Database = {
           frequency: string
           id: string
           last_booking_id: string | null
+          last_error: string | null
           listing_id: string
           next_run_at: string
           notes: string | null
           packs: number
+          paused_until: string | null
+          pickup_slot_id: string | null
+          preferred_weekday: number | null
           seller_user_id: string
+          skip_next: boolean
           status: string
           total_bookings: number
           updated_at: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          consecutive_failures?: number
           created_at?: string
           customer_email: string
           customer_name: string
@@ -1312,16 +1389,24 @@ export type Database = {
           frequency: string
           id?: string
           last_booking_id?: string | null
+          last_error?: string | null
           listing_id: string
           next_run_at?: string
           notes?: string | null
           packs?: number
+          paused_until?: string | null
+          pickup_slot_id?: string | null
+          preferred_weekday?: number | null
           seller_user_id: string
+          skip_next?: boolean
           status?: string
           total_bookings?: number
           updated_at?: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          consecutive_failures?: number
           created_at?: string
           customer_email?: string
           customer_name?: string
@@ -1329,11 +1414,16 @@ export type Database = {
           frequency?: string
           id?: string
           last_booking_id?: string | null
+          last_error?: string | null
           listing_id?: string
           next_run_at?: string
           notes?: string | null
           packs?: number
+          paused_until?: string | null
+          pickup_slot_id?: string | null
+          preferred_weekday?: number | null
           seller_user_id?: string
+          skip_next?: boolean
           status?: string
           total_bookings?: number
           updated_at?: string
@@ -1344,6 +1434,13 @@ export type Database = {
             columns: ["listing_id"]
             isOneToOne: false
             referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "egg_sale_subscriptions_pickup_slot_id_fkey"
+            columns: ["pickup_slot_id"]
+            isOneToOne: false
+            referencedRelation: "egg_sale_pickup_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -1377,37 +1474,61 @@ export type Database = {
       }
       egg_sale_waitlist: {
         Row: {
+          accepted_at: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
           customer_phone: string | null
+          expired_at: string | null
           id: string
           listing_id: string
           notified_at: string | null
+          offer_expires_at: string | null
+          offer_token: string | null
+          offered_packs: number | null
+          pack_size: number | null
           packs_wanted: number
           seller_user_id: string
+          status: string
+          updated_at: string
         }
         Insert: {
+          accepted_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
+          expired_at?: string | null
           id?: string
           listing_id: string
           notified_at?: string | null
+          offer_expires_at?: string | null
+          offer_token?: string | null
+          offered_packs?: number | null
+          pack_size?: number | null
           packs_wanted?: number
           seller_user_id: string
+          status?: string
+          updated_at?: string
         }
         Update: {
+          accepted_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
+          expired_at?: string | null
           id?: string
           listing_id?: string
           notified_at?: string | null
+          offer_expires_at?: string | null
+          offer_token?: string | null
+          offered_packs?: number | null
+          pack_size?: number | null
           packs_wanted?: number
           seller_user_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
