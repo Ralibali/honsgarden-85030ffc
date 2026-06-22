@@ -2816,6 +2816,8 @@ export type Database = {
           packed_at: string | null
           packs: number
           paid_at: string | null
+          payment_reminder_count: number
+          payment_reminder_last_sent_at: string | null
           payment_status: string
           picked_up_at: string | null
           pickup_person_name: string | null
@@ -2842,6 +2844,8 @@ export type Database = {
           packed_at?: string | null
           packs?: number
           paid_at?: string | null
+          payment_reminder_count?: number
+          payment_reminder_last_sent_at?: string | null
           payment_status?: string
           picked_up_at?: string | null
           pickup_person_name?: string | null
@@ -2868,6 +2872,8 @@ export type Database = {
           packed_at?: string | null
           packs?: number
           paid_at?: string | null
+          payment_reminder_count?: number
+          payment_reminder_last_sent_at?: string | null
           payment_status?: string
           picked_up_at?: string | null
           pickup_person_name?: string | null

@@ -13,14 +13,17 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
 import {
+  AlertTriangle,
   ArrowLeft,
   BarChart3,
+  BellRing,
   Calendar,
   CheckCircle2,
   Clock,
   Copy,
   ExternalLink,
   Loader2,
+  Mail,
   PackageCheck,
   Pause,
   Play,
@@ -167,10 +170,90 @@ function BookingsBoard({ listing }: { listing: Row }) {
   const selectedIds = Array.from(selected);
   const toggle = (id: string) => setSelected((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; });
 
+  const unpaidPickups = useMemo(() => (bookings as Row[]).filter((b) =>
+    b.picked_up_at && b.payment_status !== 'paid' && !b.cancelled_at
+  ).sort((a, b) => new Date(a.picked_up_at).getTime() - new Date(b.picked_up_at).getTime()), [bookings]);
+
+  const sendReminder = useMutation({
+    mutationFn: async (bookingId: string) => {
+      const { data, error } = await supabase.functions.invoke('send-payment-reminder', { body: { booking_id: bookingId } });
+      if (error) throw error;
+      if (data && data.ok === false) throw new Error(data.reason || 'Påminnelsen kunde inte skickas.');
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dash-bookings', listing.id] });
+      toast({ title: 'Påminnelse skickad', description: 'Kunden får ett mejl inom kort.' });
+    },
+    onError: (err: Error) => toast({ title: 'Kunde inte skicka påminnelse', description: err.message, variant: 'destructive' }),
+  });
+
   if (isLoading) return <Card><CardContent className="p-6">Laddar bokningar…</CardContent></Card>;
 
   return <div className="space-y-3">
     {selectedIds.length > 0 && <Card><CardContent className="flex flex-wrap items-center gap-2 p-3"><Badge>{selectedIds.length} valda</Badge><Button size="sm" variant="outline" onClick={() => update.mutate({ ids: selectedIds, status: 'packed' })}>Markera packade</Button><Button size="sm" onClick={() => update.mutate({ ids: selectedIds, status: 'picked_up' })}>Markera hämtade</Button></CardContent></Card>}
+    {unpaidPickups.length > 0 && (
+      <Card className="border-warning/40 bg-warning/5">
+        <CardContent className="space-y-3 p-4">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-warning" />
+            <h3 className="font-serif text-base">Hämtat – väntar på betalning</h3>
+            <Badge variant="secondary">{unpaidPickups.length}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">Påminnelser går ut automatiskt 2 dagar efter hämtning och sedan varannan dag (max 4 ggr). Du kan också skicka manuellt.</p>
+          <div className="space-y-2">
+            {unpaidPickups.map((b) => {
+              const amount = Math.round(Number(b.packs || 0) * Number(listing.price_per_pack || 0));
+              const reminders = Number(b.payment_reminder_count || 0);
+              const lastSent = b.payment_reminder_last_sent_at;
+              const token = b.egg_sale_booking_tokens?.token;
+              const url = token ? `${window.location.origin}/bestallning/${token}` : null;
+              return (
+                <div key={b.id} className="flex flex-col gap-2 rounded-xl border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{b.customer_name} <span className="text-muted-foreground font-normal">· {b.packs} kartor · {kr(amount)}</span></p>
+                    <p className="text-xs text-muted-foreground">
+                      Hämtad {dt(b.picked_up_at)}
+                      {b.customer_email ? <> · <span>{b.customer_email}</span></> : <> · <span className="text-destructive">Ingen e-post</span></>}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {reminders === 0 ? 'Ingen påminnelse skickad än.' : `${reminders} påminnelse${reminders > 1 ? 'r' : ''} skickad${reminders > 1 ? 'a' : ''}${lastSent ? ` · senast ${dt(lastSent)}` : ''}`}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!b.customer_email || sendReminder.isPending}
+                      onClick={() => sendReminder.mutate(b.id)}
+                    >
+                      <BellRing className="mr-1 h-3.5 w-3.5" />Skicka påminnelse
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={update.isPending}
+                      onClick={() => update.mutate({ ids: [b.id], status: 'picked_up', paymentStatus: 'paid' })}
+                    >
+                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" />Markera som betald
+                    </Button>
+                    {url && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                        <a href={url} target="_blank" rel="noreferrer" aria-label="Öppna orderlänk"><ExternalLink className="h-3.5 w-3.5" /></a>
+                      </Button>
+                    )}
+                    {b.customer_email && (
+                      <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
+                        <a href={`mailto:${b.customer_email}`} aria-label="Mejla kunden"><Mail className="h-3.5 w-3.5" /></a>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    )}
     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
       {STATUS_COLUMNS.map((column) => <section key={column.key} className="min-h-40 rounded-2xl border bg-muted/20 p-2.5"><div className="mb-2 flex items-center justify-between"><h3 className="font-serif">{column.label}</h3><Badge variant="secondary">{groups[column.key].length}</Badge></div><div className="space-y-2">{groups[column.key].map((booking: Row) => {
         const token = booking.egg_sale_booking_tokens?.token;
