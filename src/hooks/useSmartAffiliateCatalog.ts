@@ -7,6 +7,7 @@ import { normalizeAffiliateText, type SmartAffiliateProduct } from '@/lib/smartA
 import { skuFromTrackingUrl } from '@/hooks/useAffiliateProducts';
 
 const KEYWORD_STOP = new Set(['alla', 'andra', 'bara', 'deluxe', 'eller', 'gardena', 'med', 'och', 'premium', 'produkt', 'set', 'som', 'till', 'trädgård', 'under', 'utan']);
+const EMPTY_DATABASE_PRODUCTS: SmartAffiliateProduct[] = [];
 
 function generatedKeywords(...values: Array<string | null | undefined>): string[] {
   const seen = new Set<string>();
@@ -93,7 +94,7 @@ function mergeCatalog(databaseProducts: SmartAffiliateProduct[]): SmartAffiliate
 }
 
 export function useSmartAffiliateCatalog(): SmartAffiliateProduct[] {
-  const { data = [] } = useQuery({
+  const { data } = useQuery({
     queryKey: ['smart-affiliate-catalog'],
     queryFn: async () => {
       const { data: rows, error } = await supabase
@@ -111,5 +112,9 @@ export function useSmartAffiliateCatalog(): SmartAffiliateProduct[] {
     gcTime: 60 * 60_000,
     retry: 1,
   });
-  return useMemo(() => mergeCatalog(data), [data]);
+
+  return useMemo(
+    () => mergeCatalog(data ?? EMPTY_DATABASE_PRODUCTS),
+    [data],
+  );
 }
