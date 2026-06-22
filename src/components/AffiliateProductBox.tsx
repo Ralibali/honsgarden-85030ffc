@@ -183,7 +183,8 @@ function AffiliateProductBoxContent({ slug, title, content, limit }: Props) {
           heading: sectionTitle,
           text: `${sectionTitle} ${target.textContent?.trim() || ''}`,
         };
-        const product = matchSmartProducts(catalog, context, 5, usedProductIds)[0];
+        const candidates = matchSmartProducts(catalog, context, 5, usedProductIds);
+        const product = pickRotated(candidates, rotationSeed(slug, 'fallback', fallbackIndex));
         if (!product) continue;
 
         const id = `smart-affiliate-${slug}-fallback-${fallbackIndex}`;
