@@ -43,3 +43,5 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.send-payment-reminder]
     verify_jwt = true
+  [functions.health-schedule-reminders]
+    verify_jwt = false
