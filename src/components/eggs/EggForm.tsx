@@ -19,6 +19,23 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [count, setCount] = useState(0);
   const [selectedHenId, setSelectedHenId] = useState<string>('all');
+  const { data: karens = [] } = useActiveKarens();
+
+  const activeKarensForSelection = useMemo(() => {
+    if (!karens.length) return [];
+    const isFlock = selectedHenId.startsWith('flock:');
+    const flockId = isFlock ? selectedHenId.replace('flock:', '') : undefined;
+    const henId = !isFlock && selectedHenId !== 'all' ? selectedHenId : undefined;
+    const henFlock = henId ? activeHens.find((h: any) => h.id === henId)?.flock_id : undefined;
+    return karens.filter(k => {
+      if (henId && k.hen_id === henId) return true;
+      if (flockId && k.flock_id === flockId) return true;
+      if (henFlock && k.flock_id === henFlock) return true;
+      // "Alla" eller höna utan flock → visa karens som gäller hela besättningen
+      if (selectedHenId === 'all' && !k.hen_id && !k.flock_id) return true;
+      return false;
+    });
+  }, [karens, selectedHenId, activeHens]);
 
   const increment = () => setCount((current) => Math.min(current + 1, 999));
   const decrement = () => setCount((current) => Math.max(current - 1, 0));
