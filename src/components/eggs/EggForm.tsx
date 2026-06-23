@@ -136,6 +136,20 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
           )}
         </div>
 
+        {activeKarensForSelection.length > 0 && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2 text-xs text-destructive">
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium">Karens aktiv</p>
+              {activeKarensForSelection.map(k => (
+                <p key={k.id} className="text-destructive/90">
+                  Ägg från denna besättning bör inte ätas eller säljas förrän <strong>{k.egg_safe_from}</strong> ({k.days_left} dgr kvar).
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-2">
           <Button onClick={handleSubmit} disabled={isPending || count <= 0} className="h-11 rounded-xl active:scale-95 transition-transform flex-1">
             {isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
