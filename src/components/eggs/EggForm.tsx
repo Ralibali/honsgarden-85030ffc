@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Minus, Plus } from 'lucide-react';
+import { Loader2, Minus, Plus, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useActiveKarens } from '@/hooks/useActiveKarens';
+
 
 interface EggFormProps {
   activeHens: any[];
