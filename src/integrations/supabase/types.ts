@@ -2021,11 +2021,14 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          egg_safe_from: string | null
           event_date: string
           event_type: string
           flock_id: string | null
           hen_id: string | null
           id: string
+          karens_end_notified: boolean
+          meat_safe_from: string | null
           photo_url: string | null
           resolved: boolean
           resolved_at: string | null
@@ -2033,15 +2036,20 @@ export type Database = {
           treatment: string | null
           updated_at: string
           user_id: string
+          withdrawal_egg_days: number | null
+          withdrawal_meat_days: number | null
         }
         Insert: {
           created_at?: string
           description?: string | null
+          egg_safe_from?: string | null
           event_date?: string
           event_type: string
           flock_id?: string | null
           hen_id?: string | null
           id?: string
+          karens_end_notified?: boolean
+          meat_safe_from?: string | null
           photo_url?: string | null
           resolved?: boolean
           resolved_at?: string | null
@@ -2049,15 +2057,20 @@ export type Database = {
           treatment?: string | null
           updated_at?: string
           user_id: string
+          withdrawal_egg_days?: number | null
+          withdrawal_meat_days?: number | null
         }
         Update: {
           created_at?: string
           description?: string | null
+          egg_safe_from?: string | null
           event_date?: string
           event_type?: string
           flock_id?: string | null
           hen_id?: string | null
           id?: string
+          karens_end_notified?: boolean
+          meat_safe_from?: string | null
           photo_url?: string | null
           resolved?: boolean
           resolved_at?: string | null
@@ -2065,6 +2078,8 @@ export type Database = {
           treatment?: string | null
           updated_at?: string
           user_id?: string
+          withdrawal_egg_days?: number | null
+          withdrawal_meat_days?: number | null
         }
         Relationships: [
           {
@@ -2114,6 +2129,78 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "health_logs_hen_id_fkey"
+            columns: ["hen_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      health_schedules: {
+        Row: {
+          care_type: string
+          created_at: string
+          default_withdrawal_egg_days: number | null
+          flock_id: string | null
+          hen_id: string | null
+          id: string
+          interval_days: number
+          is_active: boolean
+          last_done_date: string | null
+          last_reminded_due: string | null
+          next_due_date: string
+          notes: string | null
+          reminder_days_before: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          care_type: string
+          created_at?: string
+          default_withdrawal_egg_days?: number | null
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          interval_days: number
+          is_active?: boolean
+          last_done_date?: string | null
+          last_reminded_due?: string | null
+          next_due_date: string
+          notes?: string | null
+          reminder_days_before?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          care_type?: string
+          created_at?: string
+          default_withdrawal_egg_days?: number | null
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          interval_days?: number
+          is_active?: boolean
+          last_done_date?: string | null
+          last_reminded_due?: string | null
+          next_due_date?: string
+          notes?: string | null
+          reminder_days_before?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_schedules_flock_id_fkey"
+            columns: ["flock_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_schedules_hen_id_fkey"
             columns: ["hen_id"]
             isOneToOne: false
             referencedRelation: "hens"

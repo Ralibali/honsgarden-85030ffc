@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Minus, Plus } from 'lucide-react';
+import { Loader2, Minus, Plus, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useActiveKarens } from '@/hooks/useActiveKarens';
+
 
 interface EggFormProps {
   activeHens: any[];
@@ -17,6 +19,23 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [count, setCount] = useState(0);
   const [selectedHenId, setSelectedHenId] = useState<string>('all');
+  const { data: karens = [] } = useActiveKarens();
+
+  const activeKarensForSelection = useMemo(() => {
+    if (!karens.length) return [];
+    const isFlock = selectedHenId.startsWith('flock:');
+    const flockId = isFlock ? selectedHenId.replace('flock:', '') : undefined;
+    const henId = !isFlock && selectedHenId !== 'all' ? selectedHenId : undefined;
+    const henFlock = henId ? activeHens.find((h: any) => h.id === henId)?.flock_id : undefined;
+    return karens.filter(k => {
+      if (henId && k.hen_id === henId) return true;
+      if (flockId && k.flock_id === flockId) return true;
+      if (henFlock && k.flock_id === henFlock) return true;
+      // "Alla" eller höna utan flock → visa karens som gäller hela besättningen
+      if (selectedHenId === 'all' && !k.hen_id && !k.flock_id) return true;
+      return false;
+    });
+  }, [karens, selectedHenId, activeHens]);
 
   const increment = () => setCount((current) => Math.min(current + 1, 999));
   const decrement = () => setCount((current) => Math.max(current - 1, 0));
@@ -116,6 +135,20 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
             </div>
           )}
         </div>
+
+        {activeKarensForSelection.length > 0 && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2 text-xs text-destructive">
+            <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="font-medium">Karens aktiv</p>
+              {activeKarensForSelection.map(k => (
+                <p key={k.id} className="text-destructive/90">
+                  Ägg från denna besättning bör inte ätas eller säljas förrän <strong>{k.egg_safe_from}</strong> ({k.days_left} dgr kvar).
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-2">
           <Button onClick={handleSubmit} disabled={isPending || count <= 0} className="h-11 rounded-xl active:scale-95 transition-transform flex-1">
