@@ -38,13 +38,22 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [country, setCountry] = useState<CountryCode>(() => guessCountryFromBrowser());
+  const intl = isInternationalDomain();
+  const [country, setCountry] = useState<CountryCode>(() => (intl ? guessCountryFromBrowser() : 'SE'));
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
-  const postalCheck = useMemo(() => validatePostalCode(postalCode, country), [postalCode, country]);
+  // På honsgarden.se behåller vi det gamla 5-siffriga svenska postnummerflödet
+  // (tomt = ok, annars exakt 5 siffror). Internationellt: per-land-regex.
+  const postalCheck = useMemo(() => {
+    if (!intl) {
+      const trimmed = postalCode.trim();
+      return { ok: trimmed.length === 0 || /^\d{5}$/.test(trimmed) };
+    }
+    return validatePostalCode(postalCode, country);
+  }, [postalCode, country, intl]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
