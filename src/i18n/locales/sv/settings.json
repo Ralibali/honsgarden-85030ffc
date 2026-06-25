@@ -1,0 +1,21 @@
+{
+  "title": "Inställningar",
+  "region_and_language": "Region och språk",
+  "country": "Land",
+  "language": "Språk",
+  "timezone": "Tidszon",
+  "currency": "Valuta",
+  "temperature": "Temperatur",
+  "measurement": "Måttenheter",
+  "postal_code": "Postnummer",
+  "country_change_note": "Landet föreslår regionala standardinställningar. Du kan ändra varje inställning separat.",
+  "country_change_confirm_title": "Skriva över regionala inställningar?",
+  "country_change_confirm_body": "Du har manuellt ändrat vissa regionala inställningar. Vill du att de skrivs över med standardvärdena för det nya landet?",
+  "use_defaults": "Använd nya defaults",
+  "keep_mine": "Behåll mina val",
+  "metric": "Metriska (kg, m, °C)",
+  "imperial": "Imperial (lb, ft, °F)",
+  "celsius": "Celsius (°C)",
+  "fahrenheit": "Fahrenheit (°F)",
+  "saved": "Inställningarna sparades"
+}

@@ -1,0 +1,8 @@
+{
+  "generic": "Något gick fel. Försök igen.",
+  "network": "Nätverksfel. Kontrollera din anslutning.",
+  "postal_code_invalid": "Postnumret ser inte rätt ut för det valda landet.",
+  "required_field": "Det här fältet är obligatoriskt.",
+  "invalid_email": "Ogiltig e-postadress.",
+  "password_too_short": "Lösenordet är för kort."
+}

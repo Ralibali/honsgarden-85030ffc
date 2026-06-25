@@ -1,0 +1,17 @@
+{
+  "app_name": "Hönsgården",
+  "tagline": "Din digitala kompanjon för hönsägare",
+  "save": "Spara",
+  "cancel": "Avbryt",
+  "delete": "Ta bort",
+  "edit": "Ändra",
+  "loading": "Laddar…",
+  "yes": "Ja",
+  "no": "Nej",
+  "close": "Stäng",
+  "back": "Tillbaka",
+  "continue": "Fortsätt",
+  "search": "Sök",
+  "optional": "valfritt",
+  "required": "obligatoriskt"
+}

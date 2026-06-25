@@ -1,0 +1,8 @@
+{
+  "generic": "Something went wrong. Please try again.",
+  "network": "Network error. Check your connection.",
+  "postal_code_invalid": "That postal code doesn't look right for the selected country.",
+  "required_field": "This field is required.",
+  "invalid_email": "Invalid email address.",
+  "password_too_short": "Password is too short."
+}
