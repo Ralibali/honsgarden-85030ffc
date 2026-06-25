@@ -25,19 +25,20 @@ function wordCount(html: string) {
   return html.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
 }
 
+// In-memory throttle so a public endpoint can't be hammered.
+// Source is public and upserts are idempotent, but no need to re-fetch more than once per 10 min.
+let lastRunAt = 0;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (!["GET", "POST"].includes(req.method)) return jsonResponse({ error: "Method not allowed" }, 405);
 
-  const auth = req.headers.get("Authorization") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  const now = Date.now();
+  const force = new URL(req.url).searchParams.get("force") === "1";
+  if (!force && now - lastRunAt < 10 * 60 * 1000) {
+    return jsonResponse({ skipped: true, reason: "throttled", retry_after_seconds: Math.ceil((10 * 60 * 1000 - (now - lastRunAt)) / 1000) });
   }
-
+  lastRunAt = now;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
