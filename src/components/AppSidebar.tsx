@@ -7,8 +7,10 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import { brandName } from '@/lib/brand';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Sidebar,
@@ -25,58 +27,60 @@ import {
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-type NavItem = { title: string; url: string; icon: any; premium?: boolean; adminOnly?: boolean };
+type NavItem = { titleKey: string; url: string; icon: any; premium?: boolean; adminOnly?: boolean };
+type NavGroup = { labelKey: string; items: NavItem[] };
 
-const groups: { label: string; items: NavItem[] }[] = [
+const groups: NavGroup[] = [
   {
-    label: 'Dagligt',
+    labelKey: 'groups.daily',
     items: [
-      { title: 'Dashboard', url: '/app', icon: Home },
-      { title: 'Logga ägg', url: '/app/eggs', icon: Egg },
-      { title: 'Uppgifter', url: '/app/tasks', icon: ClipboardCheck },
-      { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
-      { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
+      { titleKey: 'dashboard', url: '/app', icon: Home },
+      { titleKey: 'log_eggs', url: '/app/eggs', icon: Egg },
+      { titleKey: 'tasks', url: '/app/tasks', icon: ClipboardCheck },
+      { titleKey: 'reminders', url: '/app/reminders', icon: Syringe },
+      { titleKey: 'calendar', url: '/app/calendar', icon: CalendarDays },
     ],
   },
   {
-    label: 'Flocken',
+    labelKey: 'groups.flock',
     items: [
-      { title: 'Hönor', url: '/app/hens', icon: Bird },
-      { title: 'Hälsologg', url: '/app/halsa', icon: Stethoscope },
-      { title: 'Avel & kläckning', url: '/app/avel', icon: Heart, premium: true },
-      { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },
+      { titleKey: 'hens', url: '/app/hens', icon: Bird },
+      { titleKey: 'health_log', url: '/app/halsa', icon: Stethoscope },
+      { titleKey: 'breeding', url: '/app/avel', icon: Heart, premium: true },
+      { titleKey: 'weather', url: '/app/weather', icon: CloudSun, premium: true },
     ],
   },
   {
-    label: 'Ekonomi & försäljning',
+    labelKey: 'groups.economy',
     items: [
-      { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
-      { title: 'Lager', url: '/app/lager', icon: Boxes, premium: true },
-      { title: 'Ekonomi', url: '/app/finance', icon: Coins, premium: true },
-      { title: 'Marknad', url: '/app/marknad/mina', icon: Tag },
-      { title: 'Agdas Bod', url: '/app/egg-sales', icon: ReceiptText, premium: true },
+      { titleKey: 'feed', url: '/app/feed', icon: Package, premium: true },
+      { titleKey: 'inventory', url: '/app/lager', icon: Boxes, premium: true },
+      { titleKey: 'finance', url: '/app/finance', icon: Coins, premium: true },
+      { titleKey: 'marketplace', url: '/app/marknad/mina', icon: Tag },
+      { titleKey: 'agda_shop', url: '/app/egg-sales', icon: ReceiptText, premium: true },
     ],
   },
   {
-    label: 'Insikter',
+    labelKey: 'groups.insights',
     items: [
-      { title: 'Översikt', url: '/app/overview', icon: PieChart },
-      { title: 'Statistik', url: '/app/statistics', icon: BarChart3, premium: true },
-      { title: 'Rapporter', url: '/app/rapporter', icon: FileText, premium: true },
-      { title: 'Agda AI', url: '/app/agda', icon: Bot, premium: true },
-      { title: 'Nyheter', url: '/app/news', icon: Newspaper },
+      { titleKey: 'overview', url: '/app/overview', icon: PieChart },
+      { titleKey: 'statistics', url: '/app/statistics', icon: BarChart3, premium: true },
+      { titleKey: 'reports', url: '/app/rapporter', icon: FileText, premium: true },
+      { titleKey: 'agda_ai', url: '/app/agda', icon: Bot, premium: true },
+      { titleKey: 'news', url: '/app/news', icon: Newspaper },
     ],
   },
   {
-    label: 'Övrigt',
+    labelKey: 'groups.other',
     items: [
-      { title: 'Community', url: '/app/community', icon: Users },
-      { title: 'Premium', url: '/app/premium', icon: Crown },
-      { title: 'Inställningar', url: '/app/settings', icon: Settings },
-      { title: 'Admin', url: '/app/admin', icon: Shield, adminOnly: true },
+      { titleKey: 'community', url: '/app/community', icon: Users },
+      { titleKey: 'premium', url: '/app/premium', icon: Crown },
+      { titleKey: 'settings', url: '/app/settings', icon: Settings },
+      { titleKey: 'admin', url: '/app/admin', icon: Shield, adminOnly: true },
     ],
   },
 ];
+
 
 function groupKey(label: string) {
   return `sidebar_group_${label.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
