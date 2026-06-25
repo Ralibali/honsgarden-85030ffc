@@ -338,6 +338,10 @@ export default function SettingsPage() {
       {/* Premium status */}
       <PremiumStatusCard />
 
+      {/* Region & språk */}
+      <RegionLanguageSettings />
+
+
 
       {/* Profile */}
       <Card className="border-border/50 shadow-sm">
