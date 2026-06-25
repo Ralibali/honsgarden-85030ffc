@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -47,7 +48,7 @@ export default function MobileAppDashboardHero() {
   const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(), staleTime: 60_000 });
   const { data: feedRecords = [] } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords(), staleTime: 60_000 });
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = todayLocal();
   const todayEggs = useMemo(
     () => (eggs as any[]).filter((egg) => egg.date === today).reduce((sum, egg) => sum + (egg.count || 0), 0),
     [eggs, today]

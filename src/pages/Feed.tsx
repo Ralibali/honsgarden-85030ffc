@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +78,7 @@ export default function Feed() {
       feed_type: newType,
       cost: Number(newCost),
       amount_kg: Number(newKg) || 0,
-      date: new Date().toISOString().split('T')[0],
+      date: todayLocal(),
       brand: newBrand || null,
       feed_category: newCategory || null,
     } as any);

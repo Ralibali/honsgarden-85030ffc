@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -64,7 +65,7 @@ function typeColor(t: string) {
   }
 }
 
-function todayISO() { return new Date().toISOString().split('T')[0]; }
+function todayISO() { return todayLocal(); }
 function addDays(iso: string, days: number) {
   const d = new Date(iso); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0];
 }

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +17,7 @@ interface EggFormProps {
 }
 
 export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: EggFormProps) {
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(todayLocal());
   const [count, setCount] = useState(0);
   const [selectedHenId, setSelectedHenId] = useState<string>('all');
   const { data: karens = [] } = useActiveKarens();

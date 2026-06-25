@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { Egg, Plus, Minus, Check, X, CalendarMinus, Bird } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,7 +53,7 @@ export function QuickEggFAB() {
     mutationFn: async ({ count, hen_id, flock_id }: { count: number; hen_id?: string; flock_id?: string }) => {
       const date = useYesterday
         ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
+        : todayLocal();
       const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -80,7 +81,7 @@ export function QuickEggFAB() {
         if (!old) return old;
         const date = useYesterday
           ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
+          : todayLocal();
         return [...old, { date, count, id: `temp-${Date.now()}`, hen_id: null, flock_id: null }];
       });
       return { prev };
@@ -90,7 +91,7 @@ export function QuickEggFAB() {
       if (isOffline) {
         const date = useYesterday
           ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
-          : new Date().toISOString().split('T')[0];
+          : todayLocal();
         queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
           const next = (old ?? []).filter((e: any) => !String(e.id).startsWith('temp-'));
           next.unshift({
@@ -120,7 +121,7 @@ export function QuickEggFAB() {
       // Personal record check
       const date = useYesterday
         ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
+        : todayLocal();
       const existing = (queryClient.getQueryData(['eggs']) as any[]) || [];
       const records = checkPersonalRecords(user?.id, [...existing, { date, count: savedCount }], date);
       if (records.length > 0) {

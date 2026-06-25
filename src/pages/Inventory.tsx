@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,7 +41,7 @@ function InventoryInner() {
   });
   const [txForm, setTxForm] = useState({
     transaction_type: 'in', quantity: '', cost: '', notes: '',
-    transaction_date: new Date().toISOString().split('T')[0],
+    transaction_date: todayLocal(),
   });
 
   const { data: items = [], isLoading } = useQuery({
@@ -93,7 +94,7 @@ function InventoryInner() {
       queryClient.invalidateQueries({ queryKey: ['inventory_items'] });
       toast({ title: 'Transaktion sparad ✓' });
       setOpenTx(null);
-      setTxForm({ transaction_type: 'in', quantity: '', cost: '', notes: '', transaction_date: new Date().toISOString().split('T')[0] });
+      setTxForm({ transaction_type: 'in', quantity: '', cost: '', notes: '', transaction_date: todayLocal() });
     },
     onError: (e: any) => toast({ title: 'Kunde inte spara', description: e.message, variant: 'destructive' }),
   });

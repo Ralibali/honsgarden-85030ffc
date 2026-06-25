@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { supabase } from '@/integrations/supabase/client';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -40,7 +41,7 @@ function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
     setSaving(true);
     try {
       await api.createEggRecord({
-        date: new Date().toISOString().split('T')[0],
+        date: todayLocal(),
         count: Number(count),
         hen_id: henId,
       });
@@ -157,7 +158,7 @@ export default function HenProfile() {
         return api.updateHealthLog(payload.id, { type: payload.type, description: payload.text });
       }
       return api.createHealthLog({
-        date: new Date().toISOString().split('T')[0],
+        date: todayLocal(),
         type: payload.type,
         description: payload.text,
         hen_id: henId!,
@@ -244,7 +245,7 @@ export default function HenProfile() {
       notes: editForm.notes || null,
       flock_id: editForm.flock_id === 'none' ? null : editForm.flock_id,
       is_active: isActive,
-      death_date: editForm.status === 'deceased' ? (editForm.death_date || new Date().toISOString().split('T')[0]) : null,
+      death_date: editForm.status === 'deceased' ? (editForm.death_date || todayLocal()) : null,
       death_cause: editForm.status === 'deceased' ? (editForm.death_cause || null) : (editForm.status === 'sold' ? 'Såld' : null),
     });
   };
