@@ -104,9 +104,10 @@ if (typeof window !== 'undefined') {
 }
 
 function NavGroupCollapsible({
-  label, items, collapsed, isPremium, isAdmin, forceOpen,
-}: { label: string; items: NavItem[]; collapsed: boolean; isPremium: boolean; isAdmin: boolean; forceOpen: boolean }) {
-  const storageKey = groupKey(label);
+  labelKey, label, items, collapsed, isPremium, isAdmin, forceOpen,
+}: { labelKey: string; label: string; items: NavItem[]; collapsed: boolean; isPremium: boolean; isAdmin: boolean; forceOpen: boolean }) {
+  const { t } = useTranslation('nav');
+  const storageKey = groupKey(labelKey);
   const [open, setOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     const v = window.localStorage.getItem(storageKey);
@@ -128,7 +129,7 @@ function NavGroupCollapsible({
   const renderItems = (
     <SidebarMenu>
       {visible.map((item) => (
-        <SidebarMenuItem key={item.title}>
+        <SidebarMenuItem key={item.titleKey}>
           <SidebarMenuButton asChild>
             <NavLink
               to={item.url}
@@ -139,7 +140,7 @@ function NavGroupCollapsible({
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && (
                 <span className="text-[13px] flex items-center gap-1.5">
-                  {item.title}
+                  {t(item.titleKey)}
                   {item.premium && !isPremium && <Crown className="h-3 w-3 text-warning/60" />}
                 </span>
               )}
@@ -151,7 +152,6 @@ function NavGroupCollapsible({
   );
 
   if (collapsed) {
-    // In icon-collapsed sidebar, no label and no toggle — just icons.
     return (
       <SidebarGroup>
         <SidebarGroupContent>{renderItems}</SidebarGroupContent>
@@ -167,7 +167,7 @@ function NavGroupCollapsible({
             type="button"
             className="w-full flex items-center justify-between gap-2 text-[10px] text-muted-foreground/70 uppercase tracking-[0.14em] px-5 mt-3 mb-1 font-medium hover:text-muted-foreground"
             aria-expanded={open}
-            title={open ? `Dölj ${label}` : `Visa ${label} (${visible.length} val)`}
+            title={open ? t('sidebar.hide_group', { label }) : t('sidebar.show_group', { label, count: visible.length })}
           >
             <SidebarGroupLabel className="p-0 m-0 h-auto text-inherit tracking-inherit">
               {label}
@@ -176,7 +176,7 @@ function NavGroupCollapsible({
               {!open && (
                 <span
                   className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary/15 text-primary text-[10px] font-semibold leading-none"
-                  aria-label={`${visible.length} dolda val`}
+                  aria-label={t('sidebar.hidden_count', { count: visible.length })}
                 >
                   {visible.length}
                 </span>
@@ -192,6 +192,7 @@ function NavGroupCollapsible({
     </SidebarGroup>
   );
 }
+
 
 export function AppSidebar() {
   const { state } = useSidebar();
