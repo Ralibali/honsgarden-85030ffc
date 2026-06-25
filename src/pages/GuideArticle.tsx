@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
-import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
+import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import { useParams, Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { useQuery } from '@tanstack/react-query';
