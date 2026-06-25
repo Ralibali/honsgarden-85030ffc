@@ -258,7 +258,7 @@ export function AppSidebar() {
           <>
             <div className="flex items-center justify-between gap-2 px-1">
               <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{user?.name || 'Användare'}</p>
+                <p className="text-sm font-medium text-foreground truncate">{user?.name || t('sidebar.user_fallback')}</p>
                 <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
               </div>
               <Button
@@ -266,8 +266,8 @@ export function AppSidebar() {
                 size="icon"
                 className="h-8 w-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                aria-label={theme === 'dark' ? 'Byt till ljust tema' : 'Byt till mörkt tema'}
-                title={theme === 'dark' ? 'Ljust tema' : 'Mörkt tema'}
+                aria-label={theme === 'dark' ? t('sidebar.theme_light') : t('sidebar.theme_dark')}
+                title={theme === 'dark' ? t('sidebar.theme_light_short') : t('sidebar.theme_dark_short')}
               >
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
@@ -279,7 +279,7 @@ export function AppSidebar() {
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
-              Logga ut
+              {t('sign_out')}
             </Button>
           </>
         ) : (
@@ -288,10 +288,11 @@ export function AppSidebar() {
             size="icon"
             className="h-9 w-9 mx-auto rounded-lg text-muted-foreground hover:text-foreground"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            aria-label={theme === 'dark' ? 'Byt till ljust tema' : 'Byt till mörkt tema'}
+            aria-label={theme === 'dark' ? t('sidebar.theme_light') : t('sidebar.theme_dark')}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
         )}
       </SidebarFooter>
     </Sidebar>
