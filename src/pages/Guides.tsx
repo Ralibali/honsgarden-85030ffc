@@ -63,7 +63,7 @@ export default function Guides() {
 
   return (
     <div className="min-h-screen bg-background">
-      <VisitorWelcomePopup />
+      <BlogConversionPopup />
 
       {/* ItemList JSON-LD for blog listing */}
       {posts.length > 0 && (
