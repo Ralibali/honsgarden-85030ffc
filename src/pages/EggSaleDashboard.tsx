@@ -330,11 +330,110 @@ function SubscriptionsPanel({ listing }: { listing: Row }) {
 }
 
 function StatsPanel({ listing }: { listing: Row }) {
-  const { data: bookings = [] } = useQuery<Row[]>({ queryKey: ['dash-stats-bookings', listing.id], queryFn: async () => { const { data } = await (supabase as any).from('public_egg_sale_bookings').select('status,payment_status,packs,created_at').eq('listing_id', listing.id); return data || []; } });
-  const active = bookings.filter((booking) => !['cancelled', 'refunded'].includes(booking.status));
+  const [days, setDays] = useState(30);
+  const { data: bookings = [], isLoading: bLoading } = useQuery<Row[]>({
+    queryKey: ['dash-stats-bookings', listing.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('public_egg_sale_bookings')
+        .select('status,payment_status,packs,created_at,picked_up_at,paid_at,cancelled_at')
+        .eq('listing_id', listing.id);
+      return data || [];
+    },
+  });
+
+  const { data: viewStats, isLoading: vLoading } = useQuery<{ views: number; unique_visitors: number } | null>({
+    queryKey: ['dash-stats-views', listing.id, days],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc('get_egg_sale_listing_stats', { p_listing_id: listing.id, p_days: days });
+      if (error) throw error;
+      return data || { views: 0, unique_visitors: 0 };
+    },
+  });
+
+  const since = useMemo(() => Date.now() - days * 24 * 60 * 60 * 1000, [days]);
+  const inWindow = useMemo(() => bookings.filter((b) => new Date(b.created_at).getTime() >= since), [bookings, since]);
   const tiers = normalizeTiers(listing.price_tiers);
   const fallback = Number(listing.price_per_pack || 0);
-  const revenue = active.filter((booking) => booking.payment_status === 'paid').reduce((sum, booking) => sum + getOrderTotal(Number(booking.packs || 0), tiers, fallback), 0);
-  const eggs = active.filter((booking) => booking.status === 'picked_up').reduce((sum, booking) => sum + Number(booking.packs || 0) * Number(listing.eggs_per_pack || 0), 0);
-  return <div className="grid gap-3 sm:grid-cols-3"><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Bokningar</p><p className="font-serif text-3xl">{bookings.length}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Betald omsättning</p><p className="font-serif text-3xl">{kr(revenue)}</p></CardContent></Card><Card><CardContent className="p-5"><p className="text-xs text-muted-foreground">Hämtade ägg</p><p className="font-serif text-3xl">{eggs}</p></CardContent></Card></div>;
+  const eggsPerPack = Number(listing.eggs_per_pack || 0);
+
+  const active = inWindow.filter((b) => !['cancelled', 'refunded'].includes(b.status));
+  const paid = active.filter((b) => b.payment_status === 'paid');
+  const pickedUp = active.filter((b) => b.status === 'picked_up');
+  const cancelled = inWindow.filter((b) => b.status === 'cancelled' || b.cancelled_at);
+  const pendingPay = active.filter((b) => b.payment_status !== 'paid' && b.status !== 'cancelled');
+  const revenue = paid.reduce((sum, b) => sum + getOrderTotal(Number(b.packs || 0), tiers, fallback), 0);
+  const pendingValue = pendingPay.reduce((sum, b) => sum + getOrderTotal(Number(b.packs || 0), tiers, fallback), 0);
+  const totalPacks = active.reduce((sum, b) => sum + Number(b.packs || 0), 0);
+  const eggs = pickedUp.reduce((sum, b) => sum + Number(b.packs || 0) * eggsPerPack, 0);
+  const avgOrder = active.length > 0 ? revenue / Math.max(paid.length, 1) : 0;
+
+  const views = viewStats?.views ?? 0;
+  const visitors = viewStats?.unique_visitors ?? 0;
+  const conversion = visitors > 0 ? Math.round((active.length / visitors) * 1000) / 10 : 0;
+
+  // 14-day mini sparkline of bookings
+  const last14 = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const buckets: { date: string; count: number }[] = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000);
+      buckets.push({ date: d.toISOString().slice(0, 10), count: 0 });
+    }
+    bookings.forEach((b) => {
+      const key = new Date(b.created_at).toISOString().slice(0, 10);
+      const bucket = buckets.find((x) => x.date === key);
+      if (bucket) bucket.count += 1;
+    });
+    return buckets;
+  }, [bookings]);
+  const maxDay = Math.max(1, ...last14.map((x) => x.count));
+
+  if (bLoading || vLoading) return <Card><CardContent className="p-6">Laddar statistik…</CardContent></Card>;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="flex flex-wrap items-center gap-2 p-3">
+          <span className="text-sm text-muted-foreground mr-1">Tidsperiod:</span>
+          {[7, 30, 90].map((d) => (
+            <Button key={d} size="sm" variant={days === d ? 'default' : 'outline'} onClick={() => setDays(d)}>
+              {d} dagar
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Besökare</p><p className="font-serif text-3xl">{visitors.toLocaleString('sv-SE')}</p><p className="text-[11px] text-muted-foreground mt-1">{views.toLocaleString('sv-SE')} sidvisningar</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Bokningar</p><p className="font-serif text-3xl">{active.length}</p><p className="text-[11px] text-muted-foreground mt-1">{conversion}% av besökare bokar</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Betald omsättning</p><p className="font-serif text-3xl">{kr(revenue)}</p><p className="text-[11px] text-muted-foreground mt-1">{paid.length} betalda order</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Värde att fakturera</p><p className="font-serif text-3xl">{kr(pendingValue)}</p><p className="text-[11px] text-muted-foreground mt-1">{pendingPay.length} obetalda</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Kartor sålda</p><p className="font-serif text-3xl">{totalPacks}</p><p className="text-[11px] text-muted-foreground mt-1">{pickedUp.length} hämtade</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Hämtade ägg</p><p className="font-serif text-3xl">{eggs}</p><p className="text-[11px] text-muted-foreground mt-1">{eggsPerPack} ägg/karta</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Snittorder</p><p className="font-serif text-3xl">{kr(avgOrder)}</p><p className="text-[11px] text-muted-foreground mt-1">per betald bokning</p></CardContent></Card>
+        <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Avbokade</p><p className="font-serif text-3xl">{cancelled.length}</p><p className="text-[11px] text-muted-foreground mt-1">i vald period</p></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-serif text-base">Bokningar senaste 14 dagarna</h3>
+            <span className="text-xs text-muted-foreground">Totalt {last14.reduce((s, x) => s + x.count, 0)}</span>
+          </div>
+          <div className="flex items-end gap-1 h-24">
+            {last14.map((b) => (
+              <div key={b.date} className="flex-1 flex flex-col items-center justify-end" title={`${b.date}: ${b.count}`}>
+                <div className="w-full rounded-t bg-primary/70" style={{ height: `${(b.count / maxDay) * 100}%`, minHeight: b.count > 0 ? '4px' : '1px' }} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
+            <span>{last14[0]?.date.slice(5)}</span>
+            <span>{last14[last14.length - 1]?.date.slice(5)}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
