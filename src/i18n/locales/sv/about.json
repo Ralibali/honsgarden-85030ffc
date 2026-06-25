@@ -1,0 +1,75 @@
+{
+  "seo": {
+    "title": "Om Hönsgården – appen för ägg, flock och försäljning",
+    "description": "Hönsgården hjälper svenska hönsägare att logga ägg, följa flocken, sälja ägg med Agdas äggbod, få statistik, rapporter, community och AI-stöd."
+  },
+  "nav": {
+    "sell_eggs": "Sälj ägg",
+    "blog": "Blogg",
+    "get_started": "Kom igång"
+  },
+  "header": {
+    "badge": "Om {{brand}}",
+    "title": "Vi bygger kontrollpanelen för svenska hönsägare",
+    "subtitle": "Hönsgården började som en digital ägglogg, men har vuxit till ett komplett verktyg för dig som vill följa flocken, förstå kostnader, sköta rutiner, sälja ägg, dela erfarenheter och få smartare hjälp i vardagen."
+  },
+  "why": {
+    "title": "Varför {{brand}} finns",
+    "p1": "Hönsägande är fullt av små detaljer: dagens ägg, hönornas beteende, foder, väder, rengöring, kvalster, ruggning, kläckningar och ibland lokal äggförsäljning. Mycket hamnar annars i huvudet, i mobilen, på lappar eller i Excel.",
+    "p2": "Hönsgården samlar allt detta på ett ställe. Du kan logga snabbt, se mönster över tid och få bättre överblick utan att det känns som administration.",
+    "p3": "Med Agdas äggbod kan du dessutom skapa säljsidor, ta emot bokningar, hålla koll på kunder och följa betalning och hämtning. Det gör Hönsgården till både gårdsdagbok, dashboard och försäljningsstöd."
+  },
+  "offering": {
+    "title": "Det Hönsgården erbjuder",
+    "items": [
+      "Ägglogg och historik",
+      "Hönsprofiler och flocköversikt",
+      "Statistik, trender och rapporter",
+      "Foderkostnad och ekonomi",
+      "Kalender, rutiner och påminnelser",
+      "Kläckningskalender",
+      "Väder och påverkan",
+      "Community med inlägg",
+      "Feedback och produktförslag",
+      "Agdas äggbod för lokal äggförsäljning",
+      "Bokningar, kunder, betalstatus och export",
+      "Agda AI och premiuminsikter"
+    ]
+  },
+  "values": {
+    "title": "Vad vi tror på",
+    "items": [
+      { "title": "Byggt för riktig hönsvardag", "desc": "Hönsgården ska fungera när du står vid hönshuset, inte bara när du sitter vid datorn." },
+      { "title": "Från känsla till koll", "desc": "Ägg, foder, väder, hälsa och försäljning blir användbara mönster över tid." },
+      { "title": "Mindre Excel", "desc": "Agdas äggbod hjälper dig sälja ägg med länk, Swish, bokningar, kundlista och export." },
+      { "title": "Community och feedback", "desc": "Hönsägare kan dela inlägg, frågor och tips – och hjälpa oss bygga rätt saker vidare." },
+      { "title": "Smart hjälp från Agda", "desc": "AI-stöd, rapporter och förslag ska göra appen mer användbar utan att kännas krånglig." },
+      { "title": "Din data är din", "desc": "Du ska känna dig trygg med informationen om din flock, dina rutiner och din försäljning." }
+    ]
+  },
+  "team": {
+    "title": "Teamet",
+    "name": "Hönsgården-teamet",
+    "role": "Produkt, teknik & innehåll",
+    "bio": "Vi bygger Hönsgården för svenska hönsägare som vill ha mer koll utan att fastna i kalkylark. Fokus är enkel vardagsloggning, tydlig överblick och praktiska verktyg för ägg, flock, försäljning och rutiner."
+  },
+  "contact": {
+    "title": "Kontakta oss",
+    "email_label": "E-post",
+    "country_label": "Land",
+    "country_value": "Sverige 🇸🇪",
+    "founded_label": "Grundat",
+    "founded_value": "2024"
+  },
+  "cta": {
+    "title": "Vill du få mer koll på din hönsgård?",
+    "subtitle": "Skapa konto gratis och börja med äggloggen, flocken eller din första säljsida i Agdas äggbod.",
+    "button": "Kom igång nu"
+  },
+  "footer": {
+    "home": "Startsidan",
+    "sell_eggs": "Sälj ägg",
+    "blog": "Blogg",
+    "terms": "Villkor"
+  }
+}
