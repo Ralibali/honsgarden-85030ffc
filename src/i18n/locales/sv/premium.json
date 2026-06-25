@@ -1,10 +1,70 @@
 {
-  "title": "Hönsgården Plus",
-  "subtitle": "Lås upp alla funktioner",
-  "monthly": "Per månad",
-  "yearly": "Per år",
-  "best_value": "Bäst värde",
-  "trial_note": "7 dagars gratis provperiod",
-  "start_subscription": "Starta prenumeration",
-  "manage_subscription": "Hantera prenumeration"
+  "seo": {
+    "title": "Hönsgården Plus – AI-coach, ekonomi & insikter för hönsgården",
+    "description": "Uppgradera till Hönsgården Plus för AI-coach, veckorapporter, avvikelsevarningar, ekonomiverktyg och kläckningskalender. 19 kr/mån eller 149 kr/år – avsluta när du vill.",
+    "og_image_alt": "Hönsgården Plus – AI och ekonomi för hönsgårdar"
+  },
+  "hero": {
+    "badge": "Premium med AI, insikter och ekonomi",
+    "title": "Gör Hönsgården till din smarta gårdsassistent",
+    "free_trial": "🎁 Sju dagars gratis premium för nya användare",
+    "sync_status": "Synka premiumstatus"
+  },
+  "active": {
+    "title": "Du har Premium aktivt",
+    "subtitle": "Hantera abonnemang, kort och kvitton via Stripe kundportal.",
+    "manage": "Hantera abonnemang"
+  },
+  "social_proof": "Används av hönsägare i hela Sverige 🇸🇪",
+  "plans": {
+    "yearly": {
+      "name": "Plus årsvis",
+      "price": "149 kr",
+      "period": "/ år",
+      "description": "Spara 79 kr — motsvarar 12,40 kr/mån",
+      "badge": "Bäst värde",
+      "cta": "Välj årsplan"
+    },
+    "monthly": {
+      "name": "Plus månadsvis",
+      "price": "19 kr",
+      "period": "/ månad",
+      "description": "Flexibelt abonnemang. Avsluta när du vill.",
+      "sub_price": "= mindre än en kartong ägg",
+      "cta": "Välj månadsplan"
+    },
+    "active_label": "Premium är aktivt"
+  },
+  "features": {
+    "title": "Det här ingår i Plus",
+    "subtitle": "Trial, betalande premium och lifetime hålls isär i systemet.",
+    "items": [
+      "Agda AI-coachen — personliga råd om just dina hönor",
+      "Veckorapport varje söndag med tydliga nästa steg",
+      "Vet vad varje ägg kostar — foder, ekonomi och export",
+      "Larm när något avviker i flocken, innan det blir ett problem",
+      "Kläckningskalender som håller koll på alla 21 dagarna",
+      "Full statistik, äggmål, PDF/CSV och alla framtida funktioner"
+    ]
+  },
+  "sticky_cta": "Prova 7 dagar gratis",
+  "toasts": {
+    "welcome_title": "Välkommen till Premium! 🎉",
+    "welcome_desc": "Nu har du AI, insikter och ekonomiverktygen.",
+    "still_processing_title": "Betalningen behandlas fortfarande",
+    "still_processing_desc": "Apple Pay och vissa kortbetalningar kan ta någon minut. Tryck på Synka premiumstatus om sidan inte uppdateras automatiskt.",
+    "sync_ok_title": "Premiumstatus kontrollerad ✅",
+    "sync_ok_desc": "Vi har synkat din prenumeration mot betalningssystemet.",
+    "sync_fail_title": "Kunde inte synka just nu",
+    "sync_fail_desc": "Försök igen om en stund.",
+    "portal_error_title": "Något gick fel",
+    "portal_error_desc": "Kunde inte öppna kundportalen.",
+    "login_required_title": "Logga in först",
+    "login_required_desc": "Du behöver vara inloggad för att uppgradera.",
+    "already_sub_title": "Du har redan en aktiv prenumeration",
+    "already_sub_desc": "Vi öppnar kundportalen där du kan hantera den.",
+    "checkout_fail_title": "Kunde inte starta betalning",
+    "checkout_fail_desc": "Något gick fel.",
+    "no_checkout_url": "Ingen checkout-URL returnerades"
+  }
 }
