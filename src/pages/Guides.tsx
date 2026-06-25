@@ -1,4 +1,4 @@
-import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
+import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
 import { useQuery } from '@tanstack/react-query';
