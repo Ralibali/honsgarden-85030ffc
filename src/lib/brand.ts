@@ -1,18 +1,26 @@
 // Brand identity per domän
-// honsgarden.se   → "Hönsgården" (svenska som standard)
-// honsgarden.app  → "Honsgarden" (engelska som standard)
-// alla andra      → "Honsgarden" (engelska som standard)
+// honsgarden.se   → "Hönsgården" (svenska, INGEN internationalisering – exakt som innan)
+// honsgarden.app  → "Honsgarden" (internationell, full i18n)
+// lovable.app preview / localhost → internationell (för att kunna testa engelska)
+// alla andra      → internationell
 
 export type BrandRegion = "se" | "intl";
 
 export function detectBrandRegion(): BrandRegion {
-  if (typeof window === "undefined") return "se";
+  if (typeof window === "undefined") return "intl";
   const host = window.location.hostname.toLowerCase();
-  if (host.endsWith("honsgarden.se")) return "se";
-  // Preview / lovable.app / honsgarden.app / custom = internationell
-  return host.endsWith("lovable.app") || host === "localhost" || host.endsWith(".local")
-    ? "se" // behåll svensk identitet i preview/lokalt så befintliga flöden inte ändras visuellt
-    : "intl";
+  if (host === "honsgarden.se" || host.endsWith(".honsgarden.se")) return "se";
+  return "intl";
+}
+
+/**
+ * Är vi på en domän där den internationella upplevelsen (språkval, landval,
+ * regionala format etc.) ska vara aktiv?
+ * honsgarden.se → false (oförändrad svensk app)
+ * allt annat    → true
+ */
+export function isInternationalDomain(): boolean {
+  return detectBrandRegion() === "intl";
 }
 
 export function brandName(region: BrandRegion = detectBrandRegion()): string {
