@@ -338,8 +338,8 @@ export default function SettingsPage() {
       {/* Premium status */}
       <PremiumStatusCard />
 
-      {/* Region & språk */}
-      <RegionLanguageSettings />
+      {/* Region & språk – endast på internationell domän (honsgarden.app etc.) */}
+      {isInternationalDomain() && <RegionLanguageSettings />}
 
 
 
