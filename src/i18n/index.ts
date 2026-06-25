@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
-import { defaultLanguageForRegion } from "@/lib/brand";
+import { defaultLanguageForRegion, isInternationalDomain } from "@/lib/brand";
 
 import sv_common from "./locales/sv/common.json";
 import sv_auth from "./locales/sv/auth.json";
@@ -49,30 +49,38 @@ const resources = {
 };
 
 const domainDefault = defaultLanguageForRegion();
+const intl = isInternationalDomain();
 
-void i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
+// På honsgarden.se: tvinga svenska, ingen detektering, ingen cache –
+// appen ska bete sig exakt som innan internationaliseringen.
+const i18nInit = i18n.use(initReactI18next);
+if (intl) i18nInit.use(LanguageDetector);
+
+void i18nInit.init({
     resources,
-    fallbackLng: domainDefault, // sv på honsgarden.se, en på honsgarden.app
-    supportedLngs: [...ENABLED_LANGUAGES],
+    lng: intl ? undefined : "sv",
+    fallbackLng: intl ? domainDefault : "sv",
+    supportedLngs: intl ? [...ENABLED_LANGUAGES] : ["sv"],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
     ns: ["common", "auth", "nav", "settings", "errors", "premium"],
     defaultNS: "common",
-    detection: {
-      order: ["localStorage", "navigator", "htmlTag"],
-      lookupLocalStorage: "honsgarden.lang",
-      caches: ["localStorage"],
-    },
+    detection: intl
+      ? {
+          order: ["localStorage", "navigator", "htmlTag"],
+          lookupLocalStorage: "honsgarden.lang",
+          caches: ["localStorage"],
+        }
+      : { order: [], caches: [] },
   });
 
 /**
  * Sätter aktivt språk men VAKTAR att vi aldrig växlar till ett språk
  * vars bundle saknas (skulle ge ett halvengelskt/halv-svenskt UI).
+ * På honsgarden.se är detta en no-op – språket är låst till svenska.
  */
 export function setLanguageSafe(lng: string | null | undefined): void {
+  if (!intl) return;
   const target = isEnabledLanguage(lng) ? lng : domainDefault;
   if (i18n.language !== target) {
     void i18n.changeLanguage(target);
