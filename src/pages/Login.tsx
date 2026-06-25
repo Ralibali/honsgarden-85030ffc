@@ -59,7 +59,7 @@ export default function Login() {
       // Apply postal code captured at registration, if any
       try {
         const pending = localStorage.getItem('pending_postal_code');
-        if (pending && /^\d{4,5}$/.test(pending)) {
+        if (pending && pending.trim().length > 0) {
           await api.updateCoopSettings({ postal_code: pending } as any);
           localStorage.removeItem('pending_postal_code');
         }
