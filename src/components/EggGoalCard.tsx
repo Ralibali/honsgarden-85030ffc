@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Target, Egg, Save, TrendingUp, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,7 +10,7 @@ import { getSyncedEggGoal, saveSyncedEggGoal } from '@/lib/syncedProductState';
 import { toast } from '@/hooks/use-toast';
 
 function todayString() {
-  return new Date().toISOString().split('T')[0];
+  return todayLocal();
 }
 
 function daysAgo(days: number) {

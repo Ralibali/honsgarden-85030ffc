@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,7 +29,7 @@ function PairsTab() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', rooster_id: '', hen_ids: [] as string[],
-    start_date: new Date().toISOString().split('T')[0],
+    start_date: todayLocal(),
     goal: '', notes: '',
   });
 
@@ -70,7 +71,7 @@ function PairsTab() {
       queryClient.invalidateQueries({ queryKey: ['breeding_pairs'] });
       toast({ title: 'Avelspar skapat ✓' });
       setOpen(false);
-      setForm({ name: '', rooster_id: '', hen_ids: [], start_date: new Date().toISOString().split('T')[0], goal: '', notes: '' });
+      setForm({ name: '', rooster_id: '', hen_ids: [], start_date: todayLocal(), goal: '', notes: '' });
     },
     onError: (e: any) => toast({ title: 'Kunde inte spara', description: e.message, variant: 'destructive' }),
   });
@@ -210,7 +211,7 @@ function HatchSessionsTab() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name: '', breeding_pair_id: '', incubator_type: '',
-    set_date: new Date().toISOString().split('T')[0],
+    set_date: todayLocal(),
     eggs_set: '', eggs_fertile: '', eggs_hatched: '',
     temperature_avg: '', humidity_avg: '', notes: '',
   });
@@ -259,7 +260,7 @@ function HatchSessionsTab() {
       setOpen(false);
       setForm({
         name: '', breeding_pair_id: '', incubator_type: '',
-        set_date: new Date().toISOString().split('T')[0],
+        set_date: todayLocal(),
         eggs_set: '', eggs_fertile: '', eggs_hatched: '',
         temperature_avg: '', humidity_avg: '', notes: '',
       });

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
@@ -39,7 +40,7 @@ function getSeason(): string {
 }
 
 function todayStr() {
-  return new Date().toISOString().split('T')[0];
+  return todayLocal();
 }
 
 function daysAgo(d: number) {

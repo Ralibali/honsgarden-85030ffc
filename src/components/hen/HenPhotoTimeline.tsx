@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import imageCompression from 'browser-image-compression';
@@ -56,7 +57,7 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
-  const [takenAt, setTakenAt] = useState(() => new Date().toISOString().split('T')[0]);
+  const [takenAt, setTakenAt] = useState(() => todayLocal());
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -123,7 +124,7 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
     }
     setPendingFile(file);
     setCaption('');
-    setTakenAt(new Date().toISOString().split('T')[0]);
+    setTakenAt(todayLocal());
     setUploadDialogOpen(true);
   };
 
@@ -324,7 +325,7 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
               </div>
               <div>
                 <Label className="text-xs">Datum</Label>
-                <Input type="date" className="mt-1.5 rounded-xl" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} max={new Date().toISOString().split('T')[0]} />
+                <Input type="date" className="mt-1.5 rounded-xl" value={takenAt} onChange={(e) => setTakenAt(e.target.value)} max={todayLocal()} />
               </div>
               <div>
                 <Label className="text-xs">Bildtext (valfritt)</Label>

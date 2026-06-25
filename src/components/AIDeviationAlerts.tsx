@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,7 +32,7 @@ type AlertContext = {
 };
 
 function todayStr() {
-  return new Date().toISOString().split('T')[0];
+  return todayLocal();
 }
 
 function getSeason(): string {

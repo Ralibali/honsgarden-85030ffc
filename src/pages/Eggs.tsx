@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Egg as EggIcon, Loader2, Trash2, Download, List, LayoutGrid } from 'lucide-react';
@@ -167,7 +168,7 @@ export default function Eggs() {
     return '';
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = todayLocal();
   const todayEggs = eggs.filter((e: any) => e.date === todayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
   const weekEggs = eggs.filter((e: any) => new Date(e.date) >= weekAgo).reduce((s: number, e: any) => s + (e.count || 0), 0);

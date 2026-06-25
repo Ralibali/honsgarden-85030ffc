@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { todayLocal } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -177,7 +178,7 @@ export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<s
       if (pos) { lat = pos.coords.latitude; lon = pos.coords.longitude; }
     }
     if (!lat || !lon) return null;
-    const isToday = date === new Date().toISOString().split('T')[0];
+    const isToday = date === todayLocal();
     const url = isToday
       ? `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto&forecast_days=1`
       : `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${date}&end_date=${date}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,wind_speed_10m_max&timezone=auto`;

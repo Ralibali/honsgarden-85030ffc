@@ -21,6 +21,22 @@ export function todayInTz(tz?: string | null): string {
   return localCalendarDate(new Date(), tz);
 }
 
+/**
+ * YYYY-MM-DD för dagens datum i browserns lokala tidszon.
+ * Använd istället för `new Date().toISOString().split('T')[0]` som är UTC-baserad
+ * och därför kan registrera ägg/händelser på fel kalenderdag runt midnatt.
+ * För svenska användare (Europe/Stockholm) ger detta exakt samma resultat som tidigare,
+ * men för användare i andra tidszoner (t.ex. USA) hamnar händelsen på rätt lokal dag.
+ */
+export function todayLocal(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return localCalendarDate(new Date(), tz);
+  } catch {
+    return localCalendarDate(new Date(), FALLBACK_TZ);
+  }
+}
+
 /** YYYY-MM-DD för ett valt datum, i given tidszon. */
 export function localCalendarDate(date: Date | string | number, tz?: string | null): string {
   const d = date instanceof Date ? date : new Date(date);
