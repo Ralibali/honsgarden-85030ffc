@@ -4235,6 +4235,10 @@ export type Database = {
         }[]
       }
       get_booking_by_token: { Args: { p_token: string }; Returns: Json }
+      get_egg_sale_listing_stats: {
+        Args: { p_days?: number; p_listing_id: string }
+        Returns: Json
+      }
       get_farm_member_display_names: {
         Args: { _uid: string }
         Returns: {
