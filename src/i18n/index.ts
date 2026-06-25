@@ -9,6 +9,7 @@ import sv_nav from "./locales/sv/nav.json";
 import sv_settings from "./locales/sv/settings.json";
 import sv_errors from "./locales/sv/errors.json";
 import sv_premium from "./locales/sv/premium.json";
+import sv_footer from "./locales/sv/footer.json";
 
 import en_common from "./locales/en/common.json";
 import en_auth from "./locales/en/auth.json";
@@ -16,6 +17,8 @@ import en_nav from "./locales/en/nav.json";
 import en_settings from "./locales/en/settings.json";
 import en_errors from "./locales/en/errors.json";
 import en_premium from "./locales/en/premium.json";
+import en_footer from "./locales/en/footer.json";
+
 
 /**
  * Språk som har en KOMPLETT bundle och därför får vara aktiva i UI.
@@ -37,6 +40,7 @@ const resources = {
     settings: sv_settings,
     errors: sv_errors,
     premium: sv_premium,
+    footer: sv_footer,
   },
   en: {
     common: en_common,
@@ -45,8 +49,10 @@ const resources = {
     settings: en_settings,
     errors: en_errors,
     premium: en_premium,
+    footer: en_footer,
   },
 };
+
 
 const domainDefault = defaultLanguageForRegion();
 const intl = isInternationalDomain();
@@ -63,7 +69,7 @@ void i18nInit.init({
     supportedLngs: intl ? [...ENABLED_LANGUAGES] : ["sv"],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
-    ns: ["common", "auth", "nav", "settings", "errors", "premium"],
+    ns: ["common", "auth", "nav", "settings", "errors", "premium", "footer"],
     defaultNS: "common",
     detection: intl
       ? {
