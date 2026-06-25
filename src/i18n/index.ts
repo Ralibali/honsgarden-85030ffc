@@ -1,7 +1,7 @@
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
-import { defaultLanguageForRegion } from "@/lib/brand";
+import { defaultLanguageForRegion, isInternationalDomain } from "@/lib/brand";
 
 import sv_common from "./locales/sv/common.json";
 import sv_auth from "./locales/sv/auth.json";
