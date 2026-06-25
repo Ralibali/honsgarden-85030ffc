@@ -11,9 +11,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { CountrySelect } from '@/components/CountrySelect';
-import { COUNTRIES, guessCountryFromBrowser, detectTimezone, type CountryCode } from '@/lib/countries';
+import { COUNTRIES, detectTimezone, type CountryCode } from '@/lib/countries';
 import { validatePostalCode } from '@/lib/postalCode';
-import { isInternationalDomain } from '@/lib/brand';
+import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 
@@ -39,7 +39,9 @@ export default function Login() {
   const [name, setName] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const intl = isInternationalDomain();
-  const [country, setCountry] = useState<CountryCode>(() => (intl ? guessCountryFromBrowser() : 'SE'));
+  // På .app är default = US (initial USA-lansering). På .se är default = SE.
+  // Användaren kan välja ett annat land före registrering via CountrySelect.
+  const [country, setCountry] = useState<CountryCode>(() => defaultCountryForRegion() as CountryCode);
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);

@@ -36,3 +36,15 @@ export function brandTagline(region: BrandRegion = detectBrandRegion()): string 
 export function defaultLanguageForRegion(region: BrandRegion = detectBrandRegion()): "sv" | "en" {
   return region === "se" ? "sv" : "en";
 }
+
+/**
+ * Standardland vid registrering per domän.
+ * honsgarden.se → SE (oförändrat)
+ * honsgarden.app / preview / localhost → US (initial USA-lansering;
+ *   användaren kan välja ett annat land före registrering).
+ */
+export function defaultCountryForRegion(
+  region: BrandRegion = detectBrandRegion(),
+): "SE" | "US" {
+  return region === "se" ? "SE" : "US";
+}
