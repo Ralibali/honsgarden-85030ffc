@@ -201,6 +201,7 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { theme, setTheme } = useTheme();
+  const { t } = useTranslation('nav');
   const isPremium = user?.subscription_status === 'premium';
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -225,8 +226,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div>
-              <h1 className="font-serif text-lg text-foreground leading-none">Hönsgården</h1>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Din gårdsassistent</p>
+              <h1 className="font-serif text-lg text-foreground leading-none">{brandName()}</h1>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{t('sidebar.tagline')}</p>
             </div>
           )}
         </div>
@@ -237,8 +238,9 @@ export function AppSidebar() {
           );
           return (
             <NavGroupCollapsible
-              key={g.label}
-              label={g.label}
+              key={g.labelKey}
+              labelKey={g.labelKey}
+              label={t(g.labelKey)}
               items={g.items}
               collapsed={collapsed}
               isPremium={!!isPremium}
@@ -248,6 +250,8 @@ export function AppSidebar() {
           );
         })}
       </SidebarContent>
+
+
 
       <SidebarFooter className="p-4 space-y-2 border-t border-sidebar-border">
         {!collapsed ? (
