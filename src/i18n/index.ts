@@ -45,6 +45,8 @@ const resources = {
     errors: sv_errors,
     premium: sv_premium,
     footer: sv_footer,
+    about: sv_about,
+
   },
   en: {
     common: en_common,
@@ -54,6 +56,8 @@ const resources = {
     errors: en_errors,
     premium: en_premium,
     footer: en_footer,
+    about: en_about,
+
   },
 };
 
