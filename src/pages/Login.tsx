@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES, guessCountryFromBrowser, detectTimezone, type CountryCode } from '@/lib/countries';
 import { validatePostalCode } from '@/lib/postalCode';
+import { isInternationalDomain } from '@/lib/brand';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 
