@@ -215,14 +215,11 @@ export function buildRegionalPreferences(countryCode: string): RegionalPreferenc
   };
 }
 
+/**
+ * Sweden is deliberately preselected for every new registration. Users can
+ * immediately choose another country before creating the account.
+ */
 export function detectCountryCode(): string {
-  try {
-    const locale = navigator.languages?.[0] || navigator.language;
-    const region = new Intl.Locale(locale).region;
-    if (region && COUNTRY_BY_CODE.has(region)) return region;
-  } catch {
-    // Use the Swedish default below.
-  }
   return 'SE';
 }
 
