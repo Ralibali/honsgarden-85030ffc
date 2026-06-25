@@ -77,7 +77,7 @@ void i18nInit.init({
     supportedLngs: intl ? [...ENABLED_LANGUAGES] : ["sv"],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
-    ns: ["common", "auth", "nav", "settings", "errors", "premium", "footer"],
+    ns: ["common", "auth", "nav", "settings", "errors", "premium", "footer", "about"],
     defaultNS: "common",
     detection: intl
       ? {
