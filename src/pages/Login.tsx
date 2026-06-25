@@ -255,13 +255,15 @@ export default function Login() {
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Ni får båda sju dagars Premium!</p>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Land</Label>
-                  <div className="mt-1.5">
-                    <CountrySelect value={country} onChange={setCountry} />
+                {intl && (
+                  <div>
+                    <Label className="text-muted-foreground">Land / Country</Label>
+                    <div className="mt-1.5">
+                      <CountrySelect value={country} onChange={setCountry} />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">Landet sätter regionala standardvärden (språk, valuta, tidszon, måttenheter). Du kan ändra varje inställning separat senare.</p>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Landet sätter regionala standardvärden (språk, valuta, tidszon, måttenheter). Du kan ändra varje inställning separat senare.</p>
-                </div>
+                )}
                 <div>
                   <Label htmlFor="postal" className="text-muted-foreground">Postnummer (valfritt)</Label>
                   <div className="relative mt-1.5">
@@ -269,7 +271,7 @@ export default function Login() {
                     <Input
                       id="postal"
                       type="text"
-                      placeholder={country === 'US' ? '10001' : country === 'GB' ? 'SW1A 1AA' : country === 'CA' ? 'K1A 0B1' : country === 'NL' ? '1012 AB' : '582 20'}
+                      placeholder={!intl ? '582 20' : country === 'US' ? '10001' : country === 'GB' ? 'SW1A 1AA' : country === 'CA' ? 'K1A 0B1' : country === 'NL' ? '1012 AB' : '582 20'}
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value.slice(0, 12))}
                       className="pl-10 h-11"
@@ -278,9 +280,10 @@ export default function Login() {
                     />
                   </div>
                   {!postalCheck.ok && postalCode && (
-                    <p className="text-[10px] text-destructive mt-1">Postnumret ser inte rätt ut för {countryDefaults.name_sv}.</p>
+                    <p className="text-[10px] text-destructive mt-1">Postnumret ser inte rätt ut{intl ? ` för ${countryDefaults.name_sv}` : ''}.</p>
                   )}
                 </div>
+
 
                 <div className="flex items-start gap-2">
                   <input
