@@ -246,23 +246,32 @@ export default function Login() {
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Ni får båda sju dagars Premium!</p>
                 </div>
                 <div>
+                  <Label className="text-muted-foreground">Land</Label>
+                  <div className="mt-1.5">
+                    <CountrySelect value={country} onChange={setCountry} />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Landet sätter regionala standardvärden (språk, valuta, tidszon, måttenheter). Du kan ändra varje inställning separat senare.</p>
+                </div>
+                <div>
                   <Label htmlFor="postal" className="text-muted-foreground">Postnummer (valfritt)</Label>
                   <div className="relative mt-1.5">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="postal"
                       type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      placeholder="58220"
+                      placeholder={country === 'US' ? '10001' : country === 'GB' ? 'SW1A 1AA' : country === 'CA' ? 'K1A 0B1' : country === 'NL' ? '1012 AB' : '582 20'}
                       value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      onChange={(e) => setPostalCode(e.target.value.slice(0, 12))}
                       className="pl-10 h-11"
-                      maxLength={5}
+                      maxLength={12}
+                      aria-invalid={!postalCheck.ok}
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Låser upp regionala snittpriser och väderpåverkan på din gård.</p>
+                  {!postalCheck.ok && postalCode && (
+                    <p className="text-[10px] text-destructive mt-1">Postnumret ser inte rätt ut för {countryDefaults.name_sv}.</p>
+                  )}
                 </div>
+
                 <div className="flex items-start gap-2">
                   <input
                     type="checkbox"
