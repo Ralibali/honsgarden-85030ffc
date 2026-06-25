@@ -1,0 +1,36 @@
+{
+  "tagline": "Svensk app för hönsägare som samlar ägglogg, flock, statistik, foderkostnad, kalender, väder, community, AI-stöd och Agdas äggbod för lokal äggförsäljning.",
+  "copyright": "© {{year}} {{brand}}",
+  "columns": {
+    "product": "Produkt",
+    "guides": "Guider & verktyg",
+    "in_app": "I appen",
+    "support": "Support"
+  },
+  "links": {
+    "all_features": "Allt Hönsgården erbjuder",
+    "pricing": "Priser",
+    "app_for_owners": "App för hönsägare",
+    "digital_egg_log": "Digital ägglogg",
+    "chicken_calendar": "Hönskalender",
+    "feed_cost": "Foderkostnad för höns",
+    "hatching_calendar": "Kläckningskalender",
+    "sell_eggs_agda": "Sälj ägg med Agda",
+    "egg_calculator": "Äggkalkylator",
+    "starting_chickens": "Börja med höns",
+    "chicken_egg_guides": "Höns & ägg-guider",
+    "how_many_eggs": "Hur många ägg lägger en höna?",
+    "beginner_guide": "Nybörjarguide – skaffa höns",
+    "dashboard": "Dashboard",
+    "agda_shop": "Agdas äggbod",
+    "community": "Community",
+    "weather": "Väder",
+    "feedback": "Feedback",
+    "premium": "Premium",
+    "help": "Hjälp",
+    "contact": "Kontakt",
+    "about": "Om Hönsgården",
+    "privacy": "Integritetspolicy",
+    "terms": "Villkor"
+  }
+}
