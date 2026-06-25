@@ -2839,50 +2839,74 @@ export type Database = {
       }
       profiles: {
         Row: {
+          country_code: string | null
           created_at: string
+          currency_code: string | null
           display_name: string | null
           email: string | null
           id: string
           is_lifetime_premium: boolean
+          language_code: string | null
+          locale: string | null
+          measurement_system: string | null
+          postal_code: string | null
           preferences: Json
           premium_expires_at: string | null
           referral_code: string | null
           referred_by: string | null
           stripe_customer_id: string | null
           subscription_status: string
+          temperature_unit: string | null
           terms_accepted_at: string | null
+          timezone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          country_code?: string | null
           created_at?: string
+          currency_code?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           is_lifetime_premium?: boolean
+          language_code?: string | null
+          locale?: string | null
+          measurement_system?: string | null
+          postal_code?: string | null
           preferences?: Json
           premium_expires_at?: string | null
           referral_code?: string | null
           referred_by?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string
+          temperature_unit?: string | null
           terms_accepted_at?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          country_code?: string | null
           created_at?: string
+          currency_code?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           is_lifetime_premium?: boolean
+          language_code?: string | null
+          locale?: string | null
+          measurement_system?: string | null
+          postal_code?: string | null
           preferences?: Json
           premium_expires_at?: string | null
           referral_code?: string | null
           referred_by?: string | null
           stripe_customer_id?: string | null
           subscription_status?: string
+          temperature_unit?: string | null
           terms_accepted_at?: string | null
+          timezone?: string | null
           updated_at?: string
           user_id?: string
         }
