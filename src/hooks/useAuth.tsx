@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import {
+  buildRegionalPreferences,
+  type MeasurementSystem,
+  type RegionalPreferences,
+  type TemperatureUnit,
+} from '@/lib/regionalPreferences';
 
 type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
 
@@ -12,13 +18,20 @@ interface UserProfile {
   subscription_status?: string;
   subscription_end?: string | null;
   premium_type?: PremiumType;
+  country_code?: string;
+  language_code?: string;
+  locale?: string;
+  time_zone?: string;
+  currency_code?: string;
+  measurement_system?: MeasurementSystem;
+  temperature_unit?: TemperatureUnit;
 }
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<any>;
+  register: (email: string, password: string, name: string, regionalPreferences?: RegionalPreferences) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   refreshSubscription: () => Promise<void>;
@@ -29,15 +42,66 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SYNC_INTERVAL_MS = 60_000;
 
-function toBasicProfile(supaUser: SupabaseUser): UserProfile {
+type JsonRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): JsonRecord {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as JsonRecord
+    : {};
+}
+
+function parseRegionalPreferences(value: unknown): RegionalPreferences | null {
+  const regional = asRecord(value);
+  const countryCode = typeof regional.countryCode === 'string' ? regional.countryCode : null;
+  const languageCode = typeof regional.languageCode === 'string' ? regional.languageCode : null;
+  const locale = typeof regional.locale === 'string' ? regional.locale : null;
+  const timeZone = typeof regional.timeZone === 'string' ? regional.timeZone : null;
+  const currencyCode = typeof regional.currencyCode === 'string' ? regional.currencyCode : null;
+  const measurementSystem = regional.measurementSystem === 'imperial' ? 'imperial' : regional.measurementSystem === 'metric' ? 'metric' : null;
+  const temperatureUnit = regional.temperatureUnit === 'fahrenheit' ? 'fahrenheit' : regional.temperatureUnit === 'celsius' ? 'celsius' : null;
+
+  if (!countryCode || !languageCode || !locale || !timeZone || !currencyCode || !measurementSystem || !temperatureUnit) {
+    return null;
+  }
+
   return {
+    countryCode,
+    languageCode,
+    locale,
+    timeZone,
+    currencyCode,
+    measurementSystem,
+    temperatureUnit,
+  };
+}
+
+function regionalFromUserMetadata(supaUser: SupabaseUser): RegionalPreferences | null {
+  return parseRegionalPreferences(supaUser.user_metadata?.regional_preferences);
+}
+
+function applyRegionalProfile(profile: UserProfile, regional: RegionalPreferences): UserProfile {
+  return {
+    ...profile,
+    country_code: regional.countryCode,
+    language_code: regional.languageCode,
+    locale: regional.locale,
+    time_zone: regional.timeZone,
+    currency_code: regional.currencyCode,
+    measurement_system: regional.measurementSystem,
+    temperature_unit: regional.temperatureUnit,
+  };
+}
+
+function toBasicProfile(supaUser: SupabaseUser): UserProfile {
+  const regional = regionalFromUserMetadata(supaUser) ?? buildRegionalPreferences('SE');
+  return applyRegionalProfile({
     id: supaUser.id,
     email: supaUser.email ?? '',
     name: supaUser.user_metadata?.name ?? '',
     is_premium: false,
     subscription_status: 'free',
     premium_type: 'free',
-  };
+  }, regional);
 }
 
 async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; synced: boolean; userMissing?: boolean }> {
@@ -88,9 +152,24 @@ async function buildProfile(
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, subscription_status, premium_expires_at, is_lifetime_premium')
+    .select('display_name, subscription_status, premium_expires_at, is_lifetime_premium, preferences')
     .eq('user_id', supaUser.id)
     .maybeSingle();
+
+  const preferences = asRecord(profile?.preferences);
+  const storedRegional = parseRegionalPreferences(preferences.regional);
+  const metadataRegional = regionalFromUserMetadata(supaUser);
+  const regional = storedRegional ?? metadataRegional ?? buildRegionalPreferences('SE');
+
+  // Email confirmation may happen on another page or device. Mirroring the
+  // signup metadata into the profile keeps the chosen country settings durable.
+  if (!storedRegional && metadataRegional && profile) {
+    void supabase
+      .from('profiles')
+      .update({ preferences: { ...preferences, regional: metadataRegional } })
+      .eq('user_id', supaUser.id)
+      .then(() => {}, () => {});
+  }
 
   const now = new Date();
   const profileExpiryDate = profile?.premium_expires_at ? new Date(profile.premium_expires_at) : null;
@@ -119,7 +198,7 @@ async function buildProfile(
     ? null
     : subscriptionEnd ?? profile?.premium_expires_at ?? null;
 
-  return {
+  return applyRegionalProfile({
     id: supaUser.id,
     email: supaUser.email ?? '',
     name: profile?.display_name ?? supaUser.user_metadata?.name ?? '',
@@ -127,7 +206,7 @@ async function buildProfile(
     subscription_status: isPremium ? 'premium' : 'free',
     subscription_end: resolvedSubscriptionEnd,
     premium_type: premiumType,
-  };
+  }, regional);
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -179,6 +258,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (profile) setUser(profile);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = user?.language_code || 'sv';
+    }
+  }, [user?.language_code]);
 
   useEffect(() => {
     let isMounted = true;
@@ -271,11 +356,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, regionalPreferences?: RegionalPreferences) => {
+    const regional = regionalPreferences ?? buildRegionalPreferences('SE');
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: {
+          name,
+          country_code: regional.countryCode,
+          regional_preferences: regional,
+        },
+      },
     });
     if (error) throw new Error(error.message);
     return data;
