@@ -5,11 +5,20 @@ import heroFarm from '@/assets/hero-farm.webp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift, MapPin } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift, MapPin, Globe2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  buildRegionalPreferences,
+  COUNTRY_OPTIONS,
+  detectCountryCode,
+  getCountryOption,
+  isValidPostalCode,
+  normalizePostalCode,
+} from '@/lib/regionalPreferences';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 
@@ -33,10 +42,13 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [countryCode, setCountryCode] = useState(() => detectCountryCode());
   const [postalCode, setPostalCode] = useState('');
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const selectedCountry = getCountryOption(countryCode);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -49,10 +61,11 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      // Apply postal code captured at registration, if any
+      // Apply postal code captured at registration, if any. The country and
+      // locale settings are also mirrored from auth metadata by AuthProvider.
       try {
         const pending = localStorage.getItem('pending_postal_code');
-        if (pending && /^\d{4,5}$/.test(pending)) {
+        if (pending) {
           await api.updateCoopSettings({ postal_code: pending } as any);
           localStorage.removeItem('pending_postal_code');
         }
@@ -67,9 +80,20 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isValidPostalCode(postalCode, countryCode)) {
+      toast({
+        title: 'Kontrollera postnumret',
+        description: `Postnumret verkar inte följa formatet för ${selectedCountry.nativeName}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
     try {
-      const data = await register(email, password, name);
+      const regionalPreferences = buildRegionalPreferences(countryCode);
+      const data = await register(email, password, name, regionalPreferences);
       // Process referral code if provided
       if (referralCode.trim() && data?.user?.id) {
         try {
@@ -78,9 +102,9 @@ export default function Login() {
           // Non-blocking – referral is a bonus
         }
       }
-      // Stash postal code so it gets saved on first login
-      if (postalCode && /^\d{4,5}$/.test(postalCode)) {
-        try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
+      // Stash postal code so it gets saved on first login after email confirmation.
+      if (postalCode.trim()) {
+        try { localStorage.setItem('pending_postal_code', postalCode.trim()); } catch { /* ignore */ }
       }
       toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har fått 14 dagars gratis Premium! 🎉 (sju dagar provperiod + sju dagar värvningsbonus)' : 'Du har fått sju dagars gratis Premium! 🎉' });
       setAuthMode('login');
@@ -203,6 +227,34 @@ export default function Login() {
                   </div>
                 </div>
                 <div>
+                  <Label htmlFor="country" className="text-muted-foreground">Land</Label>
+                  <div className="relative mt-1.5">
+                    <Globe2 className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Select
+                      value={countryCode}
+                      onValueChange={(value) => {
+                        setCountryCode(value);
+                        setPostalCode('');
+                      }}
+                    >
+                      <SelectTrigger id="country" className="h-11 pl-10">
+                        <SelectValue placeholder="Välj land" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {COUNTRY_OPTIONS.map((country) => (
+                          <SelectItem key={country.code} value={country.code}>
+                            <span className="mr-2" aria-hidden="true">{country.flag}</span>
+                            {country.nativeName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    Ställer in språk, tidszon, valuta, temperatur och måttenheter. Allt kan ändras senare.
+                  </p>
+                </div>
+                <div>
                   <Label htmlFor="reg-email" className="text-muted-foreground">E-post</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -231,16 +283,16 @@ export default function Login() {
                     <Input
                       id="postal"
                       type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      placeholder="58220"
+                      inputMode={selectedCountry.postalCodeInputMode ?? 'text'}
+                      autoComplete="postal-code"
+                      placeholder={selectedCountry.postalCodePlaceholder}
                       value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                      className="pl-10 h-11"
-                      maxLength={5}
+                      onChange={(e) => setPostalCode(normalizePostalCode(e.target.value, countryCode))}
+                      className="pl-10 h-11 uppercase"
+                      maxLength={12}
                     />
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Låser upp regionala snittpriser och väderpåverkan på din gård.</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Låser upp lokalt väder, regionala jämförelser och marknadsplatsen nära dig.</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <input
@@ -257,7 +309,7 @@ export default function Login() {
                   </label>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading || !acceptedTerms}>
+              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading || !acceptedTerms || !countryCode}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Skapa konto <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
