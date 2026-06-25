@@ -131,7 +131,9 @@ serve(async (req) => {
           portal_url: portal.url,
           subscription_status: blocking.status,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 409 }
+        // Return 200 so supabase.functions.invoke() exposes the body via `data`
+        // (non-2xx swallows the payload into a FunctionsHttpError and `data` is null).
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
 
