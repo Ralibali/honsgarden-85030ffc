@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import heroFarm from '@/assets/hero-farm.webp';
@@ -10,6 +10,9 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES, guessCountryFromBrowser, detectTimezone, type CountryCode } from '@/lib/countries';
+import { validatePostalCode } from '@/lib/postalCode';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 
@@ -34,9 +37,13 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [postalCode, setPostalCode] = useState('');
+  const [country, setCountry] = useState<CountryCode>(() => guessCountryFromBrowser());
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
+  const postalCheck = useMemo(() => validatePostalCode(postalCode, country), [postalCode, country]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -67,9 +74,23 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!postalCheck.ok) {
+      toast({ title: 'Kontrollera postnumret', description: 'Postnumret matchar inte det valda landet.', variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
-      const data = await register(email, password, name);
+      const meta = {
+        country_code: countryDefaults.code,
+        language_code: countryDefaults.language,
+        locale: countryDefaults.locale,
+        timezone: detectTimezone(countryDefaults.timezone),
+        currency_code: countryDefaults.currency,
+        measurement_system: countryDefaults.measurement,
+        temperature_unit: countryDefaults.temperature,
+        postal_code: postalCode || null,
+      };
+      const data = await register(email, password, name, meta);
       // Process referral code if provided
       if (referralCode.trim() && data?.user?.id) {
         try {
@@ -78,8 +99,8 @@ export default function Login() {
           // Non-blocking – referral is a bonus
         }
       }
-      // Stash postal code so it gets saved on first login
-      if (postalCode && /^\d{4,5}$/.test(postalCode)) {
+      // Stash postal code so it can be re-applied at first login (legacy flöde)
+      if (postalCode) {
         try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
       }
       toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har fått 14 dagars gratis Premium! 🎉 (sju dagar provperiod + sju dagar värvningsbonus)' : 'Du har fått sju dagars gratis Premium! 🎉' });
