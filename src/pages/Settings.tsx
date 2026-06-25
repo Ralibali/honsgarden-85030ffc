@@ -21,6 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
 import { RegionLanguageSettings } from '@/components/settings/RegionLanguageSettings';
+import { isInternationalDomain } from '@/lib/brand';
 import { checkForPwaUpdate, isStandalonePwa } from '@/lib/pwaUpdate';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 
