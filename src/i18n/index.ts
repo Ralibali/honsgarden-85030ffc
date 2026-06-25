@@ -10,6 +10,8 @@ import sv_settings from "./locales/sv/settings.json";
 import sv_errors from "./locales/sv/errors.json";
 import sv_premium from "./locales/sv/premium.json";
 import sv_footer from "./locales/sv/footer.json";
+import sv_about from "./locales/sv/about.json";
+
 
 import en_common from "./locales/en/common.json";
 import en_auth from "./locales/en/auth.json";
@@ -18,6 +20,8 @@ import en_settings from "./locales/en/settings.json";
 import en_errors from "./locales/en/errors.json";
 import en_premium from "./locales/en/premium.json";
 import en_footer from "./locales/en/footer.json";
+import en_about from "./locales/en/about.json";
+
 
 
 /**
@@ -41,6 +45,8 @@ const resources = {
     errors: sv_errors,
     premium: sv_premium,
     footer: sv_footer,
+    about: sv_about,
+
   },
   en: {
     common: en_common,
@@ -50,6 +56,8 @@ const resources = {
     errors: en_errors,
     premium: en_premium,
     footer: en_footer,
+    about: en_about,
+
   },
 };
 
@@ -69,7 +77,7 @@ void i18nInit.init({
     supportedLngs: intl ? [...ENABLED_LANGUAGES] : ["sv"],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
-    ns: ["common", "auth", "nav", "settings", "errors", "premium", "footer"],
+    ns: ["common", "auth", "nav", "settings", "errors", "premium", "footer", "about"],
     defaultNS: "common",
     detection: intl
       ? {
