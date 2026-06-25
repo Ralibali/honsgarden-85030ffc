@@ -194,9 +194,16 @@ export default function Premium() {
     trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
+      let { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { plan },
       });
+
+      // Om edge-funktionen returnerar non-2xx hamnar payloaden i error.context (FunctionsHttpError).
+      if (error && !data && (error as any).context?.json) {
+        try { data = await (error as any).context.json(); } catch { /* ignore */ }
+      } else if (error && !data && (error as any).context?.text) {
+        try { data = JSON.parse(await (error as any).context.text()); } catch { /* ignore */ }
+      }
 
       if (data?.error === 'already_subscribed' && data?.portal_url) {
         toast({
@@ -207,8 +214,8 @@ export default function Premium() {
         return;
       }
 
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.message || data.error);
+      if (error) throw new Error(error.message);
       if (data?.url) window.location.href = data.url;
       else throw new Error('Ingen checkout-URL returnerades');
     } catch (err: any) {
