@@ -1,4 +1,4 @@
-import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
+import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
 import { useQuery } from '@tanstack/react-query';
@@ -63,7 +63,7 @@ export default function Guides() {
 
   return (
     <div className="min-h-screen bg-background">
-      <VisitorWelcomePopup />
+      <BlogConversionPopup />
 
       {/* ItemList JSON-LD for blog listing */}
       {posts.length > 0 && (
