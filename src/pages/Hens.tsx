@@ -568,7 +568,27 @@ export default function Hens() {
                   <p className="text-[10px] text-muted-foreground/70 mt-2 italic leading-relaxed">{hen.notes}</p>
                 )}
 
+                {!isPullet(hen) && !isRooster(hen) && (
+                  <div
+                    className="mt-3 pt-2.5 border-t border-border/40"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="w-full rounded-lg h-8 text-[11px] gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        if (confirm(`Markera ${hen.name} som unghöna igen? Hon räknas då inte med i värp-statistiken förrän du markerar henne som värpande på nytt.`)) {
+                          updateHenMutation.mutate({ id: hen.id, data: { hen_type: 'pullet' } });
+                        }
+                      }}
+                    >
+                      ↩️ Markera som unghöna igen
+                    </Button>
+                  </div>
+                )}
                 {isPullet(hen) && (
+
                   <div
                     className="mt-3 pt-2.5 border-t border-border/40"
                     onClick={(e) => e.stopPropagation()}
