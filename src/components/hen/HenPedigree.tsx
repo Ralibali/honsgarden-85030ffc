@@ -144,8 +144,11 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
         henId={henId}
         currentMotherId={motherId}
         currentFatherId={fatherId}
+        currentMotherName={motherName ?? null}
+        currentFatherName={fatherName ?? null}
         henBirthDate={henBirthDate}
       />
+
     </div>
   );
 }
