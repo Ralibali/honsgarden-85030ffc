@@ -15,7 +15,10 @@ interface Props {
   henBirthDate: string | null;
   motherId: string | null;
   fatherId: string | null;
+  motherName?: string | null;
+  fatherName?: string | null;
 }
+
 
 interface AncestorRow {
   id: string;
