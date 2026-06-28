@@ -14,20 +14,26 @@ interface Props {
   henId: string;
   currentMotherId: string | null;
   currentFatherId: string | null;
+  currentMotherName?: string | null;
+  currentFatherName?: string | null;
   henBirthDate: string | null;
 }
 
-export default function SetParentsDialog({ open, onOpenChange, henId, currentMotherId, currentFatherId, henBirthDate }: Props) {
+export default function SetParentsDialog({ open, onOpenChange, henId, currentMotherId, currentFatherId, currentMotherName, currentFatherName, henBirthDate }: Props) {
   const qc = useQueryClient();
   const [motherId, setMotherId] = useState<string | null>(currentMotherId);
   const [fatherId, setFatherId] = useState<string | null>(currentFatherId);
+  const [motherName, setMotherName] = useState<string>(currentMotherName ?? '');
+  const [fatherName, setFatherName] = useState<string>(currentFatherName ?? '');
   const [motherSearch, setMotherSearch] = useState('');
   const [fatherSearch, setFatherSearch] = useState('');
 
   React.useEffect(() => {
     setMotherId(currentMotherId);
     setFatherId(currentFatherId);
-  }, [currentMotherId, currentFatherId, open]);
+    setMotherName(currentMotherName ?? '');
+    setFatherName(currentFatherName ?? '');
+  }, [currentMotherId, currentFatherId, currentMotherName, currentFatherName, open]);
 
   const { data: candidates = [] } = useQuery({
     queryKey: ['hens-parent-candidates'],
@@ -55,7 +61,6 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
 
   const save = useMutation({
     mutationFn: async () => {
-      // validate ages
       if (henBirthDate) {
         for (const pid of [motherId, fatherId]) {
           if (!pid) continue;
@@ -70,7 +75,12 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
       }
       const { error } = await supabase
         .from('hens')
-        .update({ mother_id: motherId, father_id: fatherId })
+        .update({
+          mother_id: motherId,
+          father_id: fatherId,
+          mother_name: motherId ? null : (motherName.trim() || null),
+          father_name: fatherId ? null : (fatherName.trim() || null),
+        } as any)
         .eq('id', henId);
       if (error) throw error;
     },
@@ -89,7 +99,7 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
         <DialogHeader>
           <DialogTitle className="font-serif">Sätt föräldrar</DialogTitle>
           <DialogDescription className="text-xs">
-            Välj mor (höna) och far (tupp) från din flock. Föräldern måste vara äldre än hönan.
+            Välj från din egen flock – eller skriv in namnet som fritext om föräldern inte finns hos dig.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,6 +113,9 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
             selectedId={motherId}
             onSelect={setMotherId}
             emptyText="Inga hönor matchar."
+            freeText={motherName}
+            setFreeText={setMotherName}
+            freeTextPlaceholder="…eller skriv namn på modern (fritext)"
           />
           <ParentPicker
             label="Far"
@@ -113,6 +126,9 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
             selectedId={fatherId}
             onSelect={setFatherId}
             emptyText="Inga tuppar matchar."
+            freeText={fatherName}
+            setFreeText={setFatherName}
+            freeTextPlaceholder="…eller skriv namn på fadern (fritext)"
           />
 
           <div className="flex gap-2 pt-2 border-t border-border/40">
@@ -129,7 +145,7 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
   );
 }
 
-function ParentPicker({ label, placeholder, search, setSearch, list, selectedId, onSelect, emptyText }: any) {
+function ParentPicker({ label, placeholder, search, setSearch, list, selectedId, onSelect, emptyText, freeText, setFreeText, freeTextPlaceholder }: any) {
   const selected = list.find((h: any) => h.id === selectedId);
   return (
     <div className="space-y-2">
@@ -171,6 +187,14 @@ function ParentPicker({ label, placeholder, search, setSearch, list, selectedId,
               ))
             )}
           </div>
+          {setFreeText && (
+            <Input
+              className="rounded-xl h-9 text-sm"
+              placeholder={freeTextPlaceholder}
+              value={freeText}
+              onChange={(e) => setFreeText(e.target.value)}
+            />
+          )}
         </>
       )}
     </div>
