@@ -15,7 +15,10 @@ interface Props {
   henBirthDate: string | null;
   motherId: string | null;
   fatherId: string | null;
+  motherName?: string | null;
+  fatherName?: string | null;
 }
+
 
 interface AncestorRow {
   id: string;
@@ -31,7 +34,7 @@ interface AncestorRow {
   relation: string;
 }
 
-export default function HenPedigree({ henId, henName, henBirthDate, motherId, fatherId }: Props) {
+export default function HenPedigree({ henId, henName, henBirthDate, motherId, fatherId, motherName, fatherName }: Props) {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
 
@@ -103,6 +106,7 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
         <div className="flex flex-col gap-2 sm:gap-3 justify-center">
           <NodeOrEmpty
             hen={mother}
+            freeTextName={!mother ? motherName ?? null : null}
             relationLabel="Mor"
             emptyLabel="Lägg till mor"
             onAdd={() => setEditOpen(true)}
@@ -110,12 +114,14 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
           />
           <NodeOrEmpty
             hen={father}
+            freeTextName={!father ? fatherName ?? null : null}
             relationLabel="Far"
             emptyLabel="Lägg till far"
             onAdd={() => setEditOpen(true)}
             onClick={(id) => navigate(`/app/hens/${id}`)}
           />
         </div>
+
 
         {/* Column 3: grandparents */}
         <div className="flex flex-col gap-1.5 sm:gap-2 justify-center">
@@ -138,8 +144,11 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
         henId={henId}
         currentMotherId={motherId}
         currentFatherId={fatherId}
+        currentMotherName={motherName ?? null}
+        currentFatherName={fatherName ?? null}
         henBirthDate={henBirthDate}
       />
+
     </div>
   );
 }
@@ -166,8 +175,21 @@ function NodeCard({ hen, label, highlight, onClick }: { hen?: AncestorRow | null
   );
 }
 
-function NodeOrEmpty({ hen, relationLabel, emptyLabel, onAdd, onClick }: { hen?: AncestorRow | null; relationLabel: string; emptyLabel: string; onAdd: () => void; onClick: (id: string) => void }) {
+function NodeOrEmpty({ hen, freeTextName, relationLabel, emptyLabel, onAdd, onClick }: { hen?: AncestorRow | null; freeTextName?: string | null; relationLabel: string; emptyLabel: string; onAdd: () => void; onClick: (id: string) => void }) {
   if (hen) return <NodeCard hen={hen} label={relationLabel} onClick={() => onClick(hen.id)} />;
+  if (freeTextName) {
+    return (
+      <button
+        type="button"
+        onClick={onAdd}
+        className="w-full rounded-xl border border-border/50 bg-card p-2.5 text-center hover:border-primary/30 transition-all"
+      >
+        <p className="text-[9px] uppercase tracking-wider text-muted-foreground">{relationLabel}</p>
+        <p className="text-xs font-semibold text-foreground truncate">{freeTextName}</p>
+        <p className="text-[9px] text-muted-foreground/70 italic">fritext</p>
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -179,6 +201,7 @@ function NodeOrEmpty({ hen, relationLabel, emptyLabel, onAdd, onClick }: { hen?:
     </button>
   );
 }
+
 
 function MiniNode({ hen, label, onClick }: { hen?: AncestorRow | null; label: string; onClick: (id: string) => void }) {
   if (!hen) {

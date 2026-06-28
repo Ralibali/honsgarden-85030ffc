@@ -2259,6 +2259,7 @@ export type Database = {
           death_cause: string | null
           death_date: string | null
           father_id: string | null
+          father_name: string | null
           flock_id: string | null
           hatch_session_id: string | null
           hen_type: string
@@ -2266,6 +2267,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           mother_id: string | null
+          mother_name: string | null
           name: string
           notes: string | null
           updated_at: string
@@ -2280,6 +2282,7 @@ export type Database = {
           death_cause?: string | null
           death_date?: string | null
           father_id?: string | null
+          father_name?: string | null
           flock_id?: string | null
           hatch_session_id?: string | null
           hen_type?: string
@@ -2287,6 +2290,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           mother_id?: string | null
+          mother_name?: string | null
           name: string
           notes?: string | null
           updated_at?: string
@@ -2301,6 +2305,7 @@ export type Database = {
           death_cause?: string | null
           death_date?: string | null
           father_id?: string | null
+          father_name?: string | null
           flock_id?: string | null
           hatch_session_id?: string | null
           hen_type?: string
@@ -2308,6 +2313,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           mother_id?: string | null
+          mother_name?: string | null
           name?: string
           notes?: string | null
           updated_at?: string

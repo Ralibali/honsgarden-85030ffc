@@ -1,0 +1,1 @@
+ALTER TABLE public.hens ADD COLUMN IF NOT EXISTS mother_name TEXT, ADD COLUMN IF NOT EXISTS father_name TEXT;

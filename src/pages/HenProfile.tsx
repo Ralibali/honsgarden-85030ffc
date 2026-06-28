@@ -680,7 +680,10 @@ export default function HenProfile() {
                 henBirthDate={hen.birth_date}
                 motherId={hen.mother_id ?? null}
                 fatherId={hen.father_id ?? null}
+                motherName={(hen as any).mother_name ?? null}
+                fatherName={(hen as any).father_name ?? null}
               />
+
             </PremiumGate>
           </TabsContent>
 
@@ -696,8 +699,11 @@ export default function HenProfile() {
         henId={henId!}
         currentMotherId={hen.mother_id ?? null}
         currentFatherId={hen.father_id ?? null}
+        currentMotherName={(hen as any).mother_name ?? null}
+        currentFatherName={(hen as any).father_name ?? null}
         henBirthDate={hen.birth_date ?? null}
       />
+
 
 
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
