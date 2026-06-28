@@ -106,6 +106,7 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
         <div className="flex flex-col gap-2 sm:gap-3 justify-center">
           <NodeOrEmpty
             hen={mother}
+            freeTextName={!mother ? motherName ?? null : null}
             relationLabel="Mor"
             emptyLabel="Lägg till mor"
             onAdd={() => setEditOpen(true)}
@@ -113,12 +114,14 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
           />
           <NodeOrEmpty
             hen={father}
+            freeTextName={!father ? fatherName ?? null : null}
             relationLabel="Far"
             emptyLabel="Lägg till far"
             onAdd={() => setEditOpen(true)}
             onClick={(id) => navigate(`/app/hens/${id}`)}
           />
         </div>
+
 
         {/* Column 3: grandparents */}
         <div className="flex flex-col gap-1.5 sm:gap-2 justify-center">
