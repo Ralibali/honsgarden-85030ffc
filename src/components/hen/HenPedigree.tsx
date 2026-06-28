@@ -34,7 +34,7 @@ interface AncestorRow {
   relation: string;
 }
 
-export default function HenPedigree({ henId, henName, henBirthDate, motherId, fatherId }: Props) {
+export default function HenPedigree({ henId, henName, henBirthDate, motherId, fatherId, motherName, fatherName }: Props) {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
 
