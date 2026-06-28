@@ -680,7 +680,10 @@ export default function HenProfile() {
                 henBirthDate={hen.birth_date}
                 motherId={hen.mother_id ?? null}
                 fatherId={hen.father_id ?? null}
+                motherName={(hen as any).mother_name ?? null}
+                fatherName={(hen as any).father_name ?? null}
               />
+
             </PremiumGate>
           </TabsContent>
 
