@@ -337,7 +337,7 @@ export default function Dashboard() {
   const hasReminders = reminderCount > 0;
 
   // Insights count for header
-  const insightsCount = (hasReminders ? 1 : 0) + 2 + (streak > 0 ? 1 : 0) + (topHen ? 1 : 0);
+  const insightsCount = (hasReminders ? 1 : 0) + 2 + (topHen ? 1 : 0);
 
   return (
     <motion.div
@@ -350,13 +350,14 @@ export default function Dashboard() {
       <OnboardingGuide />
       {!onboardingVisible && eggs.length > 0 && <DailySummaryModal />}
 
-      {/* Greeting */}
-      <div className="pt-1">
+      {/* Greeting (desktop only – mobile uses MobileAppDashboardHero) */}
+      <div className="pt-1 hidden md:block">
         <p className="data-label mb-1.5">{getFormattedDate()}</p>
         <h1 className="text-2xl sm:text-3xl font-serif gradient-text leading-snug">
           {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
         </h1>
       </div>
+
 
       {/* Activation: get first egg logged */}
       {(hens as any[]).length > 0 && eggs.length === 0 && (
@@ -368,8 +369,8 @@ export default function Dashboard() {
         <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
       )}
 
-      {/* ─── 1. Dagens hönsgård ─── */}
-      <Card className="border-border/50 shadow-sm overflow-hidden">
+      {/* ─── 1. Dagens hönsgård (desktop only – mobile uses MobileAppDashboardHero) ─── */}
+      <Card className="border-border/50 shadow-sm overflow-hidden hidden md:block">
         <CardContent className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -426,9 +427,12 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* ─── Streak-kort ─── */}
-      <StreakCard />
+      {/* Streak-kort visas bara på mobil (där huvudkortet ovan är dolt) */}
+      <div className="md:hidden">
+        {streak > 0 && <StreakCard />}
+      </div>
       <YearReportPromoCard />
+
 
 
 
@@ -509,18 +513,8 @@ export default function Dashboard() {
               </div>
             </InsightRow>
 
-            {streak > 0 && (
-              <InsightRow
-                id="streak"
-                icon={Flame}
-                title="Loggningsstreak"
-                preview={`${streak} dagar i rad`}
-                openIds={openInsights}
-                setOpenIds={setOpenInsights}
-              >
-                <StreakFlame streak={streak} variant="card" />
-              </InsightRow>
-            )}
+
+
 
             {topHen && (
               <InsightRow
