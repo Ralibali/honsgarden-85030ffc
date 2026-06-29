@@ -350,13 +350,14 @@ export default function Dashboard() {
       <OnboardingGuide />
       {!onboardingVisible && eggs.length > 0 && <DailySummaryModal />}
 
-      {/* Greeting */}
-      <div className="pt-1">
+      {/* Greeting (desktop only – mobile uses MobileAppDashboardHero) */}
+      <div className="pt-1 hidden md:block">
         <p className="data-label mb-1.5">{getFormattedDate()}</p>
         <h1 className="text-2xl sm:text-3xl font-serif gradient-text leading-snug">
           {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
         </h1>
       </div>
+
 
       {/* Activation: get first egg logged */}
       {(hens as any[]).length > 0 && eggs.length === 0 && (
