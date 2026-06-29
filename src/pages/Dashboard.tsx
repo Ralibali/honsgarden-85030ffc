@@ -513,18 +513,8 @@ export default function Dashboard() {
               </div>
             </InsightRow>
 
-            {streak > 0 && (
-              <InsightRow
-                id="streak"
-                icon={Flame}
-                title="Loggningsstreak"
-                preview={`${streak} dagar i rad`}
-                openIds={openInsights}
-                setOpenIds={setOpenInsights}
-              >
-                <StreakFlame streak={streak} variant="card" />
-              </InsightRow>
-            )}
+
+
 
             {topHen && (
               <InsightRow
