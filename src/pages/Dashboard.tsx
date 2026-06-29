@@ -369,8 +369,8 @@ export default function Dashboard() {
         <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
       )}
 
-      {/* ─── 1. Dagens hönsgård ─── */}
-      <Card className="border-border/50 shadow-sm overflow-hidden">
+      {/* ─── 1. Dagens hönsgård (desktop only – mobile uses MobileAppDashboardHero) ─── */}
+      <Card className="border-border/50 shadow-sm overflow-hidden hidden md:block">
         <CardContent className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -427,9 +427,12 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* ─── Streak-kort ─── */}
-      <StreakCard />
+      {/* Streak-kort visas bara på mobil (där huvudkortet ovan är dolt) */}
+      <div className="md:hidden">
+        {streak > 0 && <StreakCard />}
+      </div>
       <YearReportPromoCard />
+
 
 
 
