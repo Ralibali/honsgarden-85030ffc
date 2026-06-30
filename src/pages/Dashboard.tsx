@@ -19,7 +19,6 @@ import { useAuth } from '@/hooks/useAuth';
 import Achievements from '@/components/Achievements';
 import ShareCard from '@/components/ShareCard';
 import ReferralCard from '@/components/ReferralCard';
-import InstallAppCard from '@/components/InstallAppCard';
 import OnboardingGuide, { useOnboardingVisible } from '@/components/OnboardingGuide';
 import AchievementNudge from '@/components/AchievementNudge';
 import TrialExpiryBanner from '@/components/TrialExpiryBanner';
@@ -29,7 +28,6 @@ import EggGoalsWidget from '@/components/EggGoalsWidget';
 import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
-import { StreakCard } from '@/components/dashboard/StreakCard';
 import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
 import { CountUp } from '@/components/CountUp';
 import { RingProgress } from '@/components/RingProgress';
@@ -350,8 +348,8 @@ export default function Dashboard() {
       <OnboardingGuide />
       {!onboardingVisible && eggs.length > 0 && <DailySummaryModal />}
 
-      {/* Greeting (desktop only – mobile uses MobileAppDashboardHero) */}
-      <div className="pt-1 hidden md:block">
+      {/* Greeting */}
+      <div className="pt-1">
         <p className="data-label mb-1.5">{getFormattedDate()}</p>
         <h1 className="text-2xl sm:text-3xl font-serif gradient-text leading-snug">
           {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
@@ -369,8 +367,8 @@ export default function Dashboard() {
         <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
       )}
 
-      {/* ─── 1. Dagens hönsgård (desktop only – mobile uses MobileAppDashboardHero) ─── */}
-      <Card className="border-border/50 shadow-sm overflow-hidden hidden md:block">
+      {/* ─── 1. Dagens hönsgård ─── */}
+      <Card className="border-border/50 shadow-sm overflow-hidden">
         <CardContent className="p-5 space-y-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
@@ -427,10 +425,6 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Streak-kort visas bara på mobil (där huvudkortet ovan är dolt) */}
-      <div className="md:hidden">
-        {streak > 0 && <StreakCard />}
-      </div>
       <YearReportPromoCard />
 
 
