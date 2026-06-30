@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Egg, Bird, CalendarDays, Lightbulb, ArrowRight, BookOpen, Loader2, Plus,
-  TrendingUp, Sparkles, Feather, Flame, Award, Bell, Target, ChevronDown,
+  TrendingUp, Sparkles, Feather, Flame, Award, Bell, ChevronDown,
   ChevronUp, Thermometer,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -544,44 +544,28 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* ─── 3. Mål & framsteg ─── */}
+      {/* ─── 3. Dagens tips ─── */}
       <Card className="border-border/50 shadow-sm">
-        <CardContent className="p-5 space-y-4">
+        <CardContent className="p-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
-              <Target className="h-4 w-4 text-primary" />
+              <Lightbulb className="h-4 w-4 text-primary" />
             </div>
-            <h2 className="font-serif text-sm text-foreground">Mål & framsteg</h2>
+            <div className="min-w-0">
+              <h2 className="font-serif text-sm text-foreground">{tipCard.label}</h2>
+              <p className="data-label mt-0.5">{tipCard.emoji} Dagens råd</p>
+            </div>
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Sätt ett äggmål för veckan. Följ om produktionen ligger i fas och få en tydligare anledning att komma tillbaka varje dag.
-          </p>
-
-          <Button
-            variant="outline"
-            className="w-full rounded-xl h-10 gap-2 border-primary/30 text-primary hover:bg-primary/8"
-            onClick={() => navigate('/app/eggs')}
-          >
-            <Target className="h-4 w-4" />
-            Sätt veckomål
-          </Button>
-
-          <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-base">{tipCard.emoji}</span>
-              <span className="data-label">{tipCard.label}</span>
-            </div>
-            <p
-              className="text-sm text-foreground leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
-            />
-            {tipCard.text.length > 200 && (
-              <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
-                Läs hela tipset <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
-            )}
-          </div>
+          <p
+            className="text-sm text-foreground leading-relaxed mt-3"
+            dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
+          />
+          {tipCard.text.length > 200 && (
+            <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
+              Läs hela tipset <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -686,7 +670,6 @@ export default function Dashboard() {
 
       {showMoreSection && (
         <div className="space-y-5 animate-fade-in">
-          {/* InstallAppCard flyttad till toppen av DashboardV2 för bättre synlighet */}
           <AchievementNudge achievements={achievements} />
           {showImportCard && (
             <Card className="border-border/50 shadow-sm card-hover cursor-pointer active:scale-[0.98] transition-transform" onClick={() => navigate('/app/import')}>
