@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Egg, Bird, CalendarDays, Lightbulb, ArrowRight, BookOpen, Loader2, Plus,
-  TrendingUp, Sparkles, Feather, Flame, Award, Bell, ChevronDown,
+  TrendingUp, Sparkles, Feather, Award, Bell, ChevronDown,
   ChevronUp, Thermometer,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,7 +30,6 @@ import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
 import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
 import { CountUp } from '@/components/CountUp';
-import { RingProgress } from '@/components/RingProgress';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
 import SinceLastVisitCard from '@/components/SinceLastVisitCard';
 
