@@ -697,6 +697,13 @@ export default function MarketplaceMap() {
                         {l.eggs_per_pack ?? 6}-pack{" "}
                         {Math.round(Number(l.price_per_pack || 0))} kr
                       </div>
+                      {l.reko_enabled && (
+                        <div className="mt-1.5">
+                          <Badge variant="outline" className="text-[10px] font-normal border-primary/40 text-primary">
+                            📦 REKO{l.reko_group_name ? ` · ${l.reko_group_name}` : ''}{l.reko_next_pickup_at ? ` · ${new Date(l.reko_next_pickup_at).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short' })}` : ''}
+                          </Badge>
+                        </div>
+                      )}
                       <div className="mt-3 flex items-center gap-2 text-xs">
                         <span className="inline-flex items-center gap-1 text-primary group-hover:underline">
                           <Locate className="h-3 w-3" /> Visa på karta
