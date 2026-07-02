@@ -168,7 +168,36 @@ const STATIC_PAGES = [
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
   { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, tips & hälsa | Hönsgården', description: 'Läs Sveriges bästa blogg om höns. Guider för nybörjare, hälsotips, hönsraser och allt om hobbyhönsägande.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'daily' },
   { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/karta', route: 'karta', title: 'Hönskarta – hitta säljare av färska ägg nära dig | Hönsgården', description: 'Interaktiv karta över svenska hönsägare som säljer färska ägg. Hitta säljare i din närhet, se öppettider och boka direkt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'weekly' },
+  { path: '/marknad', route: 'marknad', title: 'Marknad för höns, ägg och tillbehör | Hönsgården', description: 'Köp och sälj höns, tuppar, kläckägg och tillbehör mellan svenska hönsägare. Enkla annonser, direkt kontakt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'daily' },
+  { path: '/salja-agg', route: 'salja-agg', title: 'Sälja ägg privat i Sverige – regler, priser & säljplats | Hönsgården', description: 'Vill du sälja överskottsägg? Läs om regler, prissättning och skapa gratis säljsida på Hönsgården. Hitta orter och säljare nära dig.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'weekly' },
+  { path: '/honsraser', route: 'honsraser', title: 'Hönsraser i Sverige – jämför lämpliga raser för hobbyn | Hönsgården', description: 'Guide till svenska och internationella hönsraser för hobbyn: värpning, temperament, storlek och vinterhärdighet.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'monthly' },
+  { path: '/honsraser-lista', route: 'honsraser-lista', title: 'Lista över hönsraser – A till Ö | Hönsgården', description: 'Komplett lista över hönsraser med egenskaper, ursprung och tips. Hitta rätt ras för din flock.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/dvarghons', route: 'dvarghons', title: 'Dvärghöns – raser, skötsel och tips för nybörjare | Hönsgården', description: 'Allt om dvärghöns: populära raser, plats- och foderkrav, temperament och vad du bör tänka på innan du skaffar dvärghöns.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/skansk-blommehona', route: 'skansk-blommehona', title: 'Skånsk blommehöna – lantras med värpning, temperament och skötsel | Hönsgården', description: 'Skånsk blommehöna är en gammal svensk lantras. Läs om värpning, temperament, färgvariation och skötsel av blommehönor.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/app', route: 'app', title: 'Öppna Hönsgården-appen – logga ägg och sköt flocken | Hönsgården', description: 'Logga in i Hönsgården-appen. Registrera ägg, hönor, foder och påminnelser. Fungerar direkt i webbläsaren och som PWA i mobilen.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
 ];
+
+async function loadOrter() {
+  try {
+    const src = await readFile('src/data/saljaAggOrter.ts', 'utf8');
+    const re = /\{\s*slug:\s*'([^']+)'\s*,\s*name:\s*'([^']+)'\s*,\s*lan:\s*'([^']+)'/g;
+    const out = [];
+    let m;
+    while ((m = re.exec(src))) out.push({ slug: m[1], name: m[2], lan: m[3] });
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function buildOrtPage(template, ort) {
+  const path = `/salja-agg/${ort.slug}`;
+  const title = `Köp färska ägg i ${ort.name} – hitta säljare nära dig | Hönsgården`;
+  const description = `Hitta lokala hönsägare i ${ort.name} (${ort.lan}) som säljer färska ägg direkt från gården. Bläddra i säljlistor, se priser och boka hämtning nära dig.`;
+  const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Köp färska ägg i ${ort.name}`, description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE', about: { '@type': 'Place', name: ort.name, address: { '@type': 'PostalAddress', addressLocality: ort.name, addressRegion: ort.lan, addressCountry: 'SE' } } };
+  return injectHead(template, buildHeadGeneric({ title, description, path, ogImage: '/og-image.jpg', ogImageAlt: `Köp ägg i ${ort.name}`, jsonLd }));
+}
 
 const CATEGORY_META = {
   guide: { label: 'Guider', title: 'Guider om höns – Allt du behöver veta som hönsägare | Hönsgården', description: 'Kompletta guider om höns – från att bygga hönshus till att välja rätt ras. Steg-för-steg-instruktioner för nybörjare och erfarna hönsägare.', ogImage: '/blog-images/chicken-coop.jpg' },
