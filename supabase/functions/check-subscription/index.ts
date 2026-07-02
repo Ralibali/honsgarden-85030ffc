@@ -24,6 +24,10 @@ function getStripeProductId(subscription: Stripe.Subscription): string | null {
   return typeof product === "string" ? product : product?.id ?? null;
 }
 
+function getStripePriceId(subscription: Stripe.Subscription): string | null {
+  return subscription.items.data[0]?.price?.id ?? null;
+}
+
 function isEligibleStripeSubscription(subscription: Stripe.Subscription, now: Date): boolean {
   if (!ELIGIBLE_STATUSES.has(subscription.status)) return false;
   if (subscription.status === "active" || subscription.status === "trialing") return true;
