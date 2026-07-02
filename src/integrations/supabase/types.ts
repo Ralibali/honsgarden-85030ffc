@@ -3100,6 +3100,12 @@ export type Database = {
           price_per_pack: number
           price_tiers: Json
           regular_customer_threshold: number
+          reko_enabled: boolean
+          reko_group_name: string | null
+          reko_next_pickup_at: string | null
+          reko_pickup_location: string | null
+          reko_recurring_biweekly: boolean
+          reko_reminder_sent_for: string | null
           reserved_packs: number
           sections: Json
           slug: string
@@ -3141,6 +3147,12 @@ export type Database = {
           price_per_pack?: number
           price_tiers?: Json
           regular_customer_threshold?: number
+          reko_enabled?: boolean
+          reko_group_name?: string | null
+          reko_next_pickup_at?: string | null
+          reko_pickup_location?: string | null
+          reko_recurring_biweekly?: boolean
+          reko_reminder_sent_for?: string | null
           reserved_packs?: number
           sections?: Json
           slug: string
@@ -3182,6 +3194,12 @@ export type Database = {
           price_per_pack?: number
           price_tiers?: Json
           regular_customer_threshold?: number
+          reko_enabled?: boolean
+          reko_group_name?: string | null
+          reko_next_pickup_at?: string | null
+          reko_pickup_location?: string | null
+          reko_recurring_biweekly?: boolean
+          reko_reminder_sent_for?: string | null
           reserved_packs?: number
           sections?: Json
           slug?: string

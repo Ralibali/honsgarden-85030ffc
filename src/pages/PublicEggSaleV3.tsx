@@ -161,7 +161,16 @@ export default function PublicEggSaleV3() {
   const remaining = Math.max(0, sale.packs - bookedPacks);
   const isSoldOut = sale.soldOut || remaining <= 0;
   const swishText = sale.swish ? `Swish: ${sale.swish}${sale.swishName ? ` (${sale.swishName})` : ''}\nMeddelande: ${sale.swishMsg}` : 'Kontakta säljaren för betalningsinformation.';
-  const shareText = `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
+  const reko = listing?.reko_enabled ? {
+    group: listing.reko_group_name || 'REKO',
+    location: listing.reko_pickup_location || '',
+    nextAt: listing.reko_next_pickup_at ? new Date(listing.reko_next_pickup_at) : null,
+  } : null;
+  const rekoDateLabel = reko?.nextAt ? reko.nextAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', weekday: 'short', day: 'numeric', month: 'short' }) : '';
+  const rekoTimeLabel = reko?.nextAt ? reko.nextAt.toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : '';
+  const shareText = reko
+    ? `🥚 Färska ägg – utlämning via ${reko.group}${reko.nextAt ? ` ${rekoDateLabel} kl ${rekoTimeLabel}` : ''}${reko.location ? ` (${reko.location})` : ''}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr · ${remaining} kartor kvar\n\nBoka och läs mer: ${typeof window !== 'undefined' ? window.location.href : ''}`
+    : `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
   const tiers = useMemo(() => normalizeTiers(listing?.price_tiers), [listing?.price_tiers]);
   const tierRows = useMemo(
     () => tiers.map((t) => ({ label: formatTierRange(t), price: `${t.price_per_pack} kr / karta` })),
@@ -468,6 +477,11 @@ export default function PublicEggSaleV3() {
           {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
           {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
           {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
+          {reko && (
+            <Badge className="bg-white text-foreground border shadow-sm" style={{ borderColor: `${accent}60` }}>
+              📦 REKO · {reko.group}{reko.nextAt ? ` · ${rekoDateLabel}` : ''}
+            </Badge>
+          )}
         </div>
       </div>
       )}
