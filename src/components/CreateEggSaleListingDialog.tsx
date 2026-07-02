@@ -228,6 +228,10 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
             )}
           </div>
 
+          <LegalReadinessChecklist />
+
+
+
           <DialogFooter className="gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={saving}>Avbryt</Button>
             <Button type="submit" disabled={saving || uploading} className="gap-2">
