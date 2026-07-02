@@ -103,7 +103,23 @@ Deno.serve(async (req) => {
       synced += 1;
     }
 
-    return jsonResponse({ success: true, found: articles.length, synced, skipped });
+    let deployTriggered = false;
+    if (synced > 0) {
+      const deployHook = Deno.env.get("DEPLOY_HOOK_URL");
+      if (deployHook) {
+        try {
+          const hookRes = await fetch(deployHook, { method: "POST" });
+          deployTriggered = hookRes.ok;
+          if (!hookRes.ok) console.error("Deploy hook non-OK:", hookRes.status, await hookRes.text().catch(() => ""));
+        } catch (hookErr) {
+          console.error("Deploy hook failed:", hookErr);
+        }
+      } else {
+        console.warn("DEPLOY_HOOK_URL not set – skipping site rebuild. New Soro articles will lack prerendered HTML until next manual deploy.");
+      }
+    }
+
+    return jsonResponse({ success: true, found: articles.length, synced, skipped, deployTriggered });
   } catch (error) {
     console.error("sync-soro-blog error", error);
     return jsonResponse({ error: error instanceof Error ? error.message : "Internal error" }, 500);
