@@ -5,6 +5,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
+import SeoCanonical from "./components/SeoCanonical";
 
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import React, { Suspense } from "react";
