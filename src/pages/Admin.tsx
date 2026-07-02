@@ -244,6 +244,9 @@ export default function Admin() {
           <TabsTrigger value="subscriptions" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Crown className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Pren.</span><span className="sm:hidden">Prem</span>
           </TabsTrigger>
+          <TabsTrigger value="referrals" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Gift className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Värvning</span><span className="sm:hidden">🎁</span>
+          </TabsTrigger>
           <TabsTrigger value="blog" className="text-xs sm:text-sm gap-1 rounded-lg">
             <BookOpen className="h-3.5 w-3.5" /> Blogg
           </TabsTrigger>
