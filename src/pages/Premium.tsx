@@ -326,6 +326,13 @@ export default function Premium() {
         ))}
       </section>
 
+      {isPaidPremium && isLegacyPriceId(user?.stripe_price_id) && (
+        <p className="text-center text-sm text-muted-foreground -mt-1">
+          <Sparkles className="inline h-4 w-4 mr-1 text-primary" />
+          {t('plans.legacy_notice')}
+        </p>
+      )}
+
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-3 mb-5">
