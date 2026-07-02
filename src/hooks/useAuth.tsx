@@ -74,6 +74,7 @@ async function buildProfile(
   let subscribed = false;
   let subscriptionEnd: string | null = null;
   let syncedPremiumType: PremiumType | null = null;
+  let syncedPriceId: string | null = null;
   let synced = false;
 
   if (doSync) {
@@ -85,6 +86,7 @@ async function buildProfile(
     subscribed = res.subscribed;
     subscriptionEnd = res.subscriptionEnd;
     syncedPremiumType = res.premiumType;
+    syncedPriceId = res.priceId;
     synced = res.synced;
   }
 
@@ -129,6 +131,7 @@ async function buildProfile(
     subscription_status: isPremium ? 'premium' : 'free',
     subscription_end: resolvedSubscriptionEnd,
     premium_type: premiumType,
+    stripe_price_id: syncedPriceId,
   };
 }
 
