@@ -61,8 +61,8 @@ export default function Premium() {
 
   const premiumJsonLd = useMemo(() => {
     const currency = lang === 'en' ? 'USD' : 'SEK';
-    const monthlyPrice = lang === 'en' ? '1.99' : '19';
-    const yearlyPrice = lang === 'en' ? '14.99' : '149';
+    const monthlyPrice = lang === 'en' ? '3.99' : '39';
+    const yearlyPrice = lang === 'en' ? '29.99' : '299';
     return {
       '@type': 'Product',
       name: `${brand} Plus`,
