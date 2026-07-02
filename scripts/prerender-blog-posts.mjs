@@ -323,7 +323,10 @@ async function main() {
   ]));
   await writeRoute('guider', buildRedirectPage(template, '/blogg'));
 
-  for (const ort of orter) await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort));
+  for (const ort of orter) {
+    const ogPath = await generateOrtOgImage(ort);
+    await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
+  }
 
   await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter), 'utf8');
   console.log(`✅ Prerendered ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort-sidor. Sitemap uppdaterad.`);
