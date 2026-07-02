@@ -332,6 +332,21 @@ export default function MarketplaceMap() {
         <header className="mb-6 sm:mb-8 text-center">
           <h1 className="font-serif text-3xl sm:text-4xl text-foreground mb-3">{heading}</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">{subheading}</p>
+          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <span>Dela kartan:</span>
+            <ShareButtons
+              url={
+                ort
+                  ? `https://honsgarden.se/karta?ort=${ort.slug}`
+                  : `https://honsgarden.se/karta`
+              }
+              title={
+                ort
+                  ? `Hitta färska ägg i ${ort.name} 🥚 – karta över lokala äggsäljare`
+                  : `Hitta färska ägg nära dig 🥚 – karta över lokala äggsäljare`
+              }
+            />
+          </div>
         </header>
 
         {/* Search + filter bar */}
