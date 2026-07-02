@@ -32,6 +32,7 @@ import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
 import { CountUp } from '@/components/CountUp';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
 import SinceLastVisitCard from '@/components/SinceLastVisitCard';
+import InstallAppCard from '@/components/InstallAppCard';
 
 function getGreeting() {
   const now = new Date();
@@ -365,6 +366,9 @@ export default function Dashboard() {
       {eggs.length > 0 && (
         <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
       )}
+
+      {/* Diskret installationsprompt – visas först vid 3:e dashboardbesöket */}
+      <InstallAppCard />
 
       {/* ─── 1. Dagens hönsgård ─── */}
       <Card className="border-border/50 shadow-sm overflow-hidden">

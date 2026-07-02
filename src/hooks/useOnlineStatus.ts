@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { syncQueue, getQueue } from '@/lib/offlineQueue';
+import { syncQueue, getQueueLength, loadQueue } from '@/lib/offlineQueue';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -10,11 +10,14 @@ export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(
     typeof navigator === 'undefined' ? true : navigator.onLine,
   );
-  const [pendingCount, setPendingCount] = useState<number>(() => getQueue().length);
+  const [pendingCount, setPendingCount] = useState<number>(() => getQueueLength());
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
-    const refresh = () => setPendingCount(getQueue().length);
+    const refresh = () => setPendingCount(getQueueLength());
+    // Ensure the IDB-backed queue is loaded before reading its length.
+    void loadQueue().then(refresh);
+
     const onOnline = () => {
       setIsOnline(true);
       void runSync();
@@ -23,7 +26,6 @@ export function useOnlineStatus() {
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
     window.addEventListener('storage', refresh);
-    // Custom event so the same tab can update without storage event
     window.addEventListener('honsgarden:queue-changed', refresh);
     return () => {
       window.removeEventListener('online', onOnline);
@@ -36,7 +38,8 @@ export function useOnlineStatus() {
 
   const runSync = async () => {
     if (!isAuthenticated || typeof navigator === 'undefined' || !navigator.onLine) return;
-    if (getQueue().length === 0) return;
+    await loadQueue();
+    if (getQueueLength() === 0) return;
     setSyncing(true);
     try {
       const { synced } = await syncQueue(api.createEggRecord);
@@ -48,7 +51,7 @@ export function useOnlineStatus() {
       console.error('queue sync failed', err);
     } finally {
       setSyncing(false);
-      setPendingCount(getQueue().length);
+      setPendingCount(getQueueLength());
     }
   };
 

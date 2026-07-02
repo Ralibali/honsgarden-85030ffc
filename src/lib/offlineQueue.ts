@@ -1,7 +1,11 @@
-// Offline queue for egg log entries. Persists to localStorage and syncs sequentially.
+// Offline queue for egg log entries. Persists to IndexedDB via idb-keyval
+// (migrates from the legacy localStorage store) and syncs sequentially when
+// connectivity returns.
 
+import { get as idbGet, set as idbSet, del as idbDel } from 'idb-keyval';
 
-const QUEUE_KEY = 'honsgarden_offline_queue_v1';
+const IDB_KEY = 'honsgarden_offline_queue_v2';
+const LEGACY_LS_KEY = 'honsgarden_offline_queue_v1';
 const MAX_QUEUE = 200;
 
 export interface QueuedEggLog {
@@ -22,58 +26,114 @@ export type CreateEggRecordFn = (record: {
   client_id?: string;
 }) => Promise<unknown>;
 
-function readQueue(): QueuedEggLog[] {
+// In-memory mirror of the persisted queue. Kept in sync with IDB so we can
+// answer `getQueueLength()` synchronously from React render paths.
+let cache: QueuedEggLog[] = [];
+let loaded = false;
+let loadPromise: Promise<QueuedEggLog[]> | null = null;
+
+function notifyChanged(): void {
   try {
-    const raw = localStorage.getItem(QUEUE_KEY);
+    window.dispatchEvent(new Event('honsgarden:queue-changed'));
+  } catch {
+    /* ignore */
+  }
+}
+
+function migrateFromLocalStorage(): QueuedEggLog[] {
+  if (typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LEGACY_LS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    localStorage.removeItem(LEGACY_LS_KEY);
+    return parsed as QueuedEggLog[];
   } catch {
     return [];
   }
 }
 
-function writeQueue(queue: QueuedEggLog[]): void {
+async function persist(): Promise<void> {
   try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    await idbSet(IDB_KEY, cache);
   } catch (err) {
-    console.error('offlineQueue: failed to persist', err);
+    console.error('offlineQueue: failed to persist to IDB', err);
   }
 }
 
-export function getQueue(): QueuedEggLog[] {
-  return readQueue();
+export async function loadQueue(): Promise<QueuedEggLog[]> {
+  if (loaded) return cache;
+  if (loadPromise) return loadPromise;
+  loadPromise = (async () => {
+    try {
+      const stored = (await idbGet<QueuedEggLog[]>(IDB_KEY)) ?? [];
+      const legacy = migrateFromLocalStorage();
+      cache = [...stored, ...legacy];
+      if (legacy.length > 0) await persist();
+    } catch (err) {
+      console.error('offlineQueue: failed to load from IDB', err);
+      cache = migrateFromLocalStorage();
+    }
+    loaded = true;
+    notifyChanged();
+    return cache;
+  })();
+  return loadPromise;
 }
 
-export function enqueueEggLog(entry: Omit<QueuedEggLog, 'client_id' | 'queued_at'> & { client_id?: string }): QueuedEggLog {
-  const queue = readQueue();
-  if (queue.length >= MAX_QUEUE) {
-    throw new Error(`Offline-kön är full (${MAX_QUEUE} poster). Anslut till nätet så synkas dina loggningar.`);
+/** Synchronous length from the in-memory mirror (0 until loadQueue resolves). */
+export function getQueueLength(): number {
+  return cache.length;
+}
+
+/** Kept for backwards-compatibility with existing sync callers. */
+export function getQueue(): QueuedEggLog[] {
+  return cache;
+}
+
+export async function enqueueEggLog(
+  entry: Omit<QueuedEggLog, 'client_id' | 'queued_at'> & { client_id?: string },
+): Promise<QueuedEggLog> {
+  await loadQueue();
+  if (cache.length >= MAX_QUEUE) {
+    throw new Error(
+      `Offline-kön är full (${MAX_QUEUE} poster). Anslut till nätet så synkas dina loggningar.`,
+    );
   }
   const item: QueuedEggLog = {
-    client_id: entry.client_id ?? (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2)),
+    client_id:
+      entry.client_id ??
+      (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2)),
     date: entry.date,
     count: entry.count,
     hen_id: entry.hen_id,
     flock_id: entry.flock_id,
     queued_at: new Date().toISOString(),
   };
-  queue.push(item);
-  writeQueue(queue);
-  try {
-    window.dispatchEvent(new Event('honsgarden:queue-changed'));
-  } catch { /* ignore */ }
+  cache = [...cache, item];
+  await persist();
+  notifyChanged();
   return item;
 }
 
-export function removeFromQueue(clientId: string): void {
-  const next = readQueue().filter((q) => q.client_id !== clientId);
-  writeQueue(next);
-  try {
-    window.dispatchEvent(new Event('honsgarden:queue-changed'));
-  } catch { /* ignore */ }
+export async function removeFromQueue(clientId: string): Promise<void> {
+  cache = cache.filter((q) => q.client_id !== clientId);
+  await persist();
+  notifyChanged();
 }
 
+export async function clearQueue(): Promise<void> {
+  cache = [];
+  try {
+    await idbDel(IDB_KEY);
+  } catch {
+    /* ignore */
+  }
+  notifyChanged();
+}
 
 function isNetworkError(err: unknown): boolean {
   if (!err) return false;
@@ -84,16 +144,18 @@ function isNetworkError(err: unknown): boolean {
     msg.includes('network') ||
     msg.includes('fetcherror') ||
     msg.includes('load failed') ||
-    msg.includes('typeerror') && msg.includes('fetch')
+    (msg.includes('typeerror') && msg.includes('fetch'))
   );
 }
 
 let syncInFlight: Promise<{ synced: number; remaining: number }> | null = null;
 
-async function runSyncInternal(createEggRecord: CreateEggRecordFn): Promise<{ synced: number; remaining: number }> {
+async function runSyncInternal(
+  createEggRecord: CreateEggRecordFn,
+): Promise<{ synced: number; remaining: number }> {
+  await loadQueue();
   let synced = 0;
-  const queue = readQueue();
-  for (const item of [...queue]) {
+  for (const item of [...cache]) {
     try {
       await createEggRecord({
         date: item.date,
@@ -103,30 +165,30 @@ async function runSyncInternal(createEggRecord: CreateEggRecordFn): Promise<{ sy
         weather: null,
         client_id: item.client_id,
       });
-      removeFromQueue(item.client_id);
+      await removeFromQueue(item.client_id);
       synced++;
     } catch (err) {
-      if (isNetworkError(err)) {
-        break;
-      }
-      // Non-network error: drop so it doesn't block forever
+      if (isNetworkError(err)) break;
       console.error('offlineQueue: dropping invalid entry', item.client_id, err);
-      removeFromQueue(item.client_id);
+      await removeFromQueue(item.client_id);
     }
   }
-  return { synced, remaining: readQueue().length };
+  return { synced, remaining: cache.length };
 }
 
-export function syncQueue(createEggRecord: CreateEggRecordFn): Promise<{ synced: number; remaining: number }> {
+export function syncQueue(
+  createEggRecord: CreateEggRecordFn,
+): Promise<{ synced: number; remaining: number }> {
   if (syncInFlight) return syncInFlight;
   syncInFlight = runSyncInternal(createEggRecord).finally(() => {
     syncInFlight = null;
-    try {
-      window.dispatchEvent(new Event('honsgarden:queue-changed'));
-    } catch {
-      /* ignore */
-    }
+    notifyChanged();
   });
   return syncInFlight;
 }
 
+// Kick off IDB load as early as possible so the in-memory cache reflects
+// persisted entries by the time components render.
+if (typeof window !== 'undefined') {
+  void loadQueue();
+}

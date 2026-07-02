@@ -72,7 +72,7 @@ export default function Eggs() {
       const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       // Offline path: enqueue locally and bail out (still optimistic)
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        const queued = enqueueEggLog({ ...data, client_id });
+        const queued = await enqueueEggLog({ ...data, client_id });
         return { __offline: true, client_id: queued.client_id, ...data } as any;
       }
       try {
@@ -82,7 +82,7 @@ export default function Eggs() {
         const msg = (err?.message ?? '').toLowerCase();
         const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
         if (isNet) {
-          const queued = enqueueEggLog({ ...data, client_id });
+          const queued = await enqueueEggLog({ ...data, client_id });
           return { __offline: true, client_id: queued.client_id, ...data } as any;
         }
         throw err;

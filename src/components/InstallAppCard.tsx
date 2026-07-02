@@ -10,12 +10,16 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
+const VISIT_COUNT_KEY = 'dashboard-visit-count';
+const MIN_VISITS_BEFORE_PROMPT = 3;
+
 export default function InstallAppCard() {
   const [dismissed, setDismissed] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showSteps, setShowSteps] = useState(false);
+  const [visitCount, setVisitCount] = useState(0);
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches
@@ -28,6 +32,17 @@ export default function InstallAppCard() {
     const wasDismissed = localStorage.getItem('install-card-dismissed');
     if (wasDismissed) setDismissed(true);
 
+    // Öka besöksräknaren en gång per dashboard-mount så prompten dyker
+    // upp först vid tredje besöket – diskret introduktion, inte spam.
+    try {
+      const prev = parseInt(localStorage.getItem(VISIT_COUNT_KEY) ?? '0', 10) || 0;
+      const next = prev + 1;
+      localStorage.setItem(VISIT_COUNT_KEY, String(next));
+      setVisitCount(next);
+    } catch {
+      setVisitCount(MIN_VISITS_BEFORE_PROMPT);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -37,6 +52,10 @@ export default function InstallAppCard() {
   }, []);
 
   if (isStandalone || dismissed) return null;
+  if (visitCount < MIN_VISITS_BEFORE_PROMPT) return null;
+  // Android/Chrome: visa bara när browsern faktiskt kan installera.
+  // iOS: visa hjälpsteg (inget beforeinstallprompt finns där).
+  if (!deferredPrompt && !isIOS) return null;
 
   const dismiss = () => {
     setDismissed(true);
