@@ -115,7 +115,7 @@ export default function Login() {
       if (postalCode) {
         try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
       }
-      toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har fått 14 dagars gratis Premium! 🎉 (sju dagar provperiod + sju dagar värvningsbonus)' : 'Du har fått sju dagars gratis Premium! 🎉' });
+      toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har sju dagars gratis Premium. Logga ditt första ägg för att låsa upp 30 dagar Plus åt er båda! 🥚' : 'Du har fått sju dagars gratis Premium! 🎉' });
       setAuthMode('login');
     } catch (err: any) {
       toast({ title: 'Registrering misslyckades', description: err.message, variant: 'destructive' });

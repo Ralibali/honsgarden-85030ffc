@@ -11,6 +11,7 @@ import { format, subDays, startOfWeek, endOfWeek } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import AIWeeklySummary from '@/components/AIWeeklySummary';
+import ReferralCard from '@/components/ReferralCard';
 
 function getSeason(): string {
   const m = new Date().getMonth();
@@ -355,6 +356,8 @@ export default function WeeklyReport() {
           </div>
         </CardContent>
       </Card>
+
+      <ReferralCard />
     </div>
   );
 }

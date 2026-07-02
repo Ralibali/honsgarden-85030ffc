@@ -3204,23 +3204,29 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          redeemed_at: string | null
           referred_user_id: string
           referrer_user_id: string
           rewarded: boolean
+          rewarded_at: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          redeemed_at?: string | null
           referred_user_id: string
           referrer_user_id: string
           rewarded?: boolean
+          rewarded_at?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          redeemed_at?: string | null
           referred_user_id?: string
           referrer_user_id?: string
           rewarded?: boolean
+          rewarded_at?: string | null
         }
         Relationships: []
       }
@@ -4320,6 +4326,10 @@ export type Database = {
       grant_premium_days: {
         Args: { _days: number; _user_id: string }
         Returns: undefined
+      }
+      grant_referral_reward_for_referred: {
+        Args: { _referred_user_id: string }
+        Returns: boolean
       }
       has_farm_role_for_owner: {
         Args: { _owner_uid: string; _required_role?: string }

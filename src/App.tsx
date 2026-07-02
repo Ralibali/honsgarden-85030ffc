@@ -62,6 +62,7 @@ const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
 const EggSaleCustomize = lazyWithRetry(() => import("./pages/EggSaleCustomize"));
 const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
+const RTokenDispatch = lazyWithRetry(() => import("./pages/RTokenDispatch"));
 const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
 const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
 const OrderPortal = lazyWithRetry(() => import("./pages/OrderPortal"));
@@ -164,7 +165,7 @@ const AppRoutes = () => (
         <Route path="/demo" element={<DemoApp />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
-        <Route path="/r/:token" element={<PublicReview />} />
+        <Route path="/r/:token" element={<RTokenDispatch />} />
         <Route path="/avboka/:token" element={<CancelBooking />} />
         <Route path="/bestallning/:token" element={<OrderPortal />} />
         <Route path="/login" element={<Login />} />

@@ -19,6 +19,7 @@ import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
+import ReferralCard from '@/components/ReferralCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
 import { RegionLanguageSettings } from '@/components/settings/RegionLanguageSettings';
 import { isInternationalDomain } from '@/lib/brand';
@@ -339,8 +340,12 @@ export default function SettingsPage() {
       {/* Premium status */}
       <PremiumStatusCard />
 
+      {/* Bjud in en hönskompis – 30 dagar Plus åt båda */}
+      <ReferralCard />
+
       {/* Region & språk – endast på internationell domän (honsgarden.app etc.) */}
       {isInternationalDomain() && <RegionLanguageSettings />}
+
 
 
 

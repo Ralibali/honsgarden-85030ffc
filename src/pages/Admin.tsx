@@ -9,8 +9,9 @@ import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
   Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone, AlertTriangle
 } from 'lucide-react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Gift } from 'lucide-react';
 import BlogEditor from '@/components/admin/BlogEditor';
+import ReferralsAdminPanel from '@/components/admin/ReferralsAdminPanel';
 import NotificationSender from '@/components/admin/NotificationSender';
 import GlossaryManager from '@/components/admin/GlossaryManager';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
@@ -243,6 +244,9 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="subscriptions" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Crown className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Pren.</span><span className="sm:hidden">Prem</span>
+          </TabsTrigger>
+          <TabsTrigger value="referrals" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Gift className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Värvning</span><span className="sm:hidden">🎁</span>
           </TabsTrigger>
           <TabsTrigger value="blog" className="text-xs sm:text-sm gap-1 rounded-lg">
             <BookOpen className="h-3.5 w-3.5" /> Blogg
@@ -518,6 +522,10 @@ export default function Admin() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="referrals" className="space-y-3">
+          <ReferralsAdminPanel />
         </TabsContent>
 
         {/* Blog tab */}
