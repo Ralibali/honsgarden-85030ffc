@@ -71,6 +71,10 @@ type Listing = {
   image_url: string | null;
   sold_out_manually: boolean | null;
   created_at: string | null;
+  reko_enabled: boolean | null;
+  reko_group_name: string | null;
+  reko_pickup_location: string | null;
+  reko_next_pickup_at: string | null;
 };
 
 const eggIcon = L.divIcon({
@@ -163,6 +167,7 @@ export default function MarketplaceMap() {
   const [userPos, setUserPos] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(false);
   const [filterByMap, setFilterByMap] = useState(false);
+  const [onlyReko, setOnlyReko] = useState(false);
   const [mapBounds, setMapBounds] = useState<{
     south: number;
     west: number;
@@ -201,7 +206,7 @@ export default function MarketplaceMap() {
       const { data, error } = await (supabase as any)
         .from("public_egg_sale_listings")
         .select(
-          "id, slug, title, description, location, latitude, longitude, price_per_pack, eggs_per_pack, image_url, sold_out_manually, created_at",
+          "id, slug, title, description, location, latitude, longitude, price_per_pack, eggs_per_pack, image_url, sold_out_manually, created_at, reko_enabled, reko_group_name, reko_pickup_location, reko_next_pickup_at",
         )
         .eq("is_active", true)
         .not("latitude", "is", null);
@@ -229,6 +234,7 @@ export default function MarketplaceMap() {
     }
 
     if (hideSoldOut) list = list.filter((l) => !l.sold_out_manually);
+    if (onlyReko) list = list.filter((l) => l.reko_enabled === true);
     list = list.filter((l) => Number(l.price_per_pack ?? 0) <= maxPrice);
 
     if (filterByMap && mapBounds) {
@@ -267,7 +273,7 @@ export default function MarketplaceMap() {
     });
 
     return list;
-  }, [listings, ort, query, hideSoldOut, maxPrice, sort, userPos, center, filterByMap, mapBounds]);
+  }, [listings, ort, query, hideSoldOut, onlyReko, maxPrice, sort, userPos, center, filterByMap, mapBounds]);
 
   const focusListing = (l: Listing) => {
     if (l.latitude != null && l.longitude != null) {
