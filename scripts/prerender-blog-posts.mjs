@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
+import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
