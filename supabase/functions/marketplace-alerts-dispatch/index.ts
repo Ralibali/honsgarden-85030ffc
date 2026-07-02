@@ -236,6 +236,21 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // Auth: accept service-role bearer or CRON_SECRET (Bearer or x-cron-secret header)
+  const auth = req.headers.get('Authorization') ?? '';
+  const serviceKeyAuth = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
+  const provided = auth.replace('Bearer ', '').trim();
+  const okSecret = cronSecret && (provided === cronSecret || req.headers.get('x-cron-secret') === cronSecret);
+  if (provided !== serviceKeyAuth && !okSecret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+
+
   try {
     const result = await runDispatch();
     return new Response(JSON.stringify({ ok: true, ...result }), {
