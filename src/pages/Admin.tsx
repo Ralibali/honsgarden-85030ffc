@@ -9,7 +9,7 @@ import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
   Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone, AlertTriangle
 } from 'lucide-react';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Gift } from 'lucide-react';
 import BlogEditor from '@/components/admin/BlogEditor';
 import NotificationSender from '@/components/admin/NotificationSender';
 import GlossaryManager from '@/components/admin/GlossaryManager';
