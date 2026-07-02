@@ -279,6 +279,50 @@ function buildTermsPage(template) {
   return injectHead(template, buildHeadGeneric({ title: 'Användarvillkor & Integritetspolicy | Hönsgården', description: 'Hönsgårdens användarvillkor och integritetspolicy.', path: '/terms', noindex: true }));
 }
 
+function renderRegulationGuideBody(guide, updatedFormatted) {
+  const sectionsHtml = guide.sections.map((s) => `
+<section id="${s.id}" class="scroll-mt-24 mt-8"><h2 class="text-2xl font-serif mb-3">${escapeHtml(s.heading)}</h2>
+<div class="prose prose-neutral max-w-none text-foreground/85 leading-relaxed">${sanitizeHtml(s.html)}</div></section>`).join('\n');
+
+  const faqHtml = guide.faqs.map((f) => `
+<details class="rounded-xl border border-border bg-card/50 p-4"><summary class="cursor-pointer font-medium">${escapeHtml(f.q)}</summary>
+<p class="mt-3 text-sm text-foreground/80 leading-relaxed">${escapeHtml(f.a)}</p></details>`).join('\n');
+
+  const authLinks = guide.authorityLinks.map((l) => `<li><a href="${escapeHtml(l.href)}" rel="noopener noreferrer" target="_blank" class="underline">${escapeHtml(l.label)}</a></li>`).join('');
+  const relLinks = guide.relatedLinks.map((l) => `<li><a href="${escapeHtml(l.href)}" class="text-primary underline">${escapeHtml(l.label)}</a></li>`).join('');
+
+  return `<div class="min-h-screen bg-background">
+<header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/" class="font-serif text-lg">🐔 Hönsgården</a><a href="/login" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
+<main class="max-w-3xl mx-auto px-4 py-8" id="main-content">
+<nav class="text-xs text-muted-foreground mb-4"><a href="/">Start</a> / <a href="/blogg">Guider</a> / ${escapeHtml(guide.h1)}</nav>
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">Regelguide</div>
+<h1 class="text-3xl sm:text-4xl font-serif leading-tight mb-4">${escapeHtml(guide.h1)}</h1>
+<p class="text-sm text-muted-foreground mb-6">Senast uppdaterad: <time datetime="${escapeHtml(guide.updated)}">${escapeHtml(updatedFormatted)}</time></p>
+<div class="prose prose-neutral max-w-none text-foreground/85 leading-relaxed">${sanitizeHtml(guide.introHtml)}</div>
+<article>${sectionsHtml}</article>
+<aside class="mt-10 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"><p class="font-medium mb-2">Regler kan ändras – dubbelkolla alltid källan</p><p>Den här guiden är en översikt och ersätter inte myndigheternas information. För aktuella regler hänvisar vi till Jordbruksverket och Livsmedelsverket:</p><ul class="list-disc ml-5 mt-2 space-y-1">${authLinks}</ul></aside>
+<section class="mt-10"><h2 class="text-2xl font-serif mb-4">Vanliga frågor</h2><div class="space-y-3">${faqHtml}</div></section>
+<section class="mt-10 rounded-2xl border border-border bg-card/30 p-6"><h2 class="text-lg font-serif mb-3">Läs vidare</h2><ul class="space-y-2">${relLinks}</ul></section>
+</main></div>`;
+}
+
+function buildRegulationGuidePage(template, guide) {
+  const path = `/guider/${guide.slug}`;
+  const url = `${BASE_URL}${path}`;
+  const updatedFormatted = new Date(guide.updated).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' });
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'Article', '@id': `${url}#article`, headline: guide.h1, description: guide.metaDescription, datePublished: guide.updated, dateModified: guide.updated, author: { '@type': 'Organization', name: 'Hönsgården', url: BASE_URL }, publisher: { '@type': 'Organization', name: 'Hönsgården', url: BASE_URL }, mainEntityOfPage: { '@type': 'WebPage', '@id': url }, inLanguage: 'sv-SE' },
+      { '@type': 'FAQPage', mainEntity: guide.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
+      { '@type': 'BreadcrumbList', itemListElement: [ { '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Guider', item: `${BASE_URL}/blogg` }, { '@type': 'ListItem', position: 3, name: guide.h1, item: url } ] },
+    ],
+  };
+  const head = buildHeadGeneric({ title: guide.title, description: guide.metaDescription, path, ogImage: guide.ogImage, ogImageAlt: guide.h1, ogType: 'article', jsonLd });
+  return injectHead(template, head).replace('<div id="root"></div>', `<div id="root">${renderRegulationGuideBody(guide, updatedFormatted)}</div>`);
+}
+
+
 function buildArticlePage(template, post) {
   return injectHead(template, buildArticleHead(post)).replace('<div id="root"></div>', `<div id="root">${renderArticle(post)}</div>`);
 }
