@@ -226,32 +226,34 @@ const AppRoutes = () => (
 
 const App = () => (
   <ErrorBoundary>
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister: persister!,
-        maxAge: 24 * 60 * 60 * 1000,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (q) => {
-            const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
-            return typeof key === 'string' && PERSISTED_KEYS.has(key);
+    <HelmetProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: persister!,
+          maxAge: 24 * 60 * 60 * 1000,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (q) => {
+              const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
+              return typeof key === 'string' && PERSISTED_KEYS.has(key);
+            },
           },
-        },
-      }}
-    >
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <CacheClearer />
-          <AppRoutes />
-          <CookieConsent />
-          <Suspense fallback={null}>
-            <PwaUpdatePrompt />
-          </Suspense>
-        </AuthProvider>
-      </TooltipProvider>
-    </PersistQueryClientProvider>
+        }}
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <CacheClearer />
+            <AppRoutes />
+            <CookieConsent />
+            <Suspense fallback={null}>
+              <PwaUpdatePrompt />
+            </Suspense>
+          </AuthProvider>
+        </TooltipProvider>
+      </PersistQueryClientProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 
