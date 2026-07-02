@@ -437,6 +437,12 @@ export default function MarketplaceMap() {
                       />
                     </div>
                     <div className="flex items-center justify-between">
+                      <Label htmlFor="only-reko" className="text-sm">
+                        📦 Endast REKO-utlämning
+                      </Label>
+                      <Switch id="only-reko" checked={onlyReko} onCheckedChange={setOnlyReko} />
+                    </div>
+                    <div className="flex items-center justify-between">
                       <Label htmlFor="filter-map" className="text-sm flex items-center gap-1.5">
                         <Frame className="h-3.5 w-3.5" /> Filtrera efter kartan
                       </Label>
