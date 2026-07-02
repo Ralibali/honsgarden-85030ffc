@@ -12,12 +12,19 @@ const PLAN_PRICE_ENV: Record<string, string> = {
   yearly: "STRIPE_PRICE_YEARLY",
 };
 
-// Fallback Stripe price IDs (live) — used om secrets inte är satta.
+// Fallback Stripe price IDs — pekar på LEGACY-priset (19/149 kr).
+// I produktion ska STRIPE_PRICE_MONTHLY/YEARLY vara satta till NYA priser
+// (39 kr/mån, 299 kr/år). Fallbacken finns bara som säkerhetsnät om secrets
+// saknas i en miljö och håller den gamla prissättningen aktiv för nya köp
+// tills env-variablerna är satta.
 const PLAN_PRICE_FALLBACK: Record<"monthly" | "yearly", string> = {
   monthly: "price_1T3joGHzffTezY82dRQc7GTO",
   yearly: "price_1T3jwRHzffTezY829aWQVXZr",
 };
 
+// Legacy-priser (19/149 kr) — mappar gamla priceId:n som eventuellt skickas
+// från äldre klienter/länkar till motsvarande plan. Behålls så befintliga
+// prenumerationer och gamla checkout-länkar fortsätter fungera.
 const LEGACY_PRICE_PLAN: Record<string, "monthly" | "yearly"> = {
   price_1T3joGHzffTezY82dRQc7GTO: "monthly",
   price_1T3jwRHzffTezY829aWQVXZr: "yearly",
