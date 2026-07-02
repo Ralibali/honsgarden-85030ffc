@@ -165,7 +165,7 @@ const AppRoutes = () => (
         <Route path="/demo" element={<DemoApp />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
-        <Route path="/r/:token" element={<PublicReview />} />
+        <Route path="/r/:token" element={<RTokenDispatch />} />
         <Route path="/avboka/:token" element={<CancelBooking />} />
         <Route path="/bestallning/:token" element={<OrderPortal />} />
         <Route path="/login" element={<Login />} />
