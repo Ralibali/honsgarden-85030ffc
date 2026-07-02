@@ -62,6 +62,7 @@ const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
 const EggSaleCustomize = lazyWithRetry(() => import("./pages/EggSaleCustomize"));
 const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
+const RTokenDispatch = lazyWithRetry(() => import("./pages/RTokenDispatch"));
 const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
 const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
 const OrderPortal = lazyWithRetry(() => import("./pages/OrderPortal"));
