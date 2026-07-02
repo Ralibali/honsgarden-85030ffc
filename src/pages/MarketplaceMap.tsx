@@ -26,6 +26,7 @@ import "leaflet/dist/leaflet.css";
 import { ORTER, getOrt } from "@/data/saljaAggOrter";
 import AddMapListingDialog from "@/components/map/AddMapListingDialog";
 import ShareButtons from "@/components/ShareButtons";
+import EggAlertSignup from "@/components/marketing/EggAlertSignup";
 import {
   Sheet,
   SheetContent,
@@ -724,6 +725,15 @@ export default function MarketplaceMap() {
             </button>
           </div>
         )}
+
+        <div className="mt-8 max-w-xl mx-auto">
+          <EggAlertSignup
+            source="marketplace-map"
+            utmCampaign={ort ? `egg-alert-${ort.slug}` : 'egg-alert-map'}
+            ortSlug={ort?.slug ?? null}
+            ortName={ort?.name ?? null}
+          />
+        </div>
       </div>
 
       <Sheet open={!!detailListing} onOpenChange={(o) => !o && setDetailListing(null)}>
