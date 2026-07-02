@@ -83,10 +83,22 @@ const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
 const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
+const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
 
+
+// Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
+// till /blogg. Håll i sync med `src/data/regulationGuides.mjs`.
+const REGULATION_GUIDE_SLUGS = new Set([
+  'registrera-hons-jordbruksverket',
+  'salja-agg-regler',
+]);
 
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
+  if (slug && REGULATION_GUIDE_SLUGS.has(slug)) {
+    // Låt den dedikerade route:n hantera det (matchas nedan).
+    return null;
+  }
   const target = slug ? `/blogg/${slug}` : '/blogg';
   return <Navigate to={target} replace />;
 };
@@ -175,6 +187,8 @@ const AppRoutes = () => (
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
         <Route path="/inbjudan/:token" element={<AcceptInvite />} />
         <Route path="/guider" element={<GuiderRedirect />} />
+        <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />
+        <Route path="/guider/salja-agg-regler" element={<RegulationGuide slug="salja-agg-regler" />} />
         <Route path="/guider/:slug" element={<GuiderRedirect />} />
         <Route path="/blogg" element={<Guides />} />
         <Route path="/blogg/kategori/:category" element={<BlogCategory />} />

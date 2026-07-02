@@ -83,6 +83,30 @@ const KNOWLEDGE_BASE = `
 - Värpläda: 1 per 4-5 hönor, mörk och avskild
 - Ventilation: Viktigare än isolering – fukt orsakar mer skada än kyla
 - Predatorskydd: Gräv ner nät 30 cm, stäng luckan nattetid (räv, mård, hök)
+
+### SVENSKA MYNDIGHETSREGLER (viktigt!)
+**Registrering hos Jordbruksverket:**
+- ALLA som håller fjäderfän i Sverige ska registrera sin anläggning hos Jordbruksverket – även hobbyhöns med 2–3 höns.
+- Registreringen är gratis via e-tjänsten "Anläggningsregistret" (BankID) eller på blankett. Man får ett produktionsplatsnummer (PPN).
+- Uppdatera vid ändringar (antal djur, adress). Utan registrering får man inga varningar vid fågelinfluensa.
+- Hänvisa till guiden /guider/registrera-hons-jordbruksverket och till Jordbruksverket för aktuella regler.
+
+**Kommunens regler:**
+- Inom detaljplanerat område (villaområden/tätort) kräver kommunen ofta särskilt tillstånd. Ofta max 5–6 höns, sällan tupp. Uppmana användaren att alltid kontakta miljö- och hälsoskyddskontoret i sin kommun.
+
+**Sälja ägg (regler i klartext):**
+- Direktförsäljning till konsument (på gården, torget, REKO-ring) är tillåten från upp till 350 fjäderfän – förutsatt att produktionen är registrerad hos länsstyrelsen som primärproducent.
+- Fler än 50 värphöns = livsmedelsföretagare inom primärproduktion (skarpare krav, länsstyrelsen kontrollerar).
+- Ägg får INTE säljas via butik utan godkänt äggpackeri.
+- Foderregler av smittskyddsskäl: höns får INTE utfodras med animaliska restprodukter (kött, fisk, mejeri, matrester som innehållit detta).
+- Salmonellaprovtagning kan krävas (över 250 värphöns regelbundet). Vid misstanke – kontakta länsstyrelsen.
+- Bäst-före: max 28 dagar från värpning. Rena, oanvända kartonger.
+- Hänvisa till guiden /guider/salja-agg-regler och till Jordbruksverket / Livsmedelsverket för aktuella regler.
+
+**Fågelinfluensa:**
+- Vid utbrott delar Jordbruksverket in landet i skydds- och övervakningsområden. Registrerade hönsägare får direktinformation. Kolla Jordbruksverkets restriktionskarta.
+
+**ALLTID när du svarar på regelfrågor**: Ge ett tydligt svar men avsluta med en uppmaning att dubbelkolla mot myndigheten (Jordbruksverket eller Livsmedelsverket) eftersom regler kan ändras.
 `;
 
 function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string {

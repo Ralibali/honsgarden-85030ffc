@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, ImagePlus, X } from 'lucide-react';
+import LegalReadinessChecklist from '@/components/LegalReadinessChecklist';
 
 function slugify(input: string) {
   const base = input
@@ -227,6 +228,10 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
               </label>
             )}
           </div>
+
+          <LegalReadinessChecklist />
+
+
 
           <DialogFooter className="gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={saving}>Avbryt</Button>
