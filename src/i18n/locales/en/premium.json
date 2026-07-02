@@ -19,20 +19,21 @@
   "plans": {
     "yearly": {
       "name": "Plus yearly",
-      "price": "$14.99",
+      "price": "$29.99",
       "period": "/ year",
-      "description": "Save 37% — about $1.25/month",
-      "badge": "Best value",
+      "description": "About $2.50/month",
+      "badge": "Save $17.89",
       "cta": "Choose yearly"
     },
     "monthly": {
       "name": "Plus monthly",
-      "price": "$1.99",
+      "price": "$3.99",
       "period": "/ month",
       "description": "Flexible subscription. Cancel anytime.",
-      "sub_price": "= less than a carton of eggs",
+      "sub_price": "= a carton of eggs a month",
       "cta": "Choose monthly"
     },
+    "legacy_notice": "Early supporter? Your original price is locked in for life.",
     "active_label": "Premium is active"
   },
   "features": {
