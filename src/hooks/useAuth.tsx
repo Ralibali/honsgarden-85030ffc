@@ -12,6 +12,7 @@ interface UserProfile {
   subscription_status?: string;
   subscription_end?: string | null;
   premium_type?: PremiumType;
+  stripe_price_id?: string | null;
 }
 
 interface AuthContextType {
