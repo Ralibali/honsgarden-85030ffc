@@ -26,6 +26,7 @@ import "leaflet/dist/leaflet.css";
 import { ORTER, getOrt } from "@/data/saljaAggOrter";
 import AddMapListingDialog from "@/components/map/AddMapListingDialog";
 import ShareButtons from "@/components/ShareButtons";
+import EggAlertSignup from "@/components/marketing/EggAlertSignup";
 import {
   Sheet,
   SheetContent,
