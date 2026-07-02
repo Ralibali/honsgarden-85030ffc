@@ -58,7 +58,7 @@ export function QuickEggFAB() {
       const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         const { enqueueEggLog } = await import('@/lib/offlineQueue');
-        enqueueEggLog({ ...payload, client_id });
+        await enqueueEggLog({ ...payload, client_id });
         return { __offline: true, client_id, ...payload } as any;
       }
       try {
@@ -68,7 +68,7 @@ export function QuickEggFAB() {
         const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
         if (isNet) {
           const { enqueueEggLog } = await import('@/lib/offlineQueue');
-          enqueueEggLog({ ...payload, client_id });
+          await enqueueEggLog({ ...payload, client_id });
           return { __offline: true, client_id, ...payload } as any;
         }
         throw err;
