@@ -85,8 +85,19 @@ const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 
 
+// Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
+// till /blogg. Håll i sync med `src/data/regulationGuides.mjs`.
+const REGULATION_GUIDE_SLUGS = new Set([
+  'registrera-hons-jordbruksverket',
+  'salja-agg-regler',
+]);
+
 const GuiderRedirect = () => {
   const { slug } = useParams<{ slug?: string }>();
+  if (slug && REGULATION_GUIDE_SLUGS.has(slug)) {
+    // Låt den dedikerade route:n hantera det (matchas nedan).
+    return null;
+  }
   const target = slug ? `/blogg/${slug}` : '/blogg';
   return <Navigate to={target} replace />;
 };
