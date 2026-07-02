@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, ImagePlus, X } from 'lucide-react';
+import LegalReadinessChecklist from '@/components/LegalReadinessChecklist';
 
 function slugify(input: string) {
   const base = input
