@@ -41,27 +41,28 @@ function toBasicProfile(supaUser: SupabaseUser): UserProfile {
   };
 }
 
-async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; synced: boolean; userMissing?: boolean }> {
+async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; priceId: string | null; synced: boolean; userMissing?: boolean }> {
   try {
     const { data, error } = await supabase.functions.invoke('check-subscription');
     if (error) {
       const msg = (error.message || '') + ' ' + JSON.stringify((error as any).context ?? {});
       if (/User from sub claim in JWT does not exist/i.test(msg)) {
-        return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false, userMissing: true };
+        return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false, userMissing: true };
       }
       console.warn('[Auth] check-subscription error:', error.message);
-      return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
+      return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false };
     }
 
     return {
       subscribed: !!data?.subscribed,
       subscriptionEnd: data?.subscription_end ?? data?.subscriptionEnd ?? null,
       premiumType: data?.premium_type ?? null,
+      priceId: data?.price_id ?? null,
       synced: true,
     };
   } catch (err) {
     console.warn('[Auth] check-subscription failed:', err);
-    return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
+    return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false };
   }
 }
 
