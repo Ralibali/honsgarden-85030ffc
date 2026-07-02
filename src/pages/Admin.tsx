@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { DollarSign, Gift } from 'lucide-react';
 import BlogEditor from '@/components/admin/BlogEditor';
+import ReferralsAdminPanel from '@/components/admin/ReferralsAdminPanel';
 import NotificationSender from '@/components/admin/NotificationSender';
 import GlossaryManager from '@/components/admin/GlossaryManager';
 import AnalyticsDashboard from '@/components/admin/AnalyticsDashboard';
