@@ -689,6 +689,15 @@ export default function OrderPortal() {
           </CardContent>
         </Card>
 
+        {!isCancelled && (
+          <EggAlertSignup
+            source="order-portal"
+            utmCampaign="post-order-guide"
+            variant="post-order"
+            ortName={listing.location ?? null}
+          />
+        )}
+
         <p className="text-center text-[11px] text-muted-foreground py-4">
           Spara denna länk – här ser du alltid din bokning. Ingen inloggning krävs.
         </p>
