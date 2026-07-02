@@ -523,6 +523,10 @@ export default function Admin() {
           )}
         </TabsContent>
 
+        <TabsContent value="referrals" className="space-y-3">
+          <ReferralsAdminPanel />
+        </TabsContent>
+
         {/* Blog tab */}
         <TabsContent value="blog" className="space-y-3">
           <BlogEditor />
