@@ -83,6 +83,7 @@ const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
 const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
+const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
 
 
 // Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
