@@ -715,6 +715,11 @@ export default function PublicEggSaleV3() {
       );
     })()}
     <Card><CardContent className="p-4 flex gap-3"><ShieldCheck className="h-5 w-5 text-primary shrink-0" /><div><p className="text-sm font-medium">Tips till köpare</p><p className="text-sm text-muted-foreground">Bokningen är en förfrågan. Kontakta säljaren för att bekräfta tillgång, hämtning och betalning innan du Swishar.</p></div></CardContent></Card>
+    <EggAlertSignup
+      source="public-egg-sale"
+      utmCampaign={sale.location ? `egg-alert-sale-${(sale.location || '').toLowerCase().replace(/\s+/g,'-')}` : 'egg-alert-sale'}
+      ortName={sale.location || null}
+    />
     <details className="rounded-2xl border bg-card/60 p-4 text-center"><summary className="cursor-pointer list-none text-xs text-muted-foreground">Skapad med <strong>Hönsgården.se</strong></summary><div className="pt-4 space-y-3"><Sparkles className="h-5 w-5 mx-auto text-primary" /><p className="text-sm font-medium">Vill du också sälja ägg enklare?</p><p className="text-xs text-muted-foreground">Med Hönsgården kan du logga ägg, skapa säljannonser, dela försäljningssidor och hålla koll på betalningar.</p><Button variant="outline" size="sm" onClick={() => window.open('https://honsgarden.se', '_blank')}><ExternalLink className="h-3.5 w-3.5 mr-2" /> Besök Hönsgården.se</Button></div></details>
   </div></main>;
 }
