@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSeo } from '@/hooks/useSeo';
 import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
+import { isLegacyPriceId } from '@/lib/legacyPricing';
 
 type BillingPlan = 'monthly' | 'yearly';
 
