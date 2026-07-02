@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import sharp from 'sharp';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -191,12 +192,57 @@ async function loadOrter() {
   }
 }
 
-function buildOrtPage(template, ort) {
+let OG_BASE_BUFFER = null;
+async function getOgBaseBuffer() {
+  if (!OG_BASE_BUFFER) {
+    try {
+      OG_BASE_BUFFER = await readFile('public/og-image.jpg');
+    } catch {
+      OG_BASE_BUFFER = false;
+    }
+  }
+  return OG_BASE_BUFFER || null;
+}
+
+async function generateOrtOgImage(ort) {
+  const base = await getOgBaseBuffer();
+  if (!base) return null;
+  const outRel = `/og/ort/${ort.slug}.jpg`;
+  const outAbs = join('dist', outRel);
+  const svg = `<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#000" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#000" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <text x="60" y="470" fill="#FFF9EC" font-family="Georgia, 'Times New Roman', serif" font-size="72" font-weight="700">🥚 Färska ägg i ${escapeXml(ort.name)}</text>
+  <text x="60" y="540" fill="#FFF9EC" font-family="Helvetica, Arial, sans-serif" font-size="34" opacity="0.92">Hitta lokala hönsgårdar i ${escapeXml(ort.lan)}</text>
+  <text x="60" y="590" fill="#FFF9EC" font-family="Helvetica, Arial, sans-serif" font-size="26" opacity="0.75">honsgarden.se/salja-agg/${escapeXml(ort.slug)}</text>
+</svg>`;
+  try {
+    await mkdir(dirname(outAbs), { recursive: true });
+    await sharp(base)
+      .resize(1200, 630, { fit: 'cover' })
+      .composite([{ input: Buffer.from(svg) }])
+      .jpeg({ quality: 82, progressive: true })
+      .toFile(outAbs);
+    return outRel;
+  } catch (e) {
+    console.warn(`⚠️ Kunde inte generera OG-bild för ${ort.slug}: ${e.message}`);
+    return null;
+  }
+}
+
+function buildOrtPage(template, ort, ogImagePath) {
   const path = `/salja-agg/${ort.slug}`;
   const title = `Köp färska ägg i ${ort.name} – hitta säljare nära dig | Hönsgården`;
   const description = `Hitta lokala hönsägare i ${ort.name} (${ort.lan}) som säljer färska ägg direkt från gården. Bläddra i säljlistor, se priser och boka hämtning nära dig.`;
   const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Köp färska ägg i ${ort.name}`, description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE', about: { '@type': 'Place', name: ort.name, address: { '@type': 'PostalAddress', addressLocality: ort.name, addressRegion: ort.lan, addressCountry: 'SE' } } };
-  return injectHead(template, buildHeadGeneric({ title, description, path, ogImage: '/og-image.jpg', ogImageAlt: `Köp ägg i ${ort.name}`, jsonLd }));
+  return injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, jsonLd }));
 }
 
 const CATEGORY_META = {
@@ -277,7 +323,10 @@ async function main() {
   ]));
   await writeRoute('guider', buildRedirectPage(template, '/blogg'));
 
-  for (const ort of orter) await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort));
+  for (const ort of orter) {
+    const ogPath = await generateOrtOgImage(ort);
+    await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
+  }
 
   await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter), 'utf8');
   console.log(`✅ Prerendered ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort-sidor. Sitemap uppdaterad.`);
