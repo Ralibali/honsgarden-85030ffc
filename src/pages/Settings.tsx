@@ -340,8 +340,12 @@ export default function SettingsPage() {
       {/* Premium status */}
       <PremiumStatusCard />
 
+      {/* Bjud in en hönskompis – 30 dagar Plus åt båda */}
+      <ReferralCard />
+
       {/* Region & språk – endast på internationell domän (honsgarden.app etc.) */}
       {isInternationalDomain() && <RegionLanguageSettings />}
+
 
 
 
