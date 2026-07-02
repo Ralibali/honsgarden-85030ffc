@@ -333,7 +333,7 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
-function buildSitemap(posts, tags, orter = []) {
+function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
   const now = new Date().toISOString().split('T')[0];
   const urls = [];
   const push = (loc, opts = {}) => urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
@@ -343,6 +343,7 @@ function buildSitemap(posts, tags, orter = []) {
   tags.forEach((tag) => push(`${BASE_URL}/blogg/tagg/${encodeURIComponent(tag)}`, { changefreq: 'weekly', priority: '0.6' }));
   posts.forEach((post) => push(`${BASE_URL}/blogg/${post.slug}`, { lastmod: (post.updated_at || post.published_at || now).split('T')[0], changefreq: 'weekly', priority: '0.8' }));
   orter.forEach((ort) => push(`${BASE_URL}/salja-agg/${ort.slug}`, { changefreq: 'weekly', priority: '0.75' }));
+  regulationGuides.forEach((g) => push(`${BASE_URL}/guider/${g.slug}`, { lastmod: g.updated, changefreq: 'monthly', priority: '0.85' }));
 
   const body = urls.map(u => `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
@@ -352,6 +353,7 @@ async function main() {
   const template = await readFile('dist/index.html', 'utf8');
   const posts = await fetchPosts();
   const orter = await loadOrter();
+  const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
 
   for (const page of STATIC_PAGES) await writeRoute(page.route, buildStaticPage(template, page));
   await writeRoute('terms', buildTermsPage(template));
@@ -362,19 +364,28 @@ async function main() {
   const tags = Array.from(tagSet);
   for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(template, tag));
 
-  await Promise.all(posts.flatMap((post) => [
-    writeRoute(`blogg/${post.slug}`, buildArticlePage(template, post)),
-    writeRoute(`guider/${post.slug}`, buildRedirectPage(template, `/blogg/${post.slug}`)),
-  ]));
+  await Promise.all(posts.flatMap((post) => {
+    const ops = [writeRoute(`blogg/${post.slug}`, buildArticlePage(template, post))];
+    // Redirecta bara /guider/{slug} → /blogg/{slug} om det INTE är en dedikerad regelguide.
+    if (!regulationSlugs.has(post.slug)) {
+      ops.push(writeRoute(`guider/${post.slug}`, buildRedirectPage(template, `/blogg/${post.slug}`)));
+    }
+    return ops;
+  }));
   await writeRoute('guider', buildRedirectPage(template, '/blogg'));
+
+  // Prerender de dedikerade regelguiderna.
+  for (const guide of REGULATION_GUIDES) {
+    await writeRoute(`guider/${guide.slug}`, buildRegulationGuidePage(template, guide));
+  }
 
   for (const ort of orter) {
     const ogPath = await generateOrtOgImage(ort);
     await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
   }
 
-  await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter), 'utf8');
-  console.log(`✅ Prerendered ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort-sidor. Sitemap uppdaterad.`);
+  await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES), 'utf8');
+  console.log(`✅ Prerendered ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor. Sitemap uppdaterad.`);
 }
 
 main().catch((error) => {
