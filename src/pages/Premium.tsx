@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSeo } from '@/hooks/useSeo';
 import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
+import { isLegacyPriceId } from '@/lib/legacyPricing';
 
 type BillingPlan = 'monthly' | 'yearly';
 
@@ -60,8 +61,8 @@ export default function Premium() {
 
   const premiumJsonLd = useMemo(() => {
     const currency = lang === 'en' ? 'USD' : 'SEK';
-    const monthlyPrice = lang === 'en' ? '1.99' : '19';
-    const yearlyPrice = lang === 'en' ? '14.99' : '149';
+    const monthlyPrice = lang === 'en' ? '3.99' : '39';
+    const yearlyPrice = lang === 'en' ? '29.99' : '299';
     return {
       '@type': 'Product',
       name: `${brand} Plus`,
@@ -324,6 +325,13 @@ export default function Premium() {
           </Card>
         ))}
       </section>
+
+      {isPaidPremium && isLegacyPriceId(user?.stripe_price_id) && (
+        <p className="text-center text-sm text-muted-foreground -mt-1">
+          <Sparkles className="inline h-4 w-4 mr-1 text-primary" />
+          {t('plans.legacy_notice')}
+        </p>
+      )}
 
       <Card>
         <CardContent className="p-6">

@@ -12,6 +12,7 @@ interface UserProfile {
   subscription_status?: string;
   subscription_end?: string | null;
   premium_type?: PremiumType;
+  stripe_price_id?: string | null;
 }
 
 interface AuthContextType {
@@ -40,27 +41,28 @@ function toBasicProfile(supaUser: SupabaseUser): UserProfile {
   };
 }
 
-async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; synced: boolean; userMissing?: boolean }> {
+async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; priceId: string | null; synced: boolean; userMissing?: boolean }> {
   try {
     const { data, error } = await supabase.functions.invoke('check-subscription');
     if (error) {
       const msg = (error.message || '') + ' ' + JSON.stringify((error as any).context ?? {});
       if (/User from sub claim in JWT does not exist/i.test(msg)) {
-        return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false, userMissing: true };
+        return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false, userMissing: true };
       }
       console.warn('[Auth] check-subscription error:', error.message);
-      return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
+      return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false };
     }
 
     return {
       subscribed: !!data?.subscribed,
       subscriptionEnd: data?.subscription_end ?? data?.subscriptionEnd ?? null,
       premiumType: data?.premium_type ?? null,
+      priceId: data?.price_id ?? null,
       synced: true,
     };
   } catch (err) {
     console.warn('[Auth] check-subscription failed:', err);
-    return { subscribed: false, subscriptionEnd: null, premiumType: null, synced: false };
+    return { subscribed: false, subscriptionEnd: null, premiumType: null, priceId: null, synced: false };
   }
 }
 
@@ -72,6 +74,7 @@ async function buildProfile(
   let subscribed = false;
   let subscriptionEnd: string | null = null;
   let syncedPremiumType: PremiumType | null = null;
+  let syncedPriceId: string | null = null;
   let synced = false;
 
   if (doSync) {
@@ -83,6 +86,7 @@ async function buildProfile(
     subscribed = res.subscribed;
     subscriptionEnd = res.subscriptionEnd;
     syncedPremiumType = res.premiumType;
+    syncedPriceId = res.priceId;
     synced = res.synced;
   }
 
@@ -127,6 +131,7 @@ async function buildProfile(
     subscription_status: isPremium ? 'premium' : 'free',
     subscription_end: resolvedSubscriptionEnd,
     premium_type: premiumType,
+    stripe_price_id: syncedPriceId,
   };
 }
 

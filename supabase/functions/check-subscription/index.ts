@@ -24,6 +24,10 @@ function getStripeProductId(subscription: Stripe.Subscription): string | null {
   return typeof product === "string" ? product : product?.id ?? null;
 }
 
+function getStripePriceId(subscription: Stripe.Subscription): string | null {
+  return subscription.items.data[0]?.price?.id ?? null;
+}
+
 function isEligibleStripeSubscription(subscription: Stripe.Subscription, now: Date): boolean {
   if (!ELIGIBLE_STATUSES.has(subscription.status)) return false;
   if (subscription.status === "active" || subscription.status === "trialing") return true;
@@ -105,6 +109,7 @@ serve(async (req) => {
       const customerId = typeof stripeSubscription.customer === "string" ? stripeSubscription.customer : stripeSubscription.customer.id;
       const subscriptionEnd = getStripeEnd(stripeSubscription);
       const productId = getStripeProductId(stripeSubscription);
+      const priceId = getStripePriceId(stripeSubscription);
 
       const desiredExpiry = hasLifetimePremium ? null : subscriptionEnd;
       const needsUpdate =
@@ -129,6 +134,7 @@ serve(async (req) => {
         subscribed: true,
         premium_type: hasLifetimePremium ? "lifetime" : "paid",
         product_id: productId,
+        price_id: priceId,
         subscription_end: hasLifetimePremium ? null : subscriptionEnd,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
