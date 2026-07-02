@@ -140,6 +140,7 @@ function PageTracker() {
 const AppRoutes = () => (
   <BrowserRouter>
     <PageTracker />
+    <SeoCanonical />
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="/" element={<Index />} />
