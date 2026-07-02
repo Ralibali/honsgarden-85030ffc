@@ -44,12 +44,18 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
   const [swishNumber, setSwishNumber] = useState('');
   const [swishName, setSwishName] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [rekoEnabled, setRekoEnabled] = useState(false);
+  const [rekoGroup, setRekoGroup] = useState('');
+  const [rekoLocation, setRekoLocation] = useState('');
+  const [rekoDate, setRekoDate] = useState('');
+  const [rekoRecurring, setRekoRecurring] = useState(true);
 
   const reset = () => {
     setTitle(''); setDescription(''); setLocation('');
     setPricePerPack('60'); setEggsPerPack('12'); setStockPacks('5');
     setPickupInfo(''); setSwishNumber(''); setSwishName('');
     setImageUrl(null);
+    setRekoEnabled(false); setRekoGroup(''); setRekoLocation(''); setRekoDate(''); setRekoRecurring(true);
   };
 
   const onImageChange = async (file: File | null) => {
@@ -114,6 +120,11 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
         image_url: imageUrl,
         is_active: true,
         auto_publish: true,
+        reko_enabled: rekoEnabled,
+        reko_group_name: rekoEnabled ? (rekoGroup.trim() || null) : null,
+        reko_pickup_location: rekoEnabled ? (rekoLocation.trim() || null) : null,
+        reko_next_pickup_at: rekoEnabled && rekoDate ? new Date(rekoDate).toISOString() : null,
+        reko_recurring_biweekly: rekoEnabled ? rekoRecurring : false,
       };
       const { data, error } = await (supabase as any)
         .from('public_egg_sale_listings')
@@ -226,6 +237,40 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
                 {uploading ? 'Laddar upp…' : 'Lägg till bild (max 5 MB)'}
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => onImageChange(e.target.files?.[0] ?? null)} />
               </label>
+            )}
+          </div>
+
+          <div className="rounded-xl border p-3 space-y-2 bg-muted/30">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-primary"
+                checked={rekoEnabled}
+                onChange={(e) => setRekoEnabled(e.target.checked)}
+              />
+              <span className="text-sm font-medium">📦 Erbjud REKO-utlämning</span>
+            </label>
+            {rekoEnabled && (
+              <div className="space-y-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="reko-group" className="text-xs">REKO-grupp</Label>
+                    <Input id="reko-group" value={rekoGroup} onChange={(e) => setRekoGroup(e.target.value.slice(0, 80))} placeholder="t.ex. REKO Linköping" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="reko-loc" className="text-xs">Utlämningsort</Label>
+                    <Input id="reko-loc" value={rekoLocation} onChange={(e) => setRekoLocation(e.target.value.slice(0, 80))} placeholder="t.ex. ICA-parkeringen" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="reko-date" className="text-xs">Nästa utlämning</Label>
+                  <Input id="reko-date" type="datetime-local" value={rekoDate} onChange={(e) => setRekoDate(e.target.value)} />
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground">
+                  <input type="checkbox" className="h-3.5 w-3.5 accent-primary" checked={rekoRecurring} onChange={(e) => setRekoRecurring(e.target.checked)} />
+                  Upprepa varannan vecka
+                </label>
+              </div>
             )}
           </div>
 
