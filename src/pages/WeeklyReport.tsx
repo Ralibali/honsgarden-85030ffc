@@ -356,6 +356,8 @@ export default function WeeklyReport() {
           </div>
         </CardContent>
       </Card>
+
+      <ReferralCard />
     </div>
   );
 }
