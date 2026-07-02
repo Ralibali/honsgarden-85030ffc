@@ -19,20 +19,21 @@
   "plans": {
     "yearly": {
       "name": "Plus årsvis",
-      "price": "149 kr",
+      "price": "299 kr",
       "period": "/ år",
-      "description": "Spara 79 kr — motsvarar 12,40 kr/mån",
-      "badge": "Bäst värde",
+      "description": "Motsvarar 24,90 kr/mån",
+      "badge": "Spara 169 kr",
       "cta": "Välj årsplan"
     },
     "monthly": {
       "name": "Plus månadsvis",
-      "price": "19 kr",
+      "price": "39 kr",
       "period": "/ månad",
       "description": "Flexibelt abonnemang. Avsluta när du vill.",
-      "sub_price": "= mindre än en kartong ägg",
+      "sub_price": "= en kartong ägg i månaden",
       "cta": "Välj månadsplan"
     },
+    "legacy_notice": "Var med från start? Ditt gamla pris gäller för alltid.",
     "active_label": "Premium är aktivt"
   },
   "features": {
