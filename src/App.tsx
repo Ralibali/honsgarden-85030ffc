@@ -5,6 +5,8 @@ import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
+import SeoCanonical from "./components/SeoCanonical";
 
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import React, { Suspense } from "react";
@@ -138,6 +140,7 @@ function PageTracker() {
 const AppRoutes = () => (
   <BrowserRouter>
     <PageTracker />
+    <SeoCanonical />
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="/" element={<Index />} />
@@ -223,32 +226,34 @@ const AppRoutes = () => (
 
 const App = () => (
   <ErrorBoundary>
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister: persister!,
-        maxAge: 24 * 60 * 60 * 1000,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (q) => {
-            const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
-            return typeof key === 'string' && PERSISTED_KEYS.has(key);
+    <HelmetProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: persister!,
+          maxAge: 24 * 60 * 60 * 1000,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (q) => {
+              const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
+              return typeof key === 'string' && PERSISTED_KEYS.has(key);
+            },
           },
-        },
-      }}
-    >
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <AuthProvider>
-          <CacheClearer />
-          <AppRoutes />
-          <CookieConsent />
-          <Suspense fallback={null}>
-            <PwaUpdatePrompt />
-          </Suspense>
-        </AuthProvider>
-      </TooltipProvider>
-    </PersistQueryClientProvider>
+        }}
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <CacheClearer />
+            <AppRoutes />
+            <CookieConsent />
+            <Suspense fallback={null}>
+              <PwaUpdatePrompt />
+            </Suspense>
+          </AuthProvider>
+        </TooltipProvider>
+      </PersistQueryClientProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 
