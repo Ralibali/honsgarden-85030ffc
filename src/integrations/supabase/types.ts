@@ -2918,6 +2918,60 @@ export type Database = {
         }
         Relationships: []
       }
+      public_egg_alerts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_notified_at: string | null
+          ort_name: string | null
+          ort_slug: string | null
+          source: string | null
+          unsubscribe_token: string
+          updated_at: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          verified: boolean
+          verified_at: string | null
+          verify_token: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          last_notified_at?: string | null
+          ort_name?: string | null
+          ort_slug?: string | null
+          source?: string | null
+          unsubscribe_token?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          verified?: boolean
+          verified_at?: string | null
+          verify_token?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_notified_at?: string | null
+          ort_name?: string | null
+          ort_slug?: string | null
+          source?: string | null
+          unsubscribe_token?: string
+          updated_at?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          verified?: boolean
+          verified_at?: string | null
+          verify_token?: string
+        }
+        Relationships: []
+      }
       public_egg_sale_bookings: {
         Row: {
           cancelled_at: string | null
@@ -4242,6 +4296,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      confirm_public_egg_alert: { Args: { p_token: string }; Returns: Json }
       count_user_backups_today: { Args: { _uid: string }; Returns: number }
       count_user_reports_today: { Args: { _uid: string }; Returns: number }
       create_next_waitlist_offer: {
@@ -4373,6 +4428,18 @@ export type Database = {
           read_ct: number
         }[]
       }
+      request_public_egg_alert: {
+        Args: {
+          p_email: string
+          p_ort_name?: string
+          p_ort_slug?: string
+          p_source?: string
+          p_utm_campaign?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+        }
+        Returns: Json
+      }
       reschedule_order_by_token: {
         Args: { p_new_slot_id: string; p_token: string }
         Returns: Json
@@ -4391,6 +4458,7 @@ export type Database = {
         Returns: Json
       }
       unaccent: { Args: { "": string }; Returns: string }
+      unsubscribe_public_egg_alert: { Args: { p_token: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"
