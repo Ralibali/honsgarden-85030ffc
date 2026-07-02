@@ -186,6 +186,8 @@ const AppRoutes = () => (
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
         <Route path="/inbjudan/:token" element={<AcceptInvite />} />
         <Route path="/guider" element={<GuiderRedirect />} />
+        <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />
+        <Route path="/guider/salja-agg-regler" element={<RegulationGuide slug="salja-agg-regler" />} />
         <Route path="/guider/:slug" element={<GuiderRedirect />} />
         <Route path="/blogg" element={<Guides />} />
         <Route path="/blogg/kategori/:category" element={<BlogCategory />} />
