@@ -107,6 +107,17 @@ export default function EggAlertSignup({
           </div>
         ) : (
           <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
+            {/* Honeypot – hidden from users, bots often fill it. */}
+            <input
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: 'absolute', left: '-10000px', width: '1px', height: '1px', opacity: 0 }}
+              value=""
+              onChange={() => {}}
+            />
             <Input
               type="email"
               inputMode="email"
