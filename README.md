@@ -1,3 +1,5 @@
+Sync-test 2026-07-03
+
 # Hönsgården
 
 Hönsgården är en svensk webbapp för hobbyhönsägare. Appen hjälper användare att logga ägg, hålla koll på hönor, foder, ekonomi, påminnelser, kläckning, statistik och säsongsrelaterade uppgifter.
