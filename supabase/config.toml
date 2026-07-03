@@ -47,3 +47,7 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.reko-pickup-reminder]
     verify_jwt = false
+  [functions.dispatch-egg-alerts]
+    verify_jwt = false
+  [functions.public-egg-alert]
+    verify_jwt = false

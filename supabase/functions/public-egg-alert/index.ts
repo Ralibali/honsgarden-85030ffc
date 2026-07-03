@@ -26,7 +26,55 @@ const SubscribeSchema = z.object({
   utm_source: z.string().trim().max(80).optional().nullable(),
   utm_medium: z.string().trim().max(80).optional().nullable(),
   utm_campaign: z.string().trim().max(80).optional().nullable(),
+  // Honeypot – legitimate clients never fill these. Bots often do.
+  website: z.string().max(200).optional().nullable(),
+  hp_field: z.string().max(200).optional().nullable(),
 });
+
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for") ?? "";
+  const first = fwd.split(",")[0]?.trim();
+  return first || req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") || "unknown";
+}
+
+async function checkRateLimit(supabase: any, ip: string): Promise<boolean> {
+  // Bucket window to the current hour so rate_limits.window_start collapses per IP+hour.
+  const windowStart = new Date(Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS) * RATE_LIMIT_WINDOW_MS).toISOString();
+  // rate_limits.user_id is UUID – hash IP to a deterministic UUIDv5-ish value via md5.
+  const enc = new TextEncoder().encode(`egg-alert:${ip}`);
+  const hash = await crypto.subtle.digest("SHA-1", enc);
+  const bytes = new Uint8Array(hash).slice(0, 16);
+  const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+  const pseudoUserId = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+
+  const { data: existing } = await supabase
+    .from("rate_limits")
+    .select("id, request_count")
+    .eq("user_id", pseudoUserId)
+    .eq("function_name", "public-egg-alert")
+    .eq("window_start", windowStart)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.request_count >= RATE_LIMIT_MAX) return false;
+    await supabase
+      .from("rate_limits")
+      .update({ request_count: existing.request_count + 1 })
+      .eq("id", existing.id);
+    return true;
+  }
+  await supabase.from("rate_limits").insert({
+    user_id: pseudoUserId,
+    function_name: "public-egg-alert",
+    window_start: windowStart,
+    request_count: 1,
+  });
+  return true;
+}
+
 
 async function sendConfirmationEmail(params: {
   email: string;
@@ -160,6 +208,28 @@ Deno.serve(async (req) => {
       );
     }
     const p = parsed.data;
+
+    // Honeypot – silently accept and drop if filled by a bot.
+    if ((p.website && p.website.trim()) || (p.hp_field && p.hp_field.trim())) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // IP rate limit: 5 requests / IP / hour
+    const ip = clientIp(req);
+    const allowed = await checkRateLimit(supabase, ip);
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "rate_limited" }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
+        },
+      );
+    }
+
 
     const { data, error } = await supabase.rpc("request_public_egg_alert", {
       p_email: p.email,

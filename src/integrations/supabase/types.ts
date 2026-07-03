@@ -2918,6 +2918,48 @@ export type Database = {
         }
         Relationships: []
       }
+      public_egg_alert_sends: {
+        Row: {
+          alert_id: string
+          email: string
+          id: string
+          listing_id: string
+          ort_slug: string | null
+          sent_at: string
+        }
+        Insert: {
+          alert_id: string
+          email: string
+          id?: string
+          listing_id: string
+          ort_slug?: string | null
+          sent_at?: string
+        }
+        Update: {
+          alert_id?: string
+          email?: string
+          id?: string
+          listing_id?: string
+          ort_slug?: string | null
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_egg_alert_sends_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_egg_alert_sends_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "public_egg_sale_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_egg_alerts: {
         Row: {
           created_at: string
