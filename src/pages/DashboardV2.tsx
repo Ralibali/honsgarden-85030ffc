@@ -433,8 +433,7 @@ export default function DashboardV2() {
 
       <YearReportPromoCard />
 
-
-
+      <FrostAlertCard daily={weatherData?.daily} />
 
       {/* ─── 2. Insikter (accordion) ─── */}
       <Card className="border-border/50 shadow-sm">
