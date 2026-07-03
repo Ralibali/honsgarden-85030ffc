@@ -238,12 +238,26 @@ async function generateOrtOgImage(ort) {
   }
 }
 
+function renderOrtCta(ort) {
+  const ortName = escapeHtml(ort.name);
+  const slug = escapeHtml(ort.slug);
+  return `<aside class="ort-cta" style="margin:2.5rem auto;max-width:720px;padding:1.75rem 1.5rem;border:1px solid #E5E0D5;border-radius:1rem;background:#FAF8F4;text-align:center;font-family:Inter,system-ui,sans-serif;">
+  <h2 style="font-family:'Young Serif',Georgia,serif;font-size:1.5rem;line-height:1.3;color:#3A6B35;margin:0 0 0.5rem;">Drömmer du om egna höns i ${ortName}? 🐔</h2>
+  <p style="margin:0 0 1.25rem;color:#3f3f3f;font-size:1rem;line-height:1.5;">Kom igång med din egen hönsflock – gratis guide för nybörjare, eller hitta färska ägg från lokala säljare på kartan.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;">
+    <a href="/borja-med-hons?utm_source=ort-sida&amp;utm_content=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#3A6B35;color:#FFF9EC;font-weight:600;text-decoration:none;">Börja med höns</a>
+    <a href="/karta?ort=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#FFF9EC;color:#3A6B35;border:1px solid #3A6B35;font-weight:600;text-decoration:none;">Se äggsäljare i ${ortName} på kartan</a>
+  </div>
+</aside>`;
+}
+
 function buildOrtPage(template, ort, ogImagePath) {
   const path = `/salja-agg/${ort.slug}`;
   const title = `Köp färska ägg i ${ort.name} – hitta säljare nära dig | Hönsgården`;
   const description = `Hitta lokala hönsägare i ${ort.name} (${ort.lan}) som säljer färska ägg direkt från gården. Bläddra i säljlistor, se priser och boka hämtning nära dig.`;
   const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Köp färska ägg i ${ort.name}`, description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE', about: { '@type': 'Place', name: ort.name, address: { '@type': 'PostalAddress', addressLocality: ort.name, addressRegion: ort.lan, addressCountry: 'SE' } } };
-  return injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, jsonLd }));
+  const withHead = injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, jsonLd }));
+  return withHead.replace('<div id="root"></div>', `<div id="root">${renderOrtCta(ort)}</div>`);
 }
 
 const CATEGORY_META = {
