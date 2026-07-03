@@ -45,7 +45,7 @@ async function checkRateLimit(supabase: any, ip: string): Promise<boolean> {
   const windowStart = new Date(Math.floor(Date.now() / RATE_LIMIT_WINDOW_MS) * RATE_LIMIT_WINDOW_MS).toISOString();
   // rate_limits.user_id is UUID – hash IP to a deterministic UUIDv5-ish value via md5.
   const enc = new TextEncoder().encode(`egg-alert:${ip}`);
-  const hash = await crypto.subtle.digest("MD5", enc).catch(() => crypto.subtle.digest("SHA-1", enc));
+  const hash = await crypto.subtle.digest("SHA-1", enc);
   const bytes = new Uint8Array(hash).slice(0, 16);
   const hex = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
   const pseudoUserId = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
