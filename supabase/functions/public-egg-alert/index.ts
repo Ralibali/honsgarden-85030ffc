@@ -209,6 +209,28 @@ Deno.serve(async (req) => {
     }
     const p = parsed.data;
 
+    // Honeypot – silently accept and drop if filled by a bot.
+    if ((p.website && p.website.trim()) || (p.hp_field && p.hp_field.trim())) {
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // IP rate limit: 5 requests / IP / hour
+    const ip = clientIp(req);
+    const allowed = await checkRateLimit(supabase, ip);
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "rate_limited" }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
+        },
+      );
+    }
+
+
     const { data, error } = await supabase.rpc("request_public_egg_alert", {
       p_email: p.email,
       p_ort_slug: p.ort_slug ?? null,
