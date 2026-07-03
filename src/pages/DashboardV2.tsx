@@ -207,7 +207,8 @@ function InsightRow({
   );
 }
 
-export default function Dashboard() {
+export default function DashboardV2() {
+  usePageTitle('Dashboard');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
