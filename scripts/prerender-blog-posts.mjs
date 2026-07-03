@@ -363,46 +363,82 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
-async function main() {
-  const template = await readFile('dist/index.html', 'utf8');
-  const posts = await fetchPosts();
-  const orter = await loadOrter();
-  const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
-
-  for (const page of STATIC_PAGES) await writeRoute(page.route, buildStaticPage(template, page));
-  await writeRoute('terms', buildTermsPage(template));
-  for (const [slug, meta] of Object.entries(CATEGORY_META)) await writeRoute(`blogg/kategori/${slug}`, buildCategoryPage(template, slug, meta));
-
-  const tagSet = new Set();
-  for (const post of posts) if (Array.isArray(post.tags)) post.tags.forEach(t => t && tagSet.add(t));
-  const tags = Array.from(tagSet);
-  for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(template, tag));
-
-  await Promise.all(posts.flatMap((post) => {
-    const ops = [writeRoute(`blogg/${post.slug}`, buildArticlePage(template, post))];
-    // Redirecta bara /guider/{slug} → /blogg/{slug} om det INTE är en dedikerad regelguide.
-    if (!regulationSlugs.has(post.slug)) {
-      ops.push(writeRoute(`guider/${post.slug}`, buildRedirectPage(template, `/blogg/${post.slug}`)));
-    }
-    return ops;
-  }));
-  await writeRoute('guider', buildRedirectPage(template, '/blogg'));
-
-  // Prerender de dedikerade regelguiderna.
-  for (const guide of REGULATION_GUIDES) {
-    await writeRoute(`guider/${guide.slug}`, buildRegulationGuidePage(template, guide));
+async function runStep(name, fn) {
+  try {
+    await fn();
+    console.log(`✓ ${name}`);
+  } catch (error) {
+    console.error(`⚠️ PRERENDER-STEG MISSLYCKADES [${name}]: ${error?.stack || error?.message || error}`);
   }
-
-  for (const ort of orter) {
-    const ogPath = await generateOrtOgImage(ort);
-    await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
-  }
-
-  await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES), 'utf8');
-  console.log(`✅ Prerendered ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor. Sitemap uppdaterad.`);
 }
 
-main().catch((error) => {
-  console.error('Prerendering misslyckades:', error.message);
-  process.exit(1);
-});
+async function main() {
+  const template = await readFile('dist/index.html', 'utf8');
+
+  let posts = [];
+  let orter = [];
+  const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
+  const tagSet = new Set();
+
+  await runStep('fetch-posts', async () => {
+    posts = await fetchPosts();
+    for (const post of posts) if (Array.isArray(post.tags)) post.tags.forEach(t => t && tagSet.add(t));
+  });
+  await runStep('load-orter', async () => {
+    orter = await loadOrter();
+  });
+
+  await runStep('static-pages', async () => {
+    for (const page of STATIC_PAGES) await writeRoute(page.route, buildStaticPage(template, page));
+    await writeRoute('terms', buildTermsPage(template));
+  });
+
+  await runStep('category-pages', async () => {
+    for (const [slug, meta] of Object.entries(CATEGORY_META)) await writeRoute(`blogg/kategori/${slug}`, buildCategoryPage(template, slug, meta));
+  });
+
+  const tags = Array.from(tagSet);
+  await runStep('tag-pages', async () => {
+    for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(template, tag));
+  });
+
+  await runStep('blog-articles', async () => {
+    await Promise.all(posts.flatMap((post) => {
+      const ops = [writeRoute(`blogg/${post.slug}`, buildArticlePage(template, post))];
+      if (!regulationSlugs.has(post.slug)) {
+        ops.push(writeRoute(`guider/${post.slug}`, buildRedirectPage(template, `/blogg/${post.slug}`)));
+      }
+      return ops;
+    }));
+    await writeRoute('guider', buildRedirectPage(template, '/blogg'));
+  });
+
+  await runStep('regulation-guides', async () => {
+    for (const guide of REGULATION_GUIDES) {
+      await writeRoute(`guider/${guide.slug}`, buildRegulationGuidePage(template, guide));
+    }
+  });
+
+  await runStep('ort-pages', async () => {
+    for (const ort of orter) {
+      const ogPath = await generateOrtOgImage(ort);
+      await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
+    }
+  });
+
+  await runStep('sitemap', async () => {
+    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES), 'utf8');
+  });
+
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor.`);
+}
+
+main()
+  .catch((error) => {
+    console.error(`⚠️ PRERENDER MISSLYCKADES: ${error?.stack || error?.message || error}`);
+  })
+  .finally(() => {
+    // Prerender är progressiv förbättring – deploya alltid det redan lyckade vite-bygget.
+    process.exit(0);
+  });
+
