@@ -33,6 +33,7 @@ import { CountUp } from '@/components/CountUp';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
 import SinceLastVisitCard from '@/components/SinceLastVisitCard';
 import InstallAppCard from '@/components/InstallAppCard';
+import FrostAlertCard from '@/components/FrostAlertCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 function getGreeting() {
@@ -432,8 +433,7 @@ export default function DashboardV2() {
 
       <YearReportPromoCard />
 
-
-
+      <FrostAlertCard daily={weatherData?.daily} />
 
       {/* ─── 2. Insikter (accordion) ─── */}
       <Card className="border-border/50 shadow-sm">
