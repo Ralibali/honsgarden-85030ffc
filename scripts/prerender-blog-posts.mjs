@@ -257,7 +257,7 @@ function buildOrtPage(template, ort, ogImagePath) {
   const description = `Hitta lokala hönsägare i ${ort.name} (${ort.lan}) som säljer färska ägg direkt från gården. Bläddra i säljlistor, se priser och boka hämtning nära dig.`;
   const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Köp färska ägg i ${ort.name}`, description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE', about: { '@type': 'Place', name: ort.name, address: { '@type': 'PostalAddress', addressLocality: ort.name, addressRegion: ort.lan, addressCountry: 'SE' } } };
   const withHead = injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, jsonLd }));
-  return withHead.replace('<div id="root"></div>', `<div id="root"></div>\n<noscript>${renderOrtCta(ort)}</noscript>\n<template id="ort-cta-static">${renderOrtCta(ort)}</template>`);
+  return withHead.replace('<div id="root"></div>', `<div id="root">${renderOrtCta(ort)}</div>`);
 }
 
 const CATEGORY_META = {
