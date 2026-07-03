@@ -33,6 +33,7 @@ import { CountUp } from '@/components/CountUp';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
 import SinceLastVisitCard from '@/components/SinceLastVisitCard';
 import InstallAppCard from '@/components/InstallAppCard';
+import { usePageTitle } from '@/hooks/usePageTitle';
 
 function getGreeting() {
   const now = new Date();
