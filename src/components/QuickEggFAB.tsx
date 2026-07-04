@@ -52,7 +52,7 @@ export function QuickEggFAB() {
   const mutation = useMutation({
     mutationFn: async ({ count, hen_id, flock_id }: { count: number; hen_id?: string; flock_id?: string }) => {
       const date = useYesterday
-        ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        ? localCalendarDate(new Date(Date.now() - 86400000))
         : todayLocal();
       const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
@@ -80,7 +80,7 @@ export function QuickEggFAB() {
       queryClient.setQueryData(['eggs'], (old: any[]) => {
         if (!old) return old;
         const date = useYesterday
-          ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+          ? localCalendarDate(new Date(Date.now() - 86400000))
           : todayLocal();
         return [...old, { date, count, id: `temp-${Date.now()}`, hen_id: null, flock_id: null }];
       });
@@ -90,7 +90,7 @@ export function QuickEggFAB() {
       const isOffline = result?.__offline === true;
       if (isOffline) {
         const date = useYesterday
-          ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+          ? localCalendarDate(new Date(Date.now() - 86400000))
           : todayLocal();
         queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
           const next = (old ?? []).filter((e: any) => !String(e.id).startsWith('temp-'));
@@ -120,7 +120,7 @@ export function QuickEggFAB() {
 
       // Personal record check
       const date = useYesterday
-        ? new Date(Date.now() - 86400000).toISOString().split('T')[0]
+        ? localCalendarDate(new Date(Date.now() - 86400000))
         : todayLocal();
       const existing = (queryClient.getQueryData(['eggs']) as any[]) || [];
       const records = checkPersonalRecords(user?.id, [...existing, { date, count: savedCount }], date);
