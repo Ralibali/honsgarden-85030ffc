@@ -9,7 +9,8 @@ import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
   Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone, AlertTriangle
 } from 'lucide-react';
-import { DollarSign, Gift } from 'lucide-react';
+import { DollarSign, Gift, Sparkles } from 'lucide-react';
+import AgdaChatLogPanel from '@/components/admin/AgdaChatLogPanel';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ReferralsAdminPanel from '@/components/admin/ReferralsAdminPanel';
 import NotificationSender from '@/components/admin/NotificationSender';
