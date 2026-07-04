@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { todayLocal } from '@/lib/datetime';
+import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { Egg, Plus, Minus, Check, X, CalendarMinus, Bird } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
