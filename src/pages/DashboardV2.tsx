@@ -236,12 +236,12 @@ export default function DashboardV2() {
   const currentTemp = weatherData?.current?.temperature_2m;
   const weatherCode = weatherData?.current?.weathercode ?? 0;
 
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = localCalendarDate(now);
   const todayEggs = eggs.filter((e: any) => e.date === todayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
 
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+  const yesterdayStr = localCalendarDate(yesterdayDate);
   const yesterdayEggs = eggs.filter((e: any) => e.date === yesterdayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
 
   const weekAgo = new Date(now);
