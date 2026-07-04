@@ -234,6 +234,31 @@ serve(async (req) => {
 
     const proactiveInsights = buildProactiveInsights(hens, eggs, health);
 
+    // Build a compact context snapshot for logging (what Agda actually "saw")
+    const uniqueEggDates = new Set(eggs.map((e: any) => e.date)).size;
+    const contextSnapshot = {
+      counts: {
+        hens_total: hens.length,
+        hens_active: activeHens,
+        egg_logs_90d: eggs.length,
+        eggs_sum_90d: totalEggs,
+        eggs_avg_per_day: uniqueEggDates > 0 ? Number((totalEggs / Math.min(90, uniqueEggDates)).toFixed(2)) : 0,
+        health_notes: health.length,
+        feed_records: feed.length,
+        history_messages_sent: Math.min(20, (Array.isArray(history) ? history.length : 0)),
+      },
+      hens: hens.map((h: any) => ({
+        id: h.id, name: h.name, breed: h.breed, hen_type: h.hen_type,
+        is_active: h.is_active, birth_date: h.birth_date,
+      })),
+      recent_eggs: eggs.slice(0, 30).map((e: any) => ({ date: e.date, count: e.count, hen_id: e.hen_id })),
+      recent_health: health.slice(0, 10).map((h: any) => ({ date: h.date, type: h.type, description: h.description, hen_id: h.hen_id })),
+      recent_feed: feed.slice(0, 10).map((f: any) => ({ date: f.date, feed_type: f.feed_type, amount_kg: f.amount_kg, cost: f.cost })),
+      proactive_insights: proactiveInsights
+        .replace(/^\n\nPROAKTIVA INSIKTER[^\n]*\n/, '')
+        .split('\n').filter(Boolean),
+    };
+
     const systemPrompt = `Du är Agda 🐔 – en erfaren, vänlig AI-hönskonsult som hjälper svenska hönsägare.
 
 ## PERSONLIGHET
@@ -275,6 +300,27 @@ ${KNOWLEDGE_BASE}`;
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) throw new Error("AI-nyckel saknas");
 
+    const model = "google/gemini-3-flash-preview";
+
+    // Log question + context snapshot immediately (before AI call)
+    let logId: string | null = null;
+    try {
+      const { data: inserted, error: insErr } = await adminClient
+        .from("agda_chat_logs")
+        .insert({
+          user_id: user.id,
+          question: message,
+          context_snapshot: contextSnapshot,
+          model,
+        })
+        .select("id")
+        .maybeSingle();
+      if (insErr) console.error("agda_chat_logs insert failed:", insErr.message);
+      logId = inserted?.id ?? null;
+    } catch (e) {
+      console.error("agda_chat_logs insert threw:", (e as Error).message);
+    }
+
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -282,16 +328,24 @@ ${KNOWLEDGE_BASE}`;
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model,
         messages,
         max_tokens: 1500,
         temperature: 0.7,
         stream: true,
+        stream_options: { include_usage: true },
       }),
     });
 
     if (!aiRes.ok) {
       const status = aiRes.status;
+      const errText = await aiRes.text().catch(() => "");
+      if (logId) {
+        await adminClient.from("agda_chat_logs").update({
+          error: `AI ${status}: ${errText.slice(0, 500)}`,
+          completed_at: new Date().toISOString(),
+        }).eq("id", logId);
+      }
       if (status === 429) {
         return new Response(JSON.stringify({ error: "Agda har för många samtal just nu. Försök igen om en liten stund! 🐔" }), {
           status: 429,
@@ -304,13 +358,56 @@ ${KNOWLEDGE_BASE}`;
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errText = await aiRes.text();
       console.error("AI gateway error:", status, errText);
       throw new Error("AI-tjänsten svarade inte");
     }
 
-    // Stream SSE back to client
-    return new Response(aiRes.body, {
+    // Tee the SSE stream: forward to client, capture full text + usage for logging
+    if (!aiRes.body) throw new Error("Tomt AI-svar");
+
+    let fullText = "";
+    let usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null = null;
+    let sseBuffer = "";
+    const decoder = new TextDecoder();
+
+    const transform = new TransformStream<Uint8Array, Uint8Array>({
+      transform(chunk, controller) {
+        controller.enqueue(chunk);
+        try {
+          sseBuffer += decoder.decode(chunk, { stream: true });
+          const lines = sseBuffer.split("\n");
+          sseBuffer = lines.pop() ?? "";
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            const payload = trimmed.slice(5).trim();
+            if (!payload || payload === "[DONE]") continue;
+            try {
+              const json = JSON.parse(payload);
+              const delta = json?.choices?.[0]?.delta?.content;
+              if (typeof delta === "string") fullText += delta;
+              if (json?.usage) usage = json.usage;
+            } catch { /* partial JSON, ignore */ }
+          }
+        } catch { /* ignore */ }
+      },
+      async flush() {
+        if (!logId) return;
+        try {
+          await adminClient.from("agda_chat_logs").update({
+            answer: fullText || null,
+            prompt_tokens: usage?.prompt_tokens ?? null,
+            completion_tokens: usage?.completion_tokens ?? null,
+            total_tokens: usage?.total_tokens ?? null,
+            completed_at: new Date().toISOString(),
+          }).eq("id", logId);
+        } catch (e) {
+          console.error("agda_chat_logs update failed:", (e as Error).message);
+        }
+      },
+    });
+
+    return new Response(aiRes.body.pipeThrough(transform), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (err: any) {
@@ -321,3 +418,4 @@ ${KNOWLEDGE_BASE}`;
     });
   }
 });
+
