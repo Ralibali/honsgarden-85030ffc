@@ -289,7 +289,7 @@ export default function DashboardV2() {
   };
 
   const diaryMutation = useMutation({
-    mutationFn: (text: string) => api.createHealthLog({ date: now.toISOString().split('T')[0], type: 'diary', description: text }),
+    mutationFn: (text: string) => api.createHealthLog({ date: todayLocal(), type: 'diary', description: text }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['health-logs'] }); toast({ title: '📝 Dagboksinlägg sparat!' }); setDiaryOpen(false); setDiaryText(''); },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
