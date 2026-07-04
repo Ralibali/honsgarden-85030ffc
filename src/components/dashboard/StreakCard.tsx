@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Flame, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { api } from '@/lib/api';
+import { todayLocal } from '@/lib/datetime';
 
 const MILESTONES = [365, 100, 30, 7];
 
@@ -14,8 +15,7 @@ function milestoneBadge(streak: number): string | null {
 
 function hasLoggedToday(lastActivity: string | null): boolean {
   if (!lastActivity) return false;
-  const today = new Date().toISOString().slice(0, 10);
-  return lastActivity === today;
+  return lastActivity === todayLocal();
 }
 
 export function StreakCard() {
