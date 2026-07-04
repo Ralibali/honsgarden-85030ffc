@@ -323,6 +323,51 @@ export type Database = {
           },
         ]
       }
+      agda_chat_logs: {
+        Row: {
+          answer: string | null
+          completed_at: string | null
+          completion_tokens: number | null
+          context_snapshot: Json
+          created_at: string
+          error: string | null
+          id: string
+          model: string | null
+          prompt_tokens: number | null
+          question: string
+          total_tokens: number | null
+          user_id: string
+        }
+        Insert: {
+          answer?: string | null
+          completed_at?: string | null
+          completion_tokens?: number | null
+          context_snapshot?: Json
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          prompt_tokens?: number | null
+          question: string
+          total_tokens?: number | null
+          user_id: string
+        }
+        Update: {
+          answer?: string | null
+          completed_at?: string | null
+          completion_tokens?: number | null
+          context_snapshot?: Json
+          created_at?: string
+          error?: string | null
+          id?: string
+          model?: string | null
+          prompt_tokens?: number | null
+          question?: string
+          total_tokens?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       backup_exports: {
         Row: {
           created_at: string
