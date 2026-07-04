@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { todayLocal } from '@/lib/datetime';
 
 export interface ActiveKarens {
   id: string;
@@ -14,7 +15,7 @@ export function useActiveKarens() {
   return useQuery<ActiveKarens[]>({
     queryKey: ['active-karens'],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayLocal();
       const { data, error } = await (supabase
         .from('health_events') as any)
         .select('id, title, hen_id, flock_id, egg_safe_from')

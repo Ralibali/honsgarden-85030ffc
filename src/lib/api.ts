@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { todayLocal } from '@/lib/datetime';
+import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -814,12 +814,16 @@ export async function touchStreak() {
 }
 
 function calculateStreakFromEggs(eggs: EggLog[]): number {
-  const today = new Date();
+  // Använd användarens LOKALA kalenderdag så att en logg strax efter midnatt
+  // (t.ex. 00:15 svensk tid) inte hamnar på "gårdagens" UTC-datum och därmed
+  // bryter streaken orättvist.
+  const todayStr = todayLocal();
+  const today = new Date(`${todayStr}T12:00:00`); // mitten av dagen – undvik DST-kanter
   let streak = 0;
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = localCalendarDate(d);
     const hasEggs = eggs.some(e => e.date === dateStr && e.count > 0);
     if (hasEggs) streak++;
     else if (i > 0) break;

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { DailySummaryModal } from '@/components/DailySummaryModal';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -113,12 +114,13 @@ function getSeasonalTip(): { text: string; emoji: string } {
 }
 
 function calculateStreak(eggs: any[]): number {
-  const today = new Date();
+  const todayStr = todayLocal();
+  const today = new Date(`${todayStr}T12:00:00`);
   let streak = 0;
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = localCalendarDate(d);
     const hasEggs = eggs.some((e: any) => e.date === dateStr && e.count > 0);
     if (hasEggs) streak++;
     else if (i > 0) break;
@@ -234,12 +236,12 @@ export default function DashboardV2() {
   const currentTemp = weatherData?.current?.temperature_2m;
   const weatherCode = weatherData?.current?.weathercode ?? 0;
 
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = localCalendarDate(now);
   const todayEggs = eggs.filter((e: any) => e.date === todayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
 
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+  const yesterdayStr = localCalendarDate(yesterdayDate);
   const yesterdayEggs = eggs.filter((e: any) => e.date === yesterdayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
 
   const weekAgo = new Date(now);
@@ -287,7 +289,7 @@ export default function DashboardV2() {
   };
 
   const diaryMutation = useMutation({
-    mutationFn: (text: string) => api.createHealthLog({ date: now.toISOString().split('T')[0], type: 'diary', description: text }),
+    mutationFn: (text: string) => api.createHealthLog({ date: todayLocal(), type: 'diary', description: text }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['health-logs'] }); toast({ title: '📝 Dagboksinlägg sparat!' }); setDiaryOpen(false); setDiaryText(''); },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });

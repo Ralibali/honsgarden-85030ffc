@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +22,7 @@ function kr(value: number) {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return todayLocal();
 }
 
 export default function ManualEggSalesCard() {
