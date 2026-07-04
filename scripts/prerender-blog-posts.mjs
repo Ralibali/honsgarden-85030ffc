@@ -367,13 +367,22 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+const SKIPPED_STEPS = [];
+
 async function runStep(name, fn) {
   try {
     await fn();
     console.log(`✓ ${name}`);
   } catch (error) {
-    console.error(`⚠️ PRERENDER-STEG MISSLYCKADES [${name}]: ${error?.stack || error?.message || error}`);
+    const reason = error?.message || String(error);
+    SKIPPED_STEPS.push({ name, reason });
+    console.error(`⚠️ PRERENDER-STEG MISSLYCKADES [${name}]: ${error?.stack || reason}`);
   }
+}
+
+function noteSkipped(name, reason) {
+  SKIPPED_STEPS.push({ name, reason });
+  console.warn(`⚠️ HOPPAR ÖVER [${name}]: ${reason}`);
 }
 
 async function main() {
