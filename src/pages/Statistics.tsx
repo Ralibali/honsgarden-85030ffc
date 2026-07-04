@@ -13,6 +13,7 @@ import { downloadPDF, downloadMultiSheetExcel } from '@/lib/exportUtils';
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { todayLocal } from '@/lib/datetime';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
