@@ -673,6 +673,10 @@ export default function Admin() {
           <AgdaAdminPanel />
         </TabsContent>
 
+        <TabsContent value="agda-chat" className="space-y-3">
+          <AgdaChatLogPanel />
+        </TabsContent>
+
         <TabsContent value="errors" className="space-y-3">
           <ErrorLogsPanel />
         </TabsContent>
