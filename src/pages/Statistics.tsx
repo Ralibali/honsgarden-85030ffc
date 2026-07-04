@@ -98,7 +98,7 @@ export default function Statistics() {
   const maxFlockEggs = flocks.length > 0 ? Math.max(...flocks.map((f: any) => f.total_eggs), 1) : 1;
 
   const handleExportPDF = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLocal();
     const summaryRows: string[][] = [
       ['Totalt ägg', String(summary?.total_eggs ?? '–')],
       ['Snitt per dag', summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '–'],
@@ -123,7 +123,7 @@ export default function Statistics() {
   };
 
   const handleExportExcel = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayLocal();
     const summaryRows = [
       { Nyckeltal: 'Totalt ägg', Värde: summary?.total_eggs ?? '' },
       { Nyckeltal: 'Snitt per dag', Värde: summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '' },
