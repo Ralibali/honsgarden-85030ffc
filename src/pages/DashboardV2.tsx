@@ -113,12 +113,13 @@ function getSeasonalTip(): { text: string; emoji: string } {
 }
 
 function calculateStreak(eggs: any[]): number {
-  const today = new Date();
+  const todayStr = todayLocal();
+  const today = new Date(`${todayStr}T12:00:00`);
   let streak = 0;
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = localCalendarDate(d);
     const hasEggs = eggs.some((e: any) => e.date === dateStr && e.count > 0);
     if (hasEggs) streak++;
     else if (i > 0) break;
