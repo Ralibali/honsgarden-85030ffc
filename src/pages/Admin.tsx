@@ -9,7 +9,8 @@ import {
   Users, Crown, MessageSquare, BarChart3, Loader2, Trash2,
   Shield, TrendingUp, Egg, CheckCircle2, XCircle, Clock, FileCheck, Search, CalendarDays, BookOpen, Link2, Eye, Bell, Send, Mail, Lightbulb, RefreshCw, Smartphone, AlertTriangle
 } from 'lucide-react';
-import { DollarSign, Gift } from 'lucide-react';
+import { DollarSign, Gift, Sparkles } from 'lucide-react';
+import AgdaChatLogPanel from '@/components/admin/AgdaChatLogPanel';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ReferralsAdminPanel from '@/components/admin/ReferralsAdminPanel';
 import NotificationSender from '@/components/admin/NotificationSender';
@@ -271,6 +272,9 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
+          </TabsTrigger>
+          <TabsTrigger value="agda-chat" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agda AI</span><span className="sm:hidden">🤖</span>
           </TabsTrigger>
           <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
             <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
@@ -667,6 +671,10 @@ export default function Admin() {
 
         <TabsContent value="agda" className="space-y-3">
           <AgdaAdminPanel />
+        </TabsContent>
+
+        <TabsContent value="agda-chat" className="space-y-3">
+          <AgdaChatLogPanel />
         </TabsContent>
 
         <TabsContent value="errors" className="space-y-3">
