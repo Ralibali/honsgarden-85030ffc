@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MessageSquare, Search, Sparkles, User as UserIcon, Bot, Database } from 'lucide-react';
+import { Loader2, MessageSquare, Search, Sparkles, User as UserIcon, Bot, Database, Download, FileJson, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import jsPDF from 'jspdf';
 
 type LogRow = {
   id: string;
@@ -88,6 +89,101 @@ export default function AgdaChatLogPanel() {
     return { total, uniqueUsers, totalTokens, withAnswer, errors };
   }, [logs]);
 
+  const buildExportPayload = (rows: LogRow[]) =>
+    rows.map((l) => {
+      const p = profileById[l.user_id];
+      return {
+        id: l.id,
+        created_at: l.created_at,
+        completed_at: l.completed_at,
+        user: {
+          user_id: l.user_id,
+          email: p?.email ?? null,
+          display_name: p?.display_name ?? null,
+        },
+        model: l.model,
+        tokens: {
+          prompt: l.prompt_tokens,
+          completion: l.completion_tokens,
+          total: l.total_tokens,
+        },
+        question: l.question,
+        answer: l.answer,
+        error: l.error,
+        context_snapshot: l.context_snapshot,
+      };
+    });
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportJson = (rows: LogRow[], filename: string) => {
+    const payload = buildExportPayload(rows);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, filename);
+  };
+
+  const exportPdf = (row: LogRow) => {
+    const p = profileById[row.user_id];
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const usableWidth = pageWidth - marginX * 2;
+    let y = 50;
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageHeight - 40) {
+        doc.addPage();
+        y = 50;
+      }
+    };
+
+    const writeBlock = (text: string, size = 10, bold = false) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(text || '—', usableWidth);
+      for (const line of lines) {
+        ensureSpace(size + 4);
+        doc.text(line, marginX, y);
+        y += size + 4;
+      }
+    };
+
+    writeBlock('Agda AI – konversationslogg', 16, true);
+    y += 6;
+    writeBlock(
+      `Datum: ${new Date(row.created_at).toLocaleString('sv-SE')}\n` +
+        `Användare: ${p?.display_name || p?.email || row.user_id}\n` +
+        `Modell: ${row.model || '—'}\n` +
+        `Tokens: ${row.prompt_tokens ?? '?'} → ${row.completion_tokens ?? '?'} (totalt ${row.total_tokens ?? '?'})`,
+      10,
+    );
+    y += 10;
+
+    writeBlock('Användarens fråga', 12, true);
+    writeBlock(row.question, 10);
+    y += 8;
+
+    writeBlock('Agdas svar', 12, true);
+    writeBlock(row.answer || (row.error ? `Fel: ${row.error}` : 'Inget svar sparades.'), 10);
+    y += 8;
+
+    writeBlock('Datapunkter Agda såg (kontext-snapshot)', 12, true);
+    writeBlock(JSON.stringify(row.context_snapshot ?? {}, null, 2), 8);
+
+    const stamp = new Date(row.created_at).toISOString().replace(/[:.]/g, '-');
+    doc.save(`agda-konversation-${stamp}.pdf`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -98,13 +194,25 @@ export default function AgdaChatLogPanel() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" /> Agda AI – chatt-logg
-        </h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
-          Alla frågor användare skickat till Agda, tillsammans med den data-ögonblicksbild Agda såg när svaret genererades.
-        </p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" /> Agda AI – chatt-logg
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Alla frågor användare skickat till Agda, tillsammans med den data-ögonblicksbild Agda såg när svaret genererades.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => exportJson(filtered, `agda-chattlogg-${new Date().toISOString().slice(0, 10)}.json`)}
+          disabled={filtered.length === 0}
+          className="gap-1.5"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Exportera {query ? 'urval' : 'alla'} (JSON)
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
@@ -233,8 +341,24 @@ export default function AgdaChatLogPanel() {
                   </pre>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setSelected(null)}>Stäng</Button>
+                <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => exportJson([selected], `agda-konversation-${selected.id}.json`)}
+                  >
+                    <FileJson className="h-3.5 w-3.5" /> JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => exportPdf(selected)}
+                  >
+                    <FileText className="h-3.5 w-3.5" /> PDF
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setSelected(null)}>Stäng</Button>
                 </div>
               </div>
             </>
