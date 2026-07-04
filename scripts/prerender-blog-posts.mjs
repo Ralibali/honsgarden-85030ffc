@@ -443,6 +443,15 @@ async function main() {
   });
 
   console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor.`);
+
+  if (SKIPPED_STEPS.length === 0) {
+    console.log('📋 Sammanfattning: alla prerender-steg lyckades.');
+  } else {
+    console.log(`📋 Sammanfattning: ${SKIPPED_STEPS.length} steg hoppades över:`);
+    for (const { name, reason } of SKIPPED_STEPS) {
+      console.log(`   • ${name} — ${reason}`);
+    }
+  }
 }
 
 main()
