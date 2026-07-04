@@ -89,6 +89,101 @@ export default function AgdaChatLogPanel() {
     return { total, uniqueUsers, totalTokens, withAnswer, errors };
   }, [logs]);
 
+  const buildExportPayload = (rows: LogRow[]) =>
+    rows.map((l) => {
+      const p = profileById[l.user_id];
+      return {
+        id: l.id,
+        created_at: l.created_at,
+        completed_at: l.completed_at,
+        user: {
+          user_id: l.user_id,
+          email: p?.email ?? null,
+          display_name: p?.display_name ?? null,
+        },
+        model: l.model,
+        tokens: {
+          prompt: l.prompt_tokens,
+          completion: l.completion_tokens,
+          total: l.total_tokens,
+        },
+        question: l.question,
+        answer: l.answer,
+        error: l.error,
+        context_snapshot: l.context_snapshot,
+      };
+    });
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportJson = (rows: LogRow[], filename: string) => {
+    const payload = buildExportPayload(rows);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, filename);
+  };
+
+  const exportPdf = (row: LogRow) => {
+    const p = profileById[row.user_id];
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const usableWidth = pageWidth - marginX * 2;
+    let y = 50;
+
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageHeight - 40) {
+        doc.addPage();
+        y = 50;
+      }
+    };
+
+    const writeBlock = (text: string, size = 10, bold = false) => {
+      doc.setFont('helvetica', bold ? 'bold' : 'normal');
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(text || '—', usableWidth);
+      for (const line of lines) {
+        ensureSpace(size + 4);
+        doc.text(line, marginX, y);
+        y += size + 4;
+      }
+    };
+
+    writeBlock('Agda AI – konversationslogg', 16, true);
+    y += 6;
+    writeBlock(
+      `Datum: ${new Date(row.created_at).toLocaleString('sv-SE')}\n` +
+        `Användare: ${p?.display_name || p?.email || row.user_id}\n` +
+        `Modell: ${row.model || '—'}\n` +
+        `Tokens: ${row.prompt_tokens ?? '?'} → ${row.completion_tokens ?? '?'} (totalt ${row.total_tokens ?? '?'})`,
+      10,
+    );
+    y += 10;
+
+    writeBlock('Användarens fråga', 12, true);
+    writeBlock(row.question, 10);
+    y += 8;
+
+    writeBlock('Agdas svar', 12, true);
+    writeBlock(row.answer || (row.error ? `Fel: ${row.error}` : 'Inget svar sparades.'), 10);
+    y += 8;
+
+    writeBlock('Datapunkter Agda såg (kontext-snapshot)', 12, true);
+    writeBlock(JSON.stringify(row.context_snapshot ?? {}, null, 2), 8);
+
+    const stamp = new Date(row.created_at).toISOString().replace(/[:.]/g, '-');
+    doc.save(`agda-konversation-${stamp}.pdf`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
