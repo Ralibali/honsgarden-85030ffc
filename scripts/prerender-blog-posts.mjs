@@ -4,8 +4,12 @@ import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY =
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY;
 
 const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const NOINDEX_ROBOTS = 'noindex, nofollow';
@@ -144,8 +148,7 @@ function buildArticleHead(post) {
 
 async function fetchPosts() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.warn('⚠️ Saknar Supabase env vars för prerendering. Bloggartiklar hoppas över.');
-    return [];
+    throw new Error('Saknar Supabase env vars (SUPABASE_URL/VITE_SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY/VITE_SUPABASE_PUBLISHABLE_KEY)');
   }
 
   const params = new URLSearchParams({
@@ -363,13 +366,22 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
 
+const SKIPPED_STEPS = [];
+
 async function runStep(name, fn) {
   try {
     await fn();
     console.log(`✓ ${name}`);
   } catch (error) {
-    console.error(`⚠️ PRERENDER-STEG MISSLYCKADES [${name}]: ${error?.stack || error?.message || error}`);
+    const reason = error?.message || String(error);
+    SKIPPED_STEPS.push({ name, reason });
+    console.error(`⚠️ PRERENDER-STEG MISSLYCKADES [${name}]: ${error?.stack || reason}`);
   }
+}
+
+function noteSkipped(name, reason) {
+  SKIPPED_STEPS.push({ name, reason });
+  console.warn(`⚠️ HOPPAR ÖVER [${name}]: ${reason}`);
 }
 
 async function main() {
@@ -431,6 +443,15 @@ async function main() {
   });
 
   console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor.`);
+
+  if (SKIPPED_STEPS.length === 0) {
+    console.log('📋 Sammanfattning: alla prerender-steg lyckades.');
+  } else {
+    console.log(`📋 Sammanfattning: ${SKIPPED_STEPS.length} steg hoppades över:`);
+    for (const { name, reason } of SKIPPED_STEPS) {
+      console.log(`   • ${name} — ${reason}`);
+    }
+  }
 }
 
 main()
