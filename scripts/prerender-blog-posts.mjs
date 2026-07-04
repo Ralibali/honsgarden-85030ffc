@@ -148,8 +148,7 @@ function buildArticleHead(post) {
 
 async function fetchPosts() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.warn('⚠️ Saknar Supabase env vars för prerendering. Bloggartiklar hoppas över.');
-    return [];
+    throw new Error('Saknar Supabase env vars (SUPABASE_URL/VITE_SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY/VITE_SUPABASE_PUBLISHABLE_KEY)');
   }
 
   const params = new URLSearchParams({
