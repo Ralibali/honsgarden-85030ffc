@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { todayLocal } from '@/lib/datetime';
+import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
