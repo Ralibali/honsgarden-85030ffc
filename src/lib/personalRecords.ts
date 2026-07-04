@@ -49,7 +49,7 @@ function rollingWeekTotal(byDate: Map<string, number>, dateStr: string): number 
   for (let i = 0; i < 7; i++) {
     const d = new Date(end);
     d.setDate(d.getDate() - i);
-    const ds = d.toISOString().split('T')[0];
+    const ds = localCalendarDate(d);
     sum += byDate.get(ds) || 0;
   }
   return sum;
