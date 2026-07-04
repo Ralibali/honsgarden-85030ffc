@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { todayLocal } from '@/lib/datetime';
 
 export interface ActiveKarens {
   id: string;
