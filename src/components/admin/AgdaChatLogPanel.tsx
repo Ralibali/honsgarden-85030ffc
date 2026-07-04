@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, MessageSquare, Search, Sparkles, User as UserIcon, Bot, Database } from 'lucide-react';
+import { Loader2, MessageSquare, Search, Sparkles, User as UserIcon, Bot, Database, Download, FileJson, FileText } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import jsPDF from 'jspdf';
 
 type LogRow = {
   id: string;
