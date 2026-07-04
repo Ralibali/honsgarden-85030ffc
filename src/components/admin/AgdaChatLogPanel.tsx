@@ -341,8 +341,24 @@ export default function AgdaChatLogPanel() {
                   </pre>
                 </div>
 
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setSelected(null)}>Stäng</Button>
+                <div className="flex flex-wrap justify-end gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => exportJson([selected], `agda-konversation-${selected.id}.json`)}
+                  >
+                    <FileJson className="h-3.5 w-3.5" /> JSON
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => exportPdf(selected)}
+                  >
+                    <FileText className="h-3.5 w-3.5" /> PDF
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setSelected(null)}>Stäng</Button>
                 </div>
               </div>
             </>
