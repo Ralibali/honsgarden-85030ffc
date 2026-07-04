@@ -3,6 +3,8 @@
  * Stored locally per user — fast and good enough for delight UX
  * (the source of truth is still the egg_logs table).
  */
+import { localCalendarDate } from '@/lib/datetime';
+
 
 export type RecordType = 'day' | 'week';
 
