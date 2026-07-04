@@ -67,7 +67,7 @@ function typeColor(t: string) {
 
 function todayISO() { return todayLocal(); }
 function addDays(iso: string, days: number) {
-  const d = new Date(iso); d.setDate(d.getDate() + days); return d.toISOString().split('T')[0];
+  const d = new Date(`${iso}T12:00:00`); d.setDate(d.getDate() + days); return localCalendarDate(d);
 }
 
 export default function Health() {
