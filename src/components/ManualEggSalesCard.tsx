@@ -22,7 +22,7 @@ function kr(value: number) {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return todayLocal();
 }
 
 export default function ManualEggSalesCard() {
