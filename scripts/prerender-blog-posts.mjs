@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
+import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -341,7 +342,18 @@ function buildRegulationGuidePage(template, guide) {
 }
 
 
-function buildArticlePage(template, post) {
+function buildBreedPage(template, breed) {
+  const path = `/honsraser/${breed.slug}`;
+  const url = `${BASE_URL}${path}`;
+  const title = `${breed.namn} – värpning, temperament & skötsel | Hönsgården`;
+  const jsonLd = [
+    { '@context': 'https://schema.org', '@type': 'Article', headline: `${breed.namn} – värpning, temperament och skötsel`, description: breed.description, url, inLanguage: 'sv-SE', author: { '@type': 'Organization', name: 'Hönsgården' }, publisher: { '@type': 'Organization', name: 'Hönsgården' }, mainEntityOfPage: { '@type': 'WebPage', '@id': url } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: breed.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [ { '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Hönsraser', item: `${BASE_URL}/honsraser` }, { '@type': 'ListItem', position: 3, name: breed.namn, item: url } ] },
+  ];
+  return injectHead(template, buildHeadGeneric({ title, description: breed.description, path, ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: `${breed.namn} – hönsras`, ogType: 'article', jsonLd }));
+}
+
   return injectHead(template, buildArticleHead(post)).replace('<div id="root"></div>', `<div id="root">${renderArticle(post)}</div>`);
 }
 
