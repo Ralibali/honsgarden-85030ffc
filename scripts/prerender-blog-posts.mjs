@@ -354,6 +354,7 @@ function buildBreedPage(template, breed) {
   return injectHead(template, buildHeadGeneric({ title, description: breed.description, path, ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: `${breed.namn} – hönsras`, ogType: 'article', jsonLd }));
 }
 
+function buildArticlePage(template, post) {
   return injectHead(template, buildArticleHead(post)).replace('<div id="root"></div>', `<div id="root">${renderArticle(post)}</div>`);
 }
 
