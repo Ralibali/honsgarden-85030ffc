@@ -35,6 +35,8 @@ import FirstEggActivationCard from '@/components/FirstEggActivationCard';
 import SinceLastVisitCard from '@/components/SinceLastVisitCard';
 import InstallAppCard from '@/components/InstallAppCard';
 import FrostAlertCard from '@/components/FrostAlertCard';
+import OnboardingChecklistCard from '@/components/dashboard/OnboardingChecklistCard';
+import QuickEggLogCard from '@/components/dashboard/QuickEggLogCard';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 function getGreeting() {
@@ -362,10 +364,27 @@ export default function DashboardV2() {
       </div>
 
 
+      {/* Onboarding-checklista */}
+      <OnboardingChecklistCard
+        hensCount={(hens as any[]).length}
+        eggsCount={eggs.length}
+        feedRecordsCount={(feedRecords as any[]).length}
+      />
+
+      {/* Snabblogg – dagens ägg (+/−) */}
+      <QuickEggLogCard
+        todayEggs={todayEggs}
+        todayEggRowIds={(eggs as any[])
+          .filter((e: any) => e.date === todayStr)
+          .sort((a: any, b: any) => (b.created_at || '').localeCompare(a.created_at || ''))
+          .map((e: any) => e.id)}
+      />
+
       {/* Activation: get first egg logged */}
       {(hens as any[]).length > 0 && eggs.length === 0 && (
         <FirstEggActivationCard henName={(hens as any[])[0]?.name} />
       )}
+
 
       {/* Recap of activity since last visit */}
       {eggs.length > 0 && (

@@ -3428,6 +3428,79 @@ export type Database = {
         }
         Relationships: []
       }
+      reminders: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          due_date: string
+          farm_id: string | null
+          flock_id: string | null
+          hen_id: string | null
+          id: string
+          notes: string | null
+          recurrence: string
+          reminder_type: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          due_date: string
+          farm_id?: string | null
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          notes?: string | null
+          recurrence?: string
+          reminder_type?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          due_date?: string
+          farm_id?: string | null
+          flock_id?: string | null
+          hen_id?: string | null
+          id?: string
+          notes?: string | null
+          recurrence?: string
+          reminder_type?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminders_farm_id_fkey"
+            columns: ["farm_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_flock_id_fkey"
+            columns: ["flock_id"]
+            isOneToOne: false
+            referencedRelation: "flocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_hen_id_fkey"
+            columns: ["hen_id"]
+            isOneToOne: false
+            referencedRelation: "hens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scrape_jobs: {
         Row: {
           completed_at: string | null

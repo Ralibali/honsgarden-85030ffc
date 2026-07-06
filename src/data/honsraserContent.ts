@@ -466,7 +466,7 @@ const skanskBlommehona: LongformPage = {
   relatedLinks: standardRelated,
 };
 
-import { BREED_PROFILES, buildBreedPage } from './honsraserBreedProfiles';
+import { BREED_PROFILES, buildBreedPage } from './honsraserBreedProfiles.ts';
 
 const staticPages: Record<string, LongformPage> = {
   honsraser,

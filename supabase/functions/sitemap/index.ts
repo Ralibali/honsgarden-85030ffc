@@ -55,6 +55,15 @@ Deno.serve(async (req) => {
     .select("slug, updated_at")
     .eq("is_active", true);
 
+  // Active marketplace listings (drives /marknad/:slug)
+  const { data: marketplaceListings } = await supabase
+    .from("marketplace_listings")
+    .select("slug, updated_at")
+    .eq("status", "active");
+
+  const MARKETPLACE_CATEGORY_SLUGS = ["hons-till-salu", "klackagg", "tillbehor", "honshus"];
+
+
   // Static list of localities for /salja-agg/:ort (mirrors src/data/saljaAggOrter.ts)
   const SALJA_AGG_ORTER = ["goteborg","malmo","lund","helsingborg","angelholm","bastad","kristianstad","ystad","simrishamn","trelleborg","eslov","hassleholm","landskrona","lomma","staffanstorp","laholm","halmstad","falkenberg","varberg","kungsbacka","molndal","partille","lerum","alingsas","kungalv","stenungsund","uddevalla","trollhattan","vanersborg","boras","ulricehamn","vargarda","skovde","mariestad","lidkoping","jonkoping","huskvarna","vetlanda","eksjo","nassjo","varnamo","vaxjo","alvesta","kalmar","nybro","oskarshamn","vastervik","visby","karlskrona","ronneby","karlshamn","linkoping","norrkoping","motala","mjolby","soderkoping","finspang","vadstena","stockholm","solna","sundbyberg","jarfalla","taby","vallentuna","osteraker","norrtalje","nacka","varmdo","tyreso","haninge","nynashamn","huddinge","botkyrka","sodertalje","nykvarn","uppsala","enkoping","knivsta","tierp","vasteras","koping","eskilstuna","strangnas","nykoping","katrineholm","orebro","kumla","lindesberg","karlskoga","karlstad","kristinehamn","arvika","forshaga","falun","borlange","leksand","mora","gavle","sandviken","soderhamn","hudiksvall","sundsvall","harnosand","ornskoldsvik","ostersund","umea","skelleftea","pitea","lulea","boden","kiruna"];
 
@@ -88,7 +97,9 @@ Deno.serve(async (req) => {
     { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
     { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
+    { loc: "/marknad", priority: "0.85", changefreq: "daily" },
   ];
+
 
   const now = new Date().toISOString().split("T")[0];
 
@@ -200,10 +211,41 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Marketplace category landing pages /marknad/k/:kategori
+  for (const cat of MARKETPLACE_CATEGORY_SLUGS) {
+    xml += `  <url>
+    <loc>${BASE_URL}/marknad/k/${cat}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/marknad/k/${cat}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/marknad/k/${cat}" />
+  </url>
+`;
+  }
+
+  // Active marketplace listings /marknad/:slug
+  if (marketplaceListings) {
+    for (const listing of marketplaceListings) {
+      if (!listing.slug) continue;
+      const lastmod = (listing.updated_at || now).split("T")[0];
+      xml += `  <url>
+    <loc>${BASE_URL}/marknad/${listing.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/marknad/${listing.slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/marknad/${listing.slug}" />
+  </url>
+`;
+    }
+  }
+
   // SEO_SOURCES loop removed — see comment near top of file.
 
 
   xml += `</urlset>`;
+
 
   return new Response(xml, {
     headers: {

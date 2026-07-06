@@ -1,5 +1,5 @@
-import { useState, MouseEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, MouseEvent, useMemo } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Search, MapPin, Plus, Image as ImageIcon, X, Bell, Heart } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Input } from '@/components/ui/input';
@@ -14,19 +14,29 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { useSeo } from '@/hooks/useSeo';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { findMarketplaceCategoryPage } from '@/data/marketplaceCategories.ts';
 
 
 export default function Marketplace() {
-  usePageTitle('Marknad – köp & sälj höns, utrustning & mer');
+  const { kategori } = useParams<{ kategori?: string }>();
+  const categoryPage = useMemo(() => findMarketplaceCategoryPage(kategori), [kategori]);
+
+  const pageTitle = categoryPage?.title ?? 'Marknad – köp & sälj höns, utrustning & mer';
+  const seoDescription = categoryPage?.metaDescription ??
+    'Sveriges marknadsplats för hönsfolk. Köp och sälj höns, kläckägg, hönshus, foder, maskiner och mer. Helt gratis.';
+  const seoPath = categoryPage ? `/marknad/k/${categoryPage.slug}` : '/marknad';
+
+  usePageTitle(pageTitle);
   useSeo({
-    title: 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
-    description: 'Sveriges marknadsplats för hönsfolk. Köp och sälj höns, kläckägg, hönshus, foder, maskiner och mer. Helt gratis.',
-    path: '/marknad',
+    title: categoryPage ? pageTitle : 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
+    description: seoDescription,
+    path: seoPath,
   });
 
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: 'all', region: 'all' });
+  const initialCategory = categoryPage && categoryPage.categoryFilter !== 'all' ? categoryPage.categoryFilter : 'all';
+  const [filters, setFilters] = useState<ListingFilters>({ sort: 'newest', category: initialCategory as any, region: 'all' });
   const [searchInput, setSearchInput] = useState('');
   const [savingAlert, setSavingAlert] = useState(false);
   const [onlyFavorites, setOnlyFavorites] = useState(false);
@@ -38,6 +48,7 @@ export default function Marketplace() {
   const listings = onlyFavorites
     ? rawListings.filter((l) => favoriteIds.has(l.id))
     : rawListings;
+
 
   const handleToggleFavorite = (e: MouseEvent, listingId: string) => {
     e.preventDefault();
@@ -93,11 +104,16 @@ export default function Marketplace() {
       <LandingNavbar />
       <main className="pt-24 pb-16 container max-w-6xl mx-auto px-5">
         <header className="mb-8">
+          {categoryPage && (
+            <nav className="mb-4 text-xs text-muted-foreground">
+              <Link to="/" className="hover:text-foreground">Hem</Link> / <Link to="/marknad" className="hover:text-foreground">Marknad</Link> / <span>{categoryPage.h1}</span>
+            </nav>
+          )}
           <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
             <div>
-              <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-2">Marknad</h1>
+              <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-2">{categoryPage?.h1 ?? 'Marknad'}</h1>
               <p className="text-muted-foreground max-w-xl">
-                Köp och sälj höns, utrustning och allt annat för lantlivet. Helt gratis.
+                {categoryPage?.intro ?? 'Köp och sälj höns, utrustning och allt annat för lantlivet. Helt gratis.'}
               </p>
             </div>
             <Button asChild size="lg" className="rounded-2xl gap-2">
@@ -106,6 +122,7 @@ export default function Marketplace() {
               </Link>
             </Button>
           </div>
+
 
           {/* Sök + filter */}
           <Card className="border-border/60">
@@ -269,7 +286,25 @@ export default function Marketplace() {
             </div>
           </>
         )}
+
+        {categoryPage && (
+          <section className="mt-16 border-t border-border/40 pt-10 max-w-3xl">
+            <h2 className="font-serif text-2xl text-foreground mb-4">Vanliga frågor</h2>
+            <div className="space-y-4">
+              {categoryPage.faq.map((f) => (
+                <div key={f.q}>
+                  <h3 className="text-sm font-semibold text-foreground mb-1">{f.q}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.a}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 text-xs text-muted-foreground">
+              <Link to="/marknad" className="underline hover:text-foreground">← Tillbaka till hela marknaden</Link>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
 }
+

@@ -197,7 +197,9 @@ const AppRoutes = () => (
         <Route path="/blogg/:slug" element={<GuideArticle />} />
         <Route path="/marknad" element={<Marketplace />} />
         <Route path="/marknad/ny" element={<MarketplaceNew />} />
+        <Route path="/marknad/k/:kategori" element={<Marketplace />} />
         <Route path="/marknad/:slug" element={<MarketplaceDetail />} />
+
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Navigate to="/app" replace />} />
