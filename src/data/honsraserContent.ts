@@ -33,6 +33,8 @@ export interface LongformPage {
   breedTable?: BreedRow[];
   faq: { q: string; a: string }[];
   relatedLinks: { href: string; label: string }[];
+  breedName?: string;       // om satt: koppling till breedLayingRates för värpstat
+  canonicalPath?: string;   // om satt: canonical pekar hit istället för path
 }
 
 const standardRelated = [
@@ -226,6 +228,41 @@ const honsraserLista: LongformPage = {
         'Houdan – tofs och muff.',
         'Frizzle – krullig fjäderdräkt.',
         'Ayam Cemani – helsvart inifrån och ut, sällsynt.',
+      ],
+    },
+    {
+      heading: 'Alla 30 rasguider – A till Ö',
+      paragraphs: [
+        'Här är alla enskilda rasguider vi har skrivit. Klicka dig vidare för fördjupning: värpning, temperament, vinterhärdighet i svenskt klimat, ljudnivå, nybörjarvänlighet och FAQ per ras.',
+      ],
+      bullets: [
+        'Araucana – blå/gröna ägg, pigg. Läs mer: /honsraser/araucana',
+        'Australorp – lugn högvärpare (~250). Läs mer: /honsraser/australorp',
+        'Barnevelder – mörkbruna ägg, snäll. Läs mer: /honsraser/barnevelder',
+        'Bielefelder – modern autosexande allroundras. Läs mer: /honsraser/bielefelder',
+        'Bohuslän-Dals svarthöna – svensk lantras, svart. Läs mer: /honsraser/bohuslan-dals-svarthona',
+        'Brahma – lugn jätte. Läs mer: /honsraser/brahma',
+        'Cochin – fluffig ruvare. Läs mer: /honsraser/cochin',
+        'Dvärghöns – översikt av dvärgraser. Läs mer: /dvarghons',
+        'Faverolle – lugn skäggig fransk ras. Läs mer: /honsraser/faverolle',
+        'Frisisk höna – pigg gammal lantras. Läs mer: /honsraser/frisisk-hona',
+        'Gotlandshöna – svensk lantras, aktiv. Läs mer: /honsraser/gotlandshona',
+        'Hedemorahöna – extremt vinterhärdig svensk lantras. Läs mer: /honsraser/hedemorahona',
+        'Kindahöna – östgötsk svensk lantras. Läs mer: /honsraser/kindahona',
+        'Maran – chokladbruna ägg. Läs mer: /honsraser/maran',
+        'New Hampshire – snällare version av RIR. Läs mer: /honsraser/new-hampshire',
+        'Orpington – fluffig allroundras. Läs mer: /honsraser/orpington',
+        'Plymouth Rock – trygg amerikansk klassiker. Läs mer: /honsraser/plymouth-rock',
+        'Rhode Island Red – härdig brunvärpare. Läs mer: /honsraser/rhode-island-red',
+        'Sebright – vacker prydnadsdvärg. Läs mer: /honsraser/sebright',
+        'Silkeshöns – världens bästa ruvare. Läs mer: /honsraser/silkeshons',
+        'Skånsk blommehöna – sydsvensk lantras. Läs mer: /honsraser/skansk-blommehona',
+        'Sussex – nyfiken engelsk allroundras. Läs mer: /honsraser/sussex',
+        'Vit leghorn – italiensk högvärpare. Läs mer: /honsraser/vit-leghorn',
+        'Vorwerk – ovanlig tysk bicolour. Läs mer: /honsraser/vorwerk',
+        'Welsumer – terrakotta-bruna prickiga ägg. Läs mer: /honsraser/welsumer',
+        'Wyandotte – kompakt lugn allroundras. Läs mer: /honsraser/wyandotte',
+        'Öländsk höna – svensk lantras-dvärg. Läs mer: /honsraser/olandsk-hona',
       ],
     },
     {
@@ -429,11 +466,23 @@ const skanskBlommehona: LongformPage = {
   relatedLinks: standardRelated,
 };
 
-export const longformPages: Record<string, LongformPage> = {
+import { BREED_PROFILES, buildBreedPage } from './honsraserBreedProfiles';
+
+const staticPages: Record<string, LongformPage> = {
   honsraser,
   'honsraser-lista': honsraserLista,
   dvarghons,
   'skansk-blommehona': skanskBlommehona,
 };
 
+const breedPages: Record<string, LongformPage> = Object.fromEntries(
+  BREED_PROFILES.map((b) => [b.slug, buildBreedPage(b)]),
+);
+
+export const longformPages: Record<string, LongformPage> = {
+  ...staticPages,
+  ...breedPages,
+};
+
 export const longformSlugs = Object.keys(longformPages);
+export const breedLongformSlugs = Object.keys(breedPages);

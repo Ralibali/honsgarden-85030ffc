@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import { useParams } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
 import LandingNavbar from '@/components/LandingNavbar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Bird, Egg } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { longformPages, type LongformPage } from '@/data/honsraserContent';
+import { getBreedLayingRate, DEFAULT_BREED_RATE } from '@/data/breedLayingRates';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -19,15 +21,23 @@ function fadeUp(delay = 0) {
   };
 }
 
-export default function HonsrasLanding({ slug }: { slug: keyof typeof longformPages | string }) {
-  const page = longformPages[slug as string] as LongformPage | undefined;
+interface HonsrasLandingProps {
+  slug?: keyof typeof longformPages | string;
+  /** Om satt: pekar canonical/og:url dit istället för sidans egen path (används av äldre statiska routes). */
+  canonicalPath?: string;
+}
+
+export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingProps) {
+  const params = useParams<{ slug?: string }>();
+  const activeSlug = (slug ?? params.slug ?? '') as string;
+  const page = longformPages[activeSlug] as LongformPage | undefined;
 
   const articleJsonLd = page
     ? {
         '@type': 'Article',
         headline: page.h1,
         description: page.description,
-        url: `https://honsgarden.se${page.path}`,
+        url: `https://honsgarden.se${canonicalPath ?? page.path}`,
         author: { '@type': 'Organization', name: 'Hönsgården' },
         publisher: { '@type': 'Organization', name: 'Hönsgården' },
         inLanguage: 'sv-SE',
@@ -48,11 +58,14 @@ export default function HonsrasLanding({ slug }: { slug: keyof typeof longformPa
   useSeo({
     title: page?.title ?? 'Hönsraser',
     description: page?.description ?? '',
-    path: page?.path ?? '/honsraser',
+    path: canonicalPath ?? page?.path ?? '/honsraser',
     ogType: 'article',
     ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
     jsonLd: page ? [articleJsonLd, faqJsonLd] : [],
   });
+
+  const breedRate = page?.breedName ? getBreedLayingRate(page.breedName) : null;
+  const hasBreedRate = !!breedRate && breedRate !== DEFAULT_BREED_RATE;
 
   if (!page) {
     return (
@@ -85,6 +98,33 @@ export default function HonsrasLanding({ slug }: { slug: keyof typeof longformPa
           </motion.div>
         </div>
       </section>
+
+      {/* Värpstat från breedLayingRates.ts */}
+      {hasBreedRate && breedRate && (
+        <section className="py-6 bg-background">
+          <div className="container max-w-4xl mx-auto px-5 sm:px-6">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-primary/80 font-medium">Typisk värpning</div>
+                    <div className="text-2xl font-serif text-foreground">{breedRate.typical}%</div>
+                    <div className="text-xs text-muted-foreground">värpprocent (ägg per höna och dag × 100)</div>
+                  </div>
+                  <div>
+                    <div className="text-xs uppercase tracking-wide text-primary/80 font-medium">Typiskt intervall</div>
+                    <div className="text-lg text-foreground">{breedRate.min}–{breedRate.max}%</div>
+                    <div className="text-xs text-muted-foreground">för hobbyflock under värpsäsong</div>
+                  </div>
+                  <p className="text-xs text-muted-foreground max-w-md">
+                    Riktvärde från vår ras-databas – används också i äggloggen för att beräkna förväntad värpning.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      )}
 
       {/* Innehållsförteckning */}
       <section className="py-8 bg-background">
