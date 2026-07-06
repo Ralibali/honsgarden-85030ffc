@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
 import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
+import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -354,9 +355,39 @@ function buildBreedPage(template, breed) {
   return injectHead(template, buildHeadGeneric({ title, description: breed.description, path, ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: `${breed.namn} – hönsras`, ogType: 'article', jsonLd }));
 }
 
+function renderMarketplaceCategoryBody(page) {
+  return `<div class="min-h-screen bg-background">
+<main class="container mx-auto max-w-5xl px-5 pt-24 pb-16" id="main-content">
+  <nav class="text-xs text-muted-foreground mb-4"><a href="/">Hem</a> / <a href="/marknad">Marknad</a> / ${escapeHtml(page.h1)}</nav>
+  <h1 class="font-serif text-4xl md:text-5xl text-foreground mb-3">${escapeHtml(page.h1)}</h1>
+  <p class="text-muted-foreground max-w-2xl mb-8 leading-relaxed">${escapeHtml(page.intro)}</p>
+  <div class="mb-10"><a href="/marknad/ny" class="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-primary-foreground font-medium">Lägg in gratis annons →</a></div>
+  <section class="max-w-3xl border-t border-border/40 pt-8">
+    <h2 class="font-serif text-2xl text-foreground mb-4">Vanliga frågor</h2>
+    <div class="space-y-5">
+      ${page.faq.map(([q, a]) => `<div><h3 class="text-sm font-semibold text-foreground mb-1">${escapeHtml(q)}</h3><p class="text-sm text-muted-foreground leading-relaxed">${escapeHtml(a)}</p></div>`).join('')}
+    </div>
+    <p class="mt-8 text-xs text-muted-foreground"><a href="/marknad" class="underline">← Tillbaka till hela marknaden</a></p>
+  </section>
+</main></div>`;
+}
+
+function buildMarketplaceCategoryPage(template, page) {
+  const path = `/marknad/k/${page.slug}`;
+  const url = `${BASE_URL}${path}`;
+  const jsonLd = [
+    { '@context': 'https://schema.org', '@type': 'CollectionPage', name: page.h1, description: page.metaDescription, url, inLanguage: 'sv-SE', publisher: { '@type': 'Organization', name: 'Hönsgården' } },
+    { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: page.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [ { '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Marknad', item: `${BASE_URL}/marknad` }, { '@type': 'ListItem', position: 3, name: page.h1, item: url } ] },
+  ];
+  const head = buildHeadGeneric({ title: page.title, description: page.metaDescription, path, ogImage: '/og-image.jpg', ogImageAlt: page.h1, ogType: 'website', jsonLd });
+  return injectHead(template, head).replace('<div id="root"></div>', `<div id="root">${renderMarketplaceCategoryBody(page)}</div>`);
+}
+
 function buildArticlePage(template, post) {
   return injectHead(template, buildArticleHead(post)).replace('<div id="root"></div>', `<div id="root">${renderArticle(post)}</div>`);
 }
+
 
 function buildRedirectPage(template, targetPath) {
   const targetUrl = `${BASE_URL}${targetPath}`;
@@ -364,7 +395,7 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
-function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = []) {
+function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = []) {
   const now = new Date().toISOString().split('T')[0];
   const urls = [];
   const push = (loc, opts = {}) => urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
@@ -376,10 +407,12 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [
   orter.forEach((ort) => push(`${BASE_URL}/salja-agg/${ort.slug}`, { changefreq: 'weekly', priority: '0.75' }));
   regulationGuides.forEach((g) => push(`${BASE_URL}/guider/${g.slug}`, { lastmod: g.updated, changefreq: 'monthly', priority: '0.85' }));
   breeds.forEach((b) => push(`${BASE_URL}/honsraser/${b.slug}`, { changefreq: 'monthly', priority: '0.8' }));
+  marketplaceCategories.forEach((p) => push(`${BASE_URL}/marknad/k/${p.slug}`, { changefreq: 'daily', priority: '0.8' }));
 
   const body = urls.map(u => `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
 }
+
 
 const SKIPPED_STEPS = [];
 
@@ -459,11 +492,18 @@ async function main() {
     }
   });
 
-  await runStep('sitemap', async () => {
-    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES), 'utf8');
+  await runStep('marketplace-category-pages', async () => {
+    for (const page of MARKETPLACE_CATEGORY_PAGES) {
+      await writeRoute(`marknad/k/${page.slug}`, buildMarketplaceCategoryPage(template, page));
+    }
   });
 
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor.`);
+  await runStep('sitemap', async () => {
+    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES), 'utf8');
+  });
+
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
+
 
 
   if (SKIPPED_STEPS.length === 0) {
