@@ -83,7 +83,8 @@ function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noind
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeHtml(title)}">
 <meta name="twitter:description" content="${escapeHtml(description)}">
-<meta name="twitter:image" content="${escapeHtml(imageUrl)}">${jsonLdTag}`;
+<meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+<link rel="alternate" type="application/rss+xml" title="Hönsgården – blogg om höns" href="https://sikbymtrbhrofysgkqsj.supabase.co/functions/v1/rss">${jsonLdTag}`;
 }
 
 function injectHead(template, headHtml) {
