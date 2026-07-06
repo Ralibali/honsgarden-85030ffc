@@ -364,7 +364,7 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
-function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
+function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = []) {
   const now = new Date().toISOString().split('T')[0];
   const urls = [];
   const push = (loc, opts = {}) => urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
@@ -375,6 +375,7 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = []) {
   posts.forEach((post) => push(`${BASE_URL}/blogg/${post.slug}`, { lastmod: (post.updated_at || post.published_at || now).split('T')[0], changefreq: 'weekly', priority: '0.8' }));
   orter.forEach((ort) => push(`${BASE_URL}/salja-agg/${ort.slug}`, { changefreq: 'weekly', priority: '0.75' }));
   regulationGuides.forEach((g) => push(`${BASE_URL}/guider/${g.slug}`, { lastmod: g.updated, changefreq: 'monthly', priority: '0.85' }));
+  breeds.forEach((b) => push(`${BASE_URL}/honsraser/${b.slug}`, { changefreq: 'monthly', priority: '0.8' }));
 
   const body = urls.map(u => `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
@@ -452,11 +453,18 @@ async function main() {
     }
   });
 
-  await runStep('sitemap', async () => {
-    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES), 'utf8');
+  await runStep('breed-pages', async () => {
+    for (const breed of BREED_PRERENDER_PROFILES) {
+      await writeRoute(`honsraser/${breed.slug}`, buildBreedPage(template, breed));
+    }
   });
 
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide-sidor.`);
+  await runStep('sitemap', async () => {
+    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES), 'utf8');
+  });
+
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor.`);
+
 
   if (SKIPPED_STEPS.length === 0) {
     console.log('📋 Sammanfattning: alla prerender-steg lyckades.');
