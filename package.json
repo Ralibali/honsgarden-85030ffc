@@ -15,7 +15,8 @@
     "optimize:images": "node scripts/optimize-blog-images.mjs",
     "optimize:images:dry": "node scripts/optimize-blog-images.mjs --dry-run",
     "replace:blog-images": "node scripts/replace-blog-image-refs.mjs",
-    "replace:blog-images:dry": "node scripts/replace-blog-image-refs.mjs --dry-run"
+    "replace:blog-images:dry": "node scripts/replace-blog-image-refs.mjs --dry-run",
+    "capacitor:assets": "capacitor-assets generate --iconBackgroundColor '#3A6B35' --iconBackgroundColorDark '#3A6B35' --splashBackgroundColor '#FAF8F4' --splashBackgroundColorDark '#FAF8F4'"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
@@ -99,6 +100,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
