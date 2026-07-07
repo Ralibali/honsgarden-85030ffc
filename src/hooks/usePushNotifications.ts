@@ -1,110 +1,85 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { isPwaRegistrationDisabled } from '@/lib/pwaUpdate';
 
-const SW_READY_TIMEOUT_MS = 2500;
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = atob(base64);
-  const out = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
-  return out;
-}
-
-async function fetchVapidPublicKey(): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke('send-push', {
-      body: { get_public_key: true },
-    });
-    if (error) return null;
-    return (data as any)?.public_key ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function getReadyServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) return null;
-
-  const existing = await navigator.serviceWorker.getRegistration().catch(() => null);
-  if (!existing) return null;
-
-  return Promise.race<ServiceWorkerRegistration | null>([
-    navigator.serviceWorker.ready,
-    new Promise((resolve) => window.setTimeout(() => resolve(existing), SW_READY_TIMEOUT_MS)),
-  ]).catch(() => existing);
-}
-
-export function usePushNotifications() {
-  const { user } = useAuth();
-  const supported = typeof window !== 'undefined'
-    && window.isSecureContext
-    && !isPwaRegistrationDisabled()
-    && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-  const [enabled, setEnabled] = useState(false);
-  const [busy, setBusy] = useState(false);
-
+/**
+ * Registrerar enheten för native push (iOS/Android) via Capacitor
+ * och sparar APNs/FCM-token i public.device_tokens.
+ * Ingen effekt i webbläsare eller Lovable-preview.
+ */
+export function usePushNotifications(userId: string | null | undefined) {
   useEffect(() => {
-    if (!supported) return;
-    getReadyServiceWorker()
-      .then((reg) => reg?.pushManager.getSubscription() ?? null)
-      .then((sub) => setEnabled(!!sub))
-      .catch(() => {});
-  }, [supported]);
+    if (!userId) return;
+    if (!Capacitor.isNativePlatform()) return;
 
-  const enable = useCallback(async () => {
-    if (!supported || !user?.id) return false;
-    setBusy(true);
-    try {
-      const perm = await Notification.requestPermission();
-      if (perm !== 'granted') return false;
-      const reg = await getReadyServiceWorker();
-      if (!reg) return false;
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        const vapidKey = await fetchVapidPublicKey();
-        if (!vapidKey) return false;
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+    let cleanup: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+
+        const perm = await PushNotifications.checkPermissions();
+        let status = perm.receive;
+        if (status === 'prompt' || status === 'prompt-with-rationale') {
+          const req = await PushNotifications.requestPermissions();
+          status = req.receive;
+        }
+        if (status !== 'granted') {
+          console.warn('[push] permission not granted:', status);
+          return;
+        }
+
+        await PushNotifications.register();
+
+        const platform = Capacitor.getPlatform() as 'ios' | 'android' | 'web';
+
+        const regListener = await PushNotifications.addListener('registration', async (token) => {
+          try {
+            await supabase.from('device_tokens').upsert(
+              {
+                user_id: userId,
+                token: token.value,
+                platform,
+                updated_at: new Date().toISOString(),
+              },
+              { onConflict: 'token' },
+            );
+          } catch (e) {
+            console.error('[push] failed to save token', e);
+          }
         });
+
+        const errListener = await PushNotifications.addListener('registrationError', (err) => {
+          console.error('[push] registrationError', err);
+        });
+
+        const recvListener = await PushNotifications.addListener(
+          'pushNotificationReceived',
+          (notification) => {
+            console.log('[push] received', notification);
+          },
+        );
+
+        const actionListener = await PushNotifications.addListener(
+          'pushNotificationActionPerformed',
+          (action) => {
+            console.log('[push] action', action);
+          },
+        );
+
+        cleanup = () => {
+          regListener.remove();
+          errListener.remove();
+          recvListener.remove();
+          actionListener.remove();
+        };
+      } catch (e) {
+        console.error('[push] setup failed', e);
       }
-      const json = sub.toJSON();
-      const { error } = await supabase.from('push_subscriptions').upsert({
-        user_id: user.id,
-        endpoint: json.endpoint!,
-        p256dh: json.keys?.p256dh!,
-        auth: json.keys?.auth!,
-        user_agent: navigator.userAgent,
-      }, { onConflict: 'endpoint' });
-      if (error) throw error;
-      setEnabled(true);
-      return true;
-    } finally { setBusy(false); }
-  }, [supported, user?.id]);
+    })();
 
-  const disable = useCallback(async () => {
-    if (!supported) return;
-    setBusy(true);
-    try {
-      const reg = await getReadyServiceWorker();
-      if (!reg) return;
-      const sub = await reg.pushManager.getSubscription();
-      if (sub) {
-        const ep = sub.endpoint;
-        await sub.unsubscribe();
-        await supabase.from('push_subscriptions').delete().eq('endpoint', ep);
-      }
-      setEnabled(false);
-    } finally { setBusy(false); }
-  }, [supported]);
-
-  const sendTest = useCallback(async () => {
-    await supabase.functions.invoke('send-push', { body: { test: true } });
-  }, []);
-
-  return { supported, enabled, busy, enable, disable, sendTest };
+    return () => {
+      cleanup?.();
+    };
+  }, [userId]);
 }
