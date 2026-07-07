@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Camera, ImagePlus, Loader2, X } from 'lucide-react';
+import { isNativePlatform, pickImageNative } from '@/lib/nativeImagePicker';
 
 interface HenAvatarProps {
   henId: string;
@@ -203,23 +204,43 @@ export default function HenAvatar({
     if (!uploading) setPickerOpen(true);
   };
 
-  const openGallery = () => {
+  const openGallery = async () => {
     setPickerOpen(false);
+    if (isNativePlatform()) {
+      try {
+        const file = await pickImageNative('photos');
+        if (file) await processFile(file);
+      } catch (err: any) {
+        if (err?.message && !/cancel/i.test(err.message)) {
+          toast({ title: 'Kunde inte öppna bildbibliotek', description: err.message, variant: 'destructive' });
+        }
+      }
+      return;
+    }
     window.setTimeout(() => galleryInputRef.current?.click(), 0);
   };
 
-  const openCamera = () => {
+  const openCamera = async () => {
     setPickerOpen(false);
+    if (isNativePlatform()) {
+      try {
+        const file = await pickImageNative('camera');
+        if (file) await processFile(file);
+      } catch (err: any) {
+        if (err?.message && !/cancel/i.test(err.message)) {
+          toast({ title: 'Kunde inte öppna kamera', description: err.message, variant: 'destructive' });
+        }
+      }
+      return;
+    }
     window.setTimeout(() => cameraInputRef.current?.click(), 0);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  const processFile = async (file: File) => {
+    if (!user) return;
 
     if (!file.type.startsWith('image/') && !/\.(heic|heif|jpg|jpeg|png|webp)$/i.test(file.name)) {
       toast({ title: 'Endast bilder', description: 'Välj en bildfil, till exempel JPG, PNG eller WebP.', variant: 'destructive' });
-      e.target.value = '';
       return;
     }
 
@@ -287,8 +308,13 @@ export default function HenAvatar({
         setProgress(0);
         setProgressLabel('');
       }, 600);
-      e.target.value = '';
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await processFile(file);
+    e.target.value = '';
   };
 
   const handleRemove = async (e: React.MouseEvent) => {
