@@ -154,7 +154,13 @@ export default function MarketplaceNew() {
                 </div>
               ))}
               {imageUrls.length < MAX_IMAGES && (
-                <label className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition">
+                <label
+                  className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-1 text-muted-foreground hover:text-primary transition"
+                  onClick={async (e) => {
+                    const used = await handleNativePick();
+                    if (used) e.preventDefault();
+                  }}
+                >
                   {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                   <span className="text-xs">Lägg till</span>
                   <input type="file" accept="image/*" multiple className="hidden" onChange={handleUpload} disabled={uploading} />
