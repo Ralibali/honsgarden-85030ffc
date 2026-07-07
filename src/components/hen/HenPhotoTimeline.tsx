@@ -214,7 +214,21 @@ export default function HenPhotoTimeline({ henId, henName }: { henId: string; he
         <Button
           size="sm"
           className="rounded-xl h-8 text-xs gap-1.5"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={async () => {
+            const { isNativePlatform, pickImageNative } = await import('@/lib/nativeImagePicker');
+            if (isNativePlatform()) {
+              try {
+                const f = await pickImageNative('prompt');
+                if (f) handleFileSelected(f);
+              } catch (err: any) {
+                if (err?.message && !/cancel/i.test(err.message)) {
+                  toast({ title: 'Kunde inte öppna kamera', description: err.message, variant: 'destructive' });
+                }
+              }
+              return;
+            }
+            fileInputRef.current?.click();
+          }}
         >
           <ImagePlus className="h-3.5 w-3.5" /> Lägg till bild
         </Button>
