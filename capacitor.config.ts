@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.f0c63bdf2baf4795b00816d49fc7d8ae',
-  appName: 'honsgarden',
+  appId: 'se.honsgarden.app',
+  appName: 'Hönsgården',
   webDir: 'dist',
   server: {
     url: 'https://f0c63bdf-2baf-4795-b008-16d49fc7d8ae.lovableproject.com?forceHideBadge=true',
