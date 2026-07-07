@@ -36,8 +36,7 @@ export default function MarketplaceNew() {
   if (loading) return null;
   if (!isAuthenticated) return <Navigate to="/login?redirect=/marknad/ny" replace />;
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const uploadFiles = async (files: File[]) => {
     if (!files.length || !user) return;
     if (imageUrls.length + files.length > MAX_IMAGES) {
       toast({ title: 'För många bilder', description: `Max ${MAX_IMAGES} bilder per annons`, variant: 'destructive' });
@@ -61,8 +60,28 @@ export default function MarketplaceNew() {
       setImageUrls((urls) => [...urls, ...uploaded]);
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    await uploadFiles(files);
+    e.target.value = '';
+  };
+
+  const handleNativePick = async () => {
+    const { isNativePlatform, pickImagesNative } = await import('@/lib/nativeImagePicker');
+    if (!isNativePlatform()) return false;
+    try {
+      const remaining = MAX_IMAGES - imageUrls.length;
+      const files = await pickImagesNative(Math.max(1, remaining));
+      if (files && files.length) await uploadFiles(files);
+    } catch (err: any) {
+      if (err?.message && !/cancel/i.test(err.message)) {
+        toast({ title: 'Kunde inte välja bilder', description: err.message, variant: 'destructive' });
+      }
+    }
+    return true;
   };
 
   const removeImage = (url: string) => setImageUrls((urls) => urls.filter((u) => u !== url));
