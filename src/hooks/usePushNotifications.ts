@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { isPwaRegistrationDisabled } from '@/lib/pwaUpdate';
-
-const SW_READY_TIMEOUT_MS = 2500;
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -26,43 +24,102 @@ async function fetchVapidPublicKey(): Promise<string | null> {
   }
 }
 
-async function getReadyServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) return null;
-
-  const existing = await navigator.serviceWorker.getRegistration().catch(() => null);
-  if (!existing) return null;
-
-  return Promise.race<ServiceWorkerRegistration | null>([
-    navigator.serviceWorker.ready,
-    new Promise((resolve) => window.setTimeout(() => resolve(existing), SW_READY_TIMEOUT_MS)),
-  ]).catch(() => existing);
-}
-
+/**
+ * Hook för både native push (Capacitor iOS/Android) och web push.
+ * - På native: registrerar automatiskt när användaren är inloggad, sparar
+ *   APNs/FCM-token i public.device_tokens.
+ * - I webbläsare: exponerar enable/disable/sendTest för web push.
+ */
 export function usePushNotifications() {
   const { user } = useAuth();
-  const supported = typeof window !== 'undefined'
-    && window.isSecureContext
-    && !isPwaRegistrationDisabled()
+  const isNative = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+
+  const webSupported = typeof window !== 'undefined'
     && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  const supported = isNative || webSupported;
+
   const [enabled, setEnabled] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // --- Native (Capacitor) ---
   useEffect(() => {
-    if (!supported) return;
-    getReadyServiceWorker()
-      .then((reg) => reg?.pushManager.getSubscription() ?? null)
+    if (!isNative || !user?.id) return;
+    let removeFns: Array<() => void> = [];
+    (async () => {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const perm = await PushNotifications.checkPermissions();
+        let status = perm.receive;
+        if (status === 'prompt' || status === 'prompt-with-rationale') {
+          const req = await PushNotifications.requestPermissions();
+          status = req.receive;
+        }
+        if (status !== 'granted') {
+          setEnabled(false);
+          return;
+        }
+        await PushNotifications.register();
+        setEnabled(true);
+        const platform = Capacitor.getPlatform() as 'ios' | 'android' | 'web';
+
+        const reg = await PushNotifications.addListener('registration', async (token) => {
+          try {
+            await supabase.from('device_tokens' as any).upsert({
+              user_id: user.id,
+              token: token.value,
+              platform,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'token' });
+          } catch (e) {
+            console.error('[push] save token failed', e);
+          }
+        });
+        const err = await PushNotifications.addListener('registrationError', (e) =>
+          console.error('[push] registrationError', e),
+        );
+        const recv = await PushNotifications.addListener('pushNotificationReceived', (n) =>
+          console.log('[push] received', n),
+        );
+        const act = await PushNotifications.addListener('pushNotificationActionPerformed', (a) =>
+          console.log('[push] action', a),
+        );
+        removeFns = [() => reg.remove(), () => err.remove(), () => recv.remove(), () => act.remove()];
+      } catch (e) {
+        console.error('[push] native setup failed', e);
+      }
+    })();
+    return () => { removeFns.forEach((f) => f()); };
+  }, [isNative, user?.id]);
+
+  // --- Web (befintlig serviceworker-flöde) ---
+  useEffect(() => {
+    if (isNative || !webSupported) return;
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setEnabled(!!sub))
       .catch(() => {});
-  }, [supported]);
+  }, [isNative, webSupported]);
 
   const enable = useCallback(async () => {
-    if (!supported || !user?.id) return false;
+    if (isNative) {
+      // På native försöker vi be om behörighet igen
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const req = await PushNotifications.requestPermissions();
+        if (req.receive !== 'granted') return false;
+        await PushNotifications.register();
+        setEnabled(true);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    if (!webSupported || !user?.id) return false;
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') return false;
-      const reg = await getReadyServiceWorker();
-      if (!reg) return false;
+      const reg = await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         const vapidKey = await fetchVapidPublicKey();
@@ -84,14 +141,25 @@ export function usePushNotifications() {
       setEnabled(true);
       return true;
     } finally { setBusy(false); }
-  }, [supported, user?.id]);
+  }, [isNative, webSupported, user?.id]);
 
   const disable = useCallback(async () => {
-    if (!supported) return;
+    if (isNative) {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        // Ta bort denna enhets tokens
+        if (user?.id) {
+          await supabase.from('device_tokens' as any).delete().eq('user_id', user.id);
+        }
+        await PushNotifications.removeAllListeners();
+        setEnabled(false);
+      } catch {}
+      return;
+    }
+    if (!webSupported) return;
     setBusy(true);
     try {
-      const reg = await getReadyServiceWorker();
-      if (!reg) return;
+      const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
         const ep = sub.endpoint;
@@ -100,11 +168,17 @@ export function usePushNotifications() {
       }
       setEnabled(false);
     } finally { setBusy(false); }
-  }, [supported]);
+  }, [isNative, webSupported, user?.id]);
 
   const sendTest = useCallback(async () => {
+    if (isNative) {
+      await supabase.functions.invoke('send-push-notification', {
+        body: { title: 'Testnotis', body: 'Push fungerar 🎉' },
+      });
+      return;
+    }
     await supabase.functions.invoke('send-push', { body: { test: true } });
-  }, []);
+  }, [isNative]);
 
   return { supported, enabled, busy, enable, disable, sendTest };
 }
