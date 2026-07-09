@@ -624,42 +624,76 @@ export default function DashboardV2() {
 
       {/* ─── 4. Kalender ─── */}
       {showCalendar && (
-        <Card className="border-border/50 shadow-sm">
+        <Card
+          className="border-border/50 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          role="region"
+          aria-label="Äggkalender – använd vänster- och högerpil för att byta månad"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft' && !isEarliestMonth) {
+              e.preventDefault();
+              setMonthOffset((m) => m - 1);
+            } else if (e.key === 'ArrowRight' && !isCurrentMonth) {
+              e.preventDefault();
+              setMonthOffset((m) => m + 1);
+            } else if (e.key === 'Home' && monthOffset !== 0) {
+              e.preventDefault();
+              setMonthOffset(0);
+            }
+          }}
+        >
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
-                  <CalendarDays className="h-4 w-4 text-primary" />
+                  <CalendarDays className="h-4 w-4 text-primary" aria-hidden="true" />
                 </div>
-                <h2 className="font-serif text-sm text-foreground">
+                <h2
+                  className="font-serif text-sm text-foreground"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
                   {getMonthName(viewedMonth.getMonth())}
                   {viewedMonth.getFullYear() !== now.getFullYear() && (
                     <span className="text-muted-foreground font-normal ml-1">{viewedMonth.getFullYear()}</span>
                   )}
                 </h2>
               </div>
-              <div className="flex items-center gap-1">
-                <span className="text-xs text-muted-foreground font-medium mr-2">
+              <div className="flex items-center gap-1" role="group" aria-label="Byt månad">
+                <span className="text-xs text-muted-foreground font-medium mr-2" aria-hidden="true">
                   {Object.values(eggCalendarData).reduce((a, b) => a + b, 0)} ägg
                 </span>
-                <button
-                  type="button"
-                  aria-label="Föregående månad"
-                  onClick={() => setMonthOffset((m) => m - 1)}
-                  disabled={isEarliestMonth}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Nästa månad"
-                  onClick={() => setMonthOffset((m) => m + 1)}
-                  disabled={isCurrentMonth}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
+                <span className="sr-only">
+                  {Object.values(eggCalendarData).reduce((a, b) => a + b, 0)} ägg i {getMonthName(viewedMonth.getMonth())} {viewedMonth.getFullYear()}
+                </span>
+                {(() => {
+                  const prevMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() - 1, 1);
+                  const nextMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 1);
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`Föregående månad: ${getMonthName(prevMonth.getMonth())} ${prevMonth.getFullYear()}`}
+                        aria-keyshortcuts="ArrowLeft"
+                        onClick={() => setMonthOffset((m) => m - 1)}
+                        disabled={isEarliestMonth}
+                        className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <ChevronLeft className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Nästa månad: ${getMonthName(nextMonth.getMonth())} ${nextMonth.getFullYear()}`}
+                        aria-keyshortcuts="ArrowRight"
+                        onClick={() => setMonthOffset((m) => m + 1)}
+                        disabled={isCurrentMonth}
+                        className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      </button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-7 gap-1.5 mb-2">
