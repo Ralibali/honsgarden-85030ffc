@@ -271,6 +271,7 @@ export default function DashboardV2() {
   );
 
   const [monthOffset, setMonthOffset] = useState(0);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const getEggColor = (count: number) => {
     if (count === 0) return 'bg-muted/40 text-muted-foreground';
