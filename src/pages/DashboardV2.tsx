@@ -778,29 +778,76 @@ export default function DashboardV2() {
                 <div key={`${d}-${i}`} className={`text-[10px] text-center font-medium ${i >= 5 ? 'text-accent/60' : 'text-muted-foreground'}`}>{d}</div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="grid grid-cols-7 gap-1.5" role="grid" aria-label="Dagar i månaden">
               {Array.from({ length: startOffset }).map((_, i) => <div key={`empty-${i}`} />)}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const eggCount = eggCalendarData[day] || 0;
                 const isToday = isCurrentMonth && day === now.getDate();
                 const isFuture = isCurrentMonth && day > now.getDate();
+                const isSelected = selectedDay === day;
                 return (
-                  <div
+                  <button
                     key={day}
-                    className={`rounded-lg text-center py-1.5 text-[11px] transition-all
-                      ${isFuture ? 'bg-muted/20 text-muted-foreground/25' : getEggColor(eggCount)}
-                      ${isToday ? 'ring-2 ring-primary/50 ring-offset-1 ring-offset-background shadow-sm' : ''}
+                    type="button"
+                    onClick={() => setSelectedDay(isSelected ? null : day)}
+                    disabled={isFuture}
+                    aria-pressed={isSelected}
+                    aria-label={`${day} ${getMonthName(viewedMonth.getMonth())}${eggCount ? `, ${eggCount} ägg` : ''}${isToday ? ', idag' : ''}`}
+                    className={`rounded-lg text-center py-1.5 text-[11px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
+                      ${isFuture ? 'bg-muted/20 text-muted-foreground/25 cursor-not-allowed' : `${getEggColor(eggCount)} hover:brightness-95 active:scale-95 cursor-pointer`}
+                      ${isToday && !isSelected ? 'ring-2 ring-primary/50 ring-offset-1 ring-offset-background shadow-sm' : ''}
+                      ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md' : ''}
                     `}
                   >
-                    <span className="leading-none">{day}</span>
+                    <span className="leading-none block">{day}</span>
                     {!isFuture && eggCount > 0 && (
                       <span className="block text-[8px] leading-none opacity-70 mt-0.5">{eggCount}</span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
+
+            {selectedDay != null && (
+              <div className="mt-4 pt-4 border-t border-border/40" aria-live="polite">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-serif text-sm text-foreground capitalize">
+                    {selectedDateLabel}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedDay(null)}
+                    className="text-[11px] text-muted-foreground hover:text-foreground rounded-md px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label="Stäng dagsvy"
+                  >
+                    Stäng
+                  </button>
+                </div>
+                {selectedDayEvents.length === 0 ? (
+                  <p className="text-xs text-muted-foreground py-3 text-center">
+                    Inga händelser den här dagen.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedDayEvents.map((ev) => (
+                      <li
+                        key={ev.id}
+                        className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/30"
+                      >
+                        <span className="text-base leading-none mt-0.5" aria-hidden="true">{ev.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground leading-snug">{ev.label}</p>
+                          {ev.detail && (
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{ev.detail}</p>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
