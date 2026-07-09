@@ -610,11 +610,35 @@ export default function DashboardV2() {
                 <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
                   <CalendarDays className="h-4 w-4 text-primary" />
                 </div>
-                <h2 className="font-serif text-sm text-foreground">{getMonthName(now.getMonth())}</h2>
+                <h2 className="font-serif text-sm text-foreground">
+                  {getMonthName(viewedMonth.getMonth())}
+                  {viewedMonth.getFullYear() !== now.getFullYear() && (
+                    <span className="text-muted-foreground font-normal ml-1">{viewedMonth.getFullYear()}</span>
+                  )}
+                </h2>
               </div>
-              <span className="text-xs text-muted-foreground font-medium">
-                {Object.values(eggCalendarData).reduce((a, b) => a + b, 0)} ägg totalt
-              </span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground font-medium mr-2">
+                  {Object.values(eggCalendarData).reduce((a, b) => a + b, 0)} ägg
+                </span>
+                <button
+                  type="button"
+                  aria-label="Föregående månad"
+                  onClick={() => setMonthOffset((m) => m - 1)}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition"
+                >
+                  <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Nästa månad"
+                  onClick={() => setMonthOffset((m) => m + 1)}
+                  disabled={isCurrentMonth}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"
+                >
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-7 gap-1.5 mb-2">
               {['M', 'T', 'O', 'T', 'F', 'L', 'S'].map((d, i) => (
@@ -626,8 +650,8 @@ export default function DashboardV2() {
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const day = i + 1;
                 const eggCount = eggCalendarData[day] || 0;
-                const isToday = day === now.getDate();
-                const isFuture = day > now.getDate();
+                const isToday = isCurrentMonth && day === now.getDate();
+                const isFuture = isCurrentMonth && day > now.getDate();
                 return (
                   <div
                     key={day}
