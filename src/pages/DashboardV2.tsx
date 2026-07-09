@@ -315,6 +315,44 @@ export default function DashboardV2() {
   const showDiary = daysSinceFirstEgg >= 7 || (healthLogs as any[]).some((l: any) => l.type === 'diary');
   const showCalendar = eggs.length > 0;
 
+  // Calendar bounds: earliest month = first egg month, latest = current month
+  const earliestMonthOffset = useMemo(() => {
+    if (!firstEggDate) return -Infinity;
+    const first = new Date(firstEggDate.getFullYear(), firstEggDate.getMonth(), 1);
+    const current = new Date(now.getFullYear(), now.getMonth(), 1);
+    return (first.getFullYear() - current.getFullYear()) * 12 + (first.getMonth() - current.getMonth());
+  }, [firstEggDate, now]);
+
+  const effectiveMonthOffset = useMemo(() => {
+    let v = monthOffset;
+    if (v > 0) v = 0;
+    if (!Number.isFinite(earliestMonthOffset) || v < earliestMonthOffset) v = earliestMonthOffset;
+    return v;
+  }, [monthOffset, earliestMonthOffset]);
+
+  useEffect(() => {
+    if (effectiveMonthOffset !== monthOffset) setMonthOffset(effectiveMonthOffset);
+  }, [effectiveMonthOffset, monthOffset]);
+
+  const viewedMonth = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() + effectiveMonthOffset, 1),
+    [now, effectiveMonthOffset]
+  );
+  const isCurrentMonth = effectiveMonthOffset === 0;
+  const isEarliestMonth = effectiveMonthOffset === earliestMonthOffset && Number.isFinite(earliestMonthOffset);
+  const daysInMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay();
+  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+  const eggCalendarData: Record<number, number> = {};
+  eggs.forEach((e: any) => {
+    const d = new Date(e.date);
+    if (d.getMonth() === viewedMonth.getMonth() && d.getFullYear() === viewedMonth.getFullYear()) {
+      const day = d.getDate();
+      eggCalendarData[day] = (eggCalendarData[day] || 0) + (e.count || 0);
+    }
+  });
+
   const tipCard = getDailyTipCard(currentTemp ?? null, weatherCode, aiTip, seasonal);
 
   // Chores for reminders
