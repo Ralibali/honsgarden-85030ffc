@@ -646,7 +646,8 @@ export default function DashboardV2() {
                   type="button"
                   aria-label="Föregående månad"
                   onClick={() => setMonthOffset((m) => m - 1)}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition"
+                  disabled={isEarliestMonth}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"
                 >
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </button>
