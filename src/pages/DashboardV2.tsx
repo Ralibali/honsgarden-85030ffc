@@ -354,6 +354,82 @@ export default function DashboardV2() {
     }
   });
 
+  // Reset selection when month changes; auto-select today in current month
+  useEffect(() => {
+    setSelectedDay(isCurrentMonth ? now.getDate() : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedMonth.getFullYear(), viewedMonth.getMonth()]);
+
+  const selectedDateKey = useMemo(() => {
+    if (selectedDay == null) return null;
+    return localCalendarDate(new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), selectedDay));
+  }, [selectedDay, viewedMonth]);
+
+  const selectedDayEvents = useMemo(() => {
+    if (!selectedDateKey) return [] as Array<{ id: string; icon: string; label: string; detail?: string }>;
+    const matches = (d: any) => {
+      if (!d) return false;
+      try { return localCalendarDate(new Date(d)) === selectedDateKey; } catch { return false; }
+    };
+    const items: Array<{ id: string; icon: string; label: string; detail?: string }> = [];
+
+    (eggs as any[]).filter((e) => matches(e.date)).forEach((e, i) => {
+      const henName = (hens as any[]).find((h) => h.id === e.hen_id)?.name;
+      items.push({
+        id: `egg-${e.id ?? i}`,
+        icon: '🥚',
+        label: `${e.count || 0} ägg${henName ? ` – ${henName}` : ''}`,
+        detail: e.notes || undefined,
+      });
+    });
+
+    (healthLogs as any[]).filter((l) => matches(l.date)).forEach((l, i) => {
+      const isDiary = l.type === 'diary';
+      items.push({
+        id: `health-${l.id ?? i}`,
+        icon: isDiary ? '📝' : '🩺',
+        label: isDiary ? 'Dagboksinlägg' : (l.type || 'Hälsonotering'),
+        detail: l.description || undefined,
+      });
+    });
+
+    (feedRecords as any[]).filter((f) => matches(f.date)).forEach((f, i) => {
+      items.push({
+        id: `feed-${f.id ?? i}`,
+        icon: '🌾',
+        label: `Foder: ${f.feed_type || 'registrerat'}${f.amount_kg ? ` (${f.amount_kg} kg)` : ''}`,
+        detail: f.notes || undefined,
+      });
+    });
+
+    (transactions as any[]).filter((t) => matches(t.date)).forEach((t, i) => {
+      const amt = Number(t.amount || 0);
+      items.push({
+        id: `tx-${t.id ?? i}`,
+        icon: amt >= 0 ? '💰' : '💸',
+        label: `${t.description || (amt >= 0 ? 'Inkomst' : 'Utgift')}: ${amt.toLocaleString('sv-SE')} kr`,
+        detail: t.category || undefined,
+      });
+    });
+
+    (chores as any[]).filter((c) => matches(c.due_at || c.completed_at || c.date)).forEach((c, i) => {
+      items.push({
+        id: `chore-${c.id ?? i}`,
+        icon: c.completed_at ? '✅' : '📋',
+        label: c.title || 'Syssla',
+        detail: c.completed_at ? 'Klar' : (c.description || undefined),
+      });
+    });
+
+    return items;
+  }, [selectedDateKey, eggs, hens, healthLogs, feedRecords, transactions, chores]);
+
+  const selectedDateLabel = useMemo(() => {
+    if (selectedDay == null) return '';
+    return new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), selectedDay)
+      .toLocaleDateString('sv-SE', { weekday: 'long', day: 'numeric', month: 'long' });
+  }, [selectedDay, viewedMonth]);
+
   const tipCard = getDailyTipCard(currentTemp ?? null, weatherCode, aiTip, seasonal);
 
   // Chores for reminders
