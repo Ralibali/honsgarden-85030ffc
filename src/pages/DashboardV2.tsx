@@ -270,14 +270,20 @@ export default function DashboardV2() {
     [eggs, hens, streak, feedRecords, transactions, chores]
   );
 
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const [monthOffset, setMonthOffset] = useState(0);
+  const viewedMonth = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() + monthOffset, 1),
+    [now, monthOffset]
+  );
+  const isCurrentMonth = monthOffset === 0;
+  const daysInMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay();
   const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
   const eggCalendarData: Record<number, number> = {};
   eggs.forEach((e: any) => {
     const d = new Date(e.date);
-    if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+    if (d.getMonth() === viewedMonth.getMonth() && d.getFullYear() === viewedMonth.getFullYear()) {
       const day = d.getDate();
       eggCalendarData[day] = (eggCalendarData[day] || 0) + (e.count || 0);
     }
