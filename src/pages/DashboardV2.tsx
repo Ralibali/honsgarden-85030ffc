@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -271,23 +271,6 @@ export default function DashboardV2() {
   );
 
   const [monthOffset, setMonthOffset] = useState(0);
-  const viewedMonth = useMemo(
-    () => new Date(now.getFullYear(), now.getMonth() + monthOffset, 1),
-    [now, monthOffset]
-  );
-  const isCurrentMonth = monthOffset === 0;
-  const daysInMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 0).getDate();
-  const firstDayOfMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay();
-  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
-
-  const eggCalendarData: Record<number, number> = {};
-  eggs.forEach((e: any) => {
-    const d = new Date(e.date);
-    if (d.getMonth() === viewedMonth.getMonth() && d.getFullYear() === viewedMonth.getFullYear()) {
-      const day = d.getDate();
-      eggCalendarData[day] = (eggCalendarData[day] || 0) + (e.count || 0);
-    }
-  });
 
   const getEggColor = (count: number) => {
     if (count === 0) return 'bg-muted/40 text-muted-foreground';
@@ -331,6 +314,44 @@ export default function DashboardV2() {
   const showFinanceNudge = !hasTransactions && !financeDismissed;
   const showDiary = daysSinceFirstEgg >= 7 || (healthLogs as any[]).some((l: any) => l.type === 'diary');
   const showCalendar = eggs.length > 0;
+
+  // Calendar bounds: earliest month = first egg month, latest = current month
+  const earliestMonthOffset = useMemo(() => {
+    if (!firstEggDate) return -Infinity;
+    const first = new Date(firstEggDate.getFullYear(), firstEggDate.getMonth(), 1);
+    const current = new Date(now.getFullYear(), now.getMonth(), 1);
+    return (first.getFullYear() - current.getFullYear()) * 12 + (first.getMonth() - current.getMonth());
+  }, [firstEggDate, now]);
+
+  const effectiveMonthOffset = useMemo(() => {
+    let v = monthOffset;
+    if (v > 0) v = 0;
+    if (!Number.isFinite(earliestMonthOffset) || v < earliestMonthOffset) v = earliestMonthOffset;
+    return v;
+  }, [monthOffset, earliestMonthOffset]);
+
+  useEffect(() => {
+    if (effectiveMonthOffset !== monthOffset) setMonthOffset(effectiveMonthOffset);
+  }, [effectiveMonthOffset, monthOffset]);
+
+  const viewedMonth = useMemo(
+    () => new Date(now.getFullYear(), now.getMonth() + effectiveMonthOffset, 1),
+    [now, effectiveMonthOffset]
+  );
+  const isCurrentMonth = effectiveMonthOffset === 0;
+  const isEarliestMonth = effectiveMonthOffset === earliestMonthOffset && Number.isFinite(earliestMonthOffset);
+  const daysInMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay();
+  const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+  const eggCalendarData: Record<number, number> = {};
+  eggs.forEach((e: any) => {
+    const d = new Date(e.date);
+    if (d.getMonth() === viewedMonth.getMonth() && d.getFullYear() === viewedMonth.getFullYear()) {
+      const day = d.getDate();
+      eggCalendarData[day] = (eggCalendarData[day] || 0) + (e.count || 0);
+    }
+  });
 
   const tipCard = getDailyTipCard(currentTemp ?? null, weatherCode, aiTip, seasonal);
 
@@ -625,7 +646,8 @@ export default function DashboardV2() {
                   type="button"
                   aria-label="Föregående månad"
                   onClick={() => setMonthOffset((m) => m - 1)}
-                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition"
+                  disabled={isEarliestMonth}
+                  className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-muted/60 active:scale-95 transition disabled:opacity-30 disabled:pointer-events-none"
                 >
                   <ChevronLeft className="h-4 w-4 text-muted-foreground" />
                 </button>
