@@ -271,11 +271,32 @@ export default function DashboardV2() {
   );
 
   const [monthOffset, setMonthOffset] = useState(0);
+
+  // Bound calendar navigation: can't go before first egg month, can't go past current month
+  const earliestMonthOffset = useMemo(() => {
+    if (!firstEggDate) return -Infinity;
+    const first = new Date(firstEggDate.getFullYear(), firstEggDate.getMonth(), 1);
+    const current = new Date(now.getFullYear(), now.getMonth(), 1);
+    return (first.getFullYear() - current.getFullYear()) * 12 + (first.getMonth() - current.getMonth());
+  }, [firstEggDate, now]);
+
+  const clampedMonthOffset = useMemo(() => {
+    let v = monthOffset;
+    if (v > 0) v = 0;
+    if (!Number.isFinite(earliestMonthOffset) || v < earliestMonthOffset) return earliestMonthOffset;
+    return v;
+  }, [monthOffset, earliestMonthOffset]);
+
+  useEffect(() => {
+    if (clampedMonthOffset !== monthOffset) setMonthOffset(clampedMonthOffset);
+  }, [clampedMonthOffset, monthOffset]);
+
   const viewedMonth = useMemo(
-    () => new Date(now.getFullYear(), now.getMonth() + monthOffset, 1),
-    [now, monthOffset]
+    () => new Date(now.getFullYear(), now.getMonth() + clampedMonthOffset, 1),
+    [now, clampedMonthOffset]
   );
-  const isCurrentMonth = monthOffset === 0;
+  const isCurrentMonth = clampedMonthOffset === 0;
+  const isEarliestMonth = clampedMonthOffset === earliestMonthOffset && Number.isFinite(earliestMonthOffset);
   const daysInMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay();
   const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
