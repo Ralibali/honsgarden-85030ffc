@@ -1,0 +1,1 @@
+DELETE FROM public.client_error_logs WHERE message ILIKE '%Lock was stolen by another request%' OR message ILIKE '%NavigatorLockAcquireTimeout%';
