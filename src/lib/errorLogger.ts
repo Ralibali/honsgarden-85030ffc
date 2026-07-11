@@ -83,12 +83,32 @@ async function getCurrentUserId(): Promise<string | null> {
  * Loggar ett klientfel. Kan anropas från ErrorBoundary, globala handlers
  * eller från specifika try/catch-block där extra kontext finns.
  */
+// Kända, ofarliga fel som inte ska spamma loggen.
+// - "Lock was stolen by another request": Supabase gotrue-js/WebLocks race när
+//   flera flikar/instanser konkurrerar om samma auth-lås på iOS Safari. Ofarligt.
+// - "NavigatorLockAcquireTimeoutError": samma tema.
+const IGNORED_ERROR_PATTERNS: RegExp[] = [
+  /Lock was stolen by another request/i,
+  /NavigatorLockAcquireTimeout/i,
+  /Acquiring an exclusive Navigator LockManager lock .* immediately failed/i,
+];
+
+function shouldIgnore(message: string): boolean {
+  return IGNORED_ERROR_PATTERNS.some((rx) => rx.test(message));
+}
+
 export async function logClientError(
   error: unknown,
   options: { level?: ErrorLevel; context?: Record<string, unknown> } = {},
 ): Promise<void> {
   const { level = 'error', context } = options;
   const err = error instanceof Error ? error : new Error(String(error));
+
+  if (shouldIgnore(err.message)) {
+    // Tyst i console.debug så det går att felsöka vid behov, men ingen buffer/server.
+    console.debug('[honsgarden:ignored]', err.message);
+    return;
+  }
 
   const payload: ErrorPayload = {
     level,
