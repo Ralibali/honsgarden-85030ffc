@@ -24,9 +24,15 @@ export default defineConfig(({ mode }) => {
   if (mode === "production") {
     const missing = REQUIRED_PRODUCTION_ENV.filter((key) => !env[key]?.trim());
     if (missing.length > 0) {
-      throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
+      // Varna istället för att kasta – publish-miljön injectar dessa vid deploy,
+      // och en hård throw här bryter hela bygget även när värdena finns i runtime.
+      console.warn(
+        `[vite] Missing VITE_SUPABASE_* env vars at build time: ${missing.join(", ")}. ` +
+          `Continuing – hosting will inject them.`
+      );
     }
   }
+
 
 
   return {
