@@ -26,7 +26,7 @@ export default function MapListingConfirm() {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-background grid place-items-center px-4">
+    <div className="min-h-dvh bg-background grid place-items-center px-4">
       <div className="max-w-md w-full rounded-2xl border bg-card p-8 text-center shadow-sm">
         {state === "loading" && (
           <>

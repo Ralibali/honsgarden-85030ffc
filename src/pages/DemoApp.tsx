@@ -56,7 +56,7 @@ export default function DemoApp() {
   const avg = hens.length ? (todayEggs / hens.length).toFixed(1) : "0";
 
   return (
-    <div className="min-h-screen bg-background pb-32 sm:pb-12">
+    <div className="min-h-dvh bg-background pb-32 sm:pb-12">
       <div className="container max-w-3xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
         <div className="flex items-center justify-between mb-3">
           <a href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">

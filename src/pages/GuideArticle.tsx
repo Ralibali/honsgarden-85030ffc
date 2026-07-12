@@ -570,7 +570,7 @@ export default function GuideArticle() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -578,7 +578,7 @@ export default function GuideArticle() {
 
   if (isError || !post) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-4 px-4">
         <BookOpen className="h-10 w-10 text-muted-foreground/30" />
         <h1 className="font-serif text-xl text-foreground">Artikeln hittades inte</h1>
         <Link to="/blogg"><Button variant="outline" className="rounded-xl"><ArrowLeft className="h-4 w-4 mr-1" /> Tillbaka till bloggen</Button></Link>
@@ -587,7 +587,7 @@ export default function GuideArticle() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <BlogConversionPopup />
       <div className="fixed inset-x-0 top-0 z-50 h-1 bg-border/40" aria-hidden="true">
         <div className="h-full bg-primary transition-[width] duration-150" style={{ width: `${readingProgress}%` }} />

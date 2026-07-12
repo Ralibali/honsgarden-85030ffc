@@ -120,7 +120,7 @@ export default function BlogCategory() {
 
   if (!meta) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 px-4">
+      <div className="min-h-dvh bg-background flex flex-col items-center justify-center gap-4 px-4">
         <BookOpen className="h-10 w-10 text-muted-foreground/30" />
         <h1 className="font-serif text-xl text-foreground">Kategorin hittades inte</h1>
         <Link to="/blogg"><Button variant="outline" className="rounded-xl"><ArrowLeft className="h-4 w-4 mr-1" /> Tillbaka till bloggen</Button></Link>
@@ -129,7 +129,7 @@ export default function BlogCategory() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <VisitorWelcomePopup />
 
       {/* ItemList JSON-LD */}

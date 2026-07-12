@@ -433,14 +433,14 @@ export default function PublicEggSaleV3() {
     jsonLd: seoJsonLd,
   });
 
-  if (isLoading) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
-  if (shouldLoadSlug && !listing) return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
+  if (isLoading) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
+  if (shouldLoadSlug && !listing) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
 
   const lowStock = !isSoldOut && remaining > 0 && remaining <= 3;
   const reviewCount = (publicReviews as any[]).length;
   const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
 
-  return <main className={`min-h-screen ${bgClass} px-4 py-8 sm:py-12`} style={{ ['--theme-accent' as any]: accent }}>
+  return <main className={`min-h-dvh ${bgClass} px-4 py-8 sm:py-12`} style={{ ['--theme-accent' as any]: accent }}>
     <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
 
     {/* Hero */}

@@ -82,7 +82,7 @@ export default function BlogTag() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <VisitorWelcomePopup />
 
       {posts.length > 0 && (

@@ -107,11 +107,11 @@ export default function IndexUpdated() {
   });
 
   return (
-    <main id="main-content" className="min-h-screen bg-background overflow-x-hidden">
+    <main id="main-content" className="min-h-dvh bg-background overflow-x-hidden">
       <Suspense fallback={null}><StickyMobileCTA /></Suspense>
       <LandingNavbar />
 
-      <section className="relative flex flex-col justify-center pt-24 pb-12 sm:min-h-screen sm:pt-16 sm:pb-10" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 50%, #f5f0e8 100%)' }}>
+      <section className="relative flex flex-col justify-center pt-24 pb-12 sm:min-h-dvh sm:pt-16 sm:pb-10" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 50%, #f5f0e8 100%)' }}>
         <div className="container max-w-6xl mx-auto px-5 sm:px-6 relative z-10">
           <div className="grid lg:grid-cols-[1.04fr_0.96fr] gap-10 lg:gap-14 items-center">
             <div className="text-center lg:text-left">
