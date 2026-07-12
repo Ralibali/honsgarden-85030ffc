@@ -343,7 +343,7 @@ function TermsEn() {
   return (
     <>
       <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-1">Terms of Service</h1>
-      <p className="text-xs text-muted-foreground mb-6">honsgarden.app | Last updated: 2026-07-12</p>
+      <p className="text-xs text-muted-foreground mb-6">honsgarden.app | Last updated: 2026-11-15</p>
 
       <h2 className="font-serif text-lg text-foreground mt-6 mb-2">1. General</h2>
       <p className="text-sm text-foreground leading-relaxed">
