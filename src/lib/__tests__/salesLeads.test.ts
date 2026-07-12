@@ -74,9 +74,11 @@ describe('generatePersonalDraft', () => {
 });
 
 describe('statusLabel', () => {
-  it('maps all known statuses', () => {
+  it('maps all known statuses to non-empty Swedish labels', () => {
     for (const s of LEAD_STATUSES) {
-      expect(statusLabel(s)).not.toBe(s === 'new' ? 'new' : s === 'customer' ? 'customer' : statusLabel(s));
+      const label = statusLabel(s);
+      expect(label).toBeTruthy();
+      expect(label).not.toBe(s);
     }
     expect(statusLabel('new')).toBe('Ny');
     expect(statusLabel('customer')).toBe('Kund');
