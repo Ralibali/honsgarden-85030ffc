@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
 
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) {
-    return jsonResponse({ error: "FIRECRAWL_API_KEY saknas i backend-konfigurationen." }, 500);
+    return jsonResponse({ error: "config_missing", message: "FIRECRAWL_API_KEY saknas i backend-konfigurationen." }, 503);
   }
 
   const authHeader = req.headers.get("Authorization");
