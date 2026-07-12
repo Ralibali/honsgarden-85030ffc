@@ -27,6 +27,8 @@ import PwaDashboard from '@/components/admin/PwaDashboard';
 import AgdaAdminPanel from '@/components/admin/AgdaAdminPanel';
 import { ErrorLogsPanel } from '@/components/admin/ErrorLogsPanel';
 import AffiliateClicksPanel from '@/components/admin/AffiliateClicksPanel';
+import AffiliateAnalyticsPanel from '@/components/admin/AffiliateAnalyticsPanel';
+import AdminLeadsPanel from '@/components/admin/AdminLeadsPanel';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -281,6 +283,12 @@ export default function Admin() {
           </TabsTrigger>
           <TabsTrigger value="affiliate" className="text-xs sm:text-sm gap-1 rounded-lg">
             <Link2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Affiliate</span><span className="sm:hidden">💰</span>
+          </TabsTrigger>
+          <TabsTrigger value="affiliate-analytics" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <TrendingUp className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Aff.analys</span><span className="sm:hidden">📈</span>
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="text-xs sm:text-sm gap-1 rounded-lg">
+            <Search className="h-3.5 w-3.5" /> Leads
           </TabsTrigger>
         </TabsList>
 
@@ -683,6 +691,14 @@ export default function Admin() {
 
         <TabsContent value="affiliate" className="space-y-3">
           <AffiliateClicksPanel />
+        </TabsContent>
+
+        <TabsContent value="affiliate-analytics" className="space-y-3">
+          <AffiliateAnalyticsPanel />
+        </TabsContent>
+
+        <TabsContent value="leads" className="space-y-3">
+          <AdminLeadsPanel />
         </TabsContent>
       </Tabs>
 
