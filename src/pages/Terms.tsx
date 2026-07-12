@@ -610,7 +610,52 @@ function TermsEn() {
           Email: <a href="mailto:imy@imy.se" className="text-primary hover:underline">imy@imy.se</a>
         </p>
 
-        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">15. Contact</h2>
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">15. Marketplace, Agda's egg shop & Community (DSA)</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          When you publish listings, bookings, reviews or posts, Honsgarden acts as a host of user-generated content under the EU Digital Services Act (DSA, EU 2022/2065).
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li>You are responsible for the content you publish and for complying with applicable law (e.g. local food-safety rules for egg sales, consumer protection, GDPR).</li>
+          <li>Contact details you choose to publish in a listing are visible to visitors — publish only what is necessary.</li>
+          <li>We may remove content that violates the terms, is unlawful, misleading or harmful.</li>
+          <li>Notice of illegal or inappropriate content (art. 16 DSA): email <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a> with a link and description. We confirm and act without undue delay.</li>
+          <li>Takedown decisions may be appealed within 6 months. Out-of-court dispute resolution: the Swedish National Board for Consumer Disputes (ARN).</li>
+          <li>We do not display targeted advertising based on profiling and use no "dark patterns" under art. 25 DSA.</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">16. Mobile app, push notifications & camera</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          When you use the iOS app (App Store) or install the web app (PWA), the following applies in addition to this policy:
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li><strong>Push notifications:</strong> Sent only if you actively opt in via the operating system. Content includes egg reminders, marketplace alerts and subscription status. Can be disabled anytime in device settings.</li>
+          <li><strong>Camera & photo library:</strong> Access is requested only when you choose to add images to hens or listings. Images are stored encrypted and deleted when you remove them or your account.</li>
+          <li><strong>Offline mode:</strong> Logged eggs are stored locally on your device and synced when online. No third party has access to the offline queue.</li>
+          <li><strong>In-app payment:</strong> All payments are processed via Stripe on the web. We do not use Apple In-App Purchase for subscriptions.</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">17. Email alerts for eggs for sale (public form)</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          On our public city and map pages, visitors may sign up for free email alerts when new egg listings appear nearby. For this we process:
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li>Email address, optional city/postcode and search radius</li>
+          <li>Legal basis: consent (art. 6.1 a GDPR) via <strong>double opt-in</strong> — you must confirm via an email link</li>
+          <li>Unsubscribe: link included in every message, with immediate effect</li>
+          <li>Retention: until you unsubscribe; after 24 months of inactivity the subscription is deleted</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">18. Referral program</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          When you invite a friend via personal link (e.g. <code>/r/YOURCODE</code>), we record your referral code and link the invitee to your invitation at registration. We do not share your email with the invitee. The reward (30 days Plus) is granted automatically once the condition is met (first egg logged). Abuse (bots, self-referrals, fake accounts) may result in reward revocation and account suspension.
+        </p>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">19. Family sharing</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          When you invite family members to a farm, the farm's data (hens, eggs, finances, photos) is shared with the invitees. Personal data about you as the owner is shown only as a display name. You may remove a member at any time via <em>Settings → Family</em>, which immediately revokes their access.
+        </p>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">20. Contact</h2>
         <p className="text-sm text-foreground leading-relaxed">Questions about this policy or your personal data? Contact us:</p>
         <p className="text-sm text-foreground leading-relaxed">
           {brand} / honsgarden.app<br />
