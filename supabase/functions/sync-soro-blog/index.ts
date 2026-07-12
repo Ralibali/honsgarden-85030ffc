@@ -94,6 +94,36 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false },
     });
+
+    // Ladda aktiv glossary en gång per körning för auto-matchning
+    const { data: glossaryRows } = await supabase
+      .from("link_glossary")
+      .select("id, keyword")
+      .eq("is_active", true);
+    const glossary = (glossaryRows ?? []) as Array<{ id: string; keyword: string }>;
+
+    function matchGlossaryIds(content: string, title: string): string[] {
+      const bag = `${title} ${content}`.toLowerCase();
+      const scored: Array<{ id: string; score: number; len: number }> = [];
+      for (const g of glossary) {
+        const kw = g.keyword.trim().toLowerCase();
+        if (!kw) continue;
+        // Räkna förekomster (max 5 för att inte belöna spam)
+        let count = 0;
+        let from = 0;
+        while (count < 5) {
+          const idx = bag.indexOf(kw, from);
+          if (idx === -1) break;
+          count += 1;
+          from = idx + kw.length;
+        }
+        if (count > 0) scored.push({ id: g.id, score: count, len: kw.length });
+      }
+      // Prioritera fler träffar, sedan längre keyword
+      scored.sort((a, b) => b.score - a.score || b.len - a.len);
+      return scored.slice(0, 6).map((s) => s.id);
+    }
+
     let synced = 0;
     let skipped = 0;
 
