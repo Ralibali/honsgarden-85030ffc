@@ -3531,6 +3531,81 @@ export type Database = {
           },
         ]
       }
+      sales_leads: {
+        Row: {
+          business_type: string | null
+          city: string | null
+          created_at: string
+          created_by: string | null
+          do_not_contact: boolean
+          found_at: string
+          id: string
+          last_contacted_at: string | null
+          name: string
+          notes: string | null
+          public_email: string | null
+          public_phone: string | null
+          region: string | null
+          relevance_score: number
+          social_urls: Json
+          source_description: string | null
+          source_title: string | null
+          source_url: string | null
+          status: string
+          updated_at: string
+          website: string | null
+          website_domain: string | null
+        }
+        Insert: {
+          business_type?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          do_not_contact?: boolean
+          found_at?: string
+          id?: string
+          last_contacted_at?: string | null
+          name: string
+          notes?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          region?: string | null
+          relevance_score?: number
+          social_urls?: Json
+          source_description?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          website_domain?: string | null
+        }
+        Update: {
+          business_type?: string | null
+          city?: string | null
+          created_at?: string
+          created_by?: string | null
+          do_not_contact?: boolean
+          found_at?: string
+          id?: string
+          last_contacted_at?: string | null
+          name?: string
+          notes?: string | null
+          public_email?: string | null
+          public_phone?: string | null
+          region?: string | null
+          relevance_score?: number
+          social_urls?: Json
+          source_description?: string | null
+          source_title?: string | null
+          source_url?: string | null
+          status?: string
+          updated_at?: string
+          website?: string | null
+          website_domain?: string | null
+        }
+        Relationships: []
+      }
       scrape_jobs: {
         Row: {
           completed_at: string | null

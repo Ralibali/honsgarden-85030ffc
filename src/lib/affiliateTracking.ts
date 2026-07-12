@@ -18,6 +18,8 @@ export type AffiliateClickSource =
   | 'banner'
   | 'glossary'
   | 'app_widget'
+  | 'comparison'
+  | 'recommended'
   | 'other';
 
 export interface AffiliateClickPayload {
