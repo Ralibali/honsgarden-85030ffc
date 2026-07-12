@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = (Deno.env.get("PUBLIC_APP_ORIGIN") ?? "https://honsgarden.se").replace(/\/$/, "");
 
 Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  // Find users whose premium expired in the last 25 hours (to catch with some buffer)
   const now = new Date();
   const yesterday = new Date(now.getTime() - 25 * 60 * 60 * 1000);
 
