@@ -51,8 +51,9 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
   };
 
   const handleMouseDown = (e: MouseEvent<HTMLAnchorElement>) => {
-    // 0 = vänster, 1 = mitten. Högerklick fångas av onContextMenu.
-    if (e.button === 0 || e.button === 1) fire();
+    // Vänsterklick loggas här. Mittenklick loggas enbart i onAuxClick
+    // för att undvika dubbla events i webbläsare som triggar båda.
+    if (e.button === 0) fire();
     onMouseDown?.(e);
   };
   const handleAuxClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -64,7 +65,7 @@ export const AffiliateLink = forwardRef<HTMLAnchorElement, Props>(function Affil
     onContextMenu?.(e);
   };
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    // Tangentbordsaktivering (Enter) går via onClick utan mousedown
+    // Tangentbordsaktivering (Enter) går via onClick utan mousedown.
     if (e.detail === 0) fire();
     onClick?.(e);
   };
