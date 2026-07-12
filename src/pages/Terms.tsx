@@ -482,12 +482,27 @@ function TermsEn() {
               </tr>
               <tr className="border-b border-border/30">
                 <td className="py-2 pr-4">Brevo (Sendinblue)</td>
-                <td className="py-2 pr-4">Email delivery, newsletters</td>
+                <td className="py-2 pr-4">Email delivery, newsletters, transactional mail</td>
                 <td className="py-2">EU (France)</td>
               </tr>
               <tr className="border-b border-border/30">
-                <td className="py-2 pr-4">Google (Gemini AI)</td>
-                <td className="py-2 pr-4">AI features (tips, chat)</td>
+                <td className="py-2 pr-4">Google (Gemini) / Lovable AI Gateway</td>
+                <td className="py-2 pr-4">AI features (Agda chat, daily tips, insights)</td>
+                <td className="py-2">EU/USA (EU SCC)</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Apple Push Notification Service</td>
+                <td className="py-2 pr-4">Push notifications in the iOS app</td>
+                <td className="py-2">USA (EU SCC)</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Open-Meteo</td>
+                <td className="py-2 pr-4">Weather forecasts (coordinates/postcode only)</td>
+                <td className="py-2">EU</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Firecrawl</td>
+                <td className="py-2 pr-4">Product data for affiliate links (no personal data)</td>
                 <td className="py-2">USA (EU SCC)</td>
               </tr>
             </tbody>
