@@ -35,8 +35,18 @@ Deno.serve(async (req) => {
   });
   if (!isAdmin) return jsonResponse({ error: "Forbidden" }, 403);
 
+  // Läs `days` robust: query-param ELLER JSON-body (POST). Klämmer 1..365.
   const url = new URL(req.url);
-  const days = Math.min(365, Math.max(1, Number(url.searchParams.get("days")) || 30));
+  let daysRaw: unknown = url.searchParams.get("days");
+  if ((daysRaw === null || daysRaw === "") && req.method === "POST") {
+    try {
+      const body = await req.json();
+      daysRaw = body?.days;
+    } catch {
+      /* body optional */
+    }
+  }
+  const days = Math.min(365, Math.max(1, Number(daysRaw) || 30));
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   const service = createClient(
