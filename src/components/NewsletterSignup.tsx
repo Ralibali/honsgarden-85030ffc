@@ -64,7 +64,7 @@ export default function NewsletterSignup({ variant = 'card', title, description 
           aria-label="E-postadress"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 bg-white text-neutral-900 placeholder:text-neutral-500 border-white/30"
+          className="flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
           required
         />
         <Button type="submit" disabled={loading} className="shrink-0">
