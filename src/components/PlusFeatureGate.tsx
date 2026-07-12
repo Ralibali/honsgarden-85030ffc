@@ -47,7 +47,7 @@ export default function PlusFeatureGate({ title, description, featureName = 'Plu
             </Badge>
             <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-2">{resolvedTitle}</h1>
             <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">{resolvedDescription}</p>
-            <p className="text-xs text-muted-foreground mt-3">Prova sju dagar gratis – sedan 19 kr/mån</p>
+            <p className="text-xs text-muted-foreground mt-3">Prova sju dagar gratis – sedan 39 kr/mån eller 299 kr/år</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left max-w-2xl mx-auto">
             {benefits.map((benefit) => (
