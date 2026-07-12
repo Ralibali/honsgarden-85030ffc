@@ -60,6 +60,7 @@ STRIPE_WEBHOOK_SECRET=
 LOVABLE_API_KEY=
 CRON_SECRET=
 APP_ALLOWED_ORIGINS=https://honsgarden.se,https://www.honsgarden.se
+FIRECRAWL_API_KEY=   # Krävs för admin-verktyget Leads (firecrawl-lead-search)
 ```
 
 Checkout avbryts med konfigurationsfel om de aktuella Stripe-priserna saknas. Gamla priser används aldrig som fallback för nya köp.
