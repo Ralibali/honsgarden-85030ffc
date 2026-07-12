@@ -1155,68 +1155,12 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%B6ns%20sovplats" />
   </url>
   <url>
-    <loc>https://honsgarden.se/blogg/tagg/foder</loc>
+    <loc>https://honsgarden.se/blogg/tagg/kostnader</loc>
     <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/foder" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/foder" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/n%C3%A4ring</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/n%C3%A4ring" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/n%C3%A4ring" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/h%C3%B6nsmat</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/h%C3%B6nsmat" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%B6nsmat" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/foderkostnad</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/foderkostnad" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/foderkostnad" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/h%C3%B6ns</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/h%C3%B6ns" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%B6ns" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/registrering</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/registrering" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/registrering" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/tagg/lagkrav</loc>
-    <lastmod>2026-07-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/lagkrav" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/lagkrav" />
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/kostnader" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/kostnader" />
   </url>
   <url>
     <loc>https://honsgarden.se/blogg/tagg/%C3%A4ggl%C3%A4ggning</loc>
@@ -1233,6 +1177,14 @@
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/j%C3%A4mf%C3%B6relse" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/j%C3%A4mf%C3%B6relse" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/h%C3%B6ns</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/h%C3%B6ns" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%B6ns" />
   </url>
   <url>
     <loc>https://honsgarden.se/blogg/tagg/h%C3%B6nsh%C3%A4lsa</loc>
@@ -1283,12 +1235,60 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%A4lsa" />
   </url>
   <url>
-    <loc>https://honsgarden.se/blogg/tagg/kostnader</loc>
+    <loc>https://honsgarden.se/blogg/tagg/foder</loc>
     <lastmod>2026-07-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/kostnader" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/kostnader" />
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/foder" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/foder" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/n%C3%A4ring</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/n%C3%A4ring" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/n%C3%A4ring" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/h%C3%B6nsmat</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/h%C3%B6nsmat" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/h%C3%B6nsmat" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/foderkostnad</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/foderkostnad" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/foderkostnad" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/sn%C3%A4ckskal" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/registrering</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/registrering" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/registrering" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/tagg/lagkrav</loc>
+    <lastmod>2026-07-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/tagg/lagkrav" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/tagg/lagkrav" />
   </url>
   <url>
     <loc>https://honsgarden.se/blogg/tagg/paduan%20h%C3%B6ns</loc>
@@ -3547,20 +3547,12 @@
     </image:image>
   </url>
   <url>
-    <loc>https://honsgarden.se/blogg/foder-till-hons-guide</loc>
+    <loc>https://honsgarden.se/blogg/hobbyhons-nyborjarguide</loc>
     <lastmod>2026-03-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/foder-till-hons-guide" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/foder-till-hons-guide" />
-  </url>
-  <url>
-    <loc>https://honsgarden.se/blogg/registrera-hons-jordbruksverket</loc>
-    <lastmod>2026-03-01</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/registrera-hons-jordbruksverket" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/registrera-hons-jordbruksverket" />
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/hobbyhons-nyborjarguide" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/hobbyhons-nyborjarguide" />
   </url>
   <url>
     <loc>https://honsgarden.se/blogg/honsraser-for-agglaggeri-sverige</loc>
@@ -3579,12 +3571,20 @@
     <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/honshalsa-vanliga-sjukdomar" />
   </url>
   <url>
-    <loc>https://honsgarden.se/blogg/hobbyhons-nyborjarguide</loc>
+    <loc>https://honsgarden.se/blogg/foder-till-hons-guide</loc>
     <lastmod>2026-03-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/hobbyhons-nyborjarguide" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/hobbyhons-nyborjarguide" />
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/foder-till-hons-guide" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/foder-till-hons-guide" />
+  </url>
+  <url>
+    <loc>https://honsgarden.se/blogg/registrera-hons-jordbruksverket</loc>
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="https://honsgarden.se/blogg/registrera-hons-jordbruksverket" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://honsgarden.se/blogg/registrera-hons-jordbruksverket" />
   </url>
   <url>
     <loc>https://honsgarden.se/blogg/paduan-hons</loc>
