@@ -37,8 +37,8 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
       <CardContent className="p-5">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1">Kom igång ({doneCount}/{steps.length})</p>
-            <h2 className="font-serif text-lg text-foreground leading-tight">Grundbygg din hönsgård</h2>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1">Kom igång · {doneCount}/{steps.length} klart</p>
+            <h2 className="font-serif text-lg text-foreground leading-tight">Fyra steg – du är igång på fem minuter</h2>
           </div>
           <button
             aria-label="Dölj checklista"
