@@ -16,6 +16,7 @@ import { validatePostalCode } from '@/lib/postalCode';
 import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
+const TERMS_VERSION = '2026-07-12';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -29,7 +30,6 @@ export default function Login() {
     noindex: true,
   });
 
-  // Read mode from URL: /login?mode=register or /login?mode=login
   const initialMode = searchParams.get('mode');
   const [authMode, setAuthMode] = useState<AuthMode>(
     initialMode === 'register' ? 'register' : initialMode === 'login' ? 'login' : 'welcome'
@@ -39,43 +39,43 @@ export default function Login() {
   const [name, setName] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const intl = isInternationalDomain();
-  // På .app är default = US (initial USA-lansering). På .se är default = SE.
-  // Användaren kan välja ett annat land före registrering via CountrySelect.
   const [country, setCountry] = useState<CountryCode>(() => defaultCountryForRegion() as CountryCode);
   const [referralCode, setReferralCode] = useState(searchParams.get('ref') || '');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
-  // På honsgarden.se behåller vi det gamla 5-siffriga svenska postnummerflödet
-  // (tomt = ok, annars exakt 5 siffror). Internationellt: per-land-regex.
+  const normalizedPostalCode = useMemo(() => {
+    const trimmed = postalCode.trim();
+    return country === 'SE' ? trimmed.replace(/\s+/g, '') : trimmed;
+  }, [postalCode, country]);
+
   const postalCheck = useMemo(() => {
     if (!intl) {
-      const trimmed = postalCode.trim();
-      return { ok: trimmed.length === 0 || /^\d{5}$/.test(trimmed) };
+      return { ok: normalizedPostalCode.length === 0 || /^\d{5}$/.test(normalizedPostalCode) };
     }
     return validatePostalCode(postalCode, country);
-  }, [postalCode, country, intl]);
+  }, [postalCode, country, intl, normalizedPostalCode]);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      navigate('/app', { replace: true });
-    }
+    if (!authLoading && isAuthenticated) navigate('/app', { replace: true });
   }, [authLoading, isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await login(email, password);
-      // Apply postal code captured at registration, if any
+      await login(email.trim().toLowerCase(), password);
       try {
         const pending = localStorage.getItem('pending_postal_code');
-        if (pending && pending.trim().length > 0) {
+        if (pending?.trim()) {
           await api.updateCoopSettings({ postal_code: pending } as any);
           localStorage.removeItem('pending_postal_code');
         }
-      } catch { /* non-blocking */ }
+      } catch {
+        // Non-blocking legacy migration.
+      }
       navigate('/app', { replace: true });
     } catch (err: any) {
       toast({ title: 'Inloggning misslyckades', description: err.message || 'Kontrollera e-post och lösenord.', variant: 'destructive' });
@@ -86,12 +86,18 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!acceptedTerms) {
+      toast({ title: 'Godkänn villkoren', description: 'Du behöver godkänna användarvillkoren för att skapa konto.', variant: 'destructive' });
+      return;
+    }
     if (!postalCheck.ok) {
       toast({ title: 'Kontrollera postnumret', description: 'Postnumret matchar inte det valda landet.', variant: 'destructive' });
       return;
     }
+
     setLoading(true);
     try {
+      const acceptedAt = new Date().toISOString();
       const meta = {
         country_code: countryDefaults.code,
         language_code: countryDefaults.language,
@@ -100,22 +106,36 @@ export default function Login() {
         currency_code: countryDefaults.currency,
         measurement_system: countryDefaults.measurement,
         temperature_unit: countryDefaults.temperature,
-        postal_code: postalCode || null,
+        postal_code: normalizedPostalCode || null,
+        terms_accepted_at: acceptedAt,
+        terms_version: TERMS_VERSION,
+        marketing_opt_in: marketingOptIn,
+        marketing_opt_in_at: marketingOptIn ? acceptedAt : null,
+        marketing_consent_source: marketingOptIn ? 'registration' : null,
       };
-      const data = await register(email, password, name, meta);
-      // Process referral code if provided
+
+      const data = await register(email.trim().toLowerCase(), password, name.trim(), meta);
       if (referralCode.trim() && data?.user?.id) {
         try {
-          await supabase.rpc('process_referral', { _referral_code: referralCode.trim().toUpperCase(), _new_user_id: data.user.id });
+          await supabase.rpc('process_referral', {
+            _referral_code: referralCode.trim().toUpperCase(),
+            _new_user_id: data.user.id,
+          });
         } catch {
-          // Non-blocking – referral is a bonus
+          // Referral is a bonus and may be retried after first login.
         }
       }
-      // Stash postal code so it can be re-applied at first login (legacy flöde)
-      if (postalCode) {
-        try { localStorage.setItem('pending_postal_code', postalCode); } catch { /* ignore */ }
+
+      if (normalizedPostalCode) {
+        try { localStorage.setItem('pending_postal_code', normalizedPostalCode); } catch { /* ignore */ }
       }
-      toast({ title: 'Konto skapat!', description: referralCode.trim() ? 'Du har sju dagars gratis Premium. Logga ditt första ägg för att låsa upp 30 dagar Plus åt er båda! 🥚' : 'Du har fått sju dagars gratis Premium! 🎉' });
+
+      toast({
+        title: 'Konto skapat!',
+        description: referralCode.trim()
+          ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
+          : 'Du har fått sju dagars gratis Premium! 🎉',
+      });
       setAuthMode('login');
     } catch (err: any) {
       toast({ title: 'Registrering misslyckades', description: err.message, variant: 'destructive' });
@@ -125,13 +145,15 @@ export default function Login() {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    if (!email.trim()) {
       toast({ title: 'Ange e-post', description: 'Fyll i din e-postadress.', variant: 'destructive' });
       return;
     }
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
       toast({ title: 'E-post skickad!', description: 'Kolla din inkorg för att återställa lösenordet.' });
     } catch (err: any) {
       toast({ title: 'Fel', description: err.message, variant: 'destructive' });
@@ -142,7 +164,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left: Hero image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img src={heroFarm} alt="Svensk hönsgård med höns i morgonljus" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent" />
@@ -153,7 +174,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Right: Auth forms */}
       <div className="flex-1 flex items-center justify-center p-6 bg-background noise-bg">
         <div className="w-full max-w-md relative z-10">
           <div className="flex items-center gap-3 mb-10">
@@ -194,14 +214,14 @@ export default function Login() {
                   <Label htmlFor="email" className="text-muted-foreground">E-post</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" type="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="password" className="text-muted-foreground">Lösenord</Label>
                   <div className="relative mt-1.5">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" required />
                   </div>
                 </div>
               </div>
@@ -232,38 +252,36 @@ export default function Login() {
                   <Label htmlFor="name" className="text-muted-foreground">Namn</Label>
                   <div className="relative mt-1.5">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="name" type="text" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="name" type="text" autoComplete="name" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-11" minLength={2} maxLength={80} required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="reg-email" className="text-muted-foreground">E-post</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="reg-email" type="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="reg-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="reg-password" className="text-muted-foreground">Lösenord</Label>
                   <div className="relative mt-1.5">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="reg-password" type="password" placeholder="Minst 8 tecken" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" minLength={8} required />
+                    <Input id="reg-password" type="password" autoComplete="new-password" placeholder="Minst 8 tecken" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" minLength={8} maxLength={128} required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="referral" className="text-muted-foreground">Värvningskod (valfritt)</Label>
                   <div className="relative mt-1.5">
                     <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase())} className="pl-10 h-11 uppercase" maxLength={6} />
+                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className="pl-10 h-11 uppercase" maxLength={6} />
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Ni får båda sju dagars Premium!</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Bonus aktiveras när du börjar använda appen.</p>
                 </div>
                 {intl && (
                   <div>
                     <Label className="text-muted-foreground">Land / Country</Label>
-                    <div className="mt-1.5">
-                      <CountrySelect value={country} onChange={setCountry} />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-1">Landet sätter regionala standardvärden (språk, valuta, tidszon, måttenheter). Du kan ändra varje inställning separat senare.</p>
+                    <div className="mt-1.5"><CountrySelect value={country} onChange={setCountry} /></div>
+                    <p className="text-[10px] text-muted-foreground mt-1">Landet sätter språk, valuta, tidszon och måttenheter. Du kan ändra inställningarna senare.</p>
                   </div>
                 )}
                 <div>
@@ -273,6 +291,7 @@ export default function Login() {
                     <Input
                       id="postal"
                       type="text"
+                      autoComplete="postal-code"
                       placeholder={!intl ? '582 20' : country === 'US' ? '10001' : country === 'GB' ? 'SW1A 1AA' : country === 'CA' ? 'K1A 0B1' : country === 'NL' ? '1012 AB' : '582 20'}
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value.slice(0, 12))}
@@ -286,7 +305,6 @@ export default function Login() {
                   )}
                 </div>
 
-
                 <div className="flex items-start gap-2">
                   <input
                     type="checkbox"
@@ -297,8 +315,22 @@ export default function Login() {
                     required
                   />
                   <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
-                    Jag har läst och godkänner{' '}
-                    <a href="/terms" target="_blank" className="text-primary hover:underline">användarvillkoren & integritetspolicyn</a>, inklusive att kontaktas via e-post med nyhetsbrev och erbjudanden.
+                    Jag godkänner{' '}
+                    <a href="/terms" target="_blank" rel="noreferrer" className="text-primary hover:underline">användarvillkoren</a>
+                    {' '}och har läst integritetspolicyn.
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    id="marketing"
+                    checked={marketingOptIn}
+                    onChange={(e) => setMarketingOptIn(e.target.checked)}
+                    className="mt-1 rounded border-border"
+                  />
+                  <label htmlFor="marketing" className="text-xs text-muted-foreground leading-relaxed">
+                    Ja tack, skicka tips, nyheter och erbjudanden via e-post. Frivilligt och kan återkallas när som helst.
                   </label>
                 </div>
               </div>
@@ -320,7 +352,7 @@ export default function Login() {
                 <Label htmlFor="forgot-email" className="text-muted-foreground">E-post</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="forgot-email" type="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" />
+                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" />
                 </div>
               </div>
               <Button className="w-full h-12 text-base font-medium" onClick={handleForgotPassword} disabled={loading}>
