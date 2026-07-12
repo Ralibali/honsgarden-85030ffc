@@ -1,6 +1,7 @@
 // Affiliate-analys per artikel (views, impressions, klick, CTR, top produkt/annonsör).
 // Endast admin.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { resolveDays } from "./utils.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
