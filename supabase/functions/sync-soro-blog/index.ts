@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
         is_published: true,
         author_id: AUTHOR_ID,
+        glossary_ids: matchGlossaryIds(content, title),
       }, { onConflict: "slug" });
 
       if (error) throw new Error(error.message);
