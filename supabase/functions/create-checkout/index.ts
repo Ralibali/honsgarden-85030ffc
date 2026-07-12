@@ -7,28 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLAN_PRICE_ENV: Record<string, string> = {
+const PLAN_PRICE_ENV: Record<"monthly" | "yearly", string> = {
   monthly: "STRIPE_PRICE_MONTHLY",
   yearly: "STRIPE_PRICE_YEARLY",
 };
 
-// Fallback Stripe price IDs — pekar på LEGACY-priset (19/149 kr).
-// I produktion ska STRIPE_PRICE_MONTHLY/YEARLY vara satta till NYA priser
-// (39 kr/mån, 299 kr/år). Fallbacken finns bara som säkerhetsnät om secrets
-// saknas i en miljö och håller den gamla prissättningen aktiv för nya köp
-// tills env-variablerna är satta.
-const PLAN_PRICE_FALLBACK: Record<"monthly" | "yearly", string> = {
-  monthly: "price_1T3joGHzffTezY82dRQc7GTO",
-  yearly: "price_1T3jwRHzffTezY829aWQVXZr",
-};
-
-// Legacy-priser (19/149 kr) — mappar gamla priceId:n som eventuellt skickas
-// från äldre klienter/länkar till motsvarande plan. Behålls så befintliga
-// prenumerationer och gamla checkout-länkar fortsätter fungera.
+// Äldre klienter kan fortfarande skicka gamla priceId:n. De används endast för
+// att avgöra plan – nya köp måste alltid använda de aktuella env-konfigurerade priserna.
 const LEGACY_PRICE_PLAN: Record<string, "monthly" | "yearly"> = {
   price_1T3joGHzffTezY82dRQc7GTO: "monthly",
   price_1T3jwRHzffTezY829aWQVXZr: "yearly",
 };
+
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 function resolvePlanAndPrice(body: Record<string, unknown>) {
   const requestedPlan = typeof body.plan === "string" ? body.plan : null;
@@ -39,8 +35,7 @@ function resolvePlanAndPrice(body: Record<string, unknown>) {
     throw new Error("Invalid plan. Expected monthly or yearly.");
   }
 
-  const priceId = Deno.env.get(PLAN_PRICE_ENV[plan]) || PLAN_PRICE_FALLBACK[plan];
-
+  const priceId = Deno.env.get(PLAN_PRICE_ENV[plan]);
   if (!priceId) {
     throw new Error(`Stripe price is not configured for plan: ${plan}`);
   }
@@ -48,57 +43,87 @@ function resolvePlanAndPrice(body: Record<string, unknown>) {
   return { plan, priceId };
 }
 
-function getOrigin(req: Request) {
-  return req.headers.get("origin") || "https://honsgarden.se";
+function getSafeOrigin(req: Request) {
+  const fallback = "https://honsgarden.se";
+  const requested = req.headers.get("origin");
+  if (!requested) return fallback;
+
+  try {
+    const url = new URL(requested);
+    const configured = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? "")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const defaults = [
+      "https://honsgarden.se",
+      "https://www.honsgarden.se",
+      "https://honsgarden.app",
+      "https://www.honsgarden.app",
+      "https://honsgarden.lovable.app",
+    ];
+    const allowed = new Set([...defaults, ...configured]);
+    const isLocalDev = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+    return allowed.has(url.origin) || isLocalDev ? url.origin : fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
   try {
-    const supabaseAuth = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+    if (!supabaseUrl || !anonKey || !serviceRoleKey || !stripeKey) {
+      throw new Error("Checkout backend is not fully configured");
+    }
 
-    const authHeader = req.headers.get("Authorization")!;
-    const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseAuth.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) return json({ error: "User not authenticated" }, 401);
 
-    const { plan, priceId } = resolvePlanAndPrice(await req.json());
-    const origin = getOrigin(req);
-
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2025-08-27.basil",
+    const supabaseAuth = createClient(supabaseUrl, anonKey);
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
     });
 
-    const { data: profile } = await supabaseAdmin
+    const token = authHeader.slice("Bearer ".length).trim();
+    const { data, error: authError } = await supabaseAuth.auth.getUser(token);
+    if (authError || !data.user?.email) return json({ error: "User not authenticated" }, 401);
+    const user = data.user;
+
+    const body = await req.json().catch(() => ({}));
+    const { plan, priceId } = resolvePlanAndPrice(body as Record<string, unknown>);
+    const origin = getSafeOrigin(req);
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
       .maybeSingle();
+    if (profileError) throw new Error(`Profile lookup failed: ${profileError.message}`);
 
     let customerId: string | null = profile?.stripe_customer_id ?? null;
 
     if (customerId) {
       try {
-        const c = await stripe.customers.retrieve(customerId);
-        if ((c as any).deleted) customerId = null;
+        const customer = await stripe.customers.retrieve(customerId);
+        if ((customer as Stripe.DeletedCustomer).deleted) customerId = null;
       } catch {
         customerId = null;
       }
     }
 
     if (!customerId) {
-      const list = await stripe.customers.list({ email: user.email, limit: 1 });
-      if (list.data.length > 0) customerId = list.data[0].id;
+      const list = await stripe.customers.list({ email: user.email, limit: 10 });
+      const matching = list.data.find((customer) => customer.metadata?.supabase_user_id === user.id)
+        ?? list.data[0];
+      customerId = matching?.id ?? null;
     }
 
     if (!customerId) {
@@ -109,43 +134,42 @@ serve(async (req) => {
       customerId = created.id;
     }
 
-    await supabaseAdmin
+    const { error: saveCustomerError } = await supabaseAdmin
       .from("profiles")
       .update({ stripe_customer_id: customerId })
       .eq("user_id", user.id);
+    if (saveCustomerError) throw new Error(`Could not save Stripe customer: ${saveCustomerError.message}`);
 
     await stripe.customers.update(customerId, {
+      email: user.email,
       metadata: { supabase_user_id: user.id },
     });
 
     const existing = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
-      limit: 10,
+      limit: 100,
     });
     const blocking = existing.data.find(
-      (s) => s.status === "active" || s.status === "trialing" || s.status === "past_due"
+      (subscription) => ["active", "trialing", "past_due", "paused"].includes(subscription.status),
     );
+
     if (blocking) {
       const portal = await stripe.billingPortal.sessions.create({
         customer: customerId,
         return_url: `${origin}/app/premium`,
       });
-      return new Response(
-        JSON.stringify({
-          error: "already_subscribed",
-          message: "Du har redan en aktiv prenumeration. Vi öppnar kundportalen.",
-          portal_url: portal.url,
-          subscription_status: blocking.status,
-        }),
-        // Return 200 so supabase.functions.invoke() exposes the body via `data`
-        // (non-2xx swallows the payload into a FunctionsHttpError and `data` is null).
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
+      return json({
+        error: "already_subscribed",
+        message: "Du har redan en prenumeration. Vi öppnar kundportalen.",
+        portal_url: portal.url,
+        subscription_status: blocking.status,
+      });
     }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
+      client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "subscription",
       allow_promotion_codes: true,
@@ -165,14 +189,11 @@ serve(async (req) => {
       cancel_url: `${origin}/app/premium?canceled=true`,
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    if (!session.url) throw new Error("Stripe did not return a checkout URL");
+    return json({ url: session.url });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[create-checkout]", message);
+    return json({ error: message }, 500);
   }
 });
