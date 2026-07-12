@@ -251,7 +251,7 @@ Deno.serve(async (req) => {
   const queries = buildQueries(leadType, city, custom);
   const rawResults: unknown[] = [];
   for (const q of queries) {
-    const results = await firecrawlSearch(apiKey, q, limit);
+    const results = await firecrawlSearch(apiKey, q, limit, city);
     rawResults.push(...results);
     if (rawResults.length >= limit * 3) break;
   }
