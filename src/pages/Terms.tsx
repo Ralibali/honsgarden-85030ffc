@@ -419,13 +419,20 @@ function TermsEn() {
         <p className="text-sm text-foreground leading-relaxed">We collect the following categories of personal data:</p>
         <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
           <li><strong>Account data:</strong> Name (display name) and email address at registration</li>
-          <li><strong>User-generated content:</strong> Data you enter into the service, e.g. hen data, egg records, health logs, financial transactions and notes</li>
+          <li><strong>User-generated content:</strong> Data you enter into the service, e.g. hen data, egg records, health logs, financial transactions, photos, listings and notes</li>
+          <li><strong>Marketplace & Agda's egg shop:</strong> Contact details you choose to publish in listings (e.g. first name, phone, email, approximate location), bookings and messages between buyers and sellers</li>
+          <li><strong>Community/forum:</strong> Posts, comments, reactions you publish, and reports of inappropriate content (DSA)</li>
+          <li><strong>AI chat (Agda):</strong> Questions you ask and answers from the AI assistant are stored in a chat log for quality, abuse prevention and troubleshooting</li>
+          <li><strong>Referral program:</strong> Your referral code, who you invited and when the invitation was redeemed</li>
+          <li><strong>Notifications:</strong> Push token (iOS/web), email preferences and geographic search profile for egg-shop alerts</li>
+          <li><strong>Camera & photos:</strong> Photos you choose to upload to hen profiles or listings (the mobile app requests camera and library access separately)</li>
+          <li><strong>Location data:</strong> Only if you actively enter a postcode/address for weather or marketplace listings — we do not track your real-time location</li>
           <li><strong>Technical data:</strong> IP address, device type, browser, operating system and session information</li>
           <li><strong>Usage data:</strong> Page views, click events and navigation patterns (anonymized)</li>
           <li><strong>Payment data:</strong> Handled by Stripe — we never store card details</li>
         </ul>
         <p className="text-sm text-foreground leading-relaxed mt-2">
-          We do not collect sensitive personal data (e.g. health data, religious beliefs or political affiliation).
+          We do not collect special-category personal data under art. 9 GDPR (e.g. health data about individuals, religious beliefs or political affiliation).
         </p>
 
         <h2 className="font-serif text-lg text-foreground mt-6 mb-2">3. Legal basis for processing</h2>
