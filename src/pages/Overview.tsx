@@ -215,17 +215,17 @@ export default function Overview() {
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                 if (selectedMonth === 1) { setSelectedMonth(12); setYear(y => y - 1); }
                 else setSelectedMonth(m => m - 1);
-              }}>
-                <ChevronLeft className="h-4 w-4" />
+              }} aria-label="Föregående månad">
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
               </Button>
-              <span className="text-sm font-semibold text-foreground min-w-[100px] text-center">
+              <span className="text-sm font-semibold text-foreground min-w-[100px] text-center" aria-live="polite">
                 {MONTH_NAMES[selectedMonth - 1]} {year}
               </span>
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
                 if (selectedMonth === 12) { setSelectedMonth(1); setYear(y => y + 1); }
                 else setSelectedMonth(m => m + 1);
-              }} disabled={year >= now.getFullYear() && selectedMonth >= now.getMonth() + 1}>
-                <ChevronRight className="h-4 w-4" />
+              }} disabled={year >= now.getFullYear() && selectedMonth >= now.getMonth() + 1} aria-label="Nästa månad">
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
 
