@@ -664,7 +664,7 @@ export default function SettingsPage() {
 
       {/* App info */}
       <div className="text-center pt-2 pb-4">
-        <div className="flex items-center justify-center gap-1.5 text-muted-foreground/50">
+        <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
           <Heart className="h-3 w-3" />
           <span className="text-[10px]">Hönsgården v1.0 · Gjord med kärlek i Sverige</span>
           <Heart className="h-3 w-3" />
