@@ -15,13 +15,19 @@ import ManualEggSalesCard from '@/components/ManualEggSalesCard';
 type Booking = any;
 type Listing = any;
 
+const PUBLIC_APP_URL = String(import.meta.env.VITE_PUBLIC_APP_URL || 'https://honsgarden.se').replace(/\/+$/, '');
+
 function kr(value: unknown) {
   return `${Math.round(Number(value || 0))} kr`;
 }
 
-function copyText(text: string, label = 'Texten') {
-  navigator.clipboard?.writeText(text);
-  toast({ title: `${label} är kopierad` });
+async function copyText(text: string, label = 'Texten') {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast({ title: `${label} är kopierad` });
+  } catch {
+    toast({ title: 'Kunde inte kopiera', description: 'Markera texten och kopiera manuellt.', variant: 'destructive' });
+  }
 }
 
 async function getCurrentUserId() {
@@ -31,154 +37,147 @@ async function getCurrentUserId() {
 }
 
 async function downloadQrPdf(listings: Listing[]) {
-  const active = listings.filter((l) => l.is_active !== false);
+  const active = listings.filter((listing) => listing.is_active !== false);
   const pool = active.length > 0 ? active : listings;
   if (pool.length === 0) {
     toast({ title: 'Skapa en säljsida först', variant: 'destructive' });
     return;
   }
-  const [{ jsPDF }, qrModule] = await Promise.all([import('jspdf'), import('qrcode')]);
-  const QRCode = (qrModule as any).default ?? qrModule;
-  const pdf = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
-  const pageW = pdf.internal.pageSize.getWidth();   // 148
-  const pageH = pdf.internal.pageSize.getHeight();  // 210
 
-  // Brand colors (Modern Rural)
-  const cream: [number, number, number] = [250, 248, 244];
-  const green: [number, number, number] = [58, 107, 53];
-  const greenDark: [number, number, number] = [31, 42, 31];
-  const ink: [number, number, number] = [42, 36, 30];
-  const mute: [number, number, number] = [140, 128, 115];
-  const line: [number, number, number] = [225, 218, 205];
-  const accent: [number, number, number] = [212, 162, 70]; // warm yolk
+  try {
+    const [{ jsPDF }, qrModule] = await Promise.all([import('jspdf'), import('qrcode')]);
+    const QRCode = (qrModule as any).default ?? qrModule;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a5', orientation: 'portrait' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
 
-  for (let i = 0; i < pool.length; i++) {
-    const l = pool[i];
-    const url = `https://honsgarden.lovable.app/s/${l.slug || l.id}`;
-    const dataUrl = await QRCode.toDataURL(url, {
-      margin: 0,
-      width: 900,
-      errorCorrectionLevel: 'H',
-      color: { dark: '#1f2a1f', light: '#ffffff' },
-    });
-    if (i > 0) pdf.addPage();
+    const cream: [number, number, number] = [250, 248, 244];
+    const green: [number, number, number] = [58, 107, 53];
+    const greenDark: [number, number, number] = [31, 42, 31];
+    const ink: [number, number, number] = [42, 36, 30];
+    const mute: [number, number, number] = [140, 128, 115];
+    const line: [number, number, number] = [225, 218, 205];
+    const accent: [number, number, number] = [212, 162, 70];
 
-    // 1. Page background
-    pdf.setFillColor(...cream);
-    pdf.rect(0, 0, pageW, pageH, 'F');
+    for (let i = 0; i < pool.length; i += 1) {
+      const listing = pool[i];
+      const slug = encodeURIComponent(String(listing.slug || listing.id));
+      const url = `${PUBLIC_APP_URL}/s/${slug}`;
+      const dataUrl = await QRCode.toDataURL(url, {
+        margin: 0,
+        width: 900,
+        errorCorrectionLevel: 'H',
+        color: { dark: '#1f2a1f', light: '#ffffff' },
+      });
+      if (i > 0) pdf.addPage();
 
-    // 2. Top hero band
-    const heroH = 58;
-    pdf.setFillColor(...green);
-    pdf.rect(0, 0, pageW, heroH, 'F');
+      pdf.setFillColor(...cream);
+      pdf.rect(0, 0, pageW, pageH, 'F');
 
-    // thin accent rule
-    pdf.setFillColor(...accent);
-    pdf.rect(0, heroH, pageW, 1.2, 'F');
+      const heroH = 58;
+      pdf.setFillColor(...green);
+      pdf.rect(0, 0, pageW, heroH, 'F');
+      pdf.setFillColor(...accent);
+      pdf.rect(0, heroH, pageW, 1.2, 'F');
 
-    // Eyebrow
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8);
-    pdf.setTextColor(245, 230, 200);
-    pdf.text('A G D A S   B O D', pageW / 2, 18, { align: 'center' });
-
-    // Hero title (serif)
-    pdf.setFont('times', 'normal');
-    pdf.setFontSize(30);
-    pdf.setTextColor(252, 248, 240);
-    pdf.text('Färska ägg', pageW / 2, 34, { align: 'center' });
-    pdf.setFontSize(18);
-    pdf.setFont('times', 'italic');
-    pdf.text('till salu', pageW / 2, 46, { align: 'center' });
-
-    // 3. Listing title under hero
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(13);
-    pdf.setTextColor(...greenDark);
-    const title = l.title || 'Agdas bod';
-    pdf.text(title, pageW / 2, heroH + 12, { align: 'center' });
-
-    // 4. QR card
-    const qr = 78;
-    const cardW = qr + 22;
-    const cardH = qr + 22;
-    const cardX = (pageW - cardW) / 2;
-    const cardY = heroH + 18;
-
-    // soft shadow
-    pdf.setFillColor(225, 218, 205);
-    pdf.roundedRect(cardX + 1.2, cardY + 1.6, cardW, cardH, 4, 4, 'F');
-    // card
-    pdf.setFillColor(255, 255, 255);
-    pdf.roundedRect(cardX, cardY, cardW, cardH, 4, 4, 'F');
-
-    // corner brackets
-    const bx = cardX + 5, by = cardY + 5, bw = cardW - 10, bh = cardH - 10, br = 5;
-    pdf.setDrawColor(...green);
-    pdf.setLineWidth(0.9);
-    // TL
-    pdf.line(bx, by + br, bx, by); pdf.line(bx, by, bx + br, by);
-    // TR
-    pdf.line(bx + bw - br, by, bx + bw, by); pdf.line(bx + bw, by, bx + bw, by + br);
-    // BL
-    pdf.line(bx, by + bh - br, bx, by + bh); pdf.line(bx, by + bh, bx + br, by + bh);
-    // BR
-    pdf.line(bx + bw - br, by + bh, bx + bw, by + bh); pdf.line(bx + bw, by + bh - br, bx + bw, by + bh);
-
-    // QR image
-    pdf.addImage(dataUrl, 'PNG', cardX + (cardW - qr) / 2, cardY + (cardH - qr) / 2, qr, qr);
-
-    // 5. CTA pill
-    const ctaY = cardY + cardH + 12;
-    const ctaText = 'Skanna  ·  Boka  ·  Hämta';
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(11);
-    const ctaW = pdf.getTextWidth(ctaText) + 14;
-    const ctaX = (pageW - ctaW) / 2;
-    pdf.setFillColor(...greenDark);
-    pdf.roundedRect(ctaX, ctaY, ctaW, 9, 4.5, 4.5, 'F');
-    pdf.setTextColor(252, 248, 240);
-    pdf.text(ctaText, pageW / 2, ctaY + 6, { align: 'center' });
-
-    // 6. URL
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(...mute);
-    pdf.text(url.replace(/^https?:\/\//, ''), pageW / 2, ctaY + 16, { align: 'center' });
-
-    // 7. Pickup info block
-    let infoY = ctaY + 24;
-    if (l.pickup_info) {
-      const lines = pdf.splitTextToSize(l.pickup_info, pageW - 36);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(8);
-      pdf.setTextColor(...green);
-      pdf.text('U P P H Ä M T N I N G', pageW / 2, infoY, { align: 'center' });
+      pdf.setTextColor(245, 230, 200);
+      pdf.text('A G D A S   B O D', pageW / 2, 18, { align: 'center' });
+
+      pdf.setFont('times', 'normal');
+      pdf.setFontSize(30);
+      pdf.setTextColor(252, 248, 240);
+      pdf.text('Färska ägg', pageW / 2, 34, { align: 'center' });
+      pdf.setFontSize(18);
+      pdf.setFont('times', 'italic');
+      pdf.text('till salu', pageW / 2, 46, { align: 'center' });
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.setTextColor(...greenDark);
+      pdf.text(listing.title || 'Agdas bod', pageW / 2, heroH + 12, { align: 'center' });
+
+      const qr = 78;
+      const cardW = qr + 22;
+      const cardH = qr + 22;
+      const cardX = (pageW - cardW) / 2;
+      const cardY = heroH + 18;
+
+      pdf.setFillColor(225, 218, 205);
+      pdf.roundedRect(cardX + 1.2, cardY + 1.6, cardW, cardH, 4, 4, 'F');
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(cardX, cardY, cardW, cardH, 4, 4, 'F');
+
+      const bx = cardX + 5;
+      const by = cardY + 5;
+      const bw = cardW - 10;
+      const bh = cardH - 10;
+      const br = 5;
+      pdf.setDrawColor(...green);
+      pdf.setLineWidth(0.9);
+      pdf.line(bx, by + br, bx, by);
+      pdf.line(bx, by, bx + br, by);
+      pdf.line(bx + bw - br, by, bx + bw, by);
+      pdf.line(bx + bw, by, bx + bw, by + br);
+      pdf.line(bx, by + bh - br, bx, by + bh);
+      pdf.line(bx, by + bh, bx + br, by + bh);
+      pdf.line(bx + bw - br, by + bh, bx + bw, by + bh);
+      pdf.line(bx + bw, by + bh - br, bx + bw, by + bh);
+
+      pdf.addImage(dataUrl, 'PNG', cardX + (cardW - qr) / 2, cardY + (cardH - qr) / 2, qr, qr);
+
+      const ctaY = cardY + cardH + 12;
+      const ctaText = 'Skanna  ·  Boka  ·  Hämta';
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      const ctaW = pdf.getTextWidth(ctaText) + 14;
+      const ctaX = (pageW - ctaW) / 2;
+      pdf.setFillColor(...greenDark);
+      pdf.roundedRect(ctaX, ctaY, ctaW, 9, 4.5, 4.5, 'F');
+      pdf.setTextColor(252, 248, 240);
+      pdf.text(ctaText, pageW / 2, ctaY + 6, { align: 'center' });
+
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(...ink);
-      pdf.text(lines, pageW / 2, infoY + 6, { align: 'center' });
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(...mute);
+      pdf.text(url.replace(/^https?:\/\//, ''), pageW / 2, ctaY + 16, { align: 'center' });
+
+      const infoY = ctaY + 24;
+      if (listing.pickup_info) {
+        const lines = pdf.splitTextToSize(String(listing.pickup_info), pageW - 36);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...green);
+        pdf.text('U P P H Ä M T N I N G', pageW / 2, infoY, { align: 'center' });
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(...ink);
+        pdf.text(lines, pageW / 2, infoY + 6, { align: 'center' });
+      }
+
+      pdf.setDrawColor(...line);
+      pdf.setLineWidth(0.3);
+      pdf.line(20, pageH - 16, pageW - 20, pageH - 16);
+      pdf.setFont('times', 'italic');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...green);
+      pdf.text('honsgarden.se', pageW / 2 - 14, pageH - 9, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...mute);
+      pdf.setFontSize(8);
+      pdf.text('·', pageW / 2, pageH - 9, { align: 'center' });
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...greenDark);
+      pdf.text('Agdas bod', pageW / 2 + 14, pageH - 9, { align: 'center' });
     }
 
-    // 8. Footer
-    pdf.setDrawColor(...line);
-    pdf.setLineWidth(0.3);
-    pdf.line(20, pageH - 16, pageW - 20, pageH - 16);
-
-    pdf.setFont('times', 'italic');
-    pdf.setFontSize(9);
-    pdf.setTextColor(...green);
-    pdf.text('honsgarden.se', pageW / 2 - 14, pageH - 9, { align: 'center' });
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(...mute);
-    pdf.setFontSize(8);
-    pdf.text('·', pageW / 2, pageH - 9, { align: 'center' });
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(...greenDark);
-    pdf.text('Agdas bod', pageW / 2 + 14, pageH - 9, { align: 'center' });
+    pdf.save('agdas-bod-qr.pdf');
+    toast({ title: 'PDF nedladdad', description: `${pool.length} skylt${pool.length > 1 ? 'ar' : ''} skapade.` });
+  } catch (error) {
+    console.error('[EggSales] QR PDF failed', error);
+    toast({ title: 'Kunde inte skapa QR-skylten', description: 'Försök igen om en stund.', variant: 'destructive' });
   }
-  pdf.save('agdas-bod-qr.pdf');
-  toast({ title: 'PDF nedladdad', description: `${pool.length} skylt${pool.length > 1 ? 'ar' : ''} skapade.` });
 }
 
 function startOfWeek() {
@@ -214,11 +213,10 @@ export default function EggSalesProV7() {
     refetchInterval: 60_000,
   });
 
-  // Geokoda annonser som saknar koordinater – fire-and-forget.
   useEffect(() => {
-    const missing = (listings as any[]).filter((l) => l?.id && (l.latitude == null || l.longitude == null));
-    missing.forEach((l) => {
-      supabase.functions.invoke('geocode-egg-listings', { body: { listing_id: l.id } }).catch(() => {});
+    const missing = (listings as any[]).filter((listing) => listing?.id && (listing.latitude == null || listing.longitude == null));
+    missing.forEach((listing) => {
+      supabase.functions.invoke('geocode-egg-listings', { body: { listing_id: listing.id } }).catch(() => {});
     });
   }, [listings]);
 
@@ -239,57 +237,54 @@ export default function EggSalesProV7() {
 
   const listingById = useMemo(() => {
     const map: Record<string, Listing> = {};
-    (listings as Listing[]).forEach((l) => { map[l.id] = l; });
+    (listings as Listing[]).forEach((listing) => { map[listing.id] = listing; });
     return map;
   }, [listings]);
 
-  const activeBookings = useMemo(() => (bookings as Booking[]).filter((b) => b.status !== 'cancelled'), [bookings]);
-  const paidBookings = useMemo(() => activeBookings.filter((b) => b.status === 'paid' || b.status === 'picked_up'), [activeBookings]);
-  const pickedUpBookings = useMemo(() => activeBookings.filter((b) => b.status === 'picked_up'), [activeBookings]);
+  const activeBookings = useMemo(() => (bookings as Booking[]).filter((booking) => booking.status !== 'cancelled'), [bookings]);
+  const paidBookings = useMemo(() => activeBookings.filter((booking) => booking.status === 'paid' || booking.status === 'picked_up'), [activeBookings]);
+  const pickedUpBookings = useMemo(() => activeBookings.filter((booking) => booking.status === 'picked_up'), [activeBookings]);
 
-  const amountFor = (rows: Booking[]) => rows.reduce((sum, b) => {
-    const listing = listingById[b.listing_id];
-    return sum + Number(b.packs || 0) * Number(listing?.price_per_pack || 0);
+  const amountFor = (rows: Booking[]) => rows.reduce((sum, booking) => {
+    const listing = listingById[booking.listing_id];
+    return sum + Number(booking.packs || 0) * Number(listing?.price_per_pack || 0);
   }, 0);
 
   const weekStart = startOfWeek();
   const monthStart = startOfMonth();
-  const weekBookings = activeBookings.filter((b) => b.created_at && new Date(b.created_at) >= weekStart);
-  const monthBookings = activeBookings.filter((b) => b.created_at && new Date(b.created_at) >= monthStart);
+  const weekBookings = activeBookings.filter((booking) => booking.created_at && new Date(booking.created_at) >= weekStart);
+  const monthBookings = activeBookings.filter((booking) => booking.created_at && new Date(booking.created_at) >= monthStart);
 
   const customerStats = useMemo(() => {
     const map = new Map<string, { name: string; orders: number; packs: number; amount: number }>();
-    activeBookings.forEach((b) => {
-      const name = String(b.customer_name || '').trim();
-      const phone = String(b.customer_phone || '').replace(/\s+/g, '');
+    activeBookings.forEach((booking) => {
+      const name = String(booking.customer_name || '').trim();
+      const phone = String(booking.customer_phone || '').replace(/\s+/g, '');
       const key = phone || name.toLowerCase();
       if (!key) return;
-      const listing = listingById[b.listing_id];
-      const amount = Number(b.packs || 0) * Number(listing?.price_per_pack || 0);
+      const listing = listingById[booking.listing_id];
+      const amount = Number(booking.packs || 0) * Number(listing?.price_per_pack || 0);
       const row = map.get(key) || { name: name || 'Kund', orders: 0, packs: 0, amount: 0 };
       row.orders += 1;
-      row.packs += Number(b.packs || 0);
+      row.packs += Number(booking.packs || 0);
       row.amount += amount;
       map.set(key, row);
     });
     return Array.from(map.values()).sort((a, b) => b.orders - a.orders || b.amount - a.amount);
   }, [activeBookings, listingById]);
 
-  const regularCustomers = customerStats.filter((c) => c.orders >= 2 || c.packs >= 3);
+  const regularCustomers = customerStats.filter((customer) => customer.orders >= 2 || customer.packs >= 3);
   const conversionRate = activeBookings.length > 0 ? Math.round((pickedUpBookings.length / activeBookings.length) * 100) : 0;
   const avgOrder = activeBookings.length > 0 ? amountFor(activeBookings) / activeBookings.length : 0;
-  const activeListings = (listings as Listing[]).filter((l) => l.is_active !== false && !l.sold_out_manually).length;
+  const activeListings = (listings as Listing[]).filter((listing) => listing.is_active !== false && !listing.sold_out_manually).length;
 
-  const weeklyReport = `Agdas veckorapport\n\nBokningar denna vecka: ${weekBookings.length}\nKartor denna vecka: ${weekBookings.reduce((s, b) => s + Number(b.packs || 0), 0)}\nVärde denna vecka: ${kr(amountFor(weekBookings))}\nMånadens värde: ${kr(amountFor(monthBookings))}\nÅterkommande kunder: ${regularCustomers.length}\nAktiva säljsidor: ${activeListings}\nBekräftat värde totalt: ${kr(amountFor(paidBookings))}`;
+  const weeklyReport = `Agdas veckorapport\n\nBokningar denna vecka: ${weekBookings.length}\nKartor denna vecka: ${weekBookings.reduce((sum, booking) => sum + Number(booking.packs || 0), 0)}\nVärde denna vecka: ${kr(amountFor(weekBookings))}\nMånadens värde: ${kr(amountFor(monthBookings))}\nÅterkommande kunder: ${regularCustomers.length}\nAktiva säljsidor: ${activeListings}\nBekräftat värde totalt: ${kr(amountFor(paidBookings))}`;
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 pb-8">
       <EggSalesOverview />
-
       <ManualEggSalesCard />
-
       <EggSalesListingsBrowser />
-
 
       <Card className="border-primary/25 bg-gradient-to-br from-primary/10 via-card to-accent/10 shadow-sm">
         <CardContent className="p-4 sm:p-5 space-y-4">
@@ -321,7 +316,7 @@ export default function EggSalesProV7() {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <KpiCard icon={ShoppingBasket} label="Denna vecka" value={weekBookings.length} sub={`${weekBookings.reduce((s, b) => s + Number(b.packs || 0), 0)} kartor · ${kr(amountFor(weekBookings))}`} />
+            <KpiCard icon={ShoppingBasket} label="Denna vecka" value={weekBookings.length} sub={`${weekBookings.reduce((sum, booking) => sum + Number(booking.packs || 0), 0)} kartor · ${kr(amountFor(weekBookings))}`} />
             <KpiCard icon={Wallet} label="Månadens värde" value={kr(amountFor(monthBookings))} sub={`${monthBookings.length} bokningar`} />
             <KpiCard icon={Repeat} label="Stamkunder" value={regularCustomers.length} sub={`${customerStats.length} kunder totalt`} />
             <KpiCard icon={PackageCheck} label="Hämtade beställningar" value={`${conversionRate}%`} sub={`Snittorder ${kr(avgOrder)}`} />
@@ -347,7 +342,7 @@ export default function EggSalesProV7() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {customerStats.slice(0, 4).map((customer) => (
-                      <div key={customer.name} className="rounded-2xl border bg-card p-4 space-y-3">
+                      <div key={`${customer.name}-${customer.orders}-${customer.packs}`} className="rounded-2xl border bg-card p-4 space-y-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{customer.name}</p>
@@ -378,8 +373,6 @@ export default function EggSalesProV7() {
           </div>
         </CardContent>
       </Card>
-
-      
     </div>
   );
 }
