@@ -379,8 +379,8 @@ function ThreadView({ thread, meId }: { thread: Thread; meId?: string }) {
       <div className="p-3 border-t border-border flex gap-2">
         <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={2} placeholder="Skriv ett svar…"
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }} />
-        <Button onClick={handleSend} disabled={!text.trim() || send.isPending} size="icon" className="shrink-0">
-          {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <Button onClick={handleSend} disabled={!text.trim() || send.isPending} size="icon" className="shrink-0" aria-label="Skicka svar">
+          {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
         </Button>
       </div>
     </Card>
