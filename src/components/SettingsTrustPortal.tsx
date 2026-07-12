@@ -217,14 +217,25 @@ export default function SettingsTrustPortal() {
         anchor.className = 'contents';
       }
 
+      // Anchor after the first direct child of the settings root that is a
+      // *layout* block (typically the quick-actions grid). Never insert *into*
+      // that block — a `class="contents"` wrapper would otherwise turn our
+      // portal children into extra grid items and break the 2-col layout.
       const firstCard = root.querySelector('.card-hover, [class*="border-primary"]');
-      const isSafeAnchor = firstCard
-        && firstCard !== anchor
-        && !anchor.contains(firstCard)
-        && !firstCard.contains(anchor);
-      if (isSafeAnchor && firstCard.parentElement) {
+      let insertAfter: Element | null = null;
+      if (firstCard && root.contains(firstCard)) {
+        insertAfter = firstCard;
+        while (insertAfter && insertAfter.parentElement !== root) {
+          insertAfter = insertAfter.parentElement;
+        }
+      }
+      const isSafeAnchor = insertAfter
+        && insertAfter !== anchor
+        && !anchor.contains(insertAfter)
+        && !insertAfter.contains(anchor);
+      if (isSafeAnchor) {
         try {
-          firstCard.insertAdjacentElement('afterend', anchor);
+          insertAfter!.insertAdjacentElement('afterend', anchor);
         } catch {
           if (!anchor.parentElement) root.insertBefore(anchor, root.children[1] ?? null);
         }
