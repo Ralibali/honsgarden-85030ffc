@@ -504,7 +504,7 @@ export default function DashboardV2() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="font-serif text-lg text-foreground leading-tight">Dagens hönsgård</h2>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{getFormattedDate()}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Översikt just nu</p>
             </div>
             <button
               onClick={() => setWeatherSheetOpen(true)}
@@ -524,14 +524,6 @@ export default function DashboardV2() {
             </button>
           </div>
 
-          {/* Primary CTA */}
-          <Button
-            onClick={() => navigate('/app/eggs')}
-            className="w-full h-12 rounded-2xl gap-2 text-base font-semibold shadow-sm"
-          >
-            <Plus className="h-5 w-5" />
-            Logga ägg
-          </Button>
 
           {/* 3 stat-rutor */}
           <div className="grid grid-cols-3 gap-2">
