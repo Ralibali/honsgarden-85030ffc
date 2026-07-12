@@ -27,8 +27,32 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 const SYNC_INTERVAL_MS = 60_000;
+const PRIVATE_CACHE_NAMES = ['supabase-rest', 'supabase-storage'];
+const GLOBAL_QUERY_CACHE_KEY = 'honsgarden_rq_cache_v1';
+
+async function clearPrivateClientCaches(): Promise<void> {
+  try {
+    localStorage.removeItem(GLOBAL_QUERY_CACHE_KEY);
+    sessionStorage.removeItem('_track_sid');
+  } catch {
+    // Private browsing or blocked storage.
+  }
+
+  try {
+    if ('caches' in window) {
+      await Promise.all(PRIVATE_CACHE_NAMES.map((cacheName) => caches.delete(cacheName)));
+    }
+  } catch {
+    // Cache cleanup is best effort.
+  }
+
+  try {
+    navigator.serviceWorker?.controller?.postMessage({ type: 'CLEAR_PRIVATE_CACHES' });
+  } catch {
+    // Service worker may not be active yet.
+  }
+}
 
 function toBasicProfile(supaUser: SupabaseUser): UserProfile {
   return {
@@ -70,7 +94,7 @@ async function buildProfile(
   supaUser: SupabaseUser,
   options: { sync?: boolean } = {},
 ): Promise<UserProfile | null> {
-  const doSync = options.sync !== false; // default: true
+  const doSync = options.sync !== false;
   let subscribed = false;
   let subscriptionEnd: string | null = null;
   let syncedPremiumType: PremiumType | null = null;
@@ -81,6 +105,7 @@ async function buildProfile(
     const res = await syncSubscriptionStatus();
     if (res.userMissing) {
       try { await supabase.auth.signOut(); } catch { /* ignore */ }
+      await clearPrivateClientCaches();
       return null;
     }
     subscribed = res.subscribed;
@@ -104,17 +129,15 @@ async function buildProfile(
   const hasLifetimePremium = profile?.is_lifetime_premium === true;
 
   let premiumType: PremiumType = 'free';
-
   if (hasLifetimePremium || syncedPremiumType === 'lifetime') {
     premiumType = 'lifetime';
-  } else if (synced && subscribed && syncedPremiumType === 'paid') {
+  } else if (synced && subscribed && syncedPremiumType === 'paid' && hasValidSyncedExpiry) {
     premiumType = 'paid';
-  } else if (synced && subscribed && syncedPremiumType === 'trial') {
+  } else if (synced && subscribed && syncedPremiumType === 'trial' && (hasValidSyncedExpiry || hasValidProfileExpiry)) {
     premiumType = 'trial';
-  } else if (synced && subscribed) {
-    premiumType = hasValidSyncedExpiry ? 'paid' : 'trial';
+  } else if (synced && subscribed && hasValidSyncedExpiry) {
+    premiumType = 'paid';
   } else if (hasValidProfileExpiry) {
-    // Strikt datumstyrd fallback för den lokala 7-dagarstrialen.
     premiumType = 'trial';
   }
 
@@ -143,19 +166,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const profileReadyRef = useRef(false);
 
   const startPeriodicSync = useCallback((supaUser: SupabaseUser) => {
-    if (syncIntervalRef.current) {
-      clearInterval(syncIntervalRef.current);
-    }
+    if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     currentUserRef.current = supaUser;
 
     syncIntervalRef.current = setInterval(async () => {
-      // Gate: don't sync until the initial profile has been fully loaded
       if (!currentUserRef.current || !profileReadyRef.current) return;
       try {
         const profile = await buildProfile(currentUserRef.current);
         setUser(profile);
       } catch {
-        // Non-blocking periodic sync
+        // Non-blocking periodic sync.
       }
     }, SYNC_INTERVAL_MS);
   }, []);
@@ -190,40 +210,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const applySession = (session: Session | null, hydrateProfile: boolean) => {
       const supaUser = session?.user ?? null;
-
       if (!supaUser) {
         if (isMounted) setUser(null);
         stopPeriodicSync();
         return;
       }
 
-      if (isMounted) {
-        setUser(toBasicProfile(supaUser));
-      }
+      if (isMounted) setUser(toBasicProfile(supaUser));
+      if (!hydrateProfile) return;
 
-      if (hydrateProfile) {
-        // Mark profile as not ready until buildProfile completes
-        profileReadyRef.current = false;
-
-        void buildProfile(supaUser)
-          .then((profile) => {
-            if (isMounted) {
-              setUser(profile);
-              profileReadyRef.current = true;
-              startPeriodicSync(supaUser);
-            }
-          })
-          .catch(() => {
-            if (isMounted) {
-              // Even on failure, allow periodic sync to retry
-              profileReadyRef.current = true;
-              startPeriodicSync(supaUser);
-            }
-          });
-      }
+      profileReadyRef.current = false;
+      void buildProfile(supaUser)
+        .then((profile) => {
+          if (isMounted) {
+            setUser(profile);
+            profileReadyRef.current = true;
+            startPeriodicSync(supaUser);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            profileReadyRef.current = true;
+            startPeriodicSync(supaUser);
+          }
+        });
     };
 
-    // Wait for getSession to restore from storage before processing auth state
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
@@ -239,10 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
-
       if (event === 'SIGNED_OUT') {
         setUser(null);
         stopPeriodicSync();
+        void clearPrivateClientCaches();
         setLoading(false);
         return;
       }
@@ -260,14 +272,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [startPeriodicSync, stopPeriodicSync]);
 
   const login = async (email: string, password: string) => {
+    await clearPrivateClientCaches();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
 
     if (data.user) {
       setUser(toBasicProfile(data.user));
       profileReadyRef.current = false;
-      void buildProfile(data.user).then((p) => {
-        setUser(p);
+      void buildProfile(data.user).then((profile) => {
+        setUser(profile);
         profileReadyRef.current = true;
         startPeriodicSync(data.user);
       }).catch(() => {
@@ -288,25 +301,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     stopPeriodicSync();
-    const currentId = currentUserRef.current?.id ?? null;
-    await supabase.auth.signOut();
-    setUser(null);
     try {
-      // Clear Supabase session keys + the global "theme" cache (per-user theme
-      // lives under u:<id>:theme and is kept so it re-applies on next login).
-      const keysToRemove = Object.keys(localStorage).filter(k =>
-        k.startsWith('sb-') || k.startsWith('supabase') || k === 'theme' || k === '_track_sid'
+      await supabase.auth.signOut();
+    } finally {
+      setUser(null);
+      await clearPrivateClientCaches();
+    }
+
+    try {
+      const keysToRemove = Object.keys(localStorage).filter((key) =>
+        key.startsWith('sb-') ||
+        key.startsWith('supabase') ||
+        key === 'theme' ||
+        key === '_track_sid' ||
+        key === GLOBAL_QUERY_CACHE_KEY
       );
-      keysToRemove.forEach(k => localStorage.removeItem(k));
-      // Clear legacy global honsgarden-* keys (newer code uses u:<id>: prefix)
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
       Object.keys(localStorage)
-        .filter(k => k.startsWith('honsgarden-') && !k.startsWith('honsgarden-imported'))
-        .forEach(k => localStorage.removeItem(k));
-      // NOTE: We intentionally keep u:<id>:* keys so the user's preferences
-      // (theme, dismissed nudges, last hen, etc.) survive logout/login on the
-      // same device. Other users on this device have their own prefix.
-      void currentId;
-    } catch { /* private browsing */ }
+        .filter((key) => key.startsWith('honsgarden-') && !key.startsWith('honsgarden-imported'))
+        .forEach((key) => localStorage.removeItem(key));
+      // Användarspecifika u:<id>:*-preferenser behålls och kan inte läsas av andra konton.
+    } catch {
+      // Private browsing.
+    }
   };
 
   return (
