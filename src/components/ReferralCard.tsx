@@ -45,7 +45,10 @@ export default function ReferralCard({ variant = 'default' }: Props) {
   });
 
   const code = profile?.referral_code || '';
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://honsgarden.se';
+  // Delningslänken ska alltid peka på produktionsdomänen – aldrig preview/lovableproject.com.
+  const host = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isProdDomain = /honsgarden\.(se|app)$/i.test(host);
+  const origin = isProdDomain ? window.location.origin : 'https://honsgarden.se';
   const shareUrl = code ? `${origin}/r/${code}` : '';
   const shareText = `Bjud in en hönskompis 🐔 Använd min länk så får vi båda 30 dagar Hönsgården Plus när du loggar ditt första ägg.`;
 
