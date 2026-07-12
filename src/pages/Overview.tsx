@@ -93,12 +93,12 @@ export default function Overview() {
             <p className="text-sm text-muted-foreground mt-1">Trender och sammanfattningar</p>
           </div>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(y => y - 1)}>
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(y => y - 1)} aria-label="Föregående år">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <span className="text-sm font-semibold text-foreground tabular-nums min-w-[48px] text-center">{year}</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(y => y + 1)} disabled={year >= now.getFullYear()}>
-              <ChevronRight className="h-4 w-4" />
+            <span className="text-sm font-semibold text-foreground tabular-nums min-w-[48px] text-center" aria-live="polite">{year}</span>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setYear(y => y + 1)} disabled={year >= now.getFullYear()} aria-label="Nästa år">
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
