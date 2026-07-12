@@ -11,7 +11,15 @@ const REQUIRED_PRODUCTION_ENV = [
 ] as const;
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const fileEnv = loadEnv(mode, process.cwd(), "");
+  // Merge process.env so build environments that inject vars directly
+  // (utan .env-fil) fungerar likadant som lokalt.
+  const env: Record<string, string> = {
+    ...fileEnv,
+    ...Object.fromEntries(
+      Object.entries(process.env).filter(([, v]) => typeof v === "string") as [string, string][]
+    ),
+  };
 
   if (mode === "production") {
     const missing = REQUIRED_PRODUCTION_ENV.filter((key) => !env[key]?.trim());
@@ -19,6 +27,7 @@ export default defineConfig(({ mode }) => {
       throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
     }
   }
+
 
   return {
     server: {
