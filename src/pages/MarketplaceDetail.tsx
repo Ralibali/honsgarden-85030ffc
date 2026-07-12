@@ -87,8 +87,8 @@ export default function MarketplaceDetail() {
     }
   };
 
-  if (isLoading) return <div className="min-h-screen bg-background"><LandingNavbar /><p className="pt-32 text-center text-muted-foreground">Laddar…</p></div>;
-  if (!listing) return <div className="min-h-screen bg-background"><LandingNavbar /><div className="pt-32 text-center"><p className="text-muted-foreground mb-4">Annonsen hittades inte eller är borttagen.</p><Button asChild><Link to="/marknad">Till Marknad</Link></Button></div></div>;
+  if (isLoading) return <div className="min-h-dvh bg-background"><LandingNavbar /><p className="pt-32 text-center text-muted-foreground">Laddar…</p></div>;
+  if (!listing) return <div className="min-h-dvh bg-background"><LandingNavbar /><div className="pt-32 text-center"><p className="text-muted-foreground mb-4">Annonsen hittades inte eller är borttagen.</p><Button asChild><Link to="/marknad">Till Marknad</Link></Button></div></div>;
 
   const isOwner = user?.id === listing.user_id;
   const images = listing.image_urls?.length ? listing.image_urls : [];
@@ -111,7 +111,7 @@ export default function MarketplaceDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <LandingNavbar />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="pt-24 pb-16 container max-w-4xl mx-auto px-5">

@@ -69,14 +69,14 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
 
   if (!page) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-background">
+      <main className="min-h-dvh flex items-center justify-center bg-background">
         <p className="text-muted-foreground">Sidan finns inte.</p>
       </main>
     );
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-background overflow-x-hidden">
+    <main id="main-content" className="min-h-dvh bg-background overflow-x-hidden">
       <LandingNavbar />
 
       {/* Hero */}

@@ -63,11 +63,11 @@ export default function MapListingManage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen grid place-items-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <div className="min-h-dvh grid place-items-center bg-background"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
   if (notFound || !listing) {
     return (
-      <div className="min-h-screen grid place-items-center bg-background px-4">
+      <div className="min-h-dvh grid place-items-center bg-background px-4">
         <div className="max-w-md w-full rounded-2xl border bg-card p-8 text-center">
           <h1 className="font-serif text-2xl">Länken hittades inte</h1>
           <p className="text-sm text-muted-foreground mt-2">Den här hanteringslänken är ogiltig eller borttagen.</p>
@@ -80,7 +80,7 @@ export default function MapListingManage() {
   const expSoon = listing.expires_at && new Date(listing.expires_at).getTime() - Date.now() < 14 * 86400 * 1000;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="mb-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">

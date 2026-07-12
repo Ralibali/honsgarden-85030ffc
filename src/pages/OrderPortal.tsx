@@ -362,7 +362,7 @@ export default function OrderPortal() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center px-4">
+      <main className="min-h-dvh bg-background flex items-center justify-center px-4">
         <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
       </main>
     );
@@ -370,7 +370,7 @@ export default function OrderPortal() {
 
   if (err || !order || !order.ok || !booking || !listing) {
     return (
-      <main className="min-h-screen bg-background px-4 py-12 flex items-center justify-center">
+      <main className="min-h-dvh bg-background px-4 py-12 flex items-center justify-center">
         <Card className="max-w-md w-full">
           <CardContent className="p-6 text-center space-y-3">
             <XCircle className="h-10 w-10 mx-auto text-destructive" />
@@ -390,7 +390,7 @@ export default function OrderPortal() {
   const buyAgainHref = listing.slug ? `/s/${listing.slug}` : null;
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 sm:py-10">
+    <main className="min-h-dvh bg-background px-4 py-6 sm:py-10">
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Header */}
         <header className="space-y-2 text-center sm:text-left">

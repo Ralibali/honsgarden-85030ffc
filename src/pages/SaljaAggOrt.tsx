@@ -171,7 +171,7 @@ export default function SaljaAggOrt() {
   const henImg = buildOrtHenImage(ort);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-dvh bg-background flex flex-col">
       <LandingNavbar />
 
       <main className="flex-1">

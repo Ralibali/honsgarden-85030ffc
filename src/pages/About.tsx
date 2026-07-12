@@ -48,7 +48,7 @@ export default function About() {
   const values = t('values.items', { returnObjects: true }) as { title: string; desc: string }[];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-dvh bg-background">
       <VisitorWelcomePopup />
 
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">

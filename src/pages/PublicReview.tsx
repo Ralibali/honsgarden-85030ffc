@@ -85,15 +85,15 @@ export default function PublicReview() {
   });
 
   if (isLoading) {
-    return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
+    return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
   }
 
   if (!tokenRow) {
-    return <main className="min-h-screen noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Länken är ogiltig</h1><p className="text-sm text-muted-foreground">Den kan ha gått ut eller redan använts.</p></CardContent></Card></main>;
+    return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Länken är ogiltig</h1><p className="text-sm text-muted-foreground">Den kan ha gått ut eller redan använts.</p></CardContent></Card></main>;
   }
 
   return (
-    <main className="min-h-screen noise-bg px-4 py-8 sm:py-12">
+    <main className="min-h-dvh noise-bg px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-md space-y-5">
         <div className="text-center space-y-3">
           {listing?.image_url ? <img src={listing.image_url} alt={listing.title} className="mx-auto h-32 w-full max-w-sm rounded-3xl object-cover border shadow-sm" /> : <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-primary/10 border"><Egg className="h-8 w-8 text-primary" /></div>}
