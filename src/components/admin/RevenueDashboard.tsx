@@ -23,6 +23,7 @@ interface RevenueData {
     status: string;
   }>;
   revenue_trend: Array<{ month: string; total: number }>;
+  new_customers_trend?: Array<{ month: string; count: number }>;
 }
 
 const MONTH_NAMES: Record<string, string> = {
@@ -98,15 +99,15 @@ export default function RevenueDashboard() {
             <h3 className="text-sm font-semibold text-foreground mb-3">Planfördelning</h3>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Månadsplan (19 kr)</span>
+                <span className="text-sm text-muted-foreground">Månadsplan (19 / 39 kr)</span>
                 <Badge variant="secondary" className="text-xs">{data.monthly_subscribers}</Badge>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Årsplan (149 kr)</span>
+                <span className="text-sm text-muted-foreground">Årsplan (149 / 299 kr)</span>
                 <Badge variant="secondary" className="text-xs">{data.yearly_subscribers}</Badge>
               </div>
               <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                <span className="text-sm font-medium text-foreground">Totalt</span>
+                <span className="text-sm font-medium text-foreground">Totalt betalande</span>
                 <Badge className="text-xs">{data.active_subscribers}</Badge>
               </div>
             </div>
@@ -137,6 +138,28 @@ export default function RevenueDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* New customers per month */}
+      {data.new_customers_trend && data.new_customers_trend.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Nya betalande kunder per månad</h3>
+            <ResponsiveContainer width="100%" height={160}>
+              <BarChart data={data.new_customers_trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tickFormatter={formatMonth} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                <Tooltip
+                  formatter={(value: number) => [`${value} st`, 'Nya kunder']}
+                  labelFormatter={formatMonth}
+                  contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid hsl(var(--border))' }}
+                />
+                <Bar dataKey="count" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent payments */}
       <Card className="border-border/50">

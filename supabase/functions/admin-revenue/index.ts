@@ -9,9 +9,10 @@ const corsHeaders = {
 
 // Only Hönsgården products
 const HONSGARDEN_PRODUCT_IDS = new Set([
-  "prod_U1nXjyO3PyPsWS", // Hönsgården årsprenumeration
-  "prod_U1nW7q52KG8tm4", // Hönsgården årsbetalning
-  "prod_U1nP6PS9ifMlFy", // Hönsgården månadsvis
+  "prod_U1nXjyO3PyPsWS", // Hönsgården årsprenumeration (legacy)
+  "prod_U1nW7q52KG8tm4", // Hönsgården årsbetalning (legacy)
+  "prod_U1nP6PS9ifMlFy", // Hönsgården månadsvis (legacy)
+  "prod_UsFuYFeabfimV4", // Hönsgården Plus (nya priser 39/299 kr, 2026)
 ]);
 
 function isHonsgardenSub(sub: Stripe.Subscription): boolean {
@@ -20,6 +21,29 @@ function isHonsgardenSub(sub: Stripe.Subscription): boolean {
       ? item.price.product
       : (item.price.product as Stripe.Product)?.id;
     return HONSGARDEN_PRODUCT_IDS.has(productId);
+  });
+}
+
+// Extract price/product id from an invoice line — supports legacy `line.price`
+// and current `line.pricing.price_details` shapes (API 2025-08-27+).
+function lineIds(line: any): { priceId?: string; productId?: string } {
+  const direct = line?.price;
+  if (direct && typeof direct === "object") {
+    const productId = typeof direct.product === "string" ? direct.product : direct.product?.id;
+    return { priceId: direct.id, productId };
+  }
+  if (typeof direct === "string") return { priceId: direct };
+  const pd = line?.pricing?.price_details;
+  if (pd) return { priceId: pd.price, productId: pd.product };
+  return {};
+}
+
+function isHonsgardenInvoice(inv: Stripe.Invoice, honsgardenPriceIds: Set<string>): boolean {
+  return !!inv.lines?.data?.some((line) => {
+    const { priceId, productId } = lineIds(line);
+    if (productId && HONSGARDEN_PRODUCT_IDS.has(productId)) return true;
+    if (priceId && honsgardenPriceIds.has(priceId)) return true;
+    return false;
   });
 }
 
@@ -124,41 +148,48 @@ Deno.serve(async (req) => {
     });
 
     for (const inv of invoices.data) {
-      // Check if any line item belongs to a Hönsgården price
-      const isHG = inv.lines?.data?.some((line) => {
-        const priceId = typeof line.price === "string" ? line.price : line.price?.id;
-        return priceId && honsgardenPriceIds.has(priceId);
-      });
-      if (!isHG) continue;
+      if (!isHonsgardenInvoice(inv, honsgardenPriceIds)) continue;
 
+      const line = inv.lines?.data?.[0];
       recentPayments.push({
         email: inv.customer_email ?? "okänd",
         amount: (inv.amount_paid ?? 0) / 100,
         currency: (inv.currency ?? "sek").toUpperCase(),
         date: new Date((inv.created ?? 0) * 1000).toISOString(),
-        plan: inv.lines?.data?.[0]?.description ?? "Premium",
+        plan: line?.description ?? "Premium",
         status: "succeeded",
       });
     }
 
-    // 4. Monthly revenue trend (last 6 months)
-    const sixMonthsAgo = Math.floor((now.getTime() - 180 * 86400000) / 1000);
-    const allInvoices = await stripe.invoices.list({
-      limit: 100,
-      created: { gte: sixMonthsAgo },
-      status: "paid",
-    });
-
+    // 4. Monthly revenue trend (last 6 months) — paginated
+    const sixMonthsAgo = Math.floor((now.getTime() - 190 * 86400000) / 1000);
     const monthlyRevenue: Record<string, number> = {};
-    for (const inv of allInvoices.data) {
-      const isHG = inv.lines?.data?.some((line) => {
-        const priceId = typeof line.price === "string" ? line.price : line.price?.id;
-        return priceId && honsgardenPriceIds.has(priceId);
+
+    let hasMore = true;
+    let startingAfter: string | undefined;
+    while (hasMore) {
+      const batch = await stripe.invoices.list({
+        limit: 100,
+        created: { gte: sixMonthsAgo },
+        status: "paid",
+        ...(startingAfter ? { starting_after: startingAfter } : {}),
       });
-      if (!isHG) continue;
-      const d = new Date((inv.created ?? 0) * 1000);
+      for (const inv of batch.data) {
+        if (!isHonsgardenInvoice(inv, honsgardenPriceIds)) continue;
+        const d = new Date((inv.created ?? 0) * 1000);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        monthlyRevenue[key] = (monthlyRevenue[key] ?? 0) + (inv.amount_paid ?? 0) / 100;
+      }
+      hasMore = batch.has_more;
+      if (batch.data.length > 0) startingAfter = batch.data[batch.data.length - 1].id;
+      else hasMore = false;
+    }
+
+    // Ensure every month in the window appears (zero-filled)
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      monthlyRevenue[key] = (monthlyRevenue[key] ?? 0) + (inv.amount_paid ?? 0) / 100;
+      if (!(key in monthlyRevenue)) monthlyRevenue[key] = 0;
     }
 
     const revenueTrend = Object.entries(monthlyRevenue)
@@ -173,6 +204,25 @@ Deno.serve(async (req) => {
 
     const totalRevenue30d = recentPayments.reduce((sum, p) => sum + p.amount, 0);
 
+    // 6. New paying customers per month (last 6 months) — based on subscription start
+    const newByMonth: Record<string, number> = {};
+    for (const sub of allSubs) {
+      const started = sub.start_date ?? sub.created;
+      if (!started) continue;
+      const d = new Date(started * 1000);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if ((now.getTime() - d.getTime()) > 190 * 86400000) continue;
+      newByMonth[key] = (newByMonth[key] ?? 0) + 1;
+    }
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (!(key in newByMonth)) newByMonth[key] = 0;
+    }
+    const newCustomersTrend = Object.entries(newByMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count }));
+
     const result = {
       mrr: Math.round(mrr / 100),
       arr: Math.round((mrr / 100) * 12),
@@ -183,6 +233,7 @@ Deno.serve(async (req) => {
       revenue_30d: Math.round(totalRevenue30d),
       recent_payments: recentPayments.slice(0, 20),
       revenue_trend: revenueTrend,
+      new_customers_trend: newCustomersTrend,
     };
 
     return new Response(JSON.stringify(result), {
