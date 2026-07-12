@@ -281,7 +281,52 @@ function TermsSv() {
           Telefon: 08-657 61 00
         </p>
 
-        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">15. Kontakt</h2>
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">15. Marknadsplats, Agdas äggbod & Community (DSA)</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          När du publicerar annonser, bokningar, recensioner eller inlägg på tjänsten agerar Hönsgården som värd för användarskapat innehåll enligt EU:s förordning om digitala tjänster (DSA, EU 2022/2065).
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li>Du är själv ansvarig för innehållet du publicerar och för att det följer svensk lag (t.ex. Jordbruksverkets regler om äggförsäljning, konsumentköplagen, GDPR).</li>
+          <li>Kontaktuppgifter som du väljer att publicera i en annons blir synliga för besökare – publicera inte mer än nödvändigt.</li>
+          <li>Vi kan när som helst ta bort innehåll som strider mot villkoren, är olagligt, vilseledande eller skadligt.</li>
+          <li>Anmälan av olagligt eller olämpligt innehåll (art. 16 DSA): mejla <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a> med länk och beskrivning. Vi bekräftar och åtgärdar utan onödigt dröjsmål.</li>
+          <li>Beslut om nedtagning kan överklagas till oss inom 6 månader. Utomrättslig tvistlösning: Allmänna reklamationsnämnden (ARN).</li>
+          <li>Vi visar inte riktad reklam baserad på profilering och använder inga "mörka mönster" enligt art. 25 DSA.</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">16. Mobilapp, pushnotiser & kamera</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          När du använder iOS-appen (App Store) eller installerar webbappen (PWA) gäller följande utöver denna policy:
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li><strong>Pushnotiser:</strong> Skickas endast om du aktivt godkänt det i operativsystemet. Innehåller ex. äggpåminnelser, marknadsplatsnotiser och abonnemangsstatus. Kan stängas av när som helst i enhetens inställningar.</li>
+          <li><strong>Kamera & fotobibliotek:</strong> Åtkomst begärs endast när du väljer att lägga till bilder på höns eller annonser. Bilderna lagras krypterat i tjänsten och tas bort när du raderar dem eller ditt konto.</li>
+          <li><strong>Offline-läge:</strong> Loggade ägg sparas lokalt i din enhet och synkas vid uppkoppling. Ingen tredje part har tillgång till offline-kön.</li>
+          <li><strong>Betalning i appen:</strong> All betalning sker via Stripe på webben. Vi använder inte Apples köp inom app (IAP) för prenumeration.</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">17. E-postnotiser om ägg till salu (publikt formulär)</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          På våra publika ort- och kartsidor kan besökare anmäla sig till gratis e-postnotiser när nya äggannonser publiceras i närområdet. För detta behandlar vi:
+        </p>
+        <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
+          <li>E-postadress, valfri ort/postnummer och sökradie</li>
+          <li>Rättslig grund: samtycke (art. 6.1 a GDPR) via <strong>dubbel opt-in</strong> – du måste bekräfta via länk i e-post</li>
+          <li>Avanmälan: länk finns i varje utskick och tar omedelbar effekt</li>
+          <li>Lagringstid: tills du avanmäler dig; vid inaktivitet i 24 månader raderas prenumerationen</li>
+        </ul>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">18. Referral- och vänbjudansprogram</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          När du bjuder in en vän via personlig länk (t.ex. <code>/r/DINKOD</code>) registrerar vi din referral-kod och kopplar din vän till din inbjudan vid registrering. Vi delar inte din e-post med den inbjudne. Belöningen (30 dagar Plus) delas ut automatiskt när villkoret uppfyllts (första äggloggning). Missbruk (bots, självinbjudan, falska konton) kan leda till att belöningen dras tillbaka och kontot spärras.
+        </p>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">19. Familjedelning</h2>
+        <p className="text-sm text-foreground leading-relaxed">
+          När du bjuder in familjemedlemmar till en gård delas gårdens data (höns, ägg, ekonomi, foton) med de inbjudna. Personuppgifter om dig som ägare visas endast i form av visningsnamn. Du kan när som helst ta bort en medlem via <em>Inställningar → Familj</em>, vilket omedelbart återkallar deras åtkomst.
+        </p>
+
+        <h2 className="font-serif text-lg text-foreground mt-6 mb-2">20. Kontakt</h2>
         <p className="text-sm text-foreground leading-relaxed">Frågor om denna policy eller dina personuppgifter? Kontakta oss:</p>
         <p className="text-sm text-foreground leading-relaxed">
           Hönsgården / honsgarden.se<br />
