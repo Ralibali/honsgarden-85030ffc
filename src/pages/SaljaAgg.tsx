@@ -39,8 +39,8 @@ const fadeUp = (delay = 0) => ({
 
 const heroBullets = [
   'Egen säljsida med bild, pris och hämtinfo',
-  'Köpare bokar direkt – du får mejl & notis',
-  'Swish-betalning, lager och kundlista',
+  'Köpare bokar direkt – notis till dig på studs',
+  'Swish rakt till dig – inga avgifter',
 ];
 
 const stepGuide = [
