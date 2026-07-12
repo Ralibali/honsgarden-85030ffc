@@ -160,22 +160,34 @@ function normalizeResult(
   };
 }
 
-async function firecrawlSearch(apiKey: string, query: string, limit: number): Promise<unknown[]> {
+async function firecrawlSearch(
+  apiKey: string,
+  query: string,
+  limit: number,
+  location: string | undefined,
+): Promise<unknown[]> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
+    // Firecrawl v2 Search: top-level `country` + optional `location` string.
+    // Ref: https://docs.firecrawl.dev/api-reference/v2-endpoint/search
+    const payload: Record<string, unknown> = {
+      query,
+      limit: Math.min(MAX_LIMIT, limit),
+      sources: ["web"],
+      country: "SE",
+      lang: "sv",
+    };
+    if (location && location.trim().length > 0) {
+      payload.location = location.trim().slice(0, 120);
+    }
     const res = await fetch(FIRECRAWL_URL, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        query,
-        limit,
-        sources: ["web"],
-        location: { country: "SE", languages: ["sv"] },
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal,
     });
     if (!res.ok) {
