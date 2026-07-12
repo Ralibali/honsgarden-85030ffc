@@ -1,82 +1,53 @@
+# UX-polering: Hönsgården 10/10
 
-# Plan: honsgarden.app — full internationalisering
+Rent presentations- och interaktionsarbete. Ingen ny funktionalitet, inga databasmigrationer, inga ändringar i RLS, Edge Function-auth, Stripe-priser (39/299) eller cachefixar. Allt sker i `src/components/*`, `src/pages/*`, `src/index.css` och Tailwind-config.
 
-## Verklighet och omfattning
+## Mål
 
-Kodbasen har **318 TypeScript-filer**, **60+ sidor** och **140+ komponenter**, plus 40+ edge functions och e-postmallar — i princip allt med svenska strängar inbäddade direkt i JSX. En komplett, naturlig amerikansk översättning av varje knapp, dialog, toast, felmeddelande, tom-läge, formulärfält, e-postmall, metabeskrivning och OG-tagg är **inte en enskild leverans** — det är 8–12 fokuserade arbetspass. Försöker jag göra allt i ett svep blir kvaliteten dålig, jag missar strängar, och risken att förstöra `.se` ökar.
+Att appen känns snabb, lugn och självklar på mobil – att en ny användare förstår vad hen ska göra på 3 sekunder, och att en återkommande användare loggar dagens ägg på under 5.
 
-Förslag: jag bygger leveranserna nedan i ordning, en per turn (eller flera om du säger till). Allt domängatas så `honsgarden.se` är **exakt oförändrad** hela vägen. Inget mergas till main av mig — du publicerar när du vill.
+## Pass 1 – Visuell grundton (design tokens)
 
-## Förutsättningar redan på plats (från tidigare turn)
+- Rensa `src/index.css`: säkerställ att alla ytor använder semantiska tokens (`--background`, `--foreground`, `--primary`, `--muted-foreground`). Ta bort ströade `text-gray-*` / `bg-white` i komponenter jag stöter på under passet.
+- Höj kontrast på sekundär text (byt `text-muted-foreground/60` → `text-muted-foreground` där det bryter WCAG AA).
+- Standardisera radius, skuggor och kortpadding via tokens – inga hårdkodade `rounded-[14px]` kvar i vanliga kort.
+- Rulla ut befintlig typografi (Young Serif rubriker, Inter brödtext) konsekvent på Dashboard, Eggs, Hens, Marketplace, PublicEggSaleV3, SaljaAggOrt.
 
-- `src/lib/brand.ts` — `detectBrandRegion()`, `isInternationalDomain()` (.se = locked SV, allt annat = intl)
-- `src/i18n/index.ts` — i18next + react-i18next, domängatat (på .se: tvingad sv, ingen detector, ingen cache)
-- `profiles`-tabellen har `country_code`, `language_code`, `locale`, `timezone`, `currency_code`, `measurement_system`, `temperature_unit`, `postal_code` (defaults = svenska — befintliga .se-användare oförändrade)
-- `src/lib/datetime.ts` (timezone-säker `todayInTz`, `localCalendarDate`), `src/lib/format.ts`, `src/lib/countries.ts`, `src/lib/postalCode.ts`
-- `CountrySelect`, `RegionLanguageSettings`, Login med villkorad landväljare på intl
-- Bundles `sv`/`en` för: `common`, `auth`, `nav`, `settings`, `errors`, `premium`
-- 22 vitest-tester (DST, postnummer, defaults) — gröna
+## Pass 2 – Mobil-först layout
 
-## Leverans 1 — USA som standard på honsgarden.app + tidszondetektering (denna turn om du godkänner)
+- `DashboardV2`: minska vertikal brus. En tydlig H1, en primär CTA ("Logga ägg"), kalender + Dagens tips ovanför sekundära kort. FAB `size="icon"` bumpas till `min-h-11 min-w-11`.
+- `Eggs`, `Hens`, `Marketplace`, `MarketplaceMap`: sticky filterrad blir kompaktare på mobil, listkort får enhetlig höjd och tydlig primärhandling.
+- Byt kvarvarande `h-screen` → `h-dvh` i fullhöjdssidor så iOS Safari-adressfältet inte kapar innehåll.
+- Säkerställ ett enda `<main>` per route i `AppLayout`; ta bort dubletter i undersidor.
 
-1. **Browser-tidszon vid registrering**: läs `Intl.DateTimeFormat().resolvedOptions().timeZone` i `Login.tsx`, spara i `auth.signUp` metadata → `handle_new_user` skriver `profiles.timezone`. Faller tillbaka till landets standardzon endast om läsningen misslyckas.
-2. **Default-land = United States på .app**: `defaultCountryForRegion()` → SE på .se, US på .app/preview. Plockas upp av `CountrySelect`.
-3. **Migrering**: backfill `profiles.timezone` där `NULL` → `Europe/Stockholm` (säker för befintliga svenska användare); inga andra ändringar.
-4. **Imperial/Fahrenheit/USD som default när country = US** — redan stött i `format.ts`, jag verifierar formatters i `Eggs`, `Health`, `Weather`, `Finance`.
-5. **Ersätt UTC-baserad "dagens datum"-användning** (`new Date().toISOString().split('T')[0]`) med `todayInTz(profile.timezone)` i alla dagsberoende vyer: Dashboard, Eggs, DailyTasks, Reminders, Health, Statistics, WeeklyReport, Streaks, hatch dates. ~15–20 filer.
-6. SEO: `hreflang` (sv-SE ↔ en-US) + per-route canonical via `react-helmet-async` på publika sidor (landning, blogg, guider, SaljaAgg).
-7. `robots.txt` + `sitemap.xml` får båda domänernas URLer; PWA `manifest.webmanifest` per domän (namn/short_name skiljer sig).
+## Pass 3 – Tillgänglighet & mikrointeraktion
 
-## Leverans 2 — Översättning av publika ytor på .app
+- Icon-only knappar (kalender-navigering, stäng, favorit, dela) får `aria-label`.
+- Focus-visible ring på alla interaktiva element via shadcn-varianten – inga custom outlines.
+- Loading/empty states: byt spinnrar mot skeletons på Dashboard-kort, Hens-lista, Marketplace-lista, Egg-logg. Empty states får en mening + en knapp.
+- Toasts kortas: en rad, en primär åtgärd. Inga dubbla success-toasts vid samma händelse.
+- Respektera `prefers-reduced-motion` för konfetti och kort-transitions (kroken finns redan i `useReducedMotion`).
 
-- Landningssida (`IndexUpdated.tsx`), `About`, `Guides`, `GuideArticle`, `News`, `Login`, `ResetPassword`, `Premium`, `Terms`, `NotFound`, `Footer`, `AppSidebar`, navigation, sidtitlar, meta, OG.
-- Allt via `useTranslation()` med nya namespaces (`landing`, `marketing`, `legal`).
-- Dev-warning: ingen sv-fallback på .app — saknad nyckel loggas + visar nyckeln (utvecklarläge) eller neutral engelsk default (produktion).
+## Pass 4 – Copy & förenkling
 
-## Leverans 3 — Översättning av inloggad core-app
+- Kortare rubriker på Dashboard-kort ("Dagens tips", "Denna vecka", "Din flock"). Ta bort dubbla beskrivningar.
+- Onboarding-checklistan: max 4 steg synliga, resten under "Visa fler". Behåll all logik.
+- Premium-sidan: behåll priserna 39/299 exakt, men rensa punktlistorna till 5 rader per plan och en enda primär CTA.
+- Publika säljsidor (`PublicEggSaleV3`, `SaljaAggOrt`, `MarketplaceMap`): ovanför-vecket = titel, pris, "Boka" – resten scrollas fram.
 
-- Dashboard (V2), Eggs, Hens, HenProfile, DailyTasks, Reminders, Health, Feed, Inventory, Settings.
-- Egna namespaces per domän (`dashboard`, `eggs`, `hens`, `health`, `feed`, `inventory`, `tasks`).
+## Utanför scope
 
-## Leverans 4 — Översättning av sekundära ytor
+- Inga schemaändringar, inga nya tabeller, inga nya Edge Functions.
+- Inga ändringar i `supabase/config.toml`, `supabase/functions/*`, `src/integrations/supabase/*`, `src/lib/api.ts` eller prissättningslogiken.
+- Inga nya beroenden.
+- Ingen refaktor av `useMarketplace`, auth, offline-kön eller PWA-service worker.
 
-- Finance, Statistics, Reports, WeeklyReport, SmartFarmReport, Hatching, Breeding, SeasonalCalendar, Weather, Import, Backup, Feedback.
+## Verifiering per pass
 
-## Leverans 5 — Community, marknadsplats, äggförsäljning, Agda
+- Bygget körs automatiskt efter varje edit-batch; jag åtgärdar typfel direkt.
+- Efter pass 2 och 3: Playwright-screenshot av Dashboard och Marketplace i 390×844 (iPhone 14) för visuell kontroll.
+- Ingen ändring rörs som skulle kunna påverka senaste säkerhetsscanningens fynd; jag kör inte om scannern (den är oförändrad relevant).
 
-- Community, Marketplace*, EggSales*, PublicEggSale, OrderPortal, Agda.
-- Dessa har mest hårdkodad text. Många tomma lägen och toasts.
+## Leverans
 
-## Leverans 6 — Stripe USD + checkout-mapping
-
-- Skapa Stripe-produkter: `$2.99/mo`, `$24.99/yr` (7-day trial) — `stripe--create_stripe_product_and_price`.
-- Tabell `stripe_price_map (country_code, plan, currency, price_id)` — backend väljer Price ID utifrån användarens `country_code`. Klienten skickar **plan + period**, aldrig price_id.
-- `create-checkout` edge function uppdateras: läs profilens land/valuta, slå upp price_id, validera vitlista.
-- `Premium.tsx` visar pris/valuta efter region; "Best value" + "7-day free trial" på .app.
-- Success/cancel URLs sätts utifrån `window.location.origin` (fungerar för båda domänerna).
-
-## Leverans 7 — E-post & auth-mallar
-
-- Lokalisera `auth-email-hook` mallar (signup/recovery/magic-link/invite) — välj språk utifrån `user.user_metadata.language_code`.
-- Lokalisera transactional templates (`welcome`, `weekly-report`, `feedback-reply`, digests) på samma sätt.
-- Supabase **Site URL + Redirect URLs** måste uppdateras manuellt i dashboarden (jag listar exakt vilka), eftersom Lovable Cloud inte exponerar det via verktyg.
-
-## Leverans 8 — QA, lint, build, tester
-
-- Vitest-svit utökad med renderingstester per språk.
-- Playwright-smoke: `.se` → svenska, `.app` (simulerad) → engelska, samma konto fungerar.
-- Saknade nycklar listas.
-- Slutrapport med exakt vad som översatts, vad som återstår, manuella steg.
-
-## Manuella steg (inte automatiserbara av mig)
-
-- Lägg till `honsgarden.app` som custom domain i Lovable.
-- Supabase: Site URL = `https://honsgarden.app`, Additional Redirect URLs = båda domänernas `/auth/callback`, `/reset-password`.
-- Stripe: bekräfta att de nya USD-priserna ser rätt ut, koppla webhooks (samma endpoint).
-- DNS för honsgarden.app (A 185.158.133.1 + www + _lovable TXT).
-
-## Frågor innan jag startar Leverans 1
-
-1. **OK att jag kör en migration som backfillar `profiles.timezone = 'Europe/Stockholm'` för rader där den är NULL?** (Säkert för alla befintliga .se-användare; nya .app-användare får browserns IANA-zon.)
-2. **Vill du att jag fortsätter rakt igenom Leverans 1 → 8 i följande turns**, eller vill du godkänna varje leverans innan nästa startar? (Jag rekommenderar godkännande per leverans, så du kan testa `.se` är oförändrat mellan varje.)
-3. **Stripe USD-priser ($2.99/mo, $24.99/yr, 7d trial)** — ska jag skapa produkterna i Stripe åt dig i Leverans 6, eller skapar du dem manuellt och ger mig Price IDs?
+Fyra sekventiella pass, ett i taget, med kort avstämning mellan varje så du kan justera riktning innan nästa startar. Säg **"kör pass 1"** så börjar jag.
