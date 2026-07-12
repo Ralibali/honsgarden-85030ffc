@@ -9,9 +9,10 @@ const corsHeaders = {
 
 // Only Hönsgården products
 const HONSGARDEN_PRODUCT_IDS = new Set([
-  "prod_U1nXjyO3PyPsWS", // Hönsgården årsprenumeration
-  "prod_U1nW7q52KG8tm4", // Hönsgården årsbetalning
-  "prod_U1nP6PS9ifMlFy", // Hönsgården månadsvis
+  "prod_U1nXjyO3PyPsWS", // Hönsgården årsprenumeration (legacy)
+  "prod_U1nW7q52KG8tm4", // Hönsgården årsbetalning (legacy)
+  "prod_U1nP6PS9ifMlFy", // Hönsgården månadsvis (legacy)
+  "prod_UsFuYFeabfimV4", // Hönsgården Plus (nya priser 39/299 kr, 2026)
 ]);
 
 function isHonsgardenSub(sub: Stripe.Subscription): boolean {
@@ -20,6 +21,29 @@ function isHonsgardenSub(sub: Stripe.Subscription): boolean {
       ? item.price.product
       : (item.price.product as Stripe.Product)?.id;
     return HONSGARDEN_PRODUCT_IDS.has(productId);
+  });
+}
+
+// Extract price/product id from an invoice line — supports legacy `line.price`
+// and current `line.pricing.price_details` shapes (API 2025-08-27+).
+function lineIds(line: any): { priceId?: string; productId?: string } {
+  const direct = line?.price;
+  if (direct && typeof direct === "object") {
+    const productId = typeof direct.product === "string" ? direct.product : direct.product?.id;
+    return { priceId: direct.id, productId };
+  }
+  if (typeof direct === "string") return { priceId: direct };
+  const pd = line?.pricing?.price_details;
+  if (pd) return { priceId: pd.price, productId: pd.product };
+  return {};
+}
+
+function isHonsgardenInvoice(inv: Stripe.Invoice, honsgardenPriceIds: Set<string>): boolean {
+  return !!inv.lines?.data?.some((line) => {
+    const { priceId, productId } = lineIds(line);
+    if (productId && HONSGARDEN_PRODUCT_IDS.has(productId)) return true;
+    if (priceId && honsgardenPriceIds.has(priceId)) return true;
+    return false;
   });
 }
 
