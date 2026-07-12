@@ -87,13 +87,20 @@ function TermsSv() {
         <p className="text-sm text-foreground leading-relaxed">Vi samlar in följande kategorier av personuppgifter:</p>
         <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
           <li><strong>Kontouppgifter:</strong> Namn (visningsnamn) och e-postadress vid registrering</li>
-          <li><strong>Användarskapat innehåll:</strong> Data du själv lägger in i tjänsten, t.ex. hönsdata, äggregistreringar, hälsologgar, ekonomiska transaktioner och anteckningar</li>
+          <li><strong>Användarskapat innehåll:</strong> Data du själv lägger in i tjänsten, t.ex. hönsdata, äggregistreringar, hälsologgar, ekonomiska transaktioner, foton, annonser och anteckningar</li>
+          <li><strong>Marknadsplats & Agdas äggbod:</strong> Kontaktuppgifter du väljer att publicera i annonser (t.ex. förnamn, telefon, e-post, ungefärlig plats/postort), bokningar och meddelanden mellan köpare och säljare</li>
+          <li><strong>Community/forum:</strong> Inlägg, kommentarer och reaktioner du publicerar samt anmälningar av olämpligt innehåll (DSA)</li>
+          <li><strong>AI-chatt (Agda):</strong> Frågor du ställer och svar från AI-assistenten sparas i en chattlogg för kvalitet, missbruksskydd och felsökning</li>
+          <li><strong>Referral/vänbjudan:</strong> Din referral-kod, vem du bjudit in och när inbjudan lösts in</li>
+          <li><strong>Notiser:</strong> Push-token (iOS/webb), e-postpreferenser samt geografisk sökprofil för Agdas äggbod-notiser</li>
+          <li><strong>Kamera & bilder:</strong> Foton du väljer att ladda upp till hönsprofiler eller annonser (mobilappen ber om kamera- och biblioteksåtkomst separat)</li>
+          <li><strong>Platsdata:</strong> Endast om du aktivt anger postort/adress för väderprognoser eller marknadsplatsannonser – vi spårar inte din realtidsposition</li>
           <li><strong>Tekniska data:</strong> IP-adress, enhetstyp, webbläsare, operativsystem och sessionsinformation</li>
           <li><strong>Användningsdata:</strong> Sidvisningar, klickhändelser och navigeringsmönster (anonymiserat)</li>
           <li><strong>Betalningsuppgifter:</strong> Hanteras av Stripe – vi lagrar aldrig kortuppgifter</li>
         </ul>
         <p className="text-sm text-foreground leading-relaxed mt-2">
-          Vi samlar inte in känsliga personuppgifter (t.ex. hälsodata, religiös övertygelse eller politisk tillhörighet).
+          Vi samlar inte in känsliga personuppgifter enligt art. 9 GDPR (t.ex. hälsodata om personer, religiös övertygelse eller politisk tillhörighet).
         </p>
 
         <h2 className="font-serif text-lg text-foreground mt-6 mb-2">3. Rättslig grund för behandlingen</h2>
