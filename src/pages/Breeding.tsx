@@ -192,7 +192,7 @@ function PairsTab() {
                       {p.end_date && ` – ${new Date(p.end_date).toLocaleDateString('sv-SE')}`}
                     </p>
                   </div>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm('Ta bort avelsparet?')) del.mutate(p.id); }}>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm("Ta bort avelsparet?")) del.mutate(p.id); }} aria-label="Ta bort avelspar">
                     <Trash2 className="h-4 w-4 text-destructive/70" />
                   </Button>
                 </div>
@@ -397,7 +397,7 @@ function HatchSessionsTab() {
                       )}
                       {s.notes && <p className="text-xs text-muted-foreground mt-1">{s.notes}</p>}
                     </div>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm('Ta bort?')) del.mutate(s.id); }}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm("Ta bort?")) del.mutate(s.id); }} aria-label="Ta bort">
                       <Trash2 className="h-4 w-4 text-destructive/70" />
                     </Button>
                   </div>

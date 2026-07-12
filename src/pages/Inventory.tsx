@@ -227,7 +227,7 @@ function InventoryInner() {
                             <Button size="sm" variant="outline" className="rounded-xl gap-1.5 h-8 text-xs" onClick={() => { setTxForm(t => ({ ...t, transaction_type: 'ut' })); setOpenTx({ item: it }); }}>
                               <ArrowUp className="h-3.5 w-3.5 text-destructive" /> Ut
                             </Button>
-                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm('Ta bort?')) delItem.mutate(it.id); }}>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => { if (confirm("Ta bort?")) delItem.mutate(it.id); }} aria-label="Ta bort artikel">
                               <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
                             </Button>
                           </div>
