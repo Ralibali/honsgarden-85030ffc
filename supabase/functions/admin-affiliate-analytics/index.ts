@@ -38,17 +38,17 @@ Deno.serve(async (req) => {
 
   // Läs `days` robust: query-param ELLER JSON-body (POST). Klämmer 1..365.
   const url = new URL(req.url);
-  let daysRaw: unknown = url.searchParams.get("days");
-  if ((daysRaw === null || daysRaw === "") && req.method === "POST") {
+  const queryParam = url.searchParams.get("days");
+  let body: unknown = null;
+  if (req.method === "POST") {
     try {
-      const body = await req.json();
-      daysRaw = body?.days;
+      body = await req.json();
     } catch {
       /* body optional */
     }
   }
-  const days = Math.min(365, Math.max(1, Number(daysRaw) || 30));
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const { days, sinceMs } = resolveDays({ queryParam, body });
+  const since = new Date(Date.now() - sinceMs).toISOString();
 
   const service = createClient(
     Deno.env.get("SUPABASE_URL")!,
