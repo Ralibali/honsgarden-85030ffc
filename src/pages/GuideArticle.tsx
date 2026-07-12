@@ -13,6 +13,7 @@ import ArticleCta from '@/components/blog/ArticleCta';
 import { useAuth } from '@/hooks/useAuth';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
+import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
@@ -656,10 +657,18 @@ export default function GuideArticle() {
           />
         )}
 
+        {/* Affiliate-disclosure – synligt över första CTA/annonslänk */}
+        <p className="text-xs text-muted-foreground italic mb-4 mt-2">
+          Vissa länkar i denna artikel är annonslänkar. Vi kan få ersättning om du handlar via dem, utan extra kostnad för dig.
+        </p>
+
         {/* Content with auto internal links */}
         <div
           className="prose-custom"
           dangerouslySetInnerHTML={{ __html: articleIntroHtml }}
+          onMouseDownCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+          onAuxClickCapture={(e) => handleProseAffiliateClick(e, post.slug)}
+          onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
         />
 
         {!isAuthenticated && <ArticleCta category={post.category} variant="inline" />}
@@ -674,8 +683,22 @@ export default function GuideArticle() {
           />
         )}
 
-        {/* Kontextuell produktbox – matchar mot artikelns innehåll */}
-        <AffiliateProductBox slug={post.slug} title={post.title} content={`${post.excerpt || ''} ${articleRestHtml || ''}`} />
+        {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
+        <AffiliateProductBox
+          slug={post.slug}
+          title={post.title}
+          content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
+        />
+
+        {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
+        <RecommendedProducts
+          slug={post.slug}
+          title={post.title}
+          content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
+          category={post.category}
+          tags={post.tags}
+          excerpt={post.excerpt}
+        />
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
         <AffiliateBannerRotator slug={post.slug} />
