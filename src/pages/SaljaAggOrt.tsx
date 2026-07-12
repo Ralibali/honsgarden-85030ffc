@@ -199,9 +199,7 @@ export default function SaljaAggOrt() {
                   Sälja ägg i <span className="text-primary">{ort.name}</span> – gratis säljsida på 2 minuter
                 </h1>
                 <p className="text-base sm:text-lg text-muted-foreground mb-7 leading-relaxed max-w-2xl">
-                  Har du höns och fler ägg än ni hinner äta hemma? Skapa en lokal säljsida för {ort.name} och
-                  närliggande orter. Köpare bokar själva, betalar via Swish och du behåller hela försäljningen –
-                  inga avgifter, ingen mellanhand.
+                  Skapa en lokal säljsida för {ort.name}. Köpare bokar själva, betalar med Swish och du behåller hela försäljningen – inga avgifter.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button asChild size="lg" className="h-12 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]">
@@ -209,23 +207,20 @@ export default function SaljaAggOrt() {
                       Skapa min säljsida gratis <ArrowRight className="h-5 w-5" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" className="h-12 px-7 text-base">
-                    <Link to="/salja-agg#ai-pitch">Testa AI-säljtext först</Link>
-                  </Button>
-                </div>
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <Button asChild size="lg" variant="secondary" className="gap-2">
+                  <Button asChild variant="outline" size="lg" className="h-12 px-7 text-base gap-2">
                     <Link to={`/karta?ort=${ort.slug}`}>
                       <MapPin className="h-4 w-4" />
-                      Se säljare i {ort.name} på kartan
+                      Säljare i {ort.name}
                     </Link>
                   </Button>
-                  {sellerCount > 0 && (
-                    <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
-                      {sellerCount} säljare i {ort.name} just nu
-                    </Badge>
-                  )}
                 </div>
+                {sellerCount > 0 && (
+                  <p className="mt-4 text-xs text-muted-foreground">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary mr-1.5 align-middle" />
+                    {sellerCount} säljare i {ort.name} just nu
+                  </p>
+                )}
+
               </motion.div>
 
               <motion.figure {...fadeUp(0.1)} className="hidden lg:block">

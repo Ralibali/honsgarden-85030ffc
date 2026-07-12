@@ -39,8 +39,8 @@ const fadeUp = (delay = 0) => ({
 
 const heroBullets = [
   'Egen säljsida med bild, pris och hämtinfo',
-  'Köpare bokar direkt – du får mejl & notis',
-  'Swish-betalning, lager och kundlista',
+  'Köpare bokar direkt – notis till dig på studs',
+  'Swish rakt till dig – inga avgifter',
 ];
 
 const stepGuide = [
@@ -187,9 +187,9 @@ export default function SaljaAgg() {
                   Sälj ägg från dina höns – <span className="text-primary">utan krångel</span>
                 </h1>
                 <p className="text-base sm:text-lg text-muted-foreground mb-7 leading-relaxed max-w-lg">
-                  Skapa en gratis säljsida på 2 minuter. Köpare bokar själva, du får notis direkt, och
-                  Swish-betalningen går rakt till dig. Inga avgifter, ingen mellanhand.
+                  Gratis säljsida på 2 minuter. Köpare bokar själva, du får notis och Swishen går rakt till dig.
                 </p>
+
 
                 <ul className="space-y-2.5 mb-8">
                   {heroBullets.map((b) => (
