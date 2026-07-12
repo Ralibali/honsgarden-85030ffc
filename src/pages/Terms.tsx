@@ -150,12 +150,27 @@ function TermsSv() {
               </tr>
               <tr className="border-b border-border/30">
                 <td className="py-2 pr-4">Brevo (Sendinblue)</td>
-                <td className="py-2 pr-4">E-postutskick, nyhetsbrev</td>
+                <td className="py-2 pr-4">E-postutskick, nyhetsbrev, transaktionsmejl</td>
                 <td className="py-2">EU (Frankrike)</td>
               </tr>
               <tr className="border-b border-border/30">
-                <td className="py-2 pr-4">Google (Gemini AI)</td>
-                <td className="py-2 pr-4">AI-funktioner (tips, chatt)</td>
+                <td className="py-2 pr-4">Google (Gemini) / Lovable AI Gateway</td>
+                <td className="py-2 pr-4">AI-funktioner (Agda-chatt, dagliga tips, insikter)</td>
+                <td className="py-2">EU/USA (EU SCC)</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Apple Push Notification Service</td>
+                <td className="py-2 pr-4">Pushnotiser i iOS-appen</td>
+                <td className="py-2">USA (EU SCC)</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Open-Meteo</td>
+                <td className="py-2 pr-4">Väderprognoser (endast koordinater/postort)</td>
+                <td className="py-2">EU</td>
+              </tr>
+              <tr className="border-b border-border/30">
+                <td className="py-2 pr-4">Firecrawl</td>
+                <td className="py-2 pr-4">Produktdata för affiliate-länkar (ingen personuppgift)</td>
                 <td className="py-2">USA (EU SCC)</td>
               </tr>
             </tbody>
