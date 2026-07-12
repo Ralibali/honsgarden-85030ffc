@@ -117,7 +117,7 @@ export default function AgdaProductTipCard() {
             <p className="text-sm text-muted-foreground mt-1">
               {product.price}
               {product.priceOriginal && product.priceOriginal > (priceToNumber(product.price) ?? 0) && (
-                <span className="ml-1.5 line-through text-muted-foreground/60">
+                <span className="ml-1.5 line-through text-muted-foreground">
                   {product.priceOriginal.toLocaleString('sv-SE')} kr
                 </span>
               )}

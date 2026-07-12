@@ -81,7 +81,7 @@ export default function MarketplaceMine() {
                     <p className="text-sm text-primary">{formatPrice(l.price as any, l.is_giveaway)}</p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {l.status === 'sold' ? (
-                        <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">SÅLD</Badge>
+                        <Badge className="bg-primary text-primary-foreground hover:bg-primary">SÅLD</Badge>
                       ) : (
                         <Badge variant={l.status === 'active' ? 'default' : 'secondary'}>{statusLabel(l.status)}</Badge>
                       )}

@@ -219,7 +219,7 @@ export function NotificationBell() {
                           </p>
                         )}
                         <div className="mt-2 flex items-center justify-between gap-2">
-                          <p className="text-[10px] text-muted-foreground/60">
+                          <p className="text-[10px] text-muted-foreground">
                             {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: sv })}
                           </p>
                           <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">

@@ -227,7 +227,7 @@ export default function News() {
                             <div className="flex flex-wrap items-center gap-2">
                               {isUnread && <Badge className="bg-primary text-primary-foreground border-primary text-[10px]">Ny</Badge>}
                               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Clock className="h-3 w-3" /> {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: sv })}</span>
-                              <span className="text-[11px] text-muted-foreground/60">· {format(new Date(n.created_at), 'd MMM yyyy', { locale: sv })}</span>
+                              <span className="text-[11px] text-muted-foreground">· {format(new Date(n.created_at), 'd MMM yyyy', { locale: sv })}</span>
                             </div>
                             <h3 className="font-serif text-lg sm:text-xl text-foreground leading-snug break-words">{n.title}</h3>
                             <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{n.message}</p>
