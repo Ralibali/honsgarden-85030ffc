@@ -23,6 +23,7 @@ interface RevenueData {
     status: string;
   }>;
   revenue_trend: Array<{ month: string; total: number }>;
+  new_customers_trend?: Array<{ month: string; count: number }>;
 }
 
 const MONTH_NAMES: Record<string, string> = {
