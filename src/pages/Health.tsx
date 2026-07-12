@@ -522,15 +522,16 @@ export default function Health() {
                       {!e.resolved && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg"
                           onClick={() => resolveMutation.mutate(e.id)}
-                          title="Markera som åtgärdad">
-                          <CheckCircle2 className="h-4 w-4 text-success" />
+                          title="Markera som åtgärdad" aria-label="Markera som åtgärdad">
+                          <CheckCircle2 className="h-4 w-4 text-success" aria-hidden="true" />
                         </Button>
                       )}
                       <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg"
                         onClick={() => {
                           if (confirm('Ta bort den här hälsohändelsen?')) deleteMutation.mutate(e.id);
-                        }}>
-                        <Trash2 className="h-4 w-4 text-destructive/70" />
+                        }} aria-label="Ta bort hälsohändelse">
+                        <Trash2 className="h-4 w-4 text-destructive/70" aria-hidden="true" />
+                      </Button>
                       </Button>
                     </div>
                   </CardContent>
