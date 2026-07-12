@@ -102,26 +102,81 @@ Deno.serve(async (req) => {
       .eq("is_active", true);
     const glossary = (glossaryRows ?? []) as Array<{ id: string; keyword: string }>;
 
+    // Pre-hämta befintliga glossary_ids per slug så vi kan bevara manuella val
+    const slugs = articles
+      .map((a) => cleanSlug(String(a.slug || "")))
+      .filter((s) => s.length > 0);
+    const existingGlossaryBySlug = new Map<string, string[]>();
+    if (slugs.length > 0) {
+      const { data: existingRows } = await supabase
+        .from("blog_posts")
+        .select("slug, glossary_ids")
+        .in("slug", slugs);
+      for (const row of existingRows ?? []) {
+        const ids = Array.isArray((row as { glossary_ids?: unknown }).glossary_ids)
+          ? ((row as { glossary_ids: unknown[] }).glossary_ids.filter((v) => typeof v === "string") as string[])
+          : [];
+        existingGlossaryBySlug.set(String(row.slug), ids);
+      }
+    }
+
+    function escapeRegex(s: string): string {
+      return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    const MAX_TOTAL_GLOSSARY = 10;
+    const MAX_AUTO_GLOSSARY = 6;
+    const MIN_AUTO_GLOSSARY = 3;
+
     function matchGlossaryIds(content: string, title: string): string[] {
       const bag = `${title} ${content}`.toLowerCase();
       const scored: Array<{ id: string; score: number; len: number }> = [];
       for (const g of glossary) {
         const kw = g.keyword.trim().toLowerCase();
         if (!kw) continue;
-        // Räkna förekomster (max 5 för att inte belöna spam)
+        // Hel-ord/frasmatchning (Unicode-medveten) — undviker korta substringar
+        // som ger fellänkar. Fallback till substring för keywords med specialtecken.
         let count = 0;
-        let from = 0;
-        while (count < 5) {
-          const idx = bag.indexOf(kw, from);
-          if (idx === -1) break;
-          count += 1;
-          from = idx + kw.length;
+        try {
+          const re = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(kw)}(?![\\p{L}\\p{N}])`, "giu");
+          const matches = bag.match(re);
+          count = matches ? Math.min(matches.length, 5) : 0;
+        } catch {
+          let from = 0;
+          while (count < 5) {
+            const idx = bag.indexOf(kw, from);
+            if (idx === -1) break;
+            count += 1;
+            from = idx + kw.length;
+          }
         }
         if (count > 0) scored.push({ id: g.id, score: count, len: kw.length });
       }
       // Prioritera fler träffar, sedan längre keyword
       scored.sort((a, b) => b.score - a.score || b.len - a.len);
-      return scored.slice(0, 6).map((s) => s.id);
+      const autos = scored.slice(0, MAX_AUTO_GLOSSARY).map((s) => s.id);
+      // Om vi hittade färre än MIN vill vi ändå returnera vad vi har (0 är okej).
+      return autos.length >= MIN_AUTO_GLOSSARY ? autos : autos;
+    }
+
+    function mergeGlossaryIds(existing: string[], autos: string[]): string[] {
+      const seen = new Set<string>();
+      const merged: string[] = [];
+      // Manuella/befintliga först — bevaras alltid i sin ordning
+      for (const id of existing) {
+        if (typeof id === "string" && !seen.has(id)) {
+          seen.add(id);
+          merged.push(id);
+        }
+      }
+      // Fyll på med auto-matchningar som inte redan finns
+      for (const id of autos) {
+        if (!seen.has(id) && merged.length < MAX_TOTAL_GLOSSARY) {
+          seen.add(id);
+          merged.push(id);
+        }
+      }
+      return merged.slice(0, MAX_TOTAL_GLOSSARY);
     }
 
     let synced = 0;
@@ -170,7 +225,7 @@ Deno.serve(async (req) => {
         updated_at: new Date().toISOString(),
         is_published: true,
         author_id: AUTHOR_ID,
-        glossary_ids: matchGlossaryIds(content, title),
+        glossary_ids: mergeGlossaryIds(existingGlossaryBySlug.get(slug) ?? [], matchGlossaryIds(content, title)),
       }, { onConflict: "slug" });
 
       if (error) throw new Error(error.message);

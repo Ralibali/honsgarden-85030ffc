@@ -24,7 +24,7 @@ export default function AffiliateAnalyticsPanel() {
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke('admin-affiliate-analytics', {
         method: 'POST',
-        body: {},
+        body: { days: Number(days) },
       });
       if (error) throw error;
       return data as { rows: Row[]; low_ctr: Row[] };
