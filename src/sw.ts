@@ -8,16 +8,15 @@ import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategie
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
-// Push-notifikationer hanteras av separat messaging worker.
 self.importScripts("/push-sw.js");
-
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 const SUPABASE_HOST = "sikbymtrbhrofysgkqsj.supabase.co";
-const PRIVATE_RUNTIME_CACHES = ["supabase-rest", "supabase-storage"];
+// `images` tas också bort för att rensa eventuella privata Supabase-bilder som
+// äldre service-worker-versioner kan ha lagt i den generella bildcachen.
+const AUTH_SENSITIVE_CACHES = ["supabase-rest", "supabase-storage", "images"];
 
-// SPA-navigation: alla routes servas från precachad index.html.
 const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
   new NavigationRoute(handler, {
@@ -25,7 +24,51 @@ registerRoute(
   }),
 );
 
-// JS-chunks kan delas mellan användare eftersom de inte innehåller användardata.
+// Supabase-regler registreras före generella asset-regler. Workbox använder den
+// första matchande routen, så ordningen är en del av dataskyddet.
+registerRoute(
+  ({ url, request }) =>
+    url.hostname === SUPABASE_HOST &&
+    url.pathname.startsWith("/rest/") &&
+    request.method === "GET",
+  new NetworkOnly(),
+  "GET",
+);
+
+registerRoute(
+  ({ url, request }) =>
+    url.hostname === SUPABASE_HOST &&
+    url.pathname.startsWith("/storage/v1/object/public/") &&
+    request.method === "GET",
+  new StaleWhileRevalidate({
+    cacheName: "supabase-public-storage-v2",
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({
+        maxEntries: 80,
+        maxAgeSeconds: 60 * 60 * 24 * 30,
+      }),
+    ],
+  }),
+  "GET",
+);
+
+registerRoute(
+  ({ url, request }) =>
+    url.hostname === SUPABASE_HOST &&
+    url.pathname.startsWith("/storage/") &&
+    !url.pathname.startsWith("/storage/v1/object/public/") &&
+    request.method === "GET",
+  new NetworkOnly(),
+  "GET",
+);
+
+const supabaseMutationMatcher = ({ url }: { url: URL }) => url.hostname === SUPABASE_HOST;
+registerRoute(supabaseMutationMatcher, new NetworkOnly(), "POST");
+registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PATCH");
+registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PUT");
+registerRoute(supabaseMutationMatcher, new NetworkOnly(), "DELETE");
+
 registerRoute(
   ({ request }) => request.destination === "script",
   new StaleWhileRevalidate({
@@ -39,8 +82,10 @@ registerRoute(
   }),
 );
 
+// Den generella bildcachen får aldrig fånga någon Supabase-resurs. Publika
+// Supabase-bilder hanteras av den uttryckliga routen ovan; privata går nätverket.
 registerRoute(
-  ({ request }) => request.destination === "image",
+  ({ url, request }) => request.destination === "image" && url.hostname !== SUPABASE_HOST,
   new CacheFirst({
     cacheName: "images",
     plugins: [
@@ -83,59 +128,10 @@ registerRoute(
   }),
 );
 
-// Autentiserade Supabase REST-svar får aldrig hamna i en delad service-worker-cache.
-// RLS filtrerar svar med Authorization-headern, medan Cache Storage normalt matchar
-// på URL. NetworkOnly förhindrar att ett konto får ett annat kontos gamla svar.
-registerRoute(
-  ({ url, request }) =>
-    url.hostname === SUPABASE_HOST &&
-    url.pathname.startsWith("/rest/") &&
-    request.method === "GET",
-  new NetworkOnly(),
-  "GET",
-);
-
-// Endast uttryckligen publika Supabase Storage-filer cachelagras. Signerade och
-// autentiserade filer går alltid via nätverket.
-registerRoute(
-  ({ url, request }) =>
-    url.hostname === SUPABASE_HOST &&
-    url.pathname.startsWith("/storage/v1/object/public/") &&
-    request.method === "GET",
-  new StaleWhileRevalidate({
-    cacheName: "supabase-public-storage-v2",
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({
-        maxEntries: 80,
-        maxAgeSeconds: 60 * 60 * 24 * 30,
-      }),
-    ],
-  }),
-  "GET",
-);
-
-registerRoute(
-  ({ url, request }) =>
-    url.hostname === SUPABASE_HOST &&
-    url.pathname.startsWith("/storage/") &&
-    !url.pathname.startsWith("/storage/v1/object/public/") &&
-    request.method === "GET",
-  new NetworkOnly(),
-  "GET",
-);
-
-// Mutationer får aldrig cachas eller replay:as – app-lagret sköter offline-kön.
-const supabaseMutationMatcher = ({ url }: { url: URL }) => url.hostname === SUPABASE_HOST;
-registerRoute(supabaseMutationMatcher, new NetworkOnly(), "POST");
-registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PATCH");
-registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PUT");
-registerRoute(supabaseMutationMatcher, new NetworkOnly(), "DELETE");
-
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
-      ...PRIVATE_RUNTIME_CACHES.map((cacheName) => caches.delete(cacheName)),
+      ...AUTH_SENSITIVE_CACHES.map((cacheName) => caches.delete(cacheName)),
       self.clients.claim(),
     ]),
   );
@@ -143,7 +139,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("message", (event) => {
   if (event.data?.type === "CLEAR_PRIVATE_CACHES") {
-    event.waitUntil(Promise.all(PRIVATE_RUNTIME_CACHES.map((cacheName) => caches.delete(cacheName))));
+    event.waitUntil(Promise.all(AUTH_SENSITIVE_CACHES.map((cacheName) => caches.delete(cacheName))));
     return;
   }
 
