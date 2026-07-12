@@ -527,11 +527,11 @@ export default function Hens() {
                     </div>
                     <p className="text-[11px] text-muted-foreground">{hen.breed || 'Okänd ras'}</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/50 hover:text-destructive shrink-0" onClick={(e) => {
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/70 hover:text-destructive shrink-0" onClick={(e) => {
                     e.stopPropagation();
                     if (confirm(`Ta bort ${hen.name}?`)) deleteHenMutation.mutate(hen.id);
-                  }}>
-                    <Trash2 className="h-3.5 w-3.5" />
+                  }} aria-label={`Ta bort ${hen.name}`}>
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                   </Button>
                 </div>
 

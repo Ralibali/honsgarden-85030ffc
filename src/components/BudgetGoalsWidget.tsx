@@ -88,8 +88,8 @@ export default function BudgetGoalsWidget({ monthExpense, monthIncome, budgetTar
           <CardTitle className="font-serif text-base flex items-center gap-2">
             <Target className="h-4 w-4 text-primary" /> Månadsmål
           </CardTitle>
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(true)}>
-            <Pencil className="h-3.5 w-3.5" />
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditing(true)} aria-label="Redigera månadsmål">
+            <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
