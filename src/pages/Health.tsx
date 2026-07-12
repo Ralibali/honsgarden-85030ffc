@@ -532,7 +532,6 @@ export default function Health() {
                         }} aria-label="Ta bort hälsohändelse">
                         <Trash2 className="h-4 w-4 text-destructive/70" aria-hidden="true" />
                       </Button>
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
