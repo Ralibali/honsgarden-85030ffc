@@ -72,7 +72,7 @@ registerRoute(supabaseMutationMatcher, new NetworkOnly(), "DELETE");
 registerRoute(
   ({ request }) => request.destination === "script",
   new StaleWhileRevalidate({
-    cacheName: "js-chunks",
+    cacheName: "js-chunks-v2",
     plugins: [
       new ExpirationPlugin({
         maxEntries: 100,
