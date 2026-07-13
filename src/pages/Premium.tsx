@@ -118,6 +118,11 @@ export default function Premium() {
           const { data, error } = await supabase.functions.invoke('check-subscription');
           if (!error && data?.subscribed) {
             await refreshSubscription();
+            // Analytics: faktisk verifierad prenumeration (server-side bekräftad).
+            trackEvent('Premium Purchased', {
+              plan: 'plus',
+              billing_interval: data?.billing_interval === 'yearly' ? 'yearly' : 'monthly',
+            });
             toast({
               title: t('toasts.welcome_title'),
               description: t('toasts.welcome_desc'),
