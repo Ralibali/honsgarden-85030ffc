@@ -222,8 +222,15 @@ export default function Premium() {
 
       if (data?.error) throw new Error(data.message || data.error);
       if (error) throw new Error(error.message);
-      if (data?.url) window.location.href = data.url;
-      else throw new Error(t('toasts.no_checkout_url'));
+      if (data?.url) {
+        // Analytics: efter faktiskt lyckad checkout-session (URL genererad), precis innan redirect.
+        trackEvent('Premium Checkout Started', {
+          plan: 'plus',
+          billing_interval: plan,
+          source: 'premium_page',
+        });
+        window.location.href = data.url;
+      } else throw new Error(t('toasts.no_checkout_url'));
     } catch (err: any) {
       toast({
         title: t('toasts.checkout_fail_title'),
