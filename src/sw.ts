@@ -16,6 +16,9 @@ const SUPABASE_HOST = "sikbymtrbhrofysgkqsj.supabase.co";
 // `images` tas också bort för att rensa eventuella privata Supabase-bilder som
 // äldre service-worker-versioner kan ha lagt i den generella bildcachen.
 const AUTH_SENSITIVE_CACHES = ["supabase-rest", "supabase-storage", "images"];
+// Legacy caches from previous SW versions must be purged on activate so users
+// don't keep serving the broken pre-hotfix JS bundle.
+const LEGACY_CACHES = ["js-chunks", "workbox-precache-v2-https://honsgarden.se/"];
 
 const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
