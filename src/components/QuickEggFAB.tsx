@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate, hapticTap } from '@/lib/feedback';
+import { trackFirstEggIfNew } from '@/lib/analytics';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
@@ -113,6 +114,7 @@ export function QuickEggFAB() {
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
+      if (!isOffline) trackFirstEggIfNew('quick_fab');
       const savedCount = count;
       setCount(1);
       setUseYesterday(false);

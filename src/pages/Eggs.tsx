@@ -19,6 +19,7 @@ import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate } from '@/lib/feedback';
 import { useAuth } from '@/hooks/useAuth';
 import { enqueueEggLog } from '@/lib/offlineQueue';
+import { trackFirstEggIfNew } from '@/lib/analytics';
 
 
 export default function Eggs() {
@@ -113,6 +114,8 @@ export default function Eggs() {
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
+      if (!isOffline) trackFirstEggIfNew('eggs_page');
+
 
       // Personal record check (delight bump)
       const updatedEggs = [...(eggs as any[]), { date: variables.date, count: variables.count }];

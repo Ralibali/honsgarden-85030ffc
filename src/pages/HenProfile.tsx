@@ -47,6 +47,8 @@ function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
       });
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
+      const { trackFirstEggIfNew } = await import('@/lib/analytics');
+      trackFirstEggIfNew('hen_profile');
       toast({ title: `Snyggt, ${count} ägg är loggat för ${henName}! 🥚` });
       setCount('1');
     } catch (err: any) {

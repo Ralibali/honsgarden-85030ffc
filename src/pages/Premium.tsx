@@ -11,6 +11,7 @@ import { useSeo } from '@/hooks/useSeo';
 import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
+import { trackEvent } from '@/lib/analytics';
 
 type BillingPlan = 'monthly' | 'yearly';
 
@@ -117,6 +118,11 @@ export default function Premium() {
           const { data, error } = await supabase.functions.invoke('check-subscription');
           if (!error && data?.subscribed) {
             await refreshSubscription();
+            // Analytics: faktisk verifierad prenumeration (server-side bekräftad).
+            trackEvent('Premium Purchased', {
+              plan: 'plus',
+              billing_interval: data?.billing_interval === 'yearly' ? 'yearly' : 'monthly',
+            });
             toast({
               title: t('toasts.welcome_title'),
               description: t('toasts.welcome_desc'),
@@ -216,8 +222,15 @@ export default function Premium() {
 
       if (data?.error) throw new Error(data.message || data.error);
       if (error) throw new Error(error.message);
-      if (data?.url) window.location.href = data.url;
-      else throw new Error(t('toasts.no_checkout_url'));
+      if (data?.url) {
+        // Analytics: efter faktiskt lyckad checkout-session (URL genererad), precis innan redirect.
+        trackEvent('Premium Checkout Started', {
+          plan: 'plus',
+          billing_interval: plan,
+          source: 'premium_page',
+        });
+        window.location.href = data.url;
+      } else throw new Error(t('toasts.no_checkout_url'));
     } catch (err: any) {
       toast({
         title: t('toasts.checkout_fail_title'),

@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { todayLocal } from '@/lib/datetime';
 import { CountUp } from '@/components/CountUp';
 import { useState } from 'react';
+import { trackFirstEggIfNew } from '@/lib/analytics';
 
 interface Props {
   todayEggs: number;
@@ -23,6 +24,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      trackFirstEggIfNew('quick_log_card');
       toast({ title: '🥚 +1 ägg loggat' });
     },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
