@@ -19,6 +19,7 @@ import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate } from '@/lib/feedback';
 import { useAuth } from '@/hooks/useAuth';
 import { enqueueEggLog } from '@/lib/offlineQueue';
+import { trackFirstEggIfNew } from '@/lib/analytics';
 
 
 export default function Eggs() {
