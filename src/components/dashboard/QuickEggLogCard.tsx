@@ -7,6 +7,7 @@ import { toast } from '@/hooks/use-toast';
 import { todayLocal } from '@/lib/datetime';
 import { CountUp } from '@/components/CountUp';
 import { useState } from 'react';
+import { trackFirstEggIfNew } from '@/lib/analytics';
 
 interface Props {
   todayEggs: number;
