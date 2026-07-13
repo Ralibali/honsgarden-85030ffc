@@ -135,6 +135,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     Promise.all([
       ...AUTH_SENSITIVE_CACHES.map((cacheName) => caches.delete(cacheName)),
+      ...LEGACY_CACHES.map((cacheName) => caches.delete(cacheName)),
       self.clients.claim(),
     ]),
   );
