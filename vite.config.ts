@@ -10,30 +10,38 @@ const REQUIRED_PRODUCTION_ENV = [
   "VITE_SUPABASE_PROJECT_ID",
 ] as const;
 
+// These values are intentionally public client configuration. Supabase anon keys
+// are shipped to every browser; security is enforced by RLS, not by hiding them.
+// The fallback prevents a blank production app if the hosting build omits Vite envs.
+const DEFAULT_SUPABASE_URL = "https://sikbymtrbhrofysgkqsj.supabase.co";
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpa2J5bXRyYmhyb2Z5c2drcXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjQ0MjAsImV4cCI6MjA4ODI0MDQyMH0.SlgJoYwkD5GWeZ2mK-GihDvEWpt8noKWE8xulzSOqaU";
+const DEFAULT_SUPABASE_PROJECT_ID = "sikbymtrbhrofysgkqsj";
+
 export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), "");
-  // Merge process.env so build environments that inject vars directly
-  // (utan .env-fil) fungerar likadant som lokalt.
   const env: Record<string, string> = {
     ...fileEnv,
     ...Object.fromEntries(
-      Object.entries(process.env).filter(([, v]) => typeof v === "string") as [string, string][]
+      Object.entries(process.env).filter(([, value]) => typeof value === "string") as [string, string][]
     ),
   };
 
   if (mode === "production") {
     const missing = REQUIRED_PRODUCTION_ENV.filter((key) => !env[key]?.trim());
     if (missing.length > 0) {
-      // Varna istället för att kasta – publish-miljön injectar dessa vid deploy,
-      // och en hård throw här bryter hela bygget även när värdena finns i runtime.
       console.warn(
-        `[vite] Missing VITE_SUPABASE_* env vars at build time: ${missing.join(", ")}. ` +
-          `Continuing – hosting will inject them.`
+        `[vite] Missing build-time variables: ${missing.join(", ")}. ` +
+          "Using the public Hönsgården Supabase client fallback to keep the app bootable."
       );
     }
   }
 
-
+  const supabaseUrl = env.VITE_SUPABASE_URL?.trim() || DEFAULT_SUPABASE_URL;
+  const supabasePublishableKey =
+    env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim() || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseProjectId =
+    env.VITE_SUPABASE_PROJECT_ID?.trim() || DEFAULT_SUPABASE_PROJECT_ID;
 
   return {
     server: {
@@ -99,9 +107,9 @@ export default defineConfig(({ mode }) => {
       }),
     ].filter(Boolean),
     define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(env.VITE_SUPABASE_URL || ""),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(env.VITE_SUPABASE_PUBLISHABLE_KEY || ""),
-      "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(env.VITE_SUPABASE_PROJECT_ID || ""),
+      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
+      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabasePublishableKey),
+      "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(supabaseProjectId),
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     },
     build: {
