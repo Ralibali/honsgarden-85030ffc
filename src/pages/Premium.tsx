@@ -11,6 +11,7 @@ import { useSeo } from '@/hooks/useSeo';
 import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
+import { trackEvent } from '@/lib/analytics';
 
 type BillingPlan = 'monthly' | 'yearly';
 
