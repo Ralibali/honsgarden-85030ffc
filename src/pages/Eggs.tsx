@@ -114,6 +114,8 @@ export default function Eggs() {
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
+      if (!isOffline) trackFirstEggIfNew('eggs_page');
+
 
       // Personal record check (delight bump)
       const updatedEggs = [...(eggs as any[]), { date: variables.date, count: variables.count }];
