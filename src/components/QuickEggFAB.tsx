@@ -114,6 +114,7 @@ export function QuickEggFAB() {
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
+      if (!isOffline) trackFirstEggIfNew('quick_fab');
       const savedCount = count;
       setCount(1);
       setUseYesterday(false);
