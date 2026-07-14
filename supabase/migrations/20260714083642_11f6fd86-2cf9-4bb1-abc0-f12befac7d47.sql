@@ -1,0 +1,1 @@
+update public.profiles set premium_expires_at = '2027-05-05 00:14:39+00', subscription_status = 'premium' where user_id = 'ee725304-d17b-4341-bd03-7d09f14d9136';
