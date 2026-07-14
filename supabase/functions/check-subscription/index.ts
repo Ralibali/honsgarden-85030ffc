@@ -15,7 +15,15 @@ const STATUS_PRIORITY: Record<string, number> = {
 };
 
 function getStripeEnd(subscription: Stripe.Subscription): string | null {
-  const endTimestamp = (subscription as any).current_period_end as number | undefined;
+  // I Stripe API 2025-08-27.basil finns current_period_end på subscription_item,
+  // inte längre direkt på subscription-objektet. Läs primärt från items och
+  // fall tillbaka till subscription-nivå för äldre svar/testklockor.
+  const itemEnd = (subscription.items?.data ?? [])
+    .map((item) => (item as any).current_period_end as number | undefined)
+    .filter((value): value is number => typeof value === "number")
+    .sort((a, b) => b - a)[0];
+  const rootEnd = (subscription as any).current_period_end as number | undefined;
+  const endTimestamp = itemEnd ?? (typeof rootEnd === "number" ? rootEnd : undefined);
   return typeof endTimestamp === "number" ? new Date(endTimestamp * 1000).toISOString() : null;
 }
 
