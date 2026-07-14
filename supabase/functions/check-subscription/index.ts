@@ -107,7 +107,9 @@ serve(async (req) => {
         .sort((a, b) => {
           const statusDiff = (STATUS_PRIORITY[b.status] ?? 0) - (STATUS_PRIORITY[a.status] ?? 0);
           if (statusDiff !== 0) return statusDiff;
-          return (((b as any).current_period_end ?? 0) - ((a as any).current_period_end ?? 0));
+          const endA = new Date(getStripeEnd(a) ?? 0).getTime();
+          const endB = new Date(getStripeEnd(b) ?? 0).getTime();
+          return endB - endA;
         });
 
       stripeSubscription = eligibleSubscriptions[0] ?? null;
