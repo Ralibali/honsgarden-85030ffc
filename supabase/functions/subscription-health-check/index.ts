@@ -14,15 +14,26 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
+  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us.
   const auth = req.headers.get("Authorization") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
   const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
   const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
-  const okAnonKey = !!anonKey && provided === anonKey; // triggered by pg_cron inside project
-  if (!okServiceKey && !okAnonKey && !okSecret) {
+  let okProjectJwt = false;
+  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
+      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+    } catch (_) {
+      okProjectJwt = false;
+    }
+  }
+  if (!okServiceKey && !okSecret && !okProjectJwt) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
