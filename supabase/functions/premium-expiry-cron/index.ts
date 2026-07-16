@@ -13,10 +13,13 @@ Deno.serve(async (req) => {
 
   const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
   const provided = auth.replace("Bearer ", "").trim();
   const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
+  const okAnonKey = !!anonKey && provided === anonKey; // triggered by pg_cron inside project
+  if (!okServiceKey && !okAnonKey && !okSecret) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
