@@ -66,16 +66,26 @@ Deno.serve(async (req) => {
               limit: 1,
             });
             if (subs.data.length > 0) {
-              // Active Stripe sub – extend premium to match Stripe period
+              // Active Stripe sub – extend premium to match Stripe period.
+              // Stripe API 2025-08-27.basil flyttade current_period_end till
+              // subscription.items.data[i]. Läs primärt därifrån, fall
+              // tillbaka till root för äldre svar/testklockor.
               const sub = subs.data[0];
-              const endTimestamp = sub.current_period_end;
-              if (endTimestamp && typeof endTimestamp === "number") {
+              const itemEnd = (sub.items?.data ?? [])
+                .map((it: any) => it.current_period_end as number | undefined)
+                .filter((v): v is number => typeof v === "number")
+                .sort((a, b) => b - a)[0];
+              const rootEnd = (sub as any).current_period_end as number | undefined;
+              const endTimestamp = itemEnd ?? (typeof rootEnd === "number" ? rootEnd : undefined);
+              if (typeof endTimestamp === "number") {
                 const newEnd = new Date(endTimestamp * 1000).toISOString();
                 await supabase
                   .from("profiles")
                   .update({ premium_expires_at: newEnd })
                   .eq("user_id", profile.user_id);
                 console.log(`Skipped ${profile.email}: active Stripe sub, extended to ${newEnd}`);
+              } else {
+                console.warn(`Active Stripe sub for ${profile.email} but no current_period_end found; leaving premium untouched.`);
               }
               skipped++;
               continue;

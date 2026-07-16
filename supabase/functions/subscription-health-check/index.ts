@@ -85,12 +85,22 @@ serve(async (req) => {
         });
       }
 
-      // Synkkontroll: jämför slutdatum
+      // Synkkontroll: jämför slutdatum. Läs current_period_end från
+      // subscription.items.data (Stripe 2025-08-27.basil) med fallback till root.
+      const getEnd = (s: any): number | null => {
+        const itemEnd = (s.items?.data ?? [])
+          .map((it: any) => it.current_period_end as number | undefined)
+          .filter((v: any): v is number => typeof v === "number")
+          .sort((a: number, b: number) => b - a)[0];
+        const rootEnd = s.current_period_end as number | undefined;
+        return itemEnd ?? (typeof rootEnd === "number" ? rootEnd : null);
+      };
       const latestSub = eligibleSubs.sort(
-        (a, b) => (b.current_period_end ?? 0) - (a.current_period_end ?? 0),
+        (a, b) => (getEnd(b) ?? 0) - (getEnd(a) ?? 0),
       )[0];
-      if (latestSub?.current_period_end) {
-        const stripeEnd = new Date(latestSub.current_period_end * 1000);
+      const latestEnd = latestSub ? getEnd(latestSub) : null;
+      if (latestEnd) {
+        const stripeEnd = new Date(latestEnd * 1000);
         const dbEnd = profile.premium_expires_at ? new Date(profile.premium_expires_at) : null;
         const driftMs = Math.abs((dbEnd?.getTime() ?? 0) - stripeEnd.getTime());
         // Mer än 24h drift räknas som osynkat
