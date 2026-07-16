@@ -1,0 +1,1 @@
+SELECT name, length(decrypted_secret) AS len FROM vault.decrypted_secrets WHERE name = 'CRON_SECRET';

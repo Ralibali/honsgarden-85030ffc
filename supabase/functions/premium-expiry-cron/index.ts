@@ -11,12 +11,27 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
+  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us with the
+  // anon key. verify_jwt is disabled at the platform level, so we validate here.
   const auth = req.headers.get("Authorization") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
   const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
+  let okProjectJwt = false;
+  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
+      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+    } catch (_) {
+      okProjectJwt = false;
+    }
+  }
+  if (!okServiceKey && !okSecret && !okProjectJwt) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -66,16 +81,26 @@ Deno.serve(async (req) => {
               limit: 1,
             });
             if (subs.data.length > 0) {
-              // Active Stripe sub – extend premium to match Stripe period
+              // Active Stripe sub – extend premium to match Stripe period.
+              // Stripe API 2025-08-27.basil flyttade current_period_end till
+              // subscription.items.data[i]. Läs primärt därifrån, fall
+              // tillbaka till root för äldre svar/testklockor.
               const sub = subs.data[0];
-              const endTimestamp = sub.current_period_end;
-              if (endTimestamp && typeof endTimestamp === "number") {
+              const itemEnd = (sub.items?.data ?? [])
+                .map((it: any) => it.current_period_end as number | undefined)
+                .filter((v): v is number => typeof v === "number")
+                .sort((a, b) => b - a)[0];
+              const rootEnd = (sub as any).current_period_end as number | undefined;
+              const endTimestamp = itemEnd ?? (typeof rootEnd === "number" ? rootEnd : undefined);
+              if (typeof endTimestamp === "number") {
                 const newEnd = new Date(endTimestamp * 1000).toISOString();
                 await supabase
                   .from("profiles")
                   .update({ premium_expires_at: newEnd })
                   .eq("user_id", profile.user_id);
                 console.log(`Skipped ${profile.email}: active Stripe sub, extended to ${newEnd}`);
+              } else {
+                console.warn(`Active Stripe sub for ${profile.email} but no current_period_end found; leaving premium untouched.`);
               }
               skipped++;
               continue;

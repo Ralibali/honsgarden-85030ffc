@@ -14,12 +14,26 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
+  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us.
   const auth = req.headers.get("Authorization") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
   const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
+  let okProjectJwt = false;
+  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
+      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+    } catch (_) {
+      okProjectJwt = false;
+    }
+  }
+  if (!okServiceKey && !okSecret && !okProjectJwt) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -85,12 +99,22 @@ serve(async (req) => {
         });
       }
 
-      // Synkkontroll: jämför slutdatum
+      // Synkkontroll: jämför slutdatum. Läs current_period_end från
+      // subscription.items.data (Stripe 2025-08-27.basil) med fallback till root.
+      const getEnd = (s: any): number | null => {
+        const itemEnd = (s.items?.data ?? [])
+          .map((it: any) => it.current_period_end as number | undefined)
+          .filter((v: any): v is number => typeof v === "number")
+          .sort((a: number, b: number) => b - a)[0];
+        const rootEnd = s.current_period_end as number | undefined;
+        return itemEnd ?? (typeof rootEnd === "number" ? rootEnd : null);
+      };
       const latestSub = eligibleSubs.sort(
-        (a, b) => (b.current_period_end ?? 0) - (a.current_period_end ?? 0),
+        (a, b) => (getEnd(b) ?? 0) - (getEnd(a) ?? 0),
       )[0];
-      if (latestSub?.current_period_end) {
-        const stripeEnd = new Date(latestSub.current_period_end * 1000);
+      const latestEnd = latestSub ? getEnd(latestSub) : null;
+      if (latestEnd) {
+        const stripeEnd = new Date(latestEnd * 1000);
         const dbEnd = profile.premium_expires_at ? new Date(profile.premium_expires_at) : null;
         const driftMs = Math.abs((dbEnd?.getTime() ?? 0) - stripeEnd.getTime());
         // Mer än 24h drift räknas som osynkat
