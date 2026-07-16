@@ -19,6 +19,15 @@ Deno.serve(async (req) => {
   const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
   const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
   const okAnonKey = !!anonKey && provided === anonKey; // triggered by pg_cron inside project
+  console.log("[premium-expiry-cron] auth check", {
+    providedLen: provided.length,
+    serviceKeyLen: serviceKeyAuth.length,
+    anonKeyLen: anonKey.length,
+    hasCronSecret: !!cronSecret,
+    okServiceKey,
+    okAnonKey,
+    okSecret,
+  });
   if (!okServiceKey && !okAnonKey && !okSecret) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
