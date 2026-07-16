@@ -1,0 +1,1 @@
+SELECT name, length(decrypted_secret) AS len FROM vault.decrypted_secrets WHERE name IN ('CRON_SECRET','service_role_key','SUPABASE_SERVICE_ROLE_KEY','supabase_service_role_key','anon_key');
