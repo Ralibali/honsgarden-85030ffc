@@ -442,7 +442,7 @@ export default function Statistics() {
                 <CardContent className="px-4 sm:px-6 pb-4">
                   {hensWithEggs.length > 0 ? (() => {
                     const breedEntries = Object.entries(
-                      hensWithEggs.reduce((acc: Record<string, number>, hen: any) => {
+                      (hensWithEggs as any[]).reduce((acc: Record<string, number>, hen: any) => {
                         const breed = hen.breed || 'Okänd';
                         acc[breed] = (acc[breed] || 0) + 1;
                         return acc;

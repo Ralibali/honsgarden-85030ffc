@@ -1,9 +1,6 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Egg, Flame, Star, Trophy, Target, Zap, Heart, Crown, Gift, Users, Calendar, Package, Coins, ClipboardCheck } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
 
 export interface Achievement {
   id: string;
@@ -347,61 +344,12 @@ interface AchievementsComponentProps extends Partial<AchievementsProps> {
 }
 
 export default function Achievements({ achievements: passedAchievements, eggs, hens, streak, feedRecords = [], transactions = [], chores = [] }: AchievementsComponentProps) {
-  const { user } = useAuth();
-  const rewardedRef = useRef<Set<string>>(new Set());
   const computedAchievements = useMemo(() => passedAchievements ?? buildAchievements(eggs, hens, streak, feedRecords, transactions, chores), [passedAchievements, eggs, hens, streak, feedRecords, transactions, chores]);
   const achievements = computedAchievements;
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
 
-  // Grant premium days for newly unlocked achievements
-  useEffect(() => {
-    if (!user?.id) return;
-    const unlocked = achievements.filter(a => a.unlocked);
-    if (unlocked.length === 0) return;
 
-    const grantRewards = async () => {
-      const { data: existing } = await supabase
-        .from('achievement_rewards')
-        .select('achievement_id')
-        .eq('user_id', user.id);
-      
-      const alreadyRewarded = new Set((existing || []).map(r => r.achievement_id));
-      
-      // Calculate total days already granted from achievements
-      let totalGranted = 0;
-      for (const id of alreadyRewarded) {
-        const a = achievements.find(x => x.id === id);
-        if (a) totalGranted += TIER_PREMIUM_DAYS[a.tier] || 0;
-      }
-
-      for (const achievement of unlocked) {
-        if (alreadyRewarded.has(achievement.id) || rewardedRef.current.has(achievement.id)) continue;
-        
-        const days = TIER_PREMIUM_DAYS[achievement.tier] || 1;
-        
-        // Check if granting would exceed the cap
-        if (totalGranted + days > MAX_ACHIEVEMENT_PREMIUM_DAYS) {
-          // Record that it was unlocked but don't grant more days
-          rewardedRef.current.add(achievement.id);
-          await supabase.from('achievement_rewards').insert({ user_id: user.id, achievement_id: achievement.id });
-          toast({ title: `🏆 ${achievement.title} – upplåst!`, description: 'Grattis! Du har nått maxgränsen för gratis premiumdagar från achievements.' });
-          totalGranted += 0; // Don't add
-          continue;
-        }
-        
-        rewardedRef.current.add(achievement.id);
-        const { error } = await supabase.from('achievement_rewards').insert({ user_id: user.id, achievement_id: achievement.id });
-        if (!error) {
-          await supabase.rpc('grant_premium_days', { _user_id: user.id, _days: days });
-          totalGranted += days;
-          const remaining = MAX_ACHIEVEMENT_PREMIUM_DAYS - totalGranted;
-          toast({ title: `🏆 ${achievement.title} – upplåst!`, description: `Du har fått ${days} dag${days > 1 ? 'ar' : ''} gratis Premium!${remaining > 0 ? ` (${remaining} dagar kvar att låsa upp)` : ''}` });
-        }
-      }
-    };
-    grantRewards();
-  }, [achievements, user?.id]);
 
   return (
     <div className="space-y-4">
