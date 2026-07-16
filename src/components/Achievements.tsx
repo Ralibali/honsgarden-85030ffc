@@ -1,9 +1,6 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Egg, Flame, Star, Trophy, Target, Zap, Heart, Crown, Gift, Users, Calendar, Package, Coins, ClipboardCheck } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
 
 export interface Achievement {
   id: string;
