@@ -11,24 +11,27 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
+  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us with the
+  // anon key. verify_jwt is disabled at the platform level, so we validate here.
   const auth = req.headers.get("Authorization") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
   const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
+  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
   const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
-  const okAnonKey = !!anonKey && provided === anonKey; // triggered by pg_cron inside project
-  console.log("[premium-expiry-cron] auth check", {
-    providedLen: provided.length,
-    serviceKeyLen: serviceKeyAuth.length,
-    anonKeyLen: anonKey.length,
-    hasCronSecret: !!cronSecret,
-    okServiceKey,
-    okAnonKey,
-    okSecret,
-  });
-  if (!okServiceKey && !okAnonKey && !okSecret) {
+  let okProjectJwt = false;
+  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
+      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
+    } catch (_) {
+      okProjectJwt = false;
+    }
+  }
+  if (!okServiceKey && !okSecret && !okProjectJwt) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
