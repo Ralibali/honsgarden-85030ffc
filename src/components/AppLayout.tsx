@@ -10,11 +10,14 @@ import { SuspenseFallback } from '@/components/SuspenseFallback';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
+import { useAchievementRewards } from '@/hooks/useAchievementRewards';
+import AchievementUnlockOverlay from '@/components/AchievementUnlockOverlay';
 import OfflineBanner from './OfflineBanner';
 
 
 export default function AppLayout() {
   usePwaInstallTracking();
+  useAchievementRewards();
   // Ensure app routes are not indexed by search engines.
   // Inget cleanup – nästa publika sida uppdaterar robots via useSeo.
   useEffect(() => {

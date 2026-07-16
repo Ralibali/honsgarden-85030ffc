@@ -225,7 +225,7 @@ export function useUpdateListingStatus() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; status: 'active' | 'sold' | 'hidden' | 'expired' }) => {
-      const patch: Record<string, unknown> = { status: input.status };
+      const patch: { status: typeof input.status; sold_at?: string | null } = { status: input.status };
       if (input.status === 'sold') patch.sold_at = new Date().toISOString();
       if (input.status === 'active') patch.sold_at = null;
       const { error } = await supabase
