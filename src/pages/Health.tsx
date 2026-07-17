@@ -480,9 +480,9 @@ export default function Health() {
               onAction={() => setOpen(true)}
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 stagger-children">
               {filtered.map((e) => (
-                <Card key={e.id} className="border-border/50 hover:border-border transition-colors">
+                <Card key={e.id} className="border-border/50 hover:border-border hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200">
                   <CardContent className="p-4 flex items-start gap-3">
                     <div className="flex flex-col items-center min-w-[3rem]">
                       <span className="text-[10px] text-muted-foreground uppercase">

@@ -193,11 +193,11 @@ function InventoryInner() {
               <h2 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 px-1">
                 {cat.label}
               </h2>
-              <div className="space-y-2">
-                {grouped[cat.value].map((it: any) => {
+              <div className="space-y-2 stagger-children">
+                {grouped[cat.value].map((it) => {
                   const low = it.low_threshold != null && Number(it.current_quantity) <= Number(it.low_threshold);
                   return (
-                    <Card key={it.id} className={`border-border/50 ${low ? 'border-warning/40 bg-warning/5' : ''}`}>
+                    <Card key={it.id} className={`border-border/50 transition-all duration-200 hover:shadow-sm hover:-translate-y-0.5 ${low ? 'border-warning/40 bg-warning/5' : ''}`}>
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex-1 min-w-0">

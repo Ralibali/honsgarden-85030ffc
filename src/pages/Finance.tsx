@@ -161,7 +161,7 @@ export default function Finance() {
   }
 
   const handleExportCSV = () => {
-    const rows = transactions.map((t: any) => ({
+    const rows = transactions.map((t) => ({
       Datum: t.date,
       Typ: t.type === 'income' ? 'Intäkt' : 'Kostnad',
       Kategori: t.category || '',
@@ -175,7 +175,7 @@ export default function Finance() {
     downloadPDF(
       'Ekonomi – Transaktioner',
       ['Datum', 'Typ', 'Kategori', 'Beskrivning', 'Belopp (kr)'],
-      transactions.map((t: any) => [
+      transactions.map((t) => [
         t.date,
         t.type === 'income' ? 'Intäkt' : 'Kostnad',
         t.category || '',
@@ -335,8 +335,8 @@ export default function Finance() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {transactions.slice(0, 20).map((t: any) => (
-                    <div key={t.id} className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-secondary/50 transition-colors group">
+                  {transactions.slice(0, 20).map((t, i) => (
+                    <div key={t.id} className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-secondary/50 transition-colors group animate-fade-in" style={{ animationDelay: `${Math.min(i, 12) * 40}ms` }}>
                       <div className="min-w-0 mr-3">
                         <p className="text-xs sm:text-sm font-medium text-foreground truncate">{t.description}</p>
                         <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -350,7 +350,7 @@ export default function Finance() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          className="h-9 w-9 sm:h-7 sm:w-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                           onClick={() => deleteMutation.mutate(t.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

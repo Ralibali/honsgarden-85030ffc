@@ -498,7 +498,7 @@ export default function Hens() {
         {displayHens.map((hen) => {
           const henFlock = (flocks).find((f) => f.id === hen.flock_id);
           return (
-            <Card key={hen.id} className={`border-border/50 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer ${!hen.is_active ? 'opacity-50' : ''}`} onClick={() => navigate(`/app/hens/${hen.id}`)}>
+            <Card key={hen.id} className={`border-border/50 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${!hen.is_active ? 'opacity-50' : ''}`} onClick={() => navigate(`/app/hens/${hen.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div onClick={(e) => e.stopPropagation()}>

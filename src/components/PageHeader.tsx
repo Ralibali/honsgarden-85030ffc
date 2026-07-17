@@ -19,7 +19,7 @@ interface PageHeaderProps {
 export default function PageHeader({ title, emoji, subtitle, actions }: PageHeaderProps) {
   return (
     <motion.div
-      className="flex items-center justify-between gap-3 mb-4"
+      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -42,7 +42,7 @@ export default function PageHeader({ title, emoji, subtitle, actions }: PageHead
           {subtitle && <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>}
         </div>
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && <div className="flex items-center gap-2 shrink-0 flex-wrap">{actions}</div>}
     </motion.div>
   );
 }

@@ -378,7 +378,7 @@ export default function Reminders() {
           <CardTitle className="font-serif text-base sm:text-lg">Kommande ({upcoming.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border stagger-children">
             {upcoming.map((r) => renderRow(r))}
             {upcoming.length === 0 && (
               <div className="p-8 text-center text-muted-foreground text-sm">
@@ -394,7 +394,7 @@ export default function Reminders() {
           <CardTitle className="font-serif text-base sm:text-lg text-muted-foreground">Klara ({doneList.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border stagger-children">
             {doneList.map((r) => renderRow(r, true))}
             {doneList.length === 0 && (
               <div className="p-8 text-center text-muted-foreground text-sm">Inga påminnelser markerade som klara ännu</div>
