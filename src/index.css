@@ -992,7 +992,26 @@
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--primary) / 0.4);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+/* Markerad text får varumärkets mjuka gröna */
+::selection {
+  background: hsl(var(--primary) / 0.22);
+  color: hsl(var(--foreground));
+}
+
+/* Mjuk scrollning (respekterar reduced-motion via mediefrågan nedan) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Improved focus-visible indicators for keyboard navigation */

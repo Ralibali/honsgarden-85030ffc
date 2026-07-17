@@ -23,6 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 import { useActiveKarens } from '@/hooks/useActiveKarens';
+import PageHeader from '@/components/PageHeader';
 
 type HealthSchedule = Tables<'health_schedules'>;
 interface HealthScheduleForm {
@@ -311,22 +312,13 @@ export default function Health() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-serif text-2xl text-foreground flex items-center gap-2">
-            <Stethoscope className="h-5 w-5 text-primary" />
-            Hälsa
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Logg, återkommande skötsel och karenstid samlat på ett ställe.
-          </p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-xl gap-2">
-              <Plus className="h-4 w-4" /> Ny hälsohändelse
-            </Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Hälsa"
+        emoji="🩺"
+        subtitle="Logg, återkommande skötsel och karenstid samlat på ett ställe."
+        actions={<Button className="rounded-xl gap-2" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Ny hälsohändelse</Button>}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader><DialogTitle className="font-serif">Ny hälsohändelse</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -412,8 +404,7 @@ export default function Health() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
-      </div>
+      </Dialog>
 
       {(scheduleSummary.overdue > 0 || scheduleSummary.soon > 0) && (
         <Card className="border-warning/40 bg-warning/5">

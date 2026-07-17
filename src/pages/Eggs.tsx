@@ -6,6 +6,7 @@ import { Plus, Egg as EggIcon, Loader2, Trash2, Download, List, LayoutGrid } fro
 import { downloadCSV, downloadPDF } from '@/lib/exportUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, type EggLog } from '@/lib/api';
+import PageHeader from '@/components/PageHeader';
 
 type EggFormInput = { date: string; count: number; hen_id?: string; flock_id?: string };
 type OfflineEggResult = { __offline: true; client_id: string } & EggFormInput;
@@ -194,44 +195,45 @@ export default function Eggs() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Äggloggning 🥚</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">Registrera dagens ägg snabbt och följ utvecklingen över tid</p>
-        </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          {eggs.length > 0 && (
-            <>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-                const rows = eggs.map((e) => ({
-                  Datum: e.date,
-                  Antal: e.count,
-                  Flock: resolveFlockName(e),
-                  Höna: e.hen_id ? henNameMap[e.hen_id] || '' : '',
-                  Anteckningar: e.notes || '',
-                }));
-                downloadCSV(rows, `agglogg-${todayStr}`);
-              }}>
-                <Download className="h-3.5 w-3.5" /> CSV
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-                downloadPDF(
-                  'Ägglogg',
-                  ['Datum', 'Antal', 'Flock', 'Höna', 'Anteckningar'],
-                  eggs.map((e) => [e.date, String(e.count), resolveFlockName(e), e.hen_id ? henNameMap[e.hen_id] || '' : '', e.notes || '']),
-                  'agglogg'
-                );
-              }}>
-                <Download className="h-3.5 w-3.5" /> PDF
-              </Button>
-            </>
-          )}
-          <Button onClick={() => setShowForm(!showForm)} className="gap-2 active:scale-95 transition-transform flex-1 sm:flex-initial">
-            <Plus className="h-4 w-4" />
-            Logga ägg
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Äggloggning"
+        emoji="🥚"
+        subtitle="Registrera dagens ägg snabbt och följ utvecklingen över tid"
+        actions={(
+          <div className="flex gap-2">
+            {eggs.length > 0 && (
+              <>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+                  const rows = eggs.map((e) => ({
+                    Datum: e.date,
+                    Antal: e.count,
+                    Flock: resolveFlockName(e),
+                    Höna: e.hen_id ? henNameMap[e.hen_id] || '' : '',
+                    Anteckningar: e.notes || '',
+                  }));
+                  downloadCSV(rows, `agglogg-${todayStr}`);
+                }}>
+                  <Download className="h-3.5 w-3.5" /> CSV
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
+                  downloadPDF(
+                    'Ägglogg',
+                    ['Datum', 'Antal', 'Flock', 'Höna', 'Anteckningar'],
+                    eggs.map((e) => [e.date, String(e.count), resolveFlockName(e), e.hen_id ? henNameMap[e.hen_id] || '' : '', e.notes || '']),
+                    'agglogg'
+                  );
+                }}>
+                  <Download className="h-3.5 w-3.5" /> PDF
+                </Button>
+              </>
+            )}
+            <Button onClick={() => setShowForm(!showForm)} className="gap-2 active:scale-95 transition-transform">
+              <Plus className="h-4 w-4" />
+              Logga ägg
+            </Button>
+          </div>
+        )}
+      />
 
       {showForm && (
         <EggForm

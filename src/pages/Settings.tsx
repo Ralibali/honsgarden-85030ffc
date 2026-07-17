@@ -25,6 +25,7 @@ import { RegionLanguageSettings } from '@/components/settings/RegionLanguageSett
 import { isInternationalDomain } from '@/lib/brand';
 import { checkForPwaUpdate, isStandalonePwa } from '@/lib/pwaUpdate';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import PageHeader from '@/components/PageHeader';
 
 function PushNotificationsRow() {
   const { supported, enabled, busy, enable, disable, sendTest } = usePushNotifications();
@@ -300,10 +301,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-8">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Inställningar ⚙️</h1>
-        <p className="text-sm text-muted-foreground mt-1">Hantera ditt konto och din hönsgård</p>
-      </div>
+      <PageHeader title="Inställningar" emoji="⚙️" subtitle="Hantera ditt konto och din hönsgård" />
 
       {/* Quick actions: import + feedback */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

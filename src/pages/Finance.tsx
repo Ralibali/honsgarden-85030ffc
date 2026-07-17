@@ -18,6 +18,7 @@ import { PremiumGate } from '@/components/PremiumGate';
 import FinancialInsights from '@/components/FinancialInsights';
 import BudgetGoalsWidget from '@/components/BudgetGoalsWidget';
 import { useQuery as useRQQuery } from '@tanstack/react-query';
+import PageHeader from '@/components/PageHeader';
 
 const INCOME_CATEGORIES = [
   { value: 'egg_sales', label: 'Äggförsäljning' },
@@ -188,25 +189,26 @@ export default function Finance() {
   return (
     <PremiumGate feature="Ekonomi" featureKey="finance" preview>
       <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Ekonomi 💰</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1">Intäkter, kostnader och netto</p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+      <PageHeader
+        title="Ekonomi"
+        emoji="💰"
+        subtitle="Intäkter, kostnader och netto"
+        actions={(
+          <div className="flex gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportCSV}>
               <Download className="h-3.5 w-3.5" /> CSV
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportPDF}>
               <Download className="h-3.5 w-3.5" /> PDF
             </Button>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2 active:scale-95 transition-transform flex-1 sm:flex-initial">
-                  <Plus className="h-4 w-4" />
-                  Ny transaktion
-                </Button>
-              </DialogTrigger>
+            <Button className="gap-2 active:scale-95 transition-transform" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Ny transaktion
+            </Button>
+          </div>
+        )}
+      />
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle className="font-serif">Ny transaktion</DialogTitle>
@@ -255,9 +257,7 @@ export default function Finance() {
                   </Button>
                 </form>
               </DialogContent>
-            </Dialog>
-          </div>
-        </div>
+      </Dialog>
 
         <Card className="border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm">
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

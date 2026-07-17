@@ -38,6 +38,7 @@ import AgeProductionCard from '@/components/AgeProductionCard';
 import FlockSurvivalCard from '@/components/FlockSurvivalCard';
 import FeedEfficiencyCard from '@/components/FeedEfficiencyCard';
 import HatchStatsCard from '@/components/HatchStatsCard';
+import PageHeader from '@/components/PageHeader';
 
 
 
@@ -174,11 +175,11 @@ export default function Statistics() {
   return (
     <PremiumGate feature="Statistik" featureKey="statistics" preview>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Statistik 📊</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1">Förstå din hönsgård på ett enkelt och hjälpsamt sätt</p>
-          </div>
+        <PageHeader
+          title="Statistik"
+          emoji="📊"
+          subtitle="Förstå din hönsgård på ett enkelt och hjälpsamt sätt"
+          actions={(
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="rounded-xl shrink-0">
@@ -197,7 +198,8 @@ export default function Statistics() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
+          )}
+        />
 
 
         <AIDeviationAlerts variant="inline" />

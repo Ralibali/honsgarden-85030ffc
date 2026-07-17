@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PremiumGate } from '@/components/PremiumGate';
 import { Badge } from '@/components/ui/badge';
+import PageHeader from '@/components/PageHeader';
 
 const SUGGESTED_CHORES = [
   { title: 'Samla ägg', description: 'Kolla boet och plocka dagens ägg', emoji: '🥚' },
@@ -156,10 +157,7 @@ export default function DailyTasks() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Dagliga uppgifter ✅</h1>
-        <p className="text-sm text-muted-foreground mt-1">Din dagliga checklista – återställs varje morgon</p>
-      </div>
+      <PageHeader title="Dagliga uppgifter" emoji="✅" subtitle="Din dagliga checklista – återställs varje morgon" />
 
       {/* Progress */}
       <motion.div layout>

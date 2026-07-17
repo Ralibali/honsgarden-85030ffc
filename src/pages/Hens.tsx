@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import HenAvatar from '@/components/HenAvatar';
 import { HEN_TYPES, isPullet, isRooster, isLayingHen, henTypeLabel, henTypeEmoji, isPulletReadyToLay } from '@/lib/henHelpers';
+import PageHeader from '@/components/PageHeader';
 
 export default function Hens() {
   const navigate = useNavigate();
@@ -190,24 +191,25 @@ export default function Hens() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">
-            {selectedFlock ? (flocks).find((f) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'} 🐔
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {layingHens.length} värphöns{pullets.length > 0 ? ` (+ ${pullets.length} unghöns)` : ''} · {roosters.length} tuppar · {(flocks).length} flockar
-          </p>
-        </div>
-        <div className="flex gap-2">
+      <PageHeader
+        title={selectedFlock ? (flocks).find((f) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'}
+        emoji="🐔"
+        subtitle={`${layingHens.length} värphöns${pullets.length > 0 ? ` (+ ${pullets.length} unghöns)` : ''} · ${roosters.length} tuppar · ${(flocks).length} flockar`}
+        actions={(
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setFlockDialogOpen(true)}>
+              <FolderPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Ny flock</span>
+              <span className="sm:hidden">Flock</span>
+            </Button>
+            <Button className="gap-2 rounded-xl" onClick={() => setHenDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Lägg till
+            </Button>
+          </div>
+        )}
+      />
           <Dialog open={flockDialogOpen} onOpenChange={setFlockDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="gap-2 rounded-xl">
-                <FolderPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Ny flock</span>
-                <span className="sm:hidden">Flock</span>
-              </Button>
-            </DialogTrigger>
             <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif text-lg">Skapa flock</DialogTitle>
@@ -230,12 +232,6 @@ export default function Hens() {
           </Dialog>
 
           <Dialog open={henDialogOpen} onOpenChange={setHenDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2 rounded-xl">
-                <Plus className="h-4 w-4" />
-                Lägg till
-              </Button>
-            </DialogTrigger>
             <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif text-lg">Lägg till höna eller tupp</DialogTitle>
@@ -335,8 +331,6 @@ export default function Hens() {
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-      </div>
 
       {/* Quick add flock inline */}
       <div className="flex items-center gap-2 flex-wrap">
