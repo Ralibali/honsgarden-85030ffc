@@ -413,6 +413,7 @@ function HatchSessionsTab() {
 
 import { useSearchParams } from 'react-router-dom';
 import HatchingPage from './Hatching';
+import PageHeader from '@/components/PageHeader';
 
 export default function Breeding() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -426,15 +427,7 @@ export default function Breeding() {
   return (
     <PremiumGate feature="Avel & kläckning" featureKey="breeding" blur={false}>
       <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
-        <div>
-          <h1 className="font-serif text-2xl text-foreground flex items-center gap-2">
-            <Heart className="h-5 w-5 text-primary" />
-            Avel & kläckning
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Hantera avelspar, planera kläckningar och bygg upp stamträd över tid.
-          </p>
-        </div>
+        <PageHeader title="Avel & kläckning" emoji="💞" subtitle="Hantera avelspar, planera kläckningar och bygg upp stamträd över tid." />
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid grid-cols-3 max-w-xl">

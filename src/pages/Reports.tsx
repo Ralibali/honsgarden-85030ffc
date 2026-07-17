@@ -308,25 +308,16 @@ function ReportsInner() {
 
   return (
     <div className="container max-w-5xl py-6 space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-serif text-foreground">Rapporter</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Generera PDF-rapporter med din gårds data – för bokföring, översikt eller delning.
-          </p>
-          <a
-            href="/app/year-report"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-2"
-          >
-            ✨ Se ditt delbara hönsår ({new Date().getFullYear()})
-          </a>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Skapa ny rapport
-            </Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Rapporter"
+        emoji="📄"
+        subtitle="Generera PDF-rapporter med din gårds data – för bokföring, översikt eller delning."
+        actions={<Button className="gap-2" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Skapa ny rapport</Button>}
+      />
+      <a href="/app/year-report" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline -mt-2">
+        ✨ Se ditt delbara hönsår ({new Date().getFullYear()})
+      </a>
+      <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Skapa rapport</DialogTitle>
@@ -456,7 +447,6 @@ function ReportsInner() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       {isLoading ? (
         <div className="space-y-2">
@@ -538,6 +528,7 @@ function ReportsInner() {
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import SmartFarmReportPage from './SmartFarmReport';
+import PageHeader from '@/components/PageHeader';
 
 export default function Reports() {
   const [searchParams, setSearchParams] = useSearchParams();

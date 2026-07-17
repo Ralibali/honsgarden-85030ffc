@@ -8,6 +8,7 @@ import {
   Heart, Feather, Moon, Apple,
   ChevronLeft, ChevronRight, X,
 } from 'lucide-react';
+import PageHeader from '@/components/PageHeader';
 
 type MonthData = {
   name: string;
@@ -208,11 +209,7 @@ export default function SeasonalCalendar() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-serif gradient-text">Säsongskalender</h1>
-        <p className="text-sm text-muted-foreground mt-1">Tips och påminnelser för varje månad – anpassat för svenska hönsägare</p>
-      </div>
+      <PageHeader title="Säsongskalender" emoji="🍂" subtitle="Tips och påminnelser för varje månad – anpassat för svenska hönsägare" />
 
       {/* Year overview grid */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">

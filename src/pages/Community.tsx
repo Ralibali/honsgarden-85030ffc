@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Send, Share2, Users, Lightbulb, Loader2, Flag, Pin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import PageHeader from '@/components/PageHeader';
 
 type CommunityPost = {
   id: string;
@@ -175,19 +176,17 @@ export default function Community() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-fade-in pb-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
-        <div>
-          <p className="data-label mb-1">Hönsägare emellan</p>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Community 🤝</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1 max-w-2xl leading-relaxed">
-            Dela tips, frågor och erfarenheter med andra hönsägare. Inlägg, gillningar och rapporter sparas nu i databasen.
-          </p>
-        </div>
-        <Badge variant="secondary" className="w-fit gap-1.5 rounded-full px-3 py-1">
-          <Users className="h-3.5 w-3.5" />
-          {posts.length} inlägg
-        </Badge>
-      </div>
+      <PageHeader
+        title="Community"
+        emoji="🤝"
+        subtitle="Dela tips, frågor och erfarenheter med andra hönsägare. Inlägg, gillningar och rapporter sparas nu i databasen."
+        actions={(
+          <Badge variant="secondary" className="w-fit gap-1.5 rounded-full px-3 py-1">
+            <Users className="h-3.5 w-3.5" />
+            {posts.length} inlägg
+          </Badge>
+        )}
+      />
 
       <Card className="bg-gradient-to-br from-primary/8 via-card to-accent/5 border-primary/20 shadow-sm overflow-hidden">
         <CardContent className="p-4 sm:p-5">

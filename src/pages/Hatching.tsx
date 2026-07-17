@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
+import PageHeader from '@/components/PageHeader';
 
 const milestones = [
   { day: 1, label: 'Start', emoji: '🥚' },
@@ -84,15 +85,13 @@ export default function Hatching() {
   return (
     <PremiumGate feature="Kläckning" featureKey="hatching" blur>
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Kläckning 🐣</h1>
-          <p className="text-sm text-muted-foreground mt-1">Följ dina ruvningar med 21-dagars nedräkning</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto"><Plus className="h-4 w-4" />Ny kläckning</Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Kläckning"
+        emoji="🐣"
+        subtitle="Följ dina ruvningar med 21-dagars nedräkning"
+        actions={<Button className="gap-2" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Ny kläckning</Button>}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="rounded-2xl">
             <DialogHeader><DialogTitle className="font-serif">Starta ny kläckning</DialogTitle></DialogHeader>
             <div className="space-y-3 pt-2">
@@ -115,7 +114,6 @@ export default function Hatching() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
       <Card className="bg-warning/5 border-warning/20 shadow-sm">
         <CardContent className="p-4">

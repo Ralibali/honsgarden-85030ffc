@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import PageHeader from '@/components/PageHeader';
 
 type ReminderType = 'vaccination' | 'deworming' | 'vet' | 'feed' | 'cleaning' | 'other';
 type ReminderStatus = 'upcoming' | 'overdue' | 'done' | 'archived';
@@ -261,17 +262,13 @@ export default function Reminders() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Påminnelser 💉</h1>
-          <p className="text-sm text-muted-foreground mt-1">Spara och följ upp avmaskning, vaccination, veterinärbesök och andra viktiga händelser</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 w-full sm:w-auto">
-              <Plus className="h-4 w-4" /> Ny påminnelse
-            </Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Påminnelser"
+        emoji="💉"
+        subtitle="Spara och följ upp avmaskning, vaccination, veterinärbesök och andra viktiga händelser"
+        actions={<Button className="gap-2" onClick={() => setOpen(true)}><Plus className="h-4 w-4" /> Ny påminnelse</Button>}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="font-serif">Ny påminnelse</DialogTitle>
@@ -352,7 +349,6 @@ export default function Reminders() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
 
       <PremiumGate soft feature="push-notiser & hälsohistorik" featureKey="reminders">
         <div />

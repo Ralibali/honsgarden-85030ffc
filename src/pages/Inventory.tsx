@@ -20,6 +20,7 @@ import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/EmptyState';
 import { PremiumGate } from '@/components/PremiumGate';
+import PageHeader from '@/components/PageHeader';
 
 const CATEGORIES = [
   { value: 'foder', label: 'Foder' },
@@ -117,19 +118,13 @@ function InventoryInner() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-serif text-2xl text-foreground flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" /> Lager
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Håll koll på foder, förbrukning och medicin. Få varning när lagret är lågt.
-          </p>
-        </div>
-        <Dialog open={openItem} onOpenChange={setOpenItem}>
-          <DialogTrigger asChild>
-            <Button className="rounded-xl gap-2"><Plus className="h-4 w-4" /> Ny lagervara</Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Lager"
+        emoji="📦"
+        subtitle="Håll koll på foder, förbrukning och medicin. Få varning när lagret är lågt."
+        actions={<Button className="rounded-xl gap-2" onClick={() => setOpenItem(true)}><Plus className="h-4 w-4" /> Ny lagervara</Button>}
+      />
+      <Dialog open={openItem} onOpenChange={setOpenItem}>
           <DialogContent className="sm:max-w-md rounded-2xl">
             <DialogHeader><DialogTitle className="font-serif">Ny lagervara</DialogTitle></DialogHeader>
             <div className="space-y-3">
@@ -180,7 +175,6 @@ function InventoryInner() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
 
       {isLoading ? (
         <Skeleton className="h-32" />

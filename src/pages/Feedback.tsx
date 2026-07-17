@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import EmptyState from '@/components/EmptyState';
+import PageHeader from '@/components/PageHeader';
 
 const statusCopy: Record<string, { label: string; icon: any; className: string; text: string }> = {
   new: { label: 'Mottagen', icon: MessageCircle, className: 'bg-primary/10 text-primary border-primary/20', text: 'Vi har tagit emot ditt förslag.' },
@@ -42,13 +43,7 @@ export default function Feedback() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <div>
-        <p className="data-label mb-1">Inställningar</p>
-        <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Feedback & förslag 💚</h1>
-        <p className="text-sm sm:text-base text-muted-foreground mt-1 leading-relaxed">
-          Berätta vad som saknas i din hönsvardag. Vi vill bygga Hönsgården tillsammans med riktiga svenska hönsägare.
-        </p>
-      </div>
+      <PageHeader title="Feedback & förslag" emoji="💚" subtitle="Berätta vad som saknas i din hönsvardag. Vi vill bygga Hönsgården tillsammans med riktiga svenska hönsägare." />
 
       <Card className="bg-gradient-to-br from-primary/8 via-card to-accent/5 border-primary/20 shadow-sm overflow-hidden">
         <CardContent className="p-4 sm:p-5">

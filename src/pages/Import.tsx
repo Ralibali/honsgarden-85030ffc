@@ -15,6 +15,7 @@ import { Upload, FileSpreadsheet, FileText, AlertTriangle, CheckCircle, Loader2,
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 import { downloadCSV, downloadExcel, downloadMultiSheetExcel } from "@/lib/exportUtils";
+import PageHeader from '@/components/PageHeader';
 
 type AnalysisResult = {
   detected_type: "hens" | "egg_logs" | "flocks" | "mixed" | "unknown";
@@ -323,8 +324,7 @@ export default function Import() {
           <ChevronLeft className="h-4 w-4" />
           Tillbaka
         </button>
-        <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Importera & exportera data</h1>
-        <p className="text-muted-foreground">Importera befintlig statistik eller exportera din data</p>
+        <PageHeader title="Importera & exportera" emoji="📥" subtitle="Importera befintlig statistik eller exportera din data" />
       </div>
 
       {/* Progress */}
