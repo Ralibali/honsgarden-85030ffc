@@ -235,24 +235,21 @@ export default function PublicEggSaleV3() {
         payload.pickup_person_name = pickupPersonName.trim();
         payload.pickup_person_phone = pickupPersonPhone.trim() || null;
       }
-      const { error } = await (supabase as any).from('public_egg_sale_bookings').insert(payload);
+      const { data: inserted, error } = await (supabase as any)
+        .from('public_egg_sale_bookings')
+        .insert(payload)
+        .select('id')
+        .single();
       if (error) throw error;
       // Notify the seller by email — fire and forget, never block the booking.
+      // Only the booking_id is sent; the edge function reads all customer/pickup
+      // data straight from the stored booking row.
       try {
-        await supabase.functions.invoke('notify-seller-booking', {
-          body: {
-            listing_id: listing.id,
-            seller_user_id: listing.user_id,
-            customer_name: payload.customer_name,
-            customer_email: payload.customer_email,
-            customer_phone: payload.customer_phone,
-            customer_message: payload.customer_message,
-            packs: payload.packs,
-            pickup_slot_id: payload.pickup_slot_id ?? null,
-            pickup_person_name: payload.pickup_person_name ?? null,
-            pickup_person_phone: payload.pickup_person_phone ?? null,
-          },
-        });
+        if (inserted?.id) {
+          await supabase.functions.invoke('notify-seller-booking', {
+            body: { booking_id: inserted.id },
+          });
+        }
       } catch (notifyErr) {
         console.warn('notify-seller-booking failed (non-blocking)', notifyErr);
       }

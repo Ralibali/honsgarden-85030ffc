@@ -1,5 +1,8 @@
 // Notifies the seller when someone books eggs via Agdas bod.
 // Called from the public booking page right after a booking row is inserted.
+// SECURITY: All customer/pickup data used in the email is read from the stored
+// booking row (looked up by booking_id). Nothing from the request body is ever
+// placed into the email, so this endpoint cannot be used to spoof/spam sellers.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const APP_URL = "https://honsgarden.lovable.app";
@@ -22,21 +25,10 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const {
-      listing_id,
-      seller_user_id,
-      customer_name,
-      customer_email,
-      customer_phone,
-      customer_message,
-      packs,
-      pickup_slot_id,
-      pickup_person_name,
-      pickup_person_phone,
-    } = body ?? {};
+    const booking_id: string | undefined = body?.booking_id;
 
-    if (!listing_id || !seller_user_id || !customer_name || !packs) {
-      return new Response(JSON.stringify({ error: "missing_fields" }), {
+    if (!booking_id || typeof booking_id !== "string") {
+      return new Response(JSON.stringify({ error: "missing_booking_id" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -51,6 +43,44 @@ Deno.serve(async (req) => {
       });
     }
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
+    // Load the real booking row. Every field used in the email comes from here —
+    // never from the caller's request body.
+    const { data: booking, error: bookingErr } = await supabase
+      .from("public_egg_sale_bookings")
+      .select(
+        "id, listing_id, seller_user_id, customer_name, customer_phone, customer_email, customer_message, packs, pickup_slot_id, pickup_person_name, pickup_person_phone",
+      )
+      .eq("id", booking_id)
+      .maybeSingle();
+
+    if (bookingErr) {
+      console.error("booking lookup failed", bookingErr);
+      return new Response(JSON.stringify({ error: "lookup_failed" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!booking) {
+      return new Response(JSON.stringify({ error: "booking_not_found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const {
+      listing_id,
+      seller_user_id,
+      customer_name,
+      customer_phone,
+      customer_email,
+      customer_message,
+      packs,
+      pickup_slot_id,
+      pickup_person_name,
+      pickup_person_phone,
+    } = booking;
 
     // Seller email & name
     const { data: seller } = await supabase
@@ -108,7 +138,7 @@ Deno.serve(async (req) => {
     const amount = listing?.price_per_pack
       ? `${Math.round(Number(listing.price_per_pack) * Number(packs))} kr`
       : null;
-    const messageId = `seller-booking-${listing_id}-${Date.now()}`;
+    const messageId = `seller-booking-${booking.id}`;
     const subject = `Ny bokning i Agdas bod: ${customer_name} (${packs} st)`;
 
     const dashLink = `${APP_URL}/app/egg-sales`;
