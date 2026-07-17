@@ -99,7 +99,18 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(supabaseUrl, serviceKey);
-    const targetIds = payload.user_ids ?? (payload.user_id ? [payload.user_id] : [userRes.user.id]);
+
+    // SECURITY: Never trust client-supplied user_id/user_ids. Only admins may
+    // target other users; regular callers can only push to their own devices.
+    const { data: isAdmin } = await admin.rpc('has_role', {
+      _user_id: userRes.user.id,
+      _role: 'admin',
+    });
+
+    const requested = payload.user_ids ?? (payload.user_id ? [payload.user_id] : null);
+    const targetIds = isAdmin && requested && requested.length > 0
+      ? requested
+      : [userRes.user.id];
 
     const { data: tokens, error: tokErr } = await admin
       .from('device_tokens')
