@@ -5,7 +5,8 @@ import heroFarm from '@/assets/hero-farm.webp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift, MapPin } from 'lucide-react';
+import { Egg, ArrowRight, Mail, Lock, User, Loader2, Gift, MapPin, BarChart3, Coins } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -70,15 +71,15 @@ export default function Login() {
       try {
         const pending = localStorage.getItem('pending_postal_code');
         if (pending?.trim()) {
-          await api.updateCoopSettings({ postal_code: pending } as any);
+          await api.updateCoopSettings({ postal_code: pending });
           localStorage.removeItem('pending_postal_code');
         }
       } catch {
         // Non-blocking legacy migration.
       }
       navigate('/app', { replace: true });
-    } catch (err: any) {
-      toast({ title: 'Inloggning misslyckades', description: err.message || 'Kontrollera e-post och lösenord.', variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Inloggning misslyckades', description: err instanceof Error ? err.message : 'Kontrollera e-post och lösenord.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -141,8 +142,8 @@ export default function Login() {
           : 'Du har fått sju dagars gratis Premium! 🎉',
       });
       setAuthMode('login');
-    } catch (err: any) {
-      toast({ title: 'Registrering misslyckades', description: err.message, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Registrering misslyckades', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -159,8 +160,8 @@ export default function Login() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       toast({ title: 'E-post skickad!', description: 'Kolla din inkorg för att återställa lösenordet.' });
-    } catch (err: any) {
-      toast({ title: 'Fel', description: err.message, variant: 'destructive' });
+    } catch (err) {
+      toast({ title: 'Fel', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -172,23 +173,82 @@ export default function Login() {
         <img src={heroFarm} alt="Svensk hönsgård med höns i morgonljus" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        {/* Svävande ägg för liv i bilden */}
+        {['🥚', '🐔', '🥚'].map((emoji, i) => (
+          <motion.span
+            key={i}
+            className="absolute text-3xl opacity-70 pointer-events-none"
+            style={{ left: `${18 + i * 28}%`, top: `${16 + (i % 2) * 14}%` }}
+            animate={{ y: [0, -14, 0], rotate: [0, i % 2 === 0 ? 6 : -6, 0] }}
+            transition={{ duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.8 }}
+          >
+            {emoji}
+          </motion.span>
+        ))}
         <div className="relative z-10 flex flex-col justify-end p-12 pb-16">
-          <h2 className="font-serif text-4xl text-foreground mb-3">Ha full koll på din hönsgård</h2>
-          <p className="text-muted-foreground text-lg max-w-md">Logga ägg, håll ordning på flocken och följ ekonomin – enkelt och smidigt i en och samma app.</p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+          >
+            <h2 className="font-serif text-4xl text-foreground mb-3">Ha full koll på din hönsgård</h2>
+            <p className="text-muted-foreground text-lg max-w-md mb-6">Logga ägg, håll ordning på flocken och följ ekonomin – enkelt och smidigt i en och samma app.</p>
+            <div className="space-y-2.5 max-w-sm">
+              {[
+                { icon: Egg, text: 'Logga dagens ägg på under fem sekunder' },
+                { icon: BarChart3, text: 'Se trender, streaks och din bästa höna' },
+                { icon: Coins, text: 'Följ vad varje ägg kostar och ger' },
+              ].map((f, i) => (
+                <motion.div
+                  key={f.text}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 + i * 0.12 }}
+                  className="flex items-center gap-3 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 px-3.5 py-2.5"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <f.icon className="h-4 w-4 text-primary" />
+                  </span>
+                  <p className="text-sm text-foreground/90">{f.text}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-6 bg-background noise-bg">
+      <div className="flex-1 flex items-center justify-center p-6 bg-background noise-bg relative overflow-hidden">
+        {/* Mobil hero – mjuk gårdsbild som tonar ut i bakgrunden */}
+        <div className="absolute inset-x-0 top-0 h-44 lg:hidden pointer-events-none">
+          <img src={heroFarm} alt="" aria-hidden className="w-full h-full object-cover opacity-25" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/80 to-background" />
+        </div>
+        {/* Andande glöd bakom kortet */}
+        <div className="absolute top-1/4 -right-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl animate-pulse-soft pointer-events-none" />
+        <div className="absolute bottom-1/4 -left-20 w-72 h-72 rounded-full bg-accent/10 blur-3xl animate-pulse-soft pointer-events-none" style={{ animationDelay: '1.5s' }} />
+
         <div className="w-full max-w-md relative z-10">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Egg className="h-6 w-6 text-primary" />
+          <motion.div
+            className="flex items-center gap-3 mb-10"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="relative">
+              <motion.div
+                className="absolute -inset-1.5 rounded-2xl bg-primary/25 blur-md"
+                animate={{ opacity: [0.4, 0.8, 0.4] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                <Egg className="h-6 w-6 text-primary" />
+              </div>
             </div>
             <div>
               <h1 className="font-serif text-2xl text-foreground">Hönsgården</h1>
               <p className="text-xs text-muted-foreground">Din digitala assistent för hönsgården</p>
             </div>
-          </div>
+          </motion.div>
 
           {authMode === 'welcome' && (
             <div className="animate-fade-in space-y-6">
@@ -196,11 +256,26 @@ export default function Login() {
                 <h3 className="font-serif text-3xl text-foreground mb-2">Välkommen!</h3>
                 <p className="text-muted-foreground">Håll koll på dina hönor, ägg och ekonomi – på ett enkelt sätt.</p>
               </div>
+              {/* Snabba värdebevis – synligt redan innan konto */}
+              <div className="space-y-2 lg:hidden">
+                {[
+                  { icon: Egg, text: 'Logga ägg på under fem sekunder' },
+                  { icon: BarChart3, text: 'Trender, streaks & bästa hönan' },
+                ].map((f) => (
+                  <div key={f.text} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <f.icon className="h-3.5 w-3.5 text-primary" />
+                    </span>
+                    {f.text}
+                  </div>
+                ))}
+              </div>
               <div className="space-y-3">
-                <Button onClick={() => setAuthMode('login')} className="w-full h-12 text-base font-medium">
-                  Logga in med e-post <ArrowRight className="ml-2 h-4 w-4" />
+                <Button onClick={() => setAuthMode('login')} className="w-full h-12 text-base font-medium relative overflow-hidden group shadow-[0_8px_24px_hsl(var(--primary)/0.3)]">
+                  <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  <span className="relative flex items-center">Logga in med e-post <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
                 </Button>
-                <Button variant="outline" onClick={() => setAuthMode('register')} className="w-full h-12 text-base font-medium">
+                <Button variant="outline" onClick={() => setAuthMode('register')} className="w-full h-12 text-base font-medium border-primary/25 hover:border-primary/40 hover:bg-primary/5">
                   Skapa konto med e-post
                 </Button>
               </div>
@@ -218,20 +293,21 @@ export default function Login() {
                   <Label htmlFor="email" className="text-muted-foreground">E-post</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="password" className="text-muted-foreground">Lösenord</Label>
                   <div className="relative mt-1.5">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="password" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl" required />
                   </div>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
+              <Button type="submit" className="w-full h-12 text-base font-medium relative overflow-hidden group shadow-[0_8px_24px_hsl(var(--primary)/0.3)]" disabled={loading}>
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Logga in <ArrowRight className="ml-2 h-4 w-4" />
+                <span className="relative flex items-center">Logga in <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
               </Button>
               <div className="flex items-center justify-between text-sm">
                 <button type="button" className="text-primary hover:underline" onClick={() => setAuthMode('forgot')}>Glömt lösenord?</button>
@@ -256,28 +332,28 @@ export default function Login() {
                   <Label htmlFor="name" className="text-muted-foreground">Namn</Label>
                   <div className="relative mt-1.5">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="name" type="text" autoComplete="name" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-11" minLength={2} maxLength={80} required />
+                    <Input id="name" type="text" autoComplete="name" placeholder="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} className="pl-10 h-12 rounded-xl" minLength={2} maxLength={80} required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="reg-email" className="text-muted-foreground">E-post</Label>
                   <div className="relative mt-1.5">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="reg-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" required />
+                    <Input id="reg-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="reg-password" className="text-muted-foreground">Lösenord</Label>
                   <div className="relative mt-1.5">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="reg-password" type="password" autoComplete="new-password" placeholder="Minst 8 tecken" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-11" minLength={8} maxLength={128} required />
+                    <Input id="reg-password" type="password" autoComplete="new-password" placeholder="Minst 8 tecken" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl" minLength={8} maxLength={128} required />
                   </div>
                 </div>
                 <div>
                   <Label htmlFor="referral" className="text-muted-foreground">Värvningskod (valfritt)</Label>
                   <div className="relative mt-1.5">
                     <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className="pl-10 h-11 uppercase" maxLength={6} />
+                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className="pl-10 h-12 rounded-xl uppercase" maxLength={6} />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Bonus aktiveras när du börjar använda appen.</p>
                 </div>
@@ -299,7 +375,7 @@ export default function Login() {
                       placeholder={!intl ? '582 20' : country === 'US' ? '10001' : country === 'GB' ? 'SW1A 1AA' : country === 'CA' ? 'K1A 0B1' : country === 'NL' ? '1012 AB' : '582 20'}
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value.slice(0, 12))}
-                      className="pl-10 h-11"
+                      className="pl-10 h-12 rounded-xl"
                       maxLength={12}
                       aria-invalid={!postalCheck.ok}
                     />
@@ -338,9 +414,10 @@ export default function Login() {
                   </label>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading || !acceptedTerms}>
+              <Button type="submit" className="w-full h-12 text-base font-medium relative overflow-hidden group shadow-[0_8px_24px_hsl(var(--primary)/0.3)]" disabled={loading || !acceptedTerms}>
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Skapa konto <ArrowRight className="ml-2 h-4 w-4" />
+                <span className="relative flex items-center">Skapa konto <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
               </Button>
               <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('welcome')}>← Tillbaka</button>
             </form>
@@ -356,7 +433,7 @@ export default function Login() {
                 <Label htmlFor="forgot-email" className="text-muted-foreground">E-post</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-11" />
+                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" />
                 </div>
               </div>
               <Button className="w-full h-12 text-base font-medium" onClick={handleForgotPassword} disabled={loading}>

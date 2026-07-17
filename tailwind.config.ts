@@ -112,6 +112,10 @@ export default {
           "0%, 100%": { transform: "translateY(0) rotate(6deg)" },
           "50%": { transform: "translateY(-18px) rotate(-6deg)" },
         },
+        "pulse-soft": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -121,6 +125,7 @@ export default {
         "count-up": "count-up 0.3s ease-out",
         "float-slow": "float-slow 6s ease-in-out infinite",
         "float-slower": "float-slower 9s ease-in-out infinite",
+        "pulse-soft": "pulse-soft 4s ease-in-out infinite",
       },
     },
   },

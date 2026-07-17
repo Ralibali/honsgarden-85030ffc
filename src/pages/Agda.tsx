@@ -19,12 +19,12 @@ const STORAGE_KEY = 'agda-chat-history';
 const MAX_STORED_MESSAGES = 50;
 
 const STARTER_SUGGESTIONS = [
-  'Varför har mina hönor slutat värpa?',
-  'Vilka hönor värper bäst just nu?',
-  'Hur förbereder jag hönshuset inför vintern?',
-  'Ge mig en sammanfattning av min flock!',
-  'Vad ska jag göra om en höna tappar fjädrar?',
-  'Tips för att öka äggproduktionen?',
+  { emoji: '🥚', text: 'Varför har mina hönor slutat värpa?' },
+  { emoji: '🏆', text: 'Vilka hönor värper bäst just nu?' },
+  { emoji: '❄️', text: 'Hur förbereder jag hönshuset inför vintern?' },
+  { emoji: '📊', text: 'Ge mig en sammanfattning av min flock!' },
+  { emoji: '🪶', text: 'Vad ska jag göra om en höna tappar fjädrar?' },
+  { emoji: '📈', text: 'Tips för att öka äggproduktionen?' },
 ];
 
 function loadHistory(userId: string | null | undefined): ChatMessage[] {
@@ -269,9 +269,22 @@ export default function Agda() {
       animate={{ opacity: 1, y: 0 }}
     >
       <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Agda 🐔</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Fråga Agda om dina höns – hon känner din flock</p>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <motion.div
+              className="absolute -inset-1 rounded-2xl bg-primary/25 blur-md"
+              animate={{ opacity: [0.4, 0.8, 0.4] }}
+              transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center text-xl">
+              🐔
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-background" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Agda</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Fråga om dina höns – hon känner din flock</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {quotaLeft !== null && (
@@ -302,8 +315,15 @@ export default function Agda() {
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center px-4 py-8">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                <span className="text-3xl">🐔</span>
+              <div className="relative mb-4">
+                <motion.div
+                  className="absolute -inset-2 rounded-3xl bg-primary/20 blur-lg"
+                  animate={{ opacity: [0.4, 0.8, 0.4] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+                  <span className="text-3xl">🐔</span>
+                </div>
               </div>
               <h3 className="font-serif text-lg text-foreground mb-1">Hej! Jag är Agda.</h3>
               <p className="text-sm text-muted-foreground mb-2 max-w-sm">
@@ -315,11 +335,12 @@ export default function Agda() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md">
                 {STARTER_SUGGESTIONS.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => sendMessage(s)}
-                    className="text-left text-xs p-3 rounded-xl border border-border/60 bg-muted/20 hover:border-primary/30 hover:bg-primary/5 transition-all text-muted-foreground hover:text-foreground"
+                    key={s.text}
+                    onClick={() => sendMessage(s.text)}
+                    className="text-left text-xs p-3 rounded-xl border border-border/60 bg-muted/20 hover:border-primary/30 hover:bg-primary/5 hover:-translate-y-0.5 transition-all text-muted-foreground hover:text-foreground"
                   >
-                    {s}
+                    <span className="mr-1.5">{s.emoji}</span>
+                    {s.text}
                   </button>
                 ))}
               </div>
@@ -343,8 +364,8 @@ export default function Agda() {
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-md'
-                      : 'bg-muted/60 text-foreground rounded-bl-md'
+                      ? 'bg-primary text-primary-foreground rounded-br-md shadow-[0_4px_16px_hsl(var(--primary)/0.25)]'
+                      : 'bg-gradient-to-br from-primary/8 to-accent/5 border border-primary/10 text-foreground rounded-bl-md'
                   }`}
                 >
                   {msg.role === 'assistant' ? (
@@ -373,17 +394,18 @@ export default function Agda() {
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <span className="text-sm">🐔</span>
               </div>
-              <div className="bg-muted/60 rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="bg-gradient-to-br from-primary/8 to-accent/5 border border-primary/10 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2.5">
                 <div className="flex gap-1.5">
                   {[0, 1, 2].map((i) => (
                     <motion.div
                       key={i}
-                      className="w-2 h-2 rounded-full bg-muted-foreground/40"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      className="w-2 h-2 rounded-full bg-primary/50"
+                      animate={{ opacity: [0.3, 1, 0.3], y: [0, -2, 0] }}
                       transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
                     />
                   ))}
                 </div>
+                <span className="text-[10px] text-muted-foreground">Agda skriver…</span>
               </div>
             </motion.div>
           )}
@@ -400,14 +422,14 @@ export default function Agda() {
               placeholder="Skriv till Agda..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 rounded-xl border-border/60"
+              className="flex-1 rounded-full border-border/60 h-11 px-4 focus-visible:ring-primary/30"
               disabled={loading}
               autoFocus
             />
             <Button
               type="submit"
               size="sm"
-              className="h-10 w-10 rounded-xl p-0"
+              className="h-11 w-11 rounded-full p-0 shadow-[0_4px_16px_hsl(var(--primary)/0.3)]"
               disabled={!input.trim() || loading}
             >
               <Send className="h-4 w-4" />
