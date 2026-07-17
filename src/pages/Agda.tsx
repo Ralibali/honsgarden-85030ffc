@@ -52,12 +52,14 @@ async function streamAgda({
   onDelta,
   onDone,
   onError,
+  onQuota,
 }: {
   message: string;
   history: ChatMessage[];
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (err: string) => void;
+  onQuota?: (remaining: number) => void;
 }) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -87,7 +89,7 @@ async function streamAgda({
       let errMsg = 'Kunde inte nå Agda';
       try {
         const errData = await resp.json();
-        errMsg = errData.error || errMsg;
+        errMsg = errData.message || errData.error || errMsg;
       } catch (parseErr) {
         console.warn('[Agda] Kunde inte tolka felsvar:', parseErr);
       }
@@ -99,6 +101,9 @@ async function streamAgda({
       onError('Ingen data från Agda');
       return;
     }
+
+    const remaining = Number(resp.headers.get('X-Agda-Remaining'));
+    if (onQuota && Number.isFinite(remaining)) onQuota(remaining);
 
     const reader = resp.body.getReader();
     const decoder = new TextDecoder();
@@ -150,8 +155,8 @@ async function streamAgda({
     }
 
     onDone();
-  } catch (err: any) {
-    onError(err.message || 'Nätverksfel');
+  } catch (err) {
+    onError(err instanceof Error ? err.message : 'Nätverksfel');
   }
 }
 
@@ -161,6 +166,7 @@ export default function Agda() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => loadHistory(user?.id));
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [quotaLeft, setQuotaLeft] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const assistantContentRef = useRef('');
@@ -202,6 +208,7 @@ export default function Agda() {
     await streamAgda({
       message: text.trim(),
       history: newMessages,
+      onQuota: setQuotaLeft,
       onDelta: (chunk) => {
         assistantContentRef.current += chunk;
         const current = assistantContentRef.current;
@@ -266,17 +273,29 @@ export default function Agda() {
           <h1 className="text-2xl sm:text-3xl font-serif text-foreground">Agda 🐔</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Fråga Agda om dina höns – hon känner din flock</p>
         </div>
-        {messages.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground/50 hover:text-destructive gap-1.5 rounded-xl text-xs"
-            onClick={clearHistory}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            Rensa
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {quotaLeft !== null && (
+            <span
+              className={`text-[10px] font-medium px-2 py-1 rounded-full ${
+                quotaLeft <= 10 ? 'bg-warning/15 text-warning' : 'bg-muted/50 text-muted-foreground'
+              }`}
+              title="Månadens Agda-frågor"
+            >
+              {quotaLeft} frågor kvar
+            </span>
+          )}
+          {messages.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground/50 hover:text-destructive gap-1.5 rounded-xl text-xs"
+              onClick={clearHistory}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Rensa
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card className="flex-1 border-border shadow-sm overflow-hidden flex flex-col min-h-0">

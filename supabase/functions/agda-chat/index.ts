@@ -88,9 +88,59 @@ function normalizeHistory(value: unknown): ChatMessage[] {
     .filter((item) => item.content.trim().length > 0);
 }
 
+// ---- Datumhjälpare (Stockholm-tid, samma referens som användarens loggar) ----
+function stockholmNow(): Date {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Stockholm" }));
+}
+function dayKeyOffset(offset: number): string {
+  const d = stockholmNow();
+  d.setDate(d.getDate() - offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Spegling av daylightHoursFor i src/lib/api.ts – ren solformel, ingen extern API.
+function daylightHoursFor(dateISO: string, latitude: number): number {
+  const d = new Date(dateISO + "T12:00:00Z");
+  const start = new Date(Date.UTC(d.getUTCFullYear(), 0, 0));
+  const N = Math.floor((d.getTime() - start.getTime()) / 86_400_000);
+  const delta = 0.4093 * Math.sin((2 * Math.PI * (N - 81)) / 365);
+  const latRad = (latitude * Math.PI) / 180;
+  let cosH = -Math.tan(latRad) * Math.tan(delta);
+  if (cosH > 1) cosH = 1;
+  if (cosH < -1) cosH = -1;
+  return (24 / Math.PI) * Math.acos(cosH);
+}
+
+// Spegling av extractTemp i src/lib/api.ts.
+function extractTemp(weather: unknown): number | null {
+  if (!weather || typeof weather !== "object") return null;
+  const w = weather as Record<string, any>;
+  const cur = w.current?.temperature_2m;
+  if (typeof cur === "number") return cur;
+  const max = w.daily?.temperature_2m_max?.[0];
+  const min = w.daily?.temperature_2m_min?.[0];
+  if (typeof max === "number" && typeof min === "number") return (max + min) / 2;
+  if (typeof max === "number") return max;
+  if (typeof min === "number") return min;
+  return null;
+}
+
+// Ägg summerade per fönster av dygnsnycklar (yyyy-MM-dd).
+function sumEggsInWindow(eggs: any[], keys: Set<string>): { total: number; dates: Set<string> } {
+  let total = 0;
+  const dates = new Set<string>();
+  for (const egg of eggs) {
+    if (keys.has(egg.date)) {
+      total += Number(egg.count ?? 0);
+      dates.add(egg.date);
+    }
+  }
+  return { total, dates };
+}
+
 function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string {
   const insights: string[] = [];
-  const today = new Date();
+  const todayStr = dayKeyOffset(0);
 
   if (hens.length > 0 && eggs.length > 0) {
     const henEggDates: Record<string, string> = {};
@@ -100,41 +150,38 @@ function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string
       }
     });
 
-    const fiveDaysAgo = new Date(today);
-    fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
     hens.forEach((hen: any) => {
       if (!hen.is_active || hen.hen_type === "rooster") return;
       const lastEgg = henEggDates[hen.id];
-      if (lastEgg && new Date(lastEgg) < fiveDaysAgo) {
-        const days = Math.floor((today.getTime() - new Date(lastEgg).getTime()) / 86_400_000);
+      if (!lastEgg) return;
+      // Kalenderdagar via datumnycklar – undviker tidszons- och klockslagsfallgropar
+      const days = Math.round((Date.parse(todayStr) - Date.parse(lastEgg)) / 86_400_000);
+      if (days >= 5) {
         insights.push(`⚠️ ${hen.name} har inte registrerat ägg på ${days} dagar (senast ${lastEgg})`);
       }
     });
   }
 
-  if (eggs.length >= 14) {
-    const lastWeek = eggs.filter((egg: any) => {
-      const diff = (today.getTime() - new Date(egg.date).getTime()) / 86_400_000;
-      return diff <= 7;
-    }).reduce((sum: number, egg: any) => sum + (egg.count || 0), 0);
-    const prevWeek = eggs.filter((egg: any) => {
-      const diff = (today.getTime() - new Date(egg.date).getTime()) / 86_400_000;
-      return diff > 7 && diff <= 14;
-    }).reduce((sum: number, egg: any) => sum + (egg.count || 0), 0);
-    if (prevWeek > 0 && lastWeek < prevWeek * 0.6) {
-      insights.push(`📉 Äggproduktionen har minskat med ${Math.round((1 - lastWeek / prevWeek) * 100)}% senaste veckan`);
-    }
+  // Produktionsfall: jämför KOMPLETTA dygn (igår och 6 bakåt vs 7 innan) och kräv
+  // minst 4 loggade dagar i vardera fönstret – annars är datan för tunn för att larma.
+  const lastKeys = new Set(Array.from({ length: 7 }, (_, i) => dayKeyOffset(i + 1)));
+  const prevKeys = new Set(Array.from({ length: 7 }, (_, i) => dayKeyOffset(i + 8)));
+  const lastW = sumEggsInWindow(eggs, lastKeys);
+  const prevW = sumEggsInWindow(eggs, prevKeys);
+  if (lastW.dates.size >= 4 && prevW.dates.size >= 4 && prevW.total > 0 && lastW.total < prevW.total * 0.6) {
+    insights.push(`📉 Äggproduktionen har minskat med ${Math.round((1 - lastW.total / prevW.total) * 100)}% (7 kompletta dygn mot veckan innan)`);
   }
 
+  const now = stockholmNow();
   const recentHealth = health.filter((entry: any) => {
-    const diff = (today.getTime() - new Date(entry.date).getTime()) / 86_400_000;
+    const diff = (now.getTime() - new Date(entry.date).getTime()) / 86_400_000;
     return diff <= 7;
   });
   if (recentHealth.length > 0) {
     insights.push(`🏥 ${recentHealth.length} hälsonotering(ar) senaste veckan kan vara värda att följa upp`);
   }
 
-  const month = today.getMonth();
+  const month = now.getMonth();
   if (month >= 8 && month <= 10) insights.push("🍂 Det är ruggsäsong – minskad äggproduktion kan vara normalt");
   if (month >= 11 || month <= 1) insights.push("❄️ Kontrollera att vattnet inte fryser och att ventilationen är god");
 
@@ -223,11 +270,15 @@ serve(async (req) => {
     }
     const history = normalizeHistory(requestBody?.history);
 
-    const [hensRes, eggsRes, healthRes, feedRes] = await Promise.all([
+    const [hensRes, eggsRes, healthRes, feedRes, coopRes, weatherRes] = await Promise.all([
       supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").limit(30),
       supabase.from("egg_logs").select("date, count, hen_id").order("date", { ascending: false }).limit(90),
       supabase.from("health_logs").select("date, type, description, hen_id").order("date", { ascending: false }).limit(30),
       supabase.from("feed_records").select("date, feed_type, amount_kg, cost").order("date", { ascending: false }).limit(30),
+      // Valfria kontextkällor – fel här ska aldrig stoppa svaret
+      supabase.from("coop_settings").select("latitude").limit(1).maybeSingle(),
+      supabase.from("weather_advice_cache").select("cache_date, weather_snapshot")
+        .gte("cache_date", dayKeyOffset(6)).order("cache_date", { ascending: false }),
     ]);
 
     for (const result of [hensRes, eggsRes, healthRes, feedRes]) {
@@ -240,8 +291,54 @@ serve(async (req) => {
     const feed = feedRes.data ?? [];
     const totalEggs = eggs.reduce((sum: number, egg: any) => sum + (egg.count || 0), 0);
     const activeHens = hens.filter((hen: any) => hen.is_active).length;
-    const uniqueEggDates = new Set(eggs.map((egg: any) => egg.date)).size;
     const proactiveInsights = buildProactiveInsights(hens, eggs, health);
+
+    // ---- Rikare datakontext: per-höna-vecka, veckojämförelse, dagsljus, väder ----
+    const last7Keys = new Set(Array.from({ length: 7 }, (_, i) => dayKeyOffset(i)));
+    const prev7Keys = new Set(Array.from({ length: 7 }, (_, i) => dayKeyOffset(i + 7)));
+    const perHen = new Map<string, number>();
+    for (const egg of eggs) {
+      if (last7Keys.has(egg.date) && egg.hen_id) {
+        perHen.set(egg.hen_id, (perHen.get(egg.hen_id) ?? 0) + Number(egg.count ?? 0));
+      }
+    }
+    const henNameById = new Map<string, string>(hens.map((h: any) => [h.id, h.name]));
+    const perHenText = [...perHen.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([id, count]) => `${henNameById.get(id) ?? "Okänd"} ${count}`)
+      .join(", ");
+    const eggs7 = sumEggsInWindow(eggs, last7Keys).total;
+    const eggsPrev7 = sumEggsInWindow(eggs, prev7Keys).total;
+    const weekDelta = eggsPrev7 > 0 ? Math.round(((eggs7 - eggsPrev7) / eggsPrev7) * 100) : null;
+
+    let daylightText = "";
+    const lat = Number((coopRes.data as any)?.latitude);
+    if (!coopRes.error && Number.isFinite(lat) && Math.abs(lat) <= 90) {
+      const dh = daylightHoursFor(dayKeyOffset(0), lat);
+      const dhNextWeek = daylightHoursFor(dayKeyOffset(-7), lat);
+      const trendMin = Math.round(((dhNextWeek - dh) / 7) * 60);
+      const trend = trendMin === 0 ? "oförändrat" : `${trendMin > 0 ? "+" : "−"}${Math.abs(trendMin)} min/dag kommande veckan`;
+      daylightText = `\n- Dagsljus idag: ${dh.toFixed(1)} timmar (${trend}).`;
+    }
+
+    let weatherText = "";
+    if (!weatherRes.error) {
+      const temps = (weatherRes.data ?? [])
+        .map((r: any) => extractTemp(r.weather_snapshot))
+        .filter((t): t is number => t !== null);
+      if (temps.length >= 2) {
+        const avg = temps.reduce((s, t) => s + t, 0) / temps.length;
+        weatherText = `\n- Snittemperatur vid gården senaste dagarna: ${avg.toFixed(1)} °C (${temps.length} mätningar).`;
+      }
+    }
+
+    // Ägg per kalenderdag sedan första loggen (inte per loggad dag – det blåser upp snittet)
+    const oldestDate = eggs.length > 0 ? eggs[eggs.length - 1].date : null;
+    const calendarDays = oldestDate
+      ? Math.min(90, Math.max(1, Math.round((Date.parse(dayKeyOffset(0)) - Date.parse(oldestDate)) / 86_400_000) + 1))
+      : 0;
+    const eggsAvgPerDay = calendarDays > 0 ? Number((totalEggs / calendarDays).toFixed(2)) : 0;
 
     const contextSnapshot = {
       counts: {
@@ -249,7 +346,9 @@ serve(async (req) => {
         hens_active: activeHens,
         egg_logs_90d: eggs.length,
         eggs_sum_90d: totalEggs,
-        eggs_avg_per_day: uniqueEggDates > 0 ? Number((totalEggs / Math.min(90, uniqueEggDates)).toFixed(2)) : 0,
+        eggs_avg_per_day: eggsAvgPerDay,
+        eggs_last_7d: eggs7,
+        eggs_prev_7d: eggsPrev7,
         health_notes: health.length,
         feed_records: feed.length,
         history_messages_sent: history.length,
@@ -284,10 +383,15 @@ SÄKERHET:
 ANVÄNDARENS DATA:
 - ${activeHens} aktiva hönor av ${hens.length} totalt.
 - Hönor: ${hens.map((hen: any) => `${hen.name} (${hen.breed || "okänd ras"}${hen.is_active ? "" : ", inaktiv"})`).join("; ") || "Inga registrerade"}.
+- Ägg per höna senaste 7 dygnen: ${perHenText || "Inga ägg registrerade per höna"}.
+- Veckojämförelse: ${eggs7} ägg senaste 7 dygnen (inkl. pågående idag) mot ${eggsPrev7} föregående 7 dygn${weekDelta !== null ? ` (${weekDelta >= 0 ? "+" : ""}${weekDelta} %)` : ""}.
+- Snitt: ${eggsAvgPerDay} ägg per kalenderdag (sedan första loggen, max 90 dagar).
 - Senaste 90 loggar: ${totalEggs} ägg totalt.
 - Hälsonoteringar: ${health.length > 0 ? health.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.type} – ${entry.description}`).join("; ") : "Inga"}.
-- Foderdata: ${feed.length > 0 ? feed.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.feed_type || "okänt"} ${entry.amount_kg || "?"} kg`).join("; ") : "Ingen foderdata"}.
+- Foderdata: ${feed.length > 0 ? feed.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.feed_type || "okänt"} ${entry.amount_kg || "?"} kg`).join("; ") : "Ingen foderdata"}.${daylightText}${weatherText}
 ${proactiveInsights}
+
+Svara med dessa exakta siffror när användaren frågar om sin statistik – hitta aldrig på egna tal.
 
 ${KNOWLEDGE_BASE}`;
 
@@ -392,7 +496,12 @@ ${KNOWLEDGE_BASE}`;
     });
 
     return new Response(aiRes.body.pipeThrough(transform), {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "text/event-stream",
+        // Kvarvarande månadskvot efter detta anrop – frontend visar en diskret räknare
+        "X-Agda-Remaining": String(Math.max(0, monthlyLimit - (monthlyUsage ?? 0) - 1)),
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
