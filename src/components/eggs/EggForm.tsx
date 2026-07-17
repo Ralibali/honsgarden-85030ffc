@@ -8,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useActiveKarens } from '@/hooks/useActiveKarens';
 
 
+import type { Flock, Hen } from '@/lib/api';
+
 interface EggFormProps {
-  activeHens: any[];
-  flocks: any[];
+  activeHens: Hen[];
+  flocks: Flock[];
   isPending: boolean;
   onSubmit: (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => void;
   onCancel: () => void;
@@ -27,7 +29,7 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
     const isFlock = selectedHenId.startsWith('flock:');
     const flockId = isFlock ? selectedHenId.replace('flock:', '') : undefined;
     const henId = !isFlock && selectedHenId !== 'all' ? selectedHenId : undefined;
-    const henFlock = henId ? activeHens.find((h: any) => h.id === henId)?.flock_id : undefined;
+    const henFlock = henId ? activeHens.find((h) => h.id === henId)?.flock_id : undefined;
     return karens.filter(k => {
       if (henId && k.hen_id === henId) return true;
       if (flockId && k.flock_id === flockId) return true;
@@ -114,8 +116,8 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">🥚 Alla (generellt)</SelectItem>
-                  {flocks.map((flock: any) => {
-                    const flockHens = activeHens.filter((h: any) => h.flock_id === flock.id);
+                  {flocks.map((flock) => {
+                    const flockHens = activeHens.filter((h) => h.flock_id === flock.id);
                     return (
                       <SelectItem key={`flock:${flock.id}`} value={`flock:${flock.id}`}>
                         <span className="font-semibold">👥 {flock.name}</span>
@@ -123,10 +125,10 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
                       </SelectItem>
                     );
                   })}
-                  {activeHens.filter((h: any) => !h.flock_id).length > 0 && (
+                  {activeHens.filter((h) => !h.flock_id).length > 0 && (
                     <>
                       <div className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-t border-border/30 mt-1 pt-2">Utan flock</div>
-                      {activeHens.filter((h: any) => !h.flock_id).map((hen: any) => (
+                      {activeHens.filter((h) => !h.flock_id).map((hen) => (
                         <SelectItem key={hen.id} value={hen.id}>🐔 {hen.name}</SelectItem>
                       ))}
                     </>

@@ -180,7 +180,23 @@ export default function EggProductionChart() {
       date: k,
       eggs: values[i],
       avg: rolling[i],
+      forecast: null as number | null,
     }));
+
+    // Prognos: 7 dagar framåt i daglig vy, baserat på snittet av de
+    // 14 senaste dagarna. Streckad linje som kopplar till sista punkten.
+    if (!weekly && data.length >= 3) {
+      const tail = values.slice(-14);
+      const dailyMean = tail.reduce((a, b) => a + b, 0) / tail.length;
+      const forecastVal = Number(dailyMean.toFixed(1));
+      data[data.length - 1].forecast = forecastVal;
+      const lastDate = new Date(sortedKeys[sortedKeys.length - 1]);
+      for (let i = 1; i <= 7; i++) {
+        const fd = new Date(lastDate);
+        fd.setDate(fd.getDate() + i);
+        data.push({ date: toDateKey(fd), eggs: null as unknown as number, avg: null, forecast: forecastVal });
+      }
+    }
 
     // Bygg event-listan
     const bucketKeys = new Set(sortedKeys);
@@ -354,6 +370,19 @@ export default function EggProductionChart() {
                   dot={false}
                   activeDot={{ r: 4 }}
                 />
+                {!weekly && (
+                  <Line
+                    type="monotone"
+                    dataKey="forecast"
+                    name="Prognos"
+                    stroke="hsl(var(--primary) / 0.55)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                    activeDot={false}
+                    connectNulls
+                  />
+                )}
                 {events.map((e, i) => {
                   const cfg = eventDotsByKind[e.kind];
                   return (

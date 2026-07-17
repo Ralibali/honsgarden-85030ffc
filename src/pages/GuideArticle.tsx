@@ -10,6 +10,7 @@ import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-r
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import ArticleCta from '@/components/blog/ArticleCta';
+import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
@@ -814,18 +815,23 @@ export default function GuideArticle() {
       </article>
 
 
-      {toc.length > 0 && (
+      {(toc.length > 0 || !isAuthenticated) && (
         <aside className="hidden lg:block">
-          <nav className="sticky top-24 rounded-2xl border border-border/50 bg-card/70 p-4" aria-label="Innehållsförteckning">
-            <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">Innehåll</p>
-            <ol className="space-y-2 text-sm">
-              {toc.map(item => (
-                <li key={item.id} className={item.level === 3 ? 'pl-3' : ''}>
-                  <a href={`#${item.id}`} className="text-muted-foreground transition-colors hover:text-primary">{item.text}</a>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          <div className="sticky top-24 space-y-4">
+            {toc.length > 0 && (
+              <nav className="rounded-2xl border border-border/50 bg-card/70 p-4" aria-label="Innehållsförteckning">
+                <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">Innehåll</p>
+                <ol className="space-y-2 text-sm">
+                  {toc.map(item => (
+                    <li key={item.id} className={item.level === 3 ? 'pl-3' : ''}>
+                      <a href={`#${item.id}`} className="text-muted-foreground transition-colors hover:text-primary">{item.text}</a>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+            )}
+            {!isAuthenticated && <StickySidebarCta />}
+          </div>
         </aside>
       )}
       </main>

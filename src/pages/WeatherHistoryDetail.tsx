@@ -20,10 +20,31 @@ function getIcon(code: number) {
   return WEATHER_ICONS[String(code)] ?? '🌤️';
 }
 
+interface WeatherSnapshotCurrent {
+  temperature_2m?: number;
+  weathercode?: number;
+  wind_speed_10m?: number;
+  relative_humidity_2m?: number;
+}
+
+interface WeatherSnapshotDaily {
+  time?: string[];
+  weathercode?: number[];
+  temperature_2m_max?: number[];
+  temperature_2m_min?: number[];
+  precipitation_sum?: number[];
+  wind_speed_10m_max?: number[];
+}
+
+interface WeatherSnapshot {
+  current?: WeatherSnapshotCurrent;
+  daily?: WeatherSnapshotDaily;
+}
+
 interface CacheRow {
   cache_date: string;
   city_name: string | null;
-  weather_snapshot: any;
+  weather_snapshot: WeatherSnapshot | null;
   summary: string | null;
   production_forecast: string | null;
   today_advice: string;
@@ -49,21 +70,15 @@ export default function WeatherHistoryDetail() {
         .eq('user_id', user.id)
         .eq('cache_date', date)
         .maybeSingle();
-      setRow(data as any);
+      setRow(data as unknown as CacheRow);
 
-      // Hämta äggproduktion samma dag
-      const { data: farmIds } = await supabase.rpc('get_user_farm_ids', { _uid: user.id });
-      const ids: string[] = (farmIds ?? []).map((r: any) =>
-        typeof r === 'string' ? r : r.get_user_farm_ids ?? r,
-      );
-      if (ids.length) {
-        const { data: eggs } = await (supabase as any)
-          .from('eggs')
-          .select('count')
-          .in('farm_id', ids)
-          .eq('date', date);
-        setEggsThatDay((eggs ?? []).reduce((s: number, e: any) => s + (e.count ?? 0), 0));
-      }
+      // Hämta äggproduktion samma dag (egg_logs har user_id – inget farm-id behövs)
+      const { data: eggs } = await supabase
+        .from('egg_logs')
+        .select('count')
+        .eq('user_id', user.id)
+        .eq('date', date);
+      setEggsThatDay((eggs ?? []).reduce((s, e) => s + (e.count ?? 0), 0));
       setLoading(false);
     })();
   }, [date, user?.id]);

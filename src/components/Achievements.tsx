@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import type { EggLog, Hen, FeedRecord, Transaction, DailyChoreWithCompletion } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Egg, Flame, Star, Trophy, Target, Zap, Heart, Crown, Gift, Users, Calendar, Package, Coins, ClipboardCheck } from 'lucide-react';
 
@@ -32,12 +33,12 @@ const TIER_LABELS: Record<Achievement['tier'], string> = {
 };
 
 interface AchievementsProps {
-  eggs: any[];
-  hens: any[];
+  eggs: EggLog[];
+  hens: Hen[];
   streak: number;
-  feedRecords?: any[];
-  transactions?: any[];
-  chores?: any[];
+  feedRecords?: FeedRecord[];
+  transactions?: Transaction[];
+  chores?: DailyChoreWithCompletion[];
 }
 
 function getTierColors(tier: string, unlocked: boolean) {
@@ -51,24 +52,24 @@ function getTierColors(tier: string, unlocked: boolean) {
   }
 }
 
-export function buildAchievements(eggs: any[], hens: any[], streak: number, feedRecords: any[] = [], transactions: any[] = [], chores: any[] = []): Achievement[] {
-  const totalEggs = eggs.reduce((sum: number, e: any) => sum + (e.count || 0), 0);
-  const activeHens = hens.filter((h: any) => h.is_active).length;
+export function buildAchievements(eggs: EggLog[], hens: Hen[], streak: number, feedRecords: FeedRecord[] = [], transactions: Transaction[] = [], chores: DailyChoreWithCompletion[] = []): Achievement[] {
+  const totalEggs = eggs.reduce((sum, e) => sum + (e.count || 0), 0);
+  const activeHens = hens.filter((h) => h.is_active).length;
   const totalHens = hens.length;
-  const uniqueDays = new Set(eggs.filter((e: any) => e.count > 0).map((e: any) => e.date)).size;
-  const hensWithEggs = new Set(eggs.filter((e: any) => e.hen_id).map((e: any) => e.hen_id)).size;
+  const uniqueDays = new Set(eggs.filter((e) => e.count > 0).map((e) => e.date)).size;
+  const hensWithEggs = new Set(eggs.filter((e) => e.hen_id).map((e) => e.hen_id)).size;
 
   // Check for eggs on weekends
   const weekendDays = new Set(
-    eggs.filter((e: any) => {
+    eggs.filter((e) => {
       const day = new Date(e.date).getDay();
       return (day === 0 || day === 6) && e.count > 0;
-    }).map((e: any) => e.date)
+    }).map((e) => e.date)
   ).size;
 
   // Best single day
   const dailyCounts: Record<string, number> = {};
-  eggs.forEach((e: any) => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + (e.count || 0); });
+  eggs.forEach((e) => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + (e.count || 0); });
   const bestDay = Math.max(0, ...Object.values(dailyCounts));
 
   const list: Achievement[] = [
@@ -338,8 +339,8 @@ export function buildAchievements(eggs: any[], hens: any[], streak: number, feed
 
 interface AchievementsComponentProps extends Partial<AchievementsProps> {
   achievements?: Achievement[];
-  eggs: any[];
-  hens: any[];
+  eggs: EggLog[];
+  hens: Hen[];
   streak: number;
 }
 

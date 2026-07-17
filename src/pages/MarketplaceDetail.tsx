@@ -113,7 +113,7 @@ export default function MarketplaceDetail() {
   return (
     <div className="min-h-dvh bg-background">
       <LandingNavbar />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <main className="pt-24 pb-16 container max-w-4xl mx-auto px-5">
         <Button variant="ghost" size="sm" onClick={() => navigate('/marknad')} className="mb-4 gap-1">
           <ArrowLeft className="h-4 w-4" /> Till Marknad

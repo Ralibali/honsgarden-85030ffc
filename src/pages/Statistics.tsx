@@ -8,8 +8,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird, Download, FileText, FileSpreadsheet } from 'lucide-react';
-import { downloadPDF, downloadMultiSheetExcel } from '@/lib/exportUtils';
+import { Calculator, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Users, BarChart3, Egg, Bird, Download, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
+import { downloadMultiSheetExcel } from '@/lib/exportUtils';
+import { generateMonthlyReportPdf } from '@/lib/monthlyReportPdf';
+import { compareWeeks } from '@/lib/weekComparison';
+import { toast } from '@/hooks/use-toast';
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -45,6 +48,7 @@ export default function Statistics() {
   const [showAllHens, setShowAllHens] = useState(false);
   const [showAllBreeds, setShowAllBreeds] = useState(false);
   const [showAllFlocks, setShowAllFlocks] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
   const { data: summary, isLoading: summaryLoading } = useQuery({
     queryKey: ['stats-summary'],
     queryFn: () => api.getSummaryStats().catch(() => null),
@@ -64,6 +68,13 @@ export default function Statistics() {
     queryKey: ['hens-with-eggs'],
     queryFn: () => api.getHensWithEggTotals().catch(() => []),
   });
+
+  const { data: eggs = [] } = useQuery({
+    queryKey: ['eggs'],
+    queryFn: () => api.getEggs(),
+    staleTime: 60_000,
+  });
+  const weekDelta = compareWeeks(eggs);
 
   const { data: flockStats } = useQuery({
     queryKey: ['flock-statistics'],
@@ -96,31 +107,6 @@ export default function Statistics() {
   const flocks = (flockStats as any)?.flocks || [];
   const unassignedEggs = (flockStats as any)?.unassigned_eggs || 0;
   const maxFlockEggs = flocks.length > 0 ? Math.max(...flocks.map((f: any) => f.total_eggs), 1) : 1;
-
-  const handleExportPDF = () => {
-    const today = todayLocal();
-    const summaryRows: string[][] = [
-      ['Totalt ägg', String(summary?.total_eggs ?? '–')],
-      ['Snitt per dag', summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '–'],
-      ['Bästa dag', String(summary?.best_day ?? '–')],
-      ['Produktivitet', summary?.productivity != null ? `${Math.round(summary.productivity)}%` : '–'],
-      ['Kostnad per ägg', costPerEgg > 0 ? `${costPerEgg.toFixed(2)} kr` : '–'],
-      ['Intäkt per ägg', revenuePerEgg > 0 ? `${revenuePerEgg.toFixed(2)} kr` : '–'],
-    ];
-    downloadPDF('Statistik – Sammanfattning', ['Nyckeltal', 'Värde'], summaryRows, `honsgarden-statistik-${today}`);
-
-    if (rankedHens.length > 0) {
-      const henRows = rankedHens.slice(0, 50).map((h: any, i: number) => [
-        String(i + 1),
-        h.name ?? '',
-        h.breed ?? '',
-        String(h.total_eggs ?? 0),
-      ]);
-      setTimeout(() => {
-        downloadPDF('Topplista – Hönor', ['#', 'Namn', 'Ras', 'Totalt ägg'], henRows, `honsgarden-honor-${today}`);
-      }, 500);
-    }
-  };
 
   const handleExportExcel = () => {
     const today = todayLocal();
@@ -156,6 +142,35 @@ export default function Statistics() {
     );
   };
 
+  // Branderad månadsrapport i PDF – sammanställer ägg, ekonomi och
+  // nyckeltal för innevarande månad i ett snyggt dokument.
+  const handleMonthlyReport = async () => {
+    setReportLoading(true);
+    try {
+      const [eggs, transactions, hens] = await Promise.all([
+        api.getEggs(),
+        api.getTransactions(),
+        api.getHens(),
+      ]);
+      await generateMonthlyReportPdf({
+        month: new Date(),
+        eggs: eggs.map((e) => ({ date: e.date, count: e.count })),
+        transactions: transactions.map((t) => ({ date: t.date, type: t.type, amount: t.amount })),
+        henCount: hens.length,
+        topHens: rankedHens.slice(0, 5).map((h) => ({
+          name: h.name ?? 'Namnlös',
+          breed: h.breed ?? null,
+          totalEggs: h.total_eggs ?? 0,
+        })),
+      });
+      toast({ title: 'Månadsrapport nedladdad! 📄' });
+    } catch (err) {
+      toast({ title: 'Kunde inte skapa rapporten', description: err instanceof Error ? err.message : undefined, variant: 'destructive' });
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   return (
     <PremiumGate feature="Statistik" featureKey="statistics" preview>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
@@ -172,9 +187,9 @@ export default function Statistics() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-xl">
-              <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
-                <FileText className="h-4 w-4" />
-                Exportera som PDF
+              <DropdownMenuItem onClick={handleMonthlyReport} disabled={reportLoading} className="gap-2 cursor-pointer">
+                {reportLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                Månadsrapport (PDF)
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
                 <FileSpreadsheet className="h-4 w-4" />
@@ -279,7 +294,19 @@ export default function Statistics() {
                   </div>
                   <div>
                     <p className="data-label mb-1">Historik totalt</p>
-                    <h2 className="font-serif text-lg sm:text-xl text-foreground">{totalEggs} ägg loggade totalt</h2>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="font-serif text-lg sm:text-xl text-foreground">{totalEggs} ägg loggade totalt</h2>
+                      {weekDelta.deltaPct != null && (
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          weekDelta.deltaPct >= 0
+                            ? 'bg-success/10 text-success'
+                            : 'bg-warning/15 text-warning'
+                        }`}>
+                          {weekDelta.deltaPct >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                          {weekDelta.deltaPct >= 0 ? '+' : ''}{Math.round(weekDelta.deltaPct)}% vs förra veckan
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                       Snittet är {summary?.avg_per_day != null ? Number(summary.avg_per_day).toFixed(1) : '–'} ägg per dag. Bästa dagen hittills är {summary?.best_day ?? 'inte beräknad ännu'}. Fortsätt logga så blir insikterna ännu smartare.
                     </p>

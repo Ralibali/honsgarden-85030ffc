@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useSeo } from '@/hooks/useSeo';
 import { Egg, Shield, AlertTriangle, ExternalLink, ChevronRight, CheckCircle2 } from 'lucide-react';
-// @ts-ignore – .mjs data-modul
 import { getRegulationGuide } from '@/data/regulationGuides.mjs';
 import type { RegulationGuide as RegulationGuideType } from '@/data/regulationGuides.d.mts';
 import { brandName } from '@/lib/brand';

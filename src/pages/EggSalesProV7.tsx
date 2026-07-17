@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
+import ShareListingCard from '@/components/egg-sales/ShareListingCard';
 import ManualEggSalesCard from '@/components/ManualEggSalesCard';
 
 type Booking = any;
@@ -373,6 +374,18 @@ export default function EggSalesProV7() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dela-kort: QR + länk direkt i flödet för den första aktiva säljsidan */}
+      {(() => {
+        const primary = (listings as Listing[]).find((l) => l.is_active !== false) ?? (listings as Listing[])[0];
+        return primary ? (
+          <ShareListingCard
+            slug={String(primary.slug || primary.id)}
+            title={primary.title || 'Agdas äggbod'}
+            publicBaseUrl={PUBLIC_APP_URL}
+          />
+        ) : null;
+      })()}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus, Egg, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { hapticTap, hapticSuccess } from '@/lib/haptics';
 import { todayLocal } from '@/lib/datetime';
 import { CountUp } from '@/components/CountUp';
 import { useState } from 'react';
@@ -25,6 +26,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       trackFirstEggIfNew('quick_log_card');
+      hapticSuccess();
       toast({ title: '🥚 +1 ägg loggat' });
     },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
@@ -45,7 +47,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
     onSettled: () => setBusy(false),
   });
 
-  const handleAdd = () => { setBusy(true); addOne.mutate(); };
+  const handleAdd = () => { hapticTap(); setBusy(true); addOne.mutate(); };
   const handleRemove = () => { setBusy(true); removeOne.mutate(); };
   const disableMinus = busy || todayEggs === 0;
 

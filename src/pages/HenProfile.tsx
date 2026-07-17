@@ -18,7 +18,7 @@ import {
   Trash2, Pencil,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, type HealthLog } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import HenAvatar from '@/components/HenAvatar';
@@ -51,7 +51,7 @@ function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
       trackFirstEggIfNew('hen_profile');
       toast({ title: `Snyggt, ${count} ägg är loggat för ${henName}! 🥚` });
       setCount('1');
-    } catch (err: any) {
+    } catch {
       toast({ title: 'Något gick fel', description: 'Vi kunde inte spara ägget just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -144,14 +144,14 @@ export default function HenProfile() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => api.updateHen(henId!, data),
+    mutationFn: (data: Parameters<typeof api.updateHen>[1]) => api.updateHen(henId!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
       queryClient.invalidateQueries({ queryKey: ['hens'] });
       toast({ title: 'Ändringarna är sparade! 🐔' });
       setEditing(false);
     },
-    onError: (err: any) => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara ändringarna just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
+    onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara ändringarna just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
   });
 
   const healthNoteMutation = useMutation({
@@ -187,7 +187,7 @@ export default function HenProfile() {
     onError: () => toast({ title: 'Något gick fel', description: 'Kunde inte ta bort noteringen.', variant: 'destructive' }),
   });
 
-  const startEditingHealthNote = (log: any) => {
+  const startEditingHealthNote = (log: HealthLog) => {
     setEditingHealthNoteId(log.id);
     setHealthNoteText(log.description || '');
     setHealthNoteType(log.type || 'observation');
@@ -213,8 +213,8 @@ export default function HenProfile() {
       );
       queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
       toast({ title: 'Påminnelse skapad för imorgon ✓' });
-    } catch (e: any) {
-      toast({ title: 'Kunde inte skapa påminnelse', description: e?.message ?? '', variant: 'destructive' });
+    } catch (e) {
+      toast({ title: 'Kunde inte skapa påminnelse', description: e instanceof Error ? e.message : '', variant: 'destructive' });
     }
   };
 
@@ -222,7 +222,7 @@ export default function HenProfile() {
     if (!hen) return;
     const status: 'active' | 'sold' | 'deceased' = hen.is_active
       ? 'active'
-      : ((hen as any).death_date ? 'deceased' : 'sold');
+      : (hen.death_date ? 'deceased' : 'sold');
     setEditForm({
       name: hen.name || '',
       breed: hen.breed || '',
@@ -231,8 +231,8 @@ export default function HenProfile() {
       notes: hen.notes || '',
       flock_id: hen.flock_id || 'none',
       status,
-      death_date: (hen as any).death_date || '',
-      death_cause: (hen as any).death_cause || '',
+      death_date: hen.death_date || '',
+      death_cause: hen.death_cause || '',
     });
     setEditing(true);
   };
@@ -278,21 +278,21 @@ export default function HenProfile() {
   }
 
   const isRooster = hen.hen_type === 'rooster';
-  const henEggs = (allEggs as any[]).filter((e: any) => e.hen_id === henId);
-  const totalEggs = henEggs.reduce((sum: number, e: any) => sum + (e.count || 0), 0);
+  const henEggs = allEggs.filter((e) => e.hen_id === henId);
+  const totalEggs = henEggs.reduce((sum, e) => sum + (e.count || 0), 0);
 
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekEggs = henEggs.filter((e: any) => new Date(e.date) >= weekAgo).reduce((sum: number, e: any) => sum + (e.count || 0), 0);
+  const weekEggs = henEggs.filter((e) => new Date(e.date) >= weekAgo).reduce((sum, e) => sum + (e.count || 0), 0);
 
   const monthAgo = new Date();
   monthAgo.setDate(monthAgo.getDate() - 30);
-  const monthEggs = henEggs.filter((e: any) => new Date(e.date) >= monthAgo).reduce((sum: number, e: any) => sum + (e.count || 0), 0);
+  const monthEggs = henEggs.filter((e) => new Date(e.date) >= monthAgo).reduce((sum, e) => sum + (e.count || 0), 0);
 
   const dailyCounts: Record<string, number> = {};
-  henEggs.forEach((e: any) => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + e.count; });
+  henEggs.forEach((e) => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + e.count; });
   const bestDay = Object.entries(dailyCounts).sort(([, a], [, b]) => b - a)[0];
-  const latestEgg = henEggs.slice().sort((a: any, b: any) => b.date.localeCompare(a.date))[0];
+  const latestEgg = henEggs.slice().sort((a, b) => b.date.localeCompare(a.date))[0];
 
   let ageText = '';
   if (hen.birth_date) {
@@ -373,7 +373,7 @@ export default function HenProfile() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Ingen flock</SelectItem>
-                    {(flocks as any[]).map((flock: any) => (
+                    {flocks.map((flock) => (
                       <SelectItem key={flock.id} value={flock.id}>{flock.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -441,7 +441,7 @@ export default function HenProfile() {
               <h1 className="text-2xl font-serif text-foreground mb-1">{hen.name}</h1>
               <div className="flex items-center justify-center gap-2 flex-wrap">
                 {hen.flock_id && (() => {
-                  const flock = (flocks as any[]).find((f: any) => f.id === hen.flock_id);
+                  const flock = flocks.find((f) => f.id === hen.flock_id);
                   return flock ? <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-primary/20">🏠 {flock.name}</Badge> : null;
                 })()}
                 {hen.breed && <Badge variant="secondary" className="text-xs">{hen.breed}</Badge>}
@@ -613,7 +613,7 @@ export default function HenProfile() {
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    {healthLogs.map((log: any) => (
+                    {healthLogs.map((log) => (
                       <div key={log.id} className="flex gap-3 items-start p-2.5 rounded-xl bg-muted/30 border border-border/20 group">
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap mt-0.5 font-medium bg-muted/60 px-2 py-0.5 rounded-md">
                           {new Date(log.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
@@ -682,8 +682,8 @@ export default function HenProfile() {
                 henBirthDate={hen.birth_date}
                 motherId={hen.mother_id ?? null}
                 fatherId={hen.father_id ?? null}
-                motherName={(hen as any).mother_name ?? null}
-                fatherName={(hen as any).father_name ?? null}
+                motherName={hen.mother_name ?? null}
+                fatherName={hen.father_name ?? null}
               />
 
             </PremiumGate>
@@ -701,8 +701,8 @@ export default function HenProfile() {
         henId={henId!}
         currentMotherId={hen.mother_id ?? null}
         currentFatherId={hen.father_id ?? null}
-        currentMotherName={(hen as any).mother_name ?? null}
-        currentFatherName={(hen as any).father_name ?? null}
+        currentMotherName={hen.mother_name ?? null}
+        currentFatherName={hen.father_name ?? null}
         henBirthDate={hen.birth_date ?? null}
       />
 
@@ -790,7 +790,7 @@ export default function HenProfile() {
               henName={hen.name}
               henBreed={hen.breed}
               henAgeYears={hen.birth_date ? Math.max(0, Math.round((Date.now() - new Date(hen.birth_date).getTime()) / (365.25 * 24 * 3600 * 1000))) : null}
-              recentNotes={healthLogs.slice(0, 3).map((l: any) => ({ date: l.date, description: l.description || '' }))}
+              recentNotes={healthLogs.slice(0, 3).map((l) => ({ date: l.date, description: l.description || '' }))}
               onUseImprovedNote={(improved) => setHealthNoteText(improved)}
               onCreateFollowUp={followUpReminder}
             />

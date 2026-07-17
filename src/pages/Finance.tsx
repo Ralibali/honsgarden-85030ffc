@@ -292,7 +292,7 @@ export default function Finance() {
         ) : view === 'overview' ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-              <Card className="bg-card border-border border-l-4 border-l-success shadow-sm">
+              <Card className="bg-card border-border border-l-4 border-l-success shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <ShoppingCart className="h-4 w-4 text-success" />
@@ -301,7 +301,7 @@ export default function Finance() {
                   <p className="stat-number text-xl sm:text-2xl text-foreground">{monthIncome} kr</p>
                 </CardContent>
               </Card>
-              <Card className="bg-card border-border border-l-4 border-l-destructive shadow-sm">
+              <Card className="bg-card border-border border-l-4 border-l-destructive shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '70ms', animationFillMode: 'backwards' }}>
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Minus className="h-4 w-4 text-destructive" />
@@ -310,7 +310,7 @@ export default function Finance() {
                   <p className="stat-number text-xl sm:text-2xl text-foreground">{monthExpense} kr</p>
                 </CardContent>
               </Card>
-            <Card className="bg-card border-border border-l-4 border-l-primary shadow-sm">
+            <Card className="bg-card border-border border-l-4 border-l-primary shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>
                 <CardContent className="p-4 sm:p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Coins className="h-4 w-4 text-primary" />

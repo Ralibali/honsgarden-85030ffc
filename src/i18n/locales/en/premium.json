@@ -67,5 +67,10 @@
     "checkout_fail_title": "Couldn't start payment",
     "checkout_fail_desc": "Something went wrong.",
     "no_checkout_url": "No checkout URL was returned"
+  },
+  "trust": {
+    "stripe": "Secure payment via Stripe",
+    "cancel": "Cancel anytime",
+    "support": "Personal support in English"
   }
 }

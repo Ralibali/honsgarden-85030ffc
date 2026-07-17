@@ -5,23 +5,23 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 
 // ==================== TYPES ====================
 
-type Hen = Tables<'hens'>;
+export type Hen = Tables<'hens'>;
 type HenInsert = Omit<TablesInsert<'hens'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 type HenUpdate = Omit<TablesUpdate<'hens'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 
-type EggLog = Tables<'egg_logs'>;
+export type EggLog = Tables<'egg_logs'>;
 
-type FeedRecord = Tables<'feed_records'>;
+export type FeedRecord = Tables<'feed_records'>;
 type FeedRecordInsert = Omit<TablesInsert<'feed_records'>, 'user_id' | 'id' | 'created_at'>;
 
 type Hatching = Tables<'hatchings'>;
 type HatchingInsert = Omit<TablesInsert<'hatchings'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 type HatchingUpdate = Omit<TablesUpdate<'hatchings'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 
-type Transaction = Tables<'transactions'>;
+export type Transaction = Tables<'transactions'>;
 type TransactionInsert = Omit<TablesInsert<'transactions'>, 'user_id' | 'id' | 'created_at'>;
 
-type HealthLog = Tables<'health_logs'>;
+export type HealthLog = Tables<'health_logs'>;
 type HealthLogInsert = Omit<TablesInsert<'health_logs'>, 'user_id' | 'id' | 'created_at'>;
 
 type Feedback = Tables<'feedback'>;
@@ -30,7 +30,7 @@ type FeedbackInsert = Omit<TablesInsert<'feedback'>, 'user_id' | 'id' | 'created
 type CoopSettings = Tables<'coop_settings'>;
 type CoopSettingsUpdate = Omit<TablesUpdate<'coop_settings'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 
-type Flock = Tables<'flocks'>;
+export type Flock = Tables<'flocks'>;
 type FlockInsert = Omit<TablesInsert<'flocks'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 type FlockUpdate = Omit<TablesUpdate<'flocks'>, 'user_id' | 'id' | 'created_at' | 'updated_at'>;
 
@@ -44,7 +44,7 @@ interface ProductivityAlert {
   message: string;
 }
 
-interface DailyChoreWithCompletion extends Tables<'daily_chores'> {
+export interface DailyChoreWithCompletion extends Tables<'daily_chores'> {
   completed: boolean;
 }
 

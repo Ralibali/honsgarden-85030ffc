@@ -2,6 +2,7 @@ import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Share2, Download, Copy, Check, Sparkles, TrendingUp, TrendingDown, Minus, Egg, Bird, Flame, Calendar, ArrowRight, Wheat, Bell } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -183,26 +184,26 @@ export default function WeeklyReport() {
   const streak = useQuery({ queryKey: ['streak'], queryFn: () => api.getStreak() });
 
   const weekEggs = eggs
-    .filter((e: any) => e.date >= format(weekStart, 'yyyy-MM-dd') && e.date <= format(weekEnd, 'yyyy-MM-dd'))
-    .reduce((s: number, e: any) => s + e.count, 0);
+    .filter((e) => e.date >= format(weekStart, 'yyyy-MM-dd') && e.date <= format(weekEnd, 'yyyy-MM-dd'))
+    .reduce((s, e) => s + e.count, 0);
 
   const prevWeekEggs = eggs
-    .filter((e: any) => e.date >= format(prevWeekStart, 'yyyy-MM-dd') && e.date <= format(prevWeekEnd, 'yyyy-MM-dd'))
-    .reduce((s: number, e: any) => s + e.count, 0);
+    .filter((e) => e.date >= format(prevWeekStart, 'yyyy-MM-dd') && e.date <= format(prevWeekEnd, 'yyyy-MM-dd'))
+    .reduce((s, e) => s + e.count, 0);
 
   const dayMap: Record<string, number> = {};
   eggs
-    .filter((e: any) => e.date >= format(weekStart, 'yyyy-MM-dd') && e.date <= format(weekEnd, 'yyyy-MM-dd'))
-    .forEach((e: any) => { dayMap[e.date] = (dayMap[e.date] || 0) + e.count; });
+    .filter((e) => e.date >= format(weekStart, 'yyyy-MM-dd') && e.date <= format(weekEnd, 'yyyy-MM-dd'))
+    .forEach((e) => { dayMap[e.date] = (dayMap[e.date] || 0) + e.count; });
   const bestDayEntry = Object.entries(dayMap).sort((a, b) => b[1] - a[1])[0];
   const bestDay = bestDayEntry ? format(new Date(bestDayEntry[0]), 'EEE', { locale: sv }) : '—';
 
-  const henCount = hens.filter((h: any) => h.is_active).length;
+  const henCount = hens.filter((h) => h.is_active).length;
   const daysInWeek = Math.min(7, Math.ceil((now.getTime() - weekStart.getTime()) / 86400000) + 1);
   const avgPerDay = daysInWeek > 0 ? weekEggs / daysInWeek : 0;
-  const streakVal = (streak.data as any)?.current_streak || 0;
+  const streakVal = streak.data?.current_streak || 0;
   const diff = weekEggs - prevWeekEggs;
-  const completedChores = chores.filter((c: any) => c.completed).length;
+  const completedChores = chores.filter((c) => c.completed).length;
 
   const fallbackInsights = useMemo(() => {
     const result: string[] = [];
@@ -212,7 +213,7 @@ export default function WeeklyReport() {
     else result.push('Produktionen ligger stabilt jämfört med förra veckan. Stabilitet är också ett bra tecken.');
 
     if (henCount > 0 && avgPerDay > 0) result.push(`Snittet är ${avgPerDay.toFixed(1)} ägg per dag på ${henCount} aktiva hönor.`);
-    if ((feedStats as any)?.cost_per_egg) result.push(`Foderkostnaden ligger ungefär på ${(feedStats as any).cost_per_egg.toFixed(2)} kr per ägg.`);
+    if (feedStats?.cost_per_egg) result.push(`Foderkostnaden ligger ungefär på ${feedStats.cost_per_egg.toFixed(2)} kr per ägg.`);
     if (completedChores === 0 && chores.length > 0) result.push('Du har uppgifter kvar att bocka av. Små rutiner bygger stark hönsvardag.');
     return result.slice(0, 4);
   }, [weekEggs, diff, henCount, avgPerDay, feedStats, completedChores, chores.length]);
@@ -220,10 +221,10 @@ export default function WeeklyReport() {
   const visibleInsights = insights.length > 0 ? insights : fallbackInsights;
 
   const nextActions = useMemo(() => {
-    const actions: { title: string; text: string; path: string; icon: any }[] = [];
+    const actions: { title: string; text: string; path: string; icon: LucideIcon }[] = [];
     if (weekEggs === 0) actions.push({ title: 'Logga veckans första ägg', text: 'Rapporten blir mycket smartare när äggloggen är igång.', path: '/app/eggs', icon: Egg });
     if (henCount === 0) actions.push({ title: 'Lägg till din första höna', text: 'Då kan rapporten börja koppla ägg och historik till flocken.', path: '/app/hens', icon: Bird });
-    if (!(feedStats as any)?.cost_per_egg) actions.push({ title: 'Lägg till foderkostnad', text: 'Då kan Hönsgården räkna ut kostnad per ägg.', path: '/app/feed', icon: Wheat });
+    if (!feedStats?.cost_per_egg) actions.push({ title: 'Lägg till foderkostnad', text: 'Då kan Hönsgården räkna ut kostnad per ägg.', path: '/app/feed', icon: Wheat });
     if (chores.length === 0) actions.push({ title: 'Skapa en rutin', text: 'Till exempel vatten, foder, rengöring eller kvalsterkoll.', path: '/app/tasks', icon: Bell });
     return actions.slice(0, 3);
   }, [weekEggs, henCount, feedStats, chores.length]);
@@ -235,7 +236,7 @@ export default function WeeklyReport() {
       avgPerDay,
       henCount,
       bestDay,
-      feedCost: (feedStats as any)?.total_cost || 0,
+      feedCost: feedStats?.total_cost || 0,
       streak: streakVal,
       season: getSeason(),
     }),
@@ -248,7 +249,7 @@ export default function WeeklyReport() {
       const { data, error } = await supabase.functions.invoke('weekly-insights', { body: { weekData } });
       if (error) throw error;
       setInsights(data?.insights?.length ? data.insights : fallbackInsights);
-    } catch (err: any) {
+    } catch (err) {
       console.error('AI insights error:', err);
       setInsights(fallbackInsights);
       toast({ title: 'Vi använder vanliga insikter just nu', description: 'AI-insikterna kunde inte hämtas, men rapporten fungerar ändå.' });

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 import { useActiveKarens } from '@/hooks/useActiveKarens';
+
+type HealthSchedule = Tables<'health_schedules'>;
+interface HealthScheduleForm {
+  id?: string;
+  title: string;
+  care_type?: string;
+  interval_days: number;
+  hen_id?: string | null;
+  flock_id?: string | null;
+  default_withdrawal_egg_days?: number | null;
+}
 
 const EVENT_TYPES = [
   { value: 'symptom', label: 'Symtom' },
@@ -137,34 +149,34 @@ export default function Health() {
   const { data: schedules = [] } = useQuery({
     queryKey: ['health_schedules'],
     queryFn: async () => {
-      const { data, error } = await (supabase.from('health_schedules' as any) as any)
+      const { data, error } = await supabase.from('health_schedules')
         .select('*')
         .eq('is_active', true)
         .order('next_due_date', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as any[];
+      return data ?? [];
     },
   });
 
   const { data: karens = [] } = useActiveKarens();
 
   const filtered = useMemo(() => {
-    return (events as any[]).filter((e: any) => {
+    return events.filter((e) => {
       if (filterType !== 'all' && e.event_type !== filterType) return false;
       if (filterHen !== 'all' && e.hen_id !== filterHen) return false;
       return true;
     });
   }, [events, filterType, filterHen]);
 
-  const henName = (id: string | null) => (hens as any[]).find(h => h.id === id)?.name || '';
-  const flockName = (id: string | null) => (flocks as any[]).find(f => f.id === id)?.name || '';
-  const targetLabel = (s: any) =>
+  const henName = (id: string | null) => hens.find(h => h.id === id)?.name || '';
+  const flockName = (id: string | null) => flocks.find(f => f.id === id)?.name || '';
+  const targetLabel = (s: HealthSchedule) =>
     s.hen_id ? `🐔 ${henName(s.hen_id)}` : s.flock_id ? `👥 ${flockName(s.flock_id)}` : 'Hela besättningen';
 
   const scheduleSummary = useMemo(() => {
     const today = todayISO();
     let overdue = 0, soon = 0;
-    (schedules as any[]).forEach((s: any) => {
+    schedules.forEach((s) => {
       if (s.next_due_date < today) overdue++;
       else {
         const diff = Math.round((new Date(s.next_due_date).getTime() - new Date(today).getTime()) / 86400000);
@@ -178,7 +190,7 @@ export default function Health() {
     mutationFn: async () => {
       if (!user?.id) throw new Error('Ej inloggad');
       const withdrawal = form.withdrawal_egg_days ? parseInt(form.withdrawal_egg_days, 10) : null;
-      const { error } = await (supabase.from('health_events') as any).insert({
+      const { error } = await supabase.from('health_events').insert({
         user_id: user.id,
         hen_id: form.hen_id || null,
         event_type: form.event_type,
@@ -200,7 +212,7 @@ export default function Health() {
         treatment: '', event_date: todayISO(), withdrawal_egg_days: '',
       });
     },
-    onError: (e: any) => toast({ title: 'Kunde inte spara', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: 'Kunde inte spara', description: e.message, variant: 'destructive' }),
   });
 
   const resolveMutation = useMutation({
@@ -232,7 +244,7 @@ export default function Health() {
   const createScheduleMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Ej inloggad');
-      const { error } = await (supabase.from('health_schedules' as any) as any).insert({
+      const { error } = await supabase.from('health_schedules').insert({
         user_id: user.id,
         care_type: sform.care_type,
         title: sform.title,
@@ -252,15 +264,15 @@ export default function Health() {
       toast({ title: 'Schema skapat ✓' });
       setScheduleOpen(false);
     },
-    onError: (e: any) => toast({ title: 'Kunde inte spara schema', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: 'Kunde inte spara schema', description: e.message, variant: 'destructive' }),
   });
 
   const markDoneMutation = useMutation({
-    mutationFn: async (s: any) => {
+    mutationFn: async (s: HealthScheduleForm) => {
       if (!user?.id) return;
       const next = addDays(todayISO(), s.interval_days);
       // 1. Create health_event with karens calc
-      const { error: e1 } = await (supabase.from('health_events') as any).insert({
+      const { error: e1 } = await supabase.from('health_events').insert({
         user_id: user.id,
         hen_id: s.hen_id || null,
         flock_id: s.flock_id || null,
@@ -272,7 +284,7 @@ export default function Health() {
       });
       if (e1) throw e1;
       // 2. Update schedule
-      const { error: e2 } = await (supabase.from('health_schedules' as any) as any)
+      const { error: e2 } = await supabase.from('health_schedules')
         .update({ last_done_date: todayISO(), next_due_date: next, last_reminded_due: null })
         .eq('id', s.id);
       if (e2) throw e2;
@@ -283,12 +295,12 @@ export default function Health() {
       queryClient.invalidateQueries({ queryKey: ['active-karens'] });
       toast({ title: 'Utförd – nästa förfallodag är inplanerad' });
     },
-    onError: (e: any) => toast({ title: 'Kunde inte uppdatera', description: e.message, variant: 'destructive' }),
+    onError: (e: Error) => toast({ title: 'Kunde inte uppdatera', description: e.message, variant: 'destructive' }),
   });
 
   const deleteScheduleMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase.from('health_schedules' as any) as any).delete().eq('id', id);
+      const { error } = await supabase.from('health_schedules').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -341,7 +353,7 @@ export default function Health() {
                   <SelectTrigger className="rounded-xl"><SelectValue placeholder="Hela flocken" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Hela flocken</SelectItem>
-                    {(hens as any[]).map((h: any) => (
+                    {hens.map((h) => (
                       <SelectItem key={h.id} value={h.id}>{h.hen_type === 'rooster' ? '🐓 ' : '🐔 '}{h.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -457,7 +469,7 @@ export default function Health() {
                 <SelectTrigger className="w-48 rounded-xl h-9 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Alla höns</SelectItem>
-                  {(hens as any[]).map((h: any) => (
+                  {hens.map((h) => (
                     <SelectItem key={h.id} value={h.id}>{h.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -478,7 +490,7 @@ export default function Health() {
             />
           ) : (
             <div className="space-y-2">
-              {filtered.map((e: any) => (
+              {filtered.map((e) => (
                 <Card key={e.id} className="border-border/50 hover:border-border transition-colors">
                   <CardContent className="p-4 flex items-start gap-3">
                     <div className="flex flex-col items-center min-w-[3rem]">
@@ -598,7 +610,7 @@ export default function Health() {
                         <SelectTrigger className="rounded-xl"><SelectValue placeholder="Alla" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Hela besättningen</SelectItem>
-                          {(flocks as any[]).map((f: any) => (
+                          {flocks.map((f) => (
                             <SelectItem key={f.id} value={f.id}>👥 {f.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -610,7 +622,7 @@ export default function Health() {
                         <SelectTrigger className="rounded-xl"><SelectValue placeholder="Alla" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Alla</SelectItem>
-                          {(hens as any[]).map((h: any) => (
+                          {hens.map((h) => (
                             <SelectItem key={h.id} value={h.id}>🐔 {h.name}</SelectItem>
                           ))}
                         </SelectContent>
@@ -656,7 +668,7 @@ export default function Health() {
             </Dialog>
           </div>
 
-          {(schedules as any[]).length === 0 ? (
+          {schedules.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
               title="Inga scheman ännu"
@@ -666,7 +678,7 @@ export default function Health() {
             />
           ) : (
             <div className="space-y-2">
-              {(schedules as any[]).map((s: any) => {
+              {schedules.map((s) => {
                 const today = todayISO();
                 const overdue = s.next_due_date < today;
                 const diff = Math.round((new Date(s.next_due_date).getTime() - new Date(today).getTime()) / 86400000);

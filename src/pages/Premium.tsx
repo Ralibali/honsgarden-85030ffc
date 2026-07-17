@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Bot, Check, Crown, Loader2, ShieldCheck, Sparkles } from 'lucide-react';
+import { Bot, Crown, Loader2, ShieldCheck, Sparkles, RefreshCcw, MessageCircle, FileText, Coins, BellRing, CalendarDays, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,8 +13,12 @@ import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent } from '@/lib/analytics';
+import PremiumValueStats from '@/components/premium/PremiumValueStats';
 
 type BillingPlan = 'monthly' | 'yearly';
+
+// Ikoner för Plus-funktionerna (i samma ordning som i locale-filerna)
+const FEATURE_ICONS = [Bot, FileText, Coins, BellRing, CalendarDays, BarChart3];
 
 export default function Premium() {
   const { t, i18n } = useTranslation('premium');
@@ -201,9 +206,11 @@ export default function Premium() {
     trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
-      let { data, error } = await supabase.functions.invoke('create-checkout', {
+      const checkoutResult = await supabase.functions.invoke('create-checkout', {
         body: { plan },
       });
+      let data = checkoutResult.data;
+      const error = checkoutResult.error;
 
       if (error && !data && (error as any).context?.json) {
         try { data = await (error as any).context.json(); } catch { /* ignore */ }
@@ -244,9 +251,36 @@ export default function Premium() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-7 animate-fade-in pb-8">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/12 via-card to-accent/8 border border-primary/20 p-6 sm:p-10 text-center shadow-sm">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.10),transparent_70%)]" />
+      <section className="relative overflow-hidden rounded-3xl border border-primary/25 p-6 sm:p-12 text-center bg-gradient-to-br from-primary/15 via-card to-accent/10 shadow-[0_24px_60px_-24px_hsl(var(--primary)/0.4)]">
+        {/* Levande glöd bakom innehållet */}
+        <motion.div
+          className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
+          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-accent/25 blur-3xl"
+          animate={{ scale: [1.1, 1, 1.1], opacity: [0.6, 0.4, 0.6] }}
+          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+        />
         <div className="relative">
+          {/* Krona med pulserande glöd */}
+          <motion.div
+            initial={{ scale: 0, rotate: -20 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+            className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center"
+          >
+            <motion.div
+              className="absolute inset-0 rounded-3xl bg-primary/30"
+              animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
+            />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary/75 shadow-lg shadow-primary/30">
+              <Crown className="h-8 w-8 text-primary-foreground" />
+            </div>
+          </motion.div>
+
           <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Sparkles className="h-4 w-4" />
             {t('hero.badge')}
@@ -285,6 +319,9 @@ export default function Premium() {
         </Card>
       )}
 
+      {/* Personligt värdebevis: användarens egen uppbyggda data */}
+      {!isPremium && user && <PremiumValueStats />}
+
       {!isPremium && !intl && (
         <p className="text-center text-xs text-muted-foreground -mb-2">
           {t('social_proof')}
@@ -292,17 +329,31 @@ export default function Premium() {
       )}
 
       <section className="grid md:grid-cols-2 gap-4 items-stretch">
-        {plans.map((plan) => (
-          <Card
+        {plans.map((plan, i) => (
+          <motion.div
             key={plan.id}
-            className={`relative overflow-hidden shadow-sm transition-all ${
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 + i * 0.12 }}
+            whileHover={{ y: -4 }}
+            className="h-full"
+          >
+          <Card
+            className={`relative h-full overflow-hidden shadow-sm transition-shadow hover:shadow-xl ${
               plan.highlighted
                 ? 'border-2 border-primary shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.35)] md:scale-[1.02] bg-primary/[0.03]'
                 : 'border-primary/20 opacity-95'
             }`}
           >
+            {plan.highlighted && (
+              <motion.div
+                className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+                animate={{ x: ['-120%', '260%'] }}
+                transition={{ duration: 2.6, repeat: Infinity, repeatDelay: 4.5, ease: 'easeInOut' }}
+              />
+            )}
             {plan.badge && (
-              <div className="absolute right-4 top-4 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+              <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-primary to-primary/80 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
                 {plan.badge}
               </div>
             )}
@@ -336,8 +387,23 @@ export default function Premium() {
               </Button>
             </CardContent>
           </Card>
+          </motion.div>
         ))}
       </section>
+
+      {/* Förtroenderad – tar bort sista riskkänslan före köp */}
+      {!isPremium && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
+        >
+          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />{t('trust.stripe')}</span>
+          <span className="flex items-center gap-1.5"><RefreshCcw className="h-3.5 w-3.5 text-primary" />{t('trust.cancel')}</span>
+          <span className="flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5 text-primary" />{t('trust.support')}</span>
+        </motion.div>
+      )}
 
       {isPaidPremium && isLegacyPriceId(user?.stripe_price_id) && (
         <p className="text-center text-sm text-muted-foreground -mt-1">
@@ -358,14 +424,29 @@ export default function Premium() {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
-            {premiumFeatures.map((feature) => (
-              <div key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span>{feature}</span>
-              </div>
-            ))}
-          </div>
+          <motion.div
+            className="grid sm:grid-cols-2 gap-3"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: '-40px' }}
+            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+          >
+            {premiumFeatures.map((feature, i) => {
+              const FeatureIcon = FEATURE_ICONS[i % FEATURE_ICONS.length];
+              return (
+                <motion.div
+                  key={feature}
+                  variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                  className="flex items-start gap-3 rounded-xl border border-border/50 bg-background/60 p-3.5"
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <FeatureIcon className="h-4 w-4 text-primary" />
+                  </span>
+                  <span className="text-sm text-foreground/90 leading-snug pt-1">{feature}</span>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         </CardContent>
       </Card>
 

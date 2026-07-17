@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
+import PullToRefresh from '@/components/PullToRefresh';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { MobileNav } from './MobileNav';
@@ -80,7 +81,9 @@ export default function AppLayout() {
             className="flex-1 px-4 md:px-6 lg:px-8 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-8 relative z-10"
           >
             <Suspense fallback={<SuspenseFallback />}>
-              <Outlet />
+              <PullToRefresh>
+                <Outlet />
+              </PullToRefresh>
             </Suspense>
           </main>
         </div>

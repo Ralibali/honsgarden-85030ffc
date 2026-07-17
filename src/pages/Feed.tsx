@@ -149,28 +149,28 @@ export default function Feed() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="bg-card border-border shadow-sm">
+            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
               <CardContent className="p-3 sm:p-4 text-center">
                 <ShoppingCart className="h-4 w-4 text-primary mx-auto mb-1" />
                 <p className="stat-number text-xl text-foreground">{totalCost} kr</p>
                 <p className="data-label text-[10px] mt-1">Total foderkostnad</p>
               </CardContent>
             </Card>
-            <Card className="bg-card border-border shadow-sm">
+            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '70ms', animationFillMode: 'backwards' }}>
               <CardContent className="p-3 sm:p-4 text-center">
                 <Package className="h-4 w-4 text-accent mx-auto mb-1" />
                 <p className="stat-number text-xl text-foreground">{totalKg} kg</p>
                 <p className="data-label text-[10px] mt-1">Totalt foder</p>
               </CardContent>
             </Card>
-            <Card className="bg-card border-border shadow-sm">
+            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>
               <CardContent className="p-3 sm:p-4 text-center">
                 <Egg className="h-4 w-4 text-warning mx-auto mb-1" />
                 <p className="stat-number text-xl text-foreground">{feedStats?.total_eggs || '–'}</p>
                 <p className="data-label text-[10px] mt-1">Ägg totalt</p>
               </CardContent>
             </Card>
-            <Card className="bg-card border-border shadow-sm border-l-4 border-l-primary">
+            <Card className="bg-card border-border shadow-sm border-l-4 border-l-primary animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '210ms', animationFillMode: 'backwards' }}>
               <CardContent className="p-3 sm:p-4 text-center">
                 <Calculator className="h-4 w-4 text-primary mx-auto mb-1" />
                 <p className="stat-number text-xl text-primary">{costPerEgg ? `${costPerEgg.toFixed(1)} kr` : '–'}</p>

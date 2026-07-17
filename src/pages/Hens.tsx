@@ -53,7 +53,7 @@ export default function Hens() {
   const isLoading = hensLoading || flocksLoading;
 
   const createHenMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Parameters<typeof api.createHen>[0]) => {
       // Auto-assign to default flock if no flock selected
       if (!data.flock_id) {
         const defaultFlock = await api.getOrCreateDefaultFlock();
@@ -68,7 +68,7 @@ export default function Hens() {
       // Sync hen count to coop settings
       try {
         const allHens = await api.getHens();
-        const activeCount = (allHens as any[]).filter(isLayingHen).length;
+        const activeCount = (allHens).filter(isLayingHen).length;
         await api.updateCoopSettings({ hen_count: activeCount });
       } catch (err) {
         console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter create:', err);
@@ -78,11 +78,11 @@ export default function Hens() {
       setHenDialogOpen(false);
       setHenForm({ name: '', breed: '', color: '', birth_date: '', notes: '', hen_type: 'hen', flock_id: '' });
     },
-    onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
+    onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
 
   const updateHenMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => api.updateHen(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof api.updateHen>[1] }) => api.updateHen(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hens'] });
       toast({ title: 'Uppdaterad!' });
@@ -96,7 +96,7 @@ export default function Hens() {
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
       try {
         const allHens = await api.getHens();
-        const activeCount = (allHens as any[]).filter(isLayingHen).length;
+        const activeCount = (allHens).filter(isLayingHen).length;
         await api.updateCoopSettings({ hen_count: activeCount });
       } catch (err) {
         console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter delete:', err);
@@ -106,7 +106,7 @@ export default function Hens() {
   });
 
   const createFlockMutation = useMutation({
-    mutationFn: (data: any) => api.createFlock(data),
+    mutationFn: (data: Parameters<typeof api.createFlock>[0]) => api.createFlock(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flocks'] });
       toast({ title: 'Flock skapad! 🐔' });
@@ -115,7 +115,7 @@ export default function Hens() {
       setQuickFlockName('');
       setShowQuickFlock(false);
     },
-    onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
+    onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
 
   const deleteFlockMutation = useMutation({
@@ -156,12 +156,12 @@ export default function Hens() {
     createFlockMutation.mutate({ name: quickFlockName.trim(), description: null });
   };
 
-  const activeHens = hens.filter((h: any) => h.is_active);
+  const activeHens = hens.filter((h) => h.is_active);
   const filteredHens = showInactive ? hens : activeHens;
 
   const getDisplayHens = () => {
-    if (selectedFlock) return filteredHens.filter((h: any) => h.flock_id === selectedFlock);
-    if (tab === 'utan') return filteredHens.filter((h: any) => !h.flock_id);
+    if (selectedFlock) return filteredHens.filter((h) => h.flock_id === selectedFlock);
+    if (tab === 'utan') return filteredHens.filter((h) => !h.flock_id);
     if (tab === 'tuppar') return filteredHens.filter(isRooster);
     if (tab === 'unghons') return filteredHens.filter(isPullet);
     return filteredHens;
@@ -170,9 +170,9 @@ export default function Hens() {
   const displayHens = getDisplayHens();
   const roosters = filteredHens.filter(isRooster);
   const pullets = filteredHens.filter(isPullet);
-  const layingHens = filteredHens.filter((h: any) => !isRooster(h) && !isPullet(h));
+  const layingHens = filteredHens.filter((h) => !isRooster(h) && !isPullet(h));
 
-  const getFlockMemberCount = (flockId: string) => filteredHens.filter((h: any) => h.flock_id === flockId).length;
+  const getFlockMemberCount = (flockId: string) => filteredHens.filter((h) => h.flock_id === flockId).length;
 
   const getEmoji = (henType: string) => henTypeEmoji(henType);
 
@@ -193,10 +193,10 @@ export default function Hens() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-serif text-foreground">
-            {selectedFlock ? (flocks as any[]).find((f: any) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'} 🐔
+            {selectedFlock ? (flocks).find((f) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'} 🐔
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {layingHens.length} värphöns{pullets.length > 0 ? ` (+ ${pullets.length} unghöns)` : ''} · {roosters.length} tuppar · {(flocks as any[]).length} flockar
+            {layingHens.length} värphöns{pullets.length > 0 ? ` (+ ${pullets.length} unghöns)` : ''} · {roosters.length} tuppar · {(flocks).length} flockar
           </p>
         </div>
         <div className="flex gap-2">
@@ -310,7 +310,7 @@ export default function Hens() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="auto">🏠 Automatisk (Min flock)</SelectItem>
-                      {(flocks as any[]).map((f: any) => (
+                      {(flocks).map((f) => (
                         <SelectItem key={f.id} value={f.id}>🐔 {f.name}</SelectItem>
                       ))}
                     </SelectContent>
@@ -381,14 +381,14 @@ export default function Hens() {
       </div>
 
       {/* Flocks section */}
-      {(flocks as any[]).length > 0 && !selectedFlock && (
+      {(flocks).length > 0 && !selectedFlock && (
         <div className="space-y-2">
           <h2 className="data-label">Flockar</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 stagger-children">
-            {(flocks as any[]).map((flock: any) => {
-              const flockHens = filteredHens.filter((h: any) => h.flock_id === flock.id);
-              const flockRoosters = flockHens.filter((h: any) => h.hen_type === 'rooster').length;
-              const flockHensCount = flockHens.filter((h: any) => h.hen_type !== 'rooster').length;
+            {(flocks).map((flock) => {
+              const flockHens = filteredHens.filter((h) => h.flock_id === flock.id);
+              const flockRoosters = flockHens.filter((h) => h.hen_type === 'rooster').length;
+              const flockHensCount = flockHens.filter((h) => h.hen_type !== 'rooster').length;
 
               return (
                 <Card
@@ -438,7 +438,7 @@ export default function Hens() {
               className="rounded-xl text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/8 ml-auto"
               onClick={() => {
                 if (confirm('Ta bort denna flock? Hönorna och tupparna behålls.')) {
-                  displayHens.forEach((h: any) => {
+                  displayHens.forEach((h) => {
                     updateHenMutation.mutate({ id: h.id, data: { flock_id: null } });
                   });
                   deleteFlockMutation.mutate(selectedFlock);
@@ -452,8 +452,8 @@ export default function Hens() {
 
           {/* Quick-assign unassigned hens to this flock */}
           {(() => {
-            const unassigned = filteredHens.filter((h: any) => !h.flock_id || h.flock_id !== selectedFlock);
-            const otherHens = filteredHens.filter((h: any) => h.flock_id !== selectedFlock);
+            const unassigned = filteredHens.filter((h) => !h.flock_id || h.flock_id !== selectedFlock);
+            const otherHens = filteredHens.filter((h) => h.flock_id !== selectedFlock);
             if (!otherHens.length) return null;
             return (
               <Card className="border-dashed border-primary/30 bg-primary/4">
@@ -463,7 +463,7 @@ export default function Hens() {
                     Lägg till i flocken
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {otherHens.map((hen: any) => (
+                    {otherHens.map((hen) => (
                       <button
                         key={hen.id}
                         className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card border border-border/50 text-[11px] text-foreground hover:border-primary hover:bg-primary/8 transition-all"
@@ -486,7 +486,7 @@ export default function Hens() {
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="rounded-xl">
               <TabsTrigger value="alla" className="rounded-lg text-xs">Alla ({filteredHens.length})</TabsTrigger>
-              <TabsTrigger value="utan" className="rounded-lg text-xs">Utan flock ({filteredHens.filter((h: any) => !h.flock_id).length})</TabsTrigger>
+              <TabsTrigger value="utan" className="rounded-lg text-xs">Utan flock ({filteredHens.filter((h) => !h.flock_id).length})</TabsTrigger>
               <TabsTrigger value="unghons" className="rounded-lg text-xs">Unghöns ({pullets.length})</TabsTrigger>
               <TabsTrigger value="tuppar" className="rounded-lg text-xs">Tuppar ({roosters.length})</TabsTrigger>
             </TabsList>
@@ -501,8 +501,8 @@ export default function Hens() {
 
       {/* Hen/Rooster cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children">
-        {displayHens.map((hen: any) => {
-          const henFlock = (flocks as any[]).find((f: any) => f.id === hen.flock_id);
+        {displayHens.map((hen) => {
+          const henFlock = (flocks).find((f) => f.id === hen.flock_id);
           return (
             <Card key={hen.id} className={`border-border/50 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer ${!hen.is_active ? 'opacity-50' : ''}`} onClick={() => navigate(`/app/hens/${hen.id}`)}>
               <CardContent className="p-4">
@@ -551,7 +551,7 @@ export default function Hens() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Ingen flock</SelectItem>
-                      {(flocks as any[]).map((f: any) => (
+                      {(flocks).map((f) => (
                         <SelectItem key={f.id} value={f.id}>🐔 {f.name}</SelectItem>
                       ))}
                     </SelectContent>

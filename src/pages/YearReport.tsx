@@ -152,7 +152,7 @@ export default function YearReport() {
   });
 
   const stats = useMemo(() => {
-    const yearEggs = (eggs as any[]).filter((e) => e.date >= yearStart && e.date <= yearEnd);
+    const yearEggs = eggs.filter((e) => e.date >= yearStart && e.date <= yearEnd);
     const totalEggs = yearEggs.reduce((s, e) => s + (e.count || 0), 0);
 
     const byDate: Record<string, number> = {};
@@ -171,7 +171,7 @@ export default function YearReport() {
       ? `${format(new Date(bestDayEntry[0]), 'd MMM', { locale: sv })} (${bestDayEntry[1]} st)`
       : '—';
 
-    const activeHens = (hens as any[]).filter((h) => h.is_active).length || (hens as any[]).length;
+    const activeHens = hens.filter((h) => h.is_active).length || hens.length;
     const avgPerHen = activeHens > 0 ? totalEggs / activeHens : 0;
     const longestStreak = longestStreakInYear(byDate, year);
 
@@ -189,8 +189,8 @@ export default function YearReport() {
       pancakes,
       cakes,
       activeHens,
-      feedCost: (feedStats as any)?.total_cost || 0,
-      costPerEgg: (feedStats as any)?.cost_per_egg || 0,
+      feedCost: feedStats?.total_cost || 0,
+      costPerEgg: feedStats?.cost_per_egg || 0,
     };
   }, [eggs, hens, feedStats, year, yearStart, yearEnd]);
 
@@ -205,7 +205,7 @@ export default function YearReport() {
       longestStreak: stats.longestStreak,
       pancakes: stats.pancakes,
       cakes: stats.cakes,
-      userName: (user as any)?.name,
+      userName: user?.name,
     });
   }, [stats, year, user]);
 
@@ -227,7 +227,7 @@ export default function YearReport() {
         canvasRef.current!.toBlob((b) => resolve(b!), 'image/png'),
       );
       const file = new File([blob], `honsar-${year}.png`, { type: 'image/png' });
-      if (navigator.share && (navigator as any).canShare?.({ files: [file] })) {
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({
           title: `Mitt hönsår ${year}`,
           text: `Mina höns värpte ${stats.totalEggs} ägg i år! 🥚🐔`,

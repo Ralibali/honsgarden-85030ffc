@@ -4,10 +4,9 @@ const config: CapacitorConfig = {
   appId: 'se.honsgarden.app',
   appName: 'Hönsgården',
   webDir: 'dist',
-  server: {
-    url: 'https://f0c63bdf-2baf-4795-b008-16d49fc7d8ae.lovableproject.com?forceHideBadge=true',
-    cleartext: true,
-  },
+  // Produktion: ingen server.url — appen laddar de inbyggda filerna från webDir.
+  // För live-reload under utveckling, lägg tillbaka ett server-block tillfälligt:
+  // server: { url: 'http://192.168.x.x:8080', cleartext: true },
   ios: {
     contentInset: 'always',
   },

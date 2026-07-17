@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, X, Bird, Egg, Sparkles, Loader2, BarChart3, CheckCircle2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+import { hapticSuccess } from '@/lib/haptics';
+import { todayLocal } from '@/lib/datetime';
 
 const ONBOARDING_KEY = 'honsgarden-onboarding-done';
 const getOnboardingKey = (userId: string) => `${ONBOARDING_KEY}-${userId}`;
@@ -38,8 +42,13 @@ export default function OnboardingGuide() {
   const [saving, setSaving] = useState(false);
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [createdHenName, setCreatedHenName] = useState('');
+  const [createdHenId, setCreatedHenId] = useState<string | null>(null);
+  const [eggLogged, setEggLogged] = useState(false);
+  const [loggingEgg, setLoggingEgg] = useState(false);
+  const [eggCount, setEggCount] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -65,7 +74,7 @@ export default function OnboardingGuide() {
         .maybeSingle();
 
       if (isCancelled) return;
-      const prefs = (profileData?.preferences as Record<string, any>) ?? {};
+      const prefs = (profileData?.preferences as Record<string, unknown> | null) ?? {};
       if (prefs.onboarding_done) {
         localStorage.setItem(scopedKey, '1');
         return;
@@ -109,7 +118,7 @@ export default function OnboardingGuide() {
       .select('preferences')
       .eq('user_id', user.id)
       .maybeSingle();
-    const prefs = (data?.preferences as Record<string, any>) ?? {};
+    const prefs = (data?.preferences as Record<string, unknown> | null) ?? {};
     await supabase
       .from('profiles')
       .update({ preferences: { ...prefs, onboarding_done: true } })
@@ -131,20 +140,22 @@ export default function OnboardingGuide() {
     if (!henName.trim() || !user?.id) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from('hens').insert({
+      const { data: inserted, error } = await supabase.from('hens').insert({
         name: henName.trim(),
         breed: henBreed.trim() || null,
         user_id: user.id,
         hen_type: 'hen',
         is_active: true,
-      });
+      }).select('id').single();
       if (error) throw error;
       setCreatedHenName(henName.trim());
+      setCreatedHenId(inserted?.id ?? null);
       setStep(2);
       await markDone();
-    } catch (err: any) {
+    } catch (err) {
       console.error('[OnboardingGuide] addHen failed:', err);
-      const description = err?.message || err?.error_description || 'Okänt fel. Kontrollera din anslutning och försök igen.';
+      const e = err as { message?: string; error_description?: string };
+      const description = e?.message || e?.error_description || 'Okänt fel. Kontrollera din anslutning och försök igen.';
       toast({ title: 'Kunde inte spara hönan', description, variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -163,7 +174,7 @@ export default function OnboardingGuide() {
       const { data: insertedHens, error: henErr } = await supabase.from('hens').insert(demoHens).select();
       if (henErr) throw henErr;
 
-      const eggLogs: any[] = [];
+      const eggLogs: { date: string; count: number; hen_id: string; user_id: string }[] = [];
       const today = new Date();
       for (let i = 0; i < 14; i++) {
         const d = new Date(today);
@@ -182,15 +193,43 @@ export default function OnboardingGuide() {
 
       localStorage.setItem('honsgarden-demo-data', '1');
       setCreatedHenName('Greta, Astrid & Signe');
+      setCreatedHenId(null);
       setStep(2);
       await markDone();
       toast({ title: 'Exempeldata är inlagt! 🐔', description: 'Nu kan du se hur Hönsgården fungerar med hönor och äggloggar.' });
-    } catch (err: any) {
+    } catch (err) {
       console.error('[OnboardingGuide] loadDemoData failed:', err);
-      const description = err?.message || err?.error_description || 'Okänt fel. Försök igen om en stund.';
+      const e = err as { message?: string; error_description?: string };
+      const description = e?.message || e?.error_description || 'Okänt fel. Försök igen om en stund.';
       toast({ title: 'Kunde inte skapa exempeldata', description, variant: 'destructive' });
     } finally {
       setLoadingDemo(false);
+    }
+  };
+
+  // "Första ägget på 30 sekunder": ett tryck direkt i dialogen –
+  // ingen navigering, omedelbar belöning.
+  const logFirstEgg = async () => {
+    if (!createdHenId || !user?.id || loggingEgg) return;
+    setLoggingEgg(true);
+    try {
+      const { error } = await supabase.from('egg_logs').insert({
+        date: todayLocal(),
+        count: 1,
+        hen_id: createdHenId,
+        user_id: user.id,
+      });
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      hapticSuccess();
+      setEggCount((c) => c + 1);
+      setEggLogged(true);
+      toast({ title: '🥚 Första ägget loggat!', description: 'Din streak har börjat.' });
+    } catch (err) {
+      console.error('[OnboardingGuide] logFirstEgg failed:', err);
+      toast({ title: 'Kunde inte logga ägget', description: 'Försök igen – eller logga via äggknappen längst ned.', variant: 'destructive' });
+    } finally {
+      setLoggingEgg(false);
     }
   };
 
@@ -201,6 +240,10 @@ export default function OnboardingGuide() {
       <DialogContent
         className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0"
       >
+        <DialogTitle className="sr-only">Kom igång med Hönsgården</DialogTitle>
+        <DialogDescription className="sr-only">
+          Lägg till din första höna och logga ditt första ägg på under en minut.
+        </DialogDescription>
         <AnimatePresence mode="wait">
           <motion.div
             key={step}
@@ -356,10 +399,44 @@ export default function OnboardingGuide() {
                   </motion.span>
                 </div>
                 <div className="px-6 pt-4 pb-6">
-                  <h2 className="font-serif text-xl text-foreground mb-1">{createdHenName} är tillagd!</h2>
+                  <h2 className="font-serif text-xl text-foreground mb-1">
+                    {eggLogged ? 'Första ägget loggat! 🎉' : `${createdHenName} är tillagd!`}
+                  </h2>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-                    Perfekt. Logga dagens ägg nu så får dashboarden direkt bättre veckostatistik, streak och produktion per höna.
+                    {eggLogged
+                      ? `${eggCount} ${eggCount === 1 ? 'ägg' : 'ägg'} i boken – din streak har officiellt börjat. 🔥`
+                      : createdHenId
+                        ? `Sista steget: lägg ${createdHenName}s första ägg – ett tryck direkt här, klart på en sekund.`
+                        : 'Perfekt. Logga dagens ägg nu så får dashboarden direkt bättre veckostatistik, streak och produktion per höna.'}
                   </p>
+
+                  {/* Första ägget på en sekund – direkt i dialogen */}
+                  {createdHenId && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-5"
+                    >
+                      <Button
+                        size="lg"
+                        className={`w-full h-14 rounded-2xl text-base gap-2 ${
+                          eggLogged
+                            ? 'bg-success hover:bg-success/90'
+                            : 'shadow-[0_8px_24px_hsl(var(--primary)/0.35)]'
+                        }`}
+                        onClick={logFirstEgg}
+                        disabled={loggingEgg}
+                      >
+                        {loggingEgg ? (
+                          'Loggar...'
+                        ) : eggLogged ? (
+                          <><CheckCircle2 className="h-5 w-5" /> Logga ett ägg till ({eggCount})</>
+                        ) : (
+                          <><Egg className="h-5 w-5" /> Lägg {createdHenName}s första ägg!</>
+                        )}
+                      </Button>
+                    </motion.div>
+                  )}
                   <div className="rounded-xl bg-primary/5 border border-primary/10 p-3 mb-5 flex gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                     <p className="text-xs text-muted-foreground leading-relaxed">
@@ -371,17 +448,19 @@ export default function OnboardingGuide() {
                     <Button
                       size="sm"
                       className="h-9 px-5 text-xs rounded-xl gap-1.5"
-                      onClick={() => { finish(); navigate('/app/eggs'); }}
+                      onClick={() => { finish(); navigate(eggLogged ? '/app' : '/app/eggs'); }}
                     >
-                      <Egg className="h-3.5 w-3.5" /> Logga dagens ägg
+                      {eggLogged ? 'Till dashboarden 🏡' : <><Egg className="h-3.5 w-3.5" /> Logga dagens ägg</>}
                     </Button>
                   </div>
-                  <button
-                    onClick={() => { finish(); navigate('/app'); }}
-                    className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors"
-                  >
-                    Gå till dashboarden
-                  </button>
+                  {!eggLogged && (
+                    <button
+                      onClick={() => { finish(); navigate('/app'); }}
+                      className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors"
+                    >
+                      Gå till dashboarden
+                    </button>
+                  )}
                 </div>
               </>
             )}
@@ -392,7 +471,7 @@ export default function OnboardingGuide() {
   );
 }
 
-function ActivationStep({ icon: Icon, title, text, active = false }: { icon: any; title: string; text: string; active?: boolean }) {
+function ActivationStep({ icon: Icon, title, text, active = false }: { icon: LucideIcon; title: string; text: string; active?: boolean }) {
   return (
     <div className={`flex gap-3 rounded-xl border p-3 ${active ? 'border-primary/20 bg-primary/5' : 'border-border/50 bg-muted/20'}`}>
       <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${active ? 'bg-primary/10 text-primary' : 'bg-background text-muted-foreground'}`}>

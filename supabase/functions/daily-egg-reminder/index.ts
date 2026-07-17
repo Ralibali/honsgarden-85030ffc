@@ -100,30 +100,37 @@ Deno.serve(async (req) => {
 
       const name = (p.display_name || "").split(" ")[0] || "kompis";
 
-      // Streak in danger → send push instead of email
-      if (streak >= 3) {
-        try {
-          const { data: pushSubs } = await supabase
-            .from("push_subscriptions")
-            .select("id")
-            .eq("user_id", p.user_id)
-            .limit(1);
-          if (pushSubs && pushSubs.length > 0) {
-            await supabase.functions.invoke("send-push", {
-              body: {
-                user_ids: [p.user_id],
-                title: `🔥 Din streak på ${streak} dagar är i fara`,
-                body: "Logga dagens ägg innan midnatt så lever den vidare.",
-                url: "/app/eggs",
-                tag: `streak-at-risk-${todayStr}`,
-              },
-            });
-            sent++;
-            continue;
-          }
-        } catch (err) {
-          console.error("streak push failed, falling back to email", p.user_id, err);
+      // Push first for everyone with a subscription – email only as fallback.
+      // Push syns direkt på hemskärmen och når fler än mejl; copy anpassas efter streak.
+      try {
+        const { data: pushSubs } = await supabase
+          .from("push_subscriptions")
+          .select("id")
+          .eq("user_id", p.user_id)
+          .limit(1);
+        if (pushSubs && pushSubs.length > 0) {
+          const title = streak >= 3
+            ? `🔥 Din streak på ${streak} dagar är i fara`
+            : streak >= 1
+              ? `🔥 ${streak} ${streak === 1 ? "dag" : "dagar"} i rad – håll den vid liv`
+              : "🥚 Dags att räkna dagens ägg";
+          const body = streak >= 3
+            ? "Logga dagens ägg innan midnatt så lever den vidare."
+            : "Det tar 10 sekunder – logga dagens ägg innan kvällen är slut.";
+          await supabase.functions.invoke("send-push", {
+            body: {
+              user_ids: [p.user_id],
+              title,
+              body,
+              url: "/app/eggs",
+              tag: `egg-reminder-${todayStr}`,
+            },
+          });
+          sent++;
+          continue;
         }
+      } catch (err) {
+        console.error("egg reminder push failed, falling back to email", p.user_id, err);
       }
 
       const subject = "Glöm inte att räkna dagens ägg 🥚";

@@ -5,7 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Plus, Egg as EggIcon, Loader2, Trash2, Download, List, LayoutGrid } from 'lucide-react';
 import { downloadCSV, downloadPDF } from '@/lib/exportUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, type EggLog } from '@/lib/api';
+
+type EggFormInput = { date: string; count: number; hen_id?: string; flock_id?: string };
+type OfflineEggResult = { __offline: true; client_id: string } & EggFormInput;
+type CreateEggResult = EggLog | OfflineEggResult;
+type PendingEggLog = EggLog & { pending?: boolean; client_id?: string };
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EggForm } from '@/components/eggs/EggForm';
@@ -49,16 +54,16 @@ export default function Eggs() {
     staleTime: 60_000,
   });
 
-  const activeHens = (hens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster');
+  const activeHens = hens.filter((h) => h.is_active && h.hen_type !== 'rooster');
 
   const { data: feedRecords = [] } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords(), staleTime: 60_000 });
   const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(), staleTime: 60_000 });
   const { data: chores = [] } = useQuery({ queryKey: ['daily-chores'], queryFn: () => api.getDailyChores(), staleTime: 60_000 });
 
   const unusedFeatures: ('feed' | 'finance' | 'chores')[] = [];
-  if ((feedRecords as any[]).length === 0) unusedFeatures.push('feed');
-  if ((transactions as any[]).length === 0) unusedFeatures.push('finance');
-  if ((chores as any[]).length === 0) unusedFeatures.push('chores');
+  if (feedRecords.length === 0) unusedFeatures.push('feed');
+  if (transactions.length === 0) unusedFeatures.push('finance');
+  if (chores.length === 0) unusedFeatures.push('chores');
 
   const handleAnimationDone = useCallback(() => {
     setShowAnimation(false);
@@ -69,31 +74,31 @@ export default function Eggs() {
   }, [animCount, unusedFeatures.length]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => {
+    mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
       const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       // Offline path: enqueue locally and bail out (still optimistic)
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         const queued = await enqueueEggLog({ ...data, client_id });
-        return { __offline: true, client_id: queued.client_id, ...data } as any;
+        return { __offline: true, client_id: queued.client_id, ...data };
       }
       try {
         const weather = await api.fetchEggLogWeatherSnapshot(data.date);
         return await api.createEggRecord({ ...data, weather, client_id });
-      } catch (err: any) {
-        const msg = (err?.message ?? '').toLowerCase();
+      } catch (err) {
+        const msg = (err instanceof Error ? err.message : '').toLowerCase();
         const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
         if (isNet) {
           const queued = await enqueueEggLog({ ...data, client_id });
-          return { __offline: true, client_id: queued.client_id, ...data } as any;
+          return { __offline: true, client_id: queued.client_id, ...data };
         }
         throw err;
       }
     },
-    onSuccess: (result: any, variables) => {
-      const isOffline = result?.__offline === true;
+    onSuccess: (result, variables) => {
+      const isOffline = '__offline' in result;
       if (isOffline) {
         // Optimistic insert with pending flag
-        queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
+        queryClient.setQueryData<PendingEggLog[]>(['eggs'], (old) => {
           const next = [...(old ?? [])];
           next.unshift({
             id: `pending-${result.client_id}`,
@@ -103,7 +108,7 @@ export default function Eggs() {
             hen_id: variables.hen_id ?? null,
             flock_id: variables.flock_id ?? null,
             pending: true,
-          });
+          } as PendingEggLog);
           return next;
         });
         toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
@@ -118,7 +123,7 @@ export default function Eggs() {
 
 
       // Personal record check (delight bump)
-      const updatedEggs = [...(eggs as any[]), { date: variables.date, count: variables.count }];
+      const updatedEggs = [...eggs, { date: variables.date, count: variables.count }];
       const records = checkPersonalRecords(user?.id, updatedEggs, variables.date);
       if (records.length > 0) {
         const r = records[0];
@@ -134,7 +139,7 @@ export default function Eggs() {
         }, 600);
       }
     },
-    onError: (err: any) => toast({ title: 'Något gick fel', description: err?.message ?? 'Vi kunde inte spara äggen just nu.', variant: 'destructive' }),
+    onError: (err) => toast({ title: 'Något gick fel', description: err instanceof Error ? err.message : 'Vi kunde inte spara äggen just nu.', variant: 'destructive' }),
   });
 
 
@@ -149,33 +154,33 @@ export default function Eggs() {
 
   const henNameMap = useMemo(() => {
     const map: Record<string, string> = {};
-    (hens as any[]).forEach((h: any) => { map[h.id] = h.name; });
+    hens.forEach((h) => { map[h.id] = h.name; });
     return map;
   }, [hens]);
 
   const henFlockMap = useMemo(() => {
     const map: Record<string, string> = {};
-    (hens as any[]).forEach((h: any) => { if (h.flock_id) map[h.id] = h.flock_id; });
+    hens.forEach((h) => { if (h.flock_id) map[h.id] = h.flock_id; });
     return map;
   }, [hens]);
 
   const flockNameMap = useMemo(() => {
     const map: Record<string, string> = {};
-    (flocks as any[]).forEach((f: any) => { map[f.id] = f.name; });
+    flocks.forEach((f) => { map[f.id] = f.name; });
     return map;
   }, [flocks]);
 
-  const resolveFlockName = (e: any) => {
+  const resolveFlockName = (e: Pick<EggLog, 'flock_id' | 'hen_id'>) => {
     if (e.flock_id) return flockNameMap[e.flock_id] || '';
     if (e.hen_id && henFlockMap[e.hen_id]) return flockNameMap[henFlockMap[e.hen_id]] || '';
     return '';
   };
 
   const todayStr = todayLocal();
-  const todayEggs = eggs.filter((e: any) => e.date === todayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
+  const todayEggs = eggs.filter((e) => e.date === todayStr).reduce((s, e) => s + (e.count || 0), 0);
   const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekEggs = eggs.filter((e: any) => new Date(e.date) >= weekAgo).reduce((s: number, e: any) => s + (e.count || 0), 0);
-  const monthEggs = eggs.filter((e: any) => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s: number, e: any) => s + (e.count || 0), 0);
+  const weekEggs = eggs.filter((e) => new Date(e.date) >= weekAgo).reduce((s, e) => s + (e.count || 0), 0);
+  const monthEggs = eggs.filter((e) => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s, e) => s + (e.count || 0), 0);
 
   if (isLoading) {
     return (
@@ -198,7 +203,7 @@ export default function Eggs() {
           {eggs.length > 0 && (
             <>
               <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-                const rows = eggs.map((e: any) => ({
+                const rows = eggs.map((e) => ({
                   Datum: e.date,
                   Antal: e.count,
                   Flock: resolveFlockName(e),
@@ -213,7 +218,7 @@ export default function Eggs() {
                 downloadPDF(
                   'Ägglogg',
                   ['Datum', 'Antal', 'Flock', 'Höna', 'Anteckningar'],
-                  eggs.map((e: any) => [e.date, String(e.count), resolveFlockName(e), e.hen_id ? henNameMap[e.hen_id] || '' : '', e.notes || '']),
+                  eggs.map((e) => [e.date, String(e.count), resolveFlockName(e), e.hen_id ? henNameMap[e.hen_id] || '' : '', e.notes || '']),
                   'agglogg'
                 );
               }}>
@@ -231,7 +236,7 @@ export default function Eggs() {
       {showForm && (
         <EggForm
           activeHens={activeHens}
-          flocks={flocks as any[]}
+          flocks={flocks}
           isPending={createMutation.isPending}
           onSubmit={(data) => createMutation.mutate(data)}
           onCancel={() => setShowForm(false)}
@@ -255,8 +260,8 @@ export default function Eggs() {
               { label: 'Idag', value: todayEggs },
               { label: 'Denna vecka', value: weekEggs },
               { label: 'Denna månad', value: monthEggs },
-            ].map((s) => (
-              <Card key={s.label} className="bg-card border-border shadow-sm">
+            ].map((s, i) => (
+              <Card key={s.label} className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}>
                 <CardContent className="p-3 sm:p-4 text-center">
                   <p className="stat-number text-xl sm:text-2xl text-foreground">{s.value}</p>
                   <p className="data-label mt-1 text-[10px] sm:text-xs">{s.label}</p>

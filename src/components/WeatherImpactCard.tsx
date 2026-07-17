@@ -69,17 +69,14 @@ export default function WeatherImpactCard({ daily, latitude, longitude }: Props)
     queryKey: ['weather-impact', user?.id],
     queryFn: async () => {
       const since = new Date(Date.now() - 60 * 24 * 3600_000).toISOString().split('T')[0];
-      const { data: farmIds } = await supabase.rpc('get_user_farm_ids', { _uid: user!.id });
-      const ids = (farmIds ?? []).map((r: any) => r.get_user_farm_ids ?? r);
-      if (!ids.length) return { eggsByDay: {} as Record<string, number>, weatherByDay: {} as Record<string, any> };
 
-      const sb = supabase as any;
-      const eggsRes = await sb
-        .from('eggs')
+      // egg_logs har user_id direkt på raden – ingen farm-uppslagning behövs
+      const eggsRes = await supabase
+        .from('egg_logs')
         .select('date, count')
-        .in('farm_id', ids)
+        .eq('user_id', user!.id)
         .gte('date', since);
-      const weatherRes = await sb
+      const weatherRes = await supabase
         .from('weather_advice_cache')
         .select('cache_date, weather_snapshot')
         .eq('user_id', user!.id)
@@ -94,7 +91,17 @@ export default function WeatherImpactCard({ daily, latitude, longitude }: Props)
       const cachedDates = new Set((weatherRes.data ?? []).map((r) => r.cache_date));
       const weatherByDay: Record<string, { tMax: number; tMin: number; precip: number; wind: number; code: number }> = {};
       for (const row of weatherRes.data ?? []) {
-        const snap: any = row.weather_snapshot;
+        const snap = row.weather_snapshot as {
+          current?: { temperature_2m?: number; weathercode?: number; wind_speed_10m?: number };
+          daily?: {
+            time?: string[];
+            temperature_2m_max?: number[];
+            temperature_2m_min?: number[];
+            precipitation_sum?: number[];
+            wind_speed_10m_max?: number[];
+            weathercode?: number[];
+          };
+        } | null;
         const cur = snap?.current ?? {};
         const dailyArr = snap?.daily;
         // försök plocka ut dagens värden från snapshot
@@ -157,7 +164,15 @@ export default function WeatherImpactCard({ daily, latitude, longitude }: Props)
     if (!data) return null;
     const { eggsByDay, weatherByDay } = data;
     const days = Object.keys(eggsByDay).sort();
-    if (days.length < 7) return { matched: 0, days: days.length, baseline: 0, perBucket: [] as any[], forecast: [] as any[] };
+    if (days.length < 7) {
+      return {
+        matched: 0,
+        days: days.length,
+        baseline: 0,
+        perBucket: [] as { bucket: Bucket; avg: number; diff: number; pct: number; n: number }[],
+        forecast: [] as { date: string; predicted: number; confidence: 'low' | 'medium' | 'high'; buckets: Bucket[] }[],
+      };
+    }
 
     // Baseline: snitt av loggade dagar
     const all = days.map((d) => eggsByDay[d]);

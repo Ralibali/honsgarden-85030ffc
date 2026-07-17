@@ -1,18 +1,25 @@
 /**
  * Export utilities for CSV, Excel and PDF generation
  */
-import * as XLSX from "xlsx";
 import DOMPurify from "dompurify";
 
-export function downloadExcel(rows: Record<string, any>[], filename: string, sheetName = "Data") {
+// xlsx (~400 kB) laddas först när användaren faktiskt exporterar –
+// håller appens startbundle liten.
+async function loadXLSX() {
+  return import("xlsx");
+}
+
+export async function downloadExcel(rows: Record<string, any>[], filename: string, sheetName = "Data") {
   if (rows.length === 0) return;
+  const XLSX = await loadXLSX();
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, `${filename}.xlsx`);
 }
 
-export function downloadMultiSheetExcel(sheets: { name: string; rows: Record<string, any>[] }[], filename: string) {
+export async function downloadMultiSheetExcel(sheets: { name: string; rows: Record<string, any>[] }[], filename: string) {
+  const XLSX = await loadXLSX();
   const wb = XLSX.utils.book_new();
   for (const sheet of sheets) {
     if (sheet.rows.length === 0) {

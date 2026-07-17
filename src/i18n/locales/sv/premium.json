@@ -67,5 +67,10 @@
     "checkout_fail_title": "Kunde inte starta betalning",
     "checkout_fail_desc": "Något gick fel.",
     "no_checkout_url": "Ingen checkout-URL returnerades"
+  },
+  "trust": {
+    "stripe": "Säker betalning via Stripe",
+    "cancel": "Avsluta när du vill",
+    "support": "Personlig support på svenska"
   }
 }

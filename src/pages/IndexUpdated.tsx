@@ -111,7 +111,31 @@ export default function IndexUpdated() {
       <Suspense fallback={null}><StickyMobileCTA /></Suspense>
       <LandingNavbar />
 
-      <section className="relative flex flex-col justify-center pt-24 pb-12 sm:min-h-dvh sm:pt-16 sm:pb-10" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 50%, #f5f0e8 100%)' }}>
+      <section className="relative flex flex-col justify-center pt-24 pb-12 sm:min-h-dvh sm:pt-16 sm:pb-10 overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 50%, #f5f0e8 100%)' }}>
+        {/* Levande bakgrund: glödmoln + svävande ägg */}
+        <motion.div
+          className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/15 blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-warning/15 blur-3xl"
+          animate={{ scale: [1.15, 1, 1.15], opacity: [0.6, 0.4, 0.6] }}
+          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        {[
+          { top: '18%', left: '6%', size: 44, delay: 0 },
+          { top: '62%', left: '2%', size: 32, delay: 1.2 },
+          { top: '24%', right: '4%', size: 38, delay: 0.6 },
+        ].map((egg, i) => (
+          <motion.div
+            key={i}
+            className="pointer-events-none absolute hidden lg:block rounded-[50%_50%_50%_50%/60%_60%_40%_40%] bg-gradient-to-b from-amber-100 to-amber-200/70 shadow-sm border border-amber-200/50"
+            style={{ top: egg.top, left: egg.left, right: egg.right, width: egg.size, height: egg.size * 1.25 }}
+            animate={{ y: [0, -14, 0], rotate: [0, 4, 0, -4, 0] }}
+            transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: egg.delay }}
+          />
+        ))}
         <div className="container max-w-6xl mx-auto px-5 sm:px-6 relative z-10">
           <div className="grid lg:grid-cols-[1.04fr_0.96fr] gap-10 lg:gap-14 items-center">
             <div className="text-center lg:text-left">
@@ -121,7 +145,7 @@ export default function IndexUpdated() {
                 <Badge variant="secondary" className="bg-background/70 text-foreground border-border text-xs px-3 py-1">Gratis att börja</Badge>
               </motion.div>
               <motion.h1 {...fadeUp(0.05)} className="font-serif text-[2rem] sm:text-5xl md:text-6xl text-foreground leading-[1.08] mb-4 sm:mb-5">
-                Mer koll på din hönsgård – <span className="text-primary">från ägg till försäljning</span>
+                Mer koll på din hönsgård – <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">från ägg till försäljning</span>
               </motion.h1>
               <motion.p {...fadeUp(0.08)} className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-5 sm:mb-6">
                 Hönsgården samlar ägglogg, flock, hönsprofiler, statistik, foderkostnad, kalender, väder, community, rapporter och Agdas äggbod på samma plats. Logga vardagen, förstå mönstren och sälj ägg utan Excel-kaos.
@@ -150,7 +174,7 @@ export default function IndexUpdated() {
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hönsgården är inte bara en ägglogg längre. Det är ett komplett arbetsbord för dig som vill förstå flocken, sköta vardagen, sälja ägg och bygga bättre rutiner över tid.</p>
           </motion.div>
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {productModules.map((f) => <motion.a key={f.title} href={f.href} variants={staggerItem} className="relative p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">{f.badge && <Badge className="absolute top-4 right-4 bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">{f.badge}</Badge>}<div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><f.icon className="h-5 w-5 text-primary" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.a>)}
+            {productModules.map((f) => <motion.a key={f.title} href={f.href} variants={staggerItem} className="group relative p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200">{f.badge && <Badge className="absolute top-4 right-4 bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">{f.badge}</Badge>}<div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><f.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.a>)}
           </motion.div>
         </div>
       </section>
@@ -168,9 +192,9 @@ export default function IndexUpdated() {
       <section className="py-16 sm:py-24 bg-background">
         <div className="container max-w-6xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Så fungerar Agdas äggbod i praktiken</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Från första säljlistan till uppföljning av betalning, hämtning och återkommande kunder.</p></motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {agdaSteps.map((s) => <Card key={s.step} className="border-primary/15 shadow-sm"><CardContent className="p-5 text-center"><span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold mb-3">{s.step}</span><h3 className="font-serif text-base text-foreground mb-2">{s.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p></CardContent></Card>)}
-          </div>
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {agdaSteps.map((s) => <motion.div key={s.step} variants={staggerItem}><Card className="h-full border-primary/15 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"><CardContent className="p-5 text-center"><span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold mb-3 shadow-sm">{s.step}</span><h3 className="font-serif text-base text-foreground mb-2">{s.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p></CardContent></Card></motion.div>)}
+          </motion.div>
         </div>
       </section>
 
@@ -197,8 +221,8 @@ export default function IndexUpdated() {
           <motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Börja gratis – uppgradera när du vill ha mer hjälp</h2><p className="text-muted-foreground text-sm sm:text-base">Gratis ger dig grunden. Plus ger mer AI, insikter, rapporter och obegränsad användning.</p></motion.div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
-            <PricingCard title="Plus – Månad" price="19 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova Plus" />
-            <PricingCard highlighted title="Plus – År" price="149 kr/år" desc="Bästa värdet för aktiva hönsägare" features={plusFeatures} cta="Välj årsplan" />
+            <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova Plus" />
+            <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Välj årsplan" />
           </div>
         </div>
       </section>
@@ -208,7 +232,7 @@ export default function IndexUpdated() {
       </section>
 
       <section className="relative z-10 pb-10 sm:pb-16">
-        <div className="container max-w-3xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center"><div className="text-5xl mb-4">🐔</div><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2><p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">När du loggar ägg, foder, hälsa, försäljning, väder och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.</p><Button asChild size="lg" className="h-14 px-10 text-lg gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:scale-[1.02] transition-transform"><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-5 w-5" /></a></Button><p className="text-xs text-muted-foreground mt-4">Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p></motion.div></div>
+        <div className="container max-w-3xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center"><motion.div className="text-5xl mb-4 inline-block" animate={{ y: [0, -8, 0], rotate: [0, -6, 0, 6, 0] }} transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}>🐔</motion.div><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2><p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">När du loggar ägg, foder, hälsa, försäljning, väder och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.</p><Button asChild size="lg" className="h-14 px-10 text-lg gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:scale-[1.02] transition-transform"><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-5 w-5" /></a></Button><p className="text-xs text-muted-foreground mt-4">Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p></motion.div></div>
       </section>
 
       <Suspense fallback={null}><LandingFooter /></Suspense>
@@ -218,13 +242,28 @@ export default function IndexUpdated() {
 
 function PricingCard({ title, price, desc, features, cta, highlighted = false }: { title: string; price: string; desc: string; features: string[]; cta: string; highlighted?: boolean }) {
   return (
-    <motion.div {...fadeUp(highlighted ? 0.2 : 0.1)} className={`relative p-6 sm:p-8 rounded-2xl shadow-sm ${highlighted ? 'border-2 border-primary bg-primary/5' : 'bg-card border border-border'}`}>
-      {highlighted && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-primary text-primary-foreground text-xs px-3 py-1">Spara 35%</Badge></div>}
+    <motion.div
+      {...fadeUp(highlighted ? 0.2 : 0.1)}
+      whileHover={{ y: -5 }}
+      className={`relative overflow-hidden p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-xl transition-shadow ${
+        highlighted
+          ? 'border-2 border-primary bg-primary/5 shadow-[0_12px_40px_-12px_hsl(var(--primary)/0.4)]'
+          : 'bg-card border border-border'
+      }`}
+    >
+      {highlighted && (
+        <motion.div
+          className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          animate={{ x: ['-120%', '260%'] }}
+          transition={{ duration: 2.6, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }}
+        />
+      )}
+      {highlighted && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs px-3 py-1 shadow-sm">Spara 169 kr</Badge></div>}
       <h3 className="font-serif text-xl text-foreground mb-1">{title}</h3>
       <p className="text-muted-foreground text-sm mb-6">{desc}</p>
       <p className="text-4xl font-bold text-foreground mb-6">{price}</p>
-      <ul className="space-y-3 mb-8">{features.map((f) => <li key={f} className="flex items-center gap-2.5 text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" />{f}</li>)}</ul>
-      <Button asChild variant={highlighted ? 'default' : 'outline'} className="w-full h-11"><a href="/login?mode=register">{cta}</a></Button>
+      <ul className="space-y-3 mb-8">{features.map((f) => <li key={f} className="flex items-center gap-2.5 text-sm text-foreground"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><Check className="h-3 w-3 text-primary" /></span>{f}</li>)}</ul>
+      <Button asChild variant={highlighted ? 'default' : 'outline'} className={`w-full h-11 ${highlighted ? 'shadow-[0_6px_20px_hsl(var(--primary)/0.35)]' : ''}`}><a href="/login?mode=register">{cta}</a></Button>
     </motion.div>
   );
 }

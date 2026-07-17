@@ -7,8 +7,11 @@ import {
   TrendingUp, Sparkles, Feather, Award, Bell, ChevronDown,
   ChevronUp, Thermometer, ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import type { EggLog, Hen } from '@/lib/api';
+import { boldMarkdownToSafeHtml } from '@/lib/safeHtml';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { DailySummaryModal } from '@/components/DailySummaryModal';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +32,9 @@ import EggGoalsWidget from '@/components/EggGoalsWidget';
 import DashboardAICoach from '@/components/DashboardAICoach';
 import AIDeviationAlerts from '@/components/AIDeviationAlerts';
 import { StreakFlame } from '@/components/StreakFlame';
+import SmartUpsellCard from '@/components/SmartUpsellCard';
+import StreakRescueCard from '@/components/dashboard/StreakRescueCard';
+import HenRaceCard from '@/components/dashboard/HenRaceCard';
 import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
 import { CountUp } from '@/components/CountUp';
 import FirstEggActivationCard from '@/components/FirstEggActivationCard';
@@ -115,7 +121,7 @@ function getSeasonalTip(): { text: string; emoji: string } {
   return { text: 'Kort dagsljus minskar värpningen. Överväg belysning i hönshuset.', emoji: '❄️' };
 }
 
-function calculateStreak(eggs: any[]): number {
+function calculateStreak(eggs: EggLog[]): number {
   const todayStr = todayLocal();
   const today = new Date(`${todayStr}T12:00:00`);
   let streak = 0;
@@ -123,7 +129,7 @@ function calculateStreak(eggs: any[]): number {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = localCalendarDate(d);
-    const hasEggs = eggs.some((e: any) => e.date === dateStr && e.count > 0);
+    const hasEggs = eggs.some((e) => e.date === dateStr && e.count > 0);
     if (hasEggs) streak++;
     else if (i > 0) break;
     else continue;
@@ -131,15 +137,15 @@ function calculateStreak(eggs: any[]): number {
   return streak;
 }
 
-function getTopHen(eggs: any[], hens: any[]): { name: string; count: number } | null {
+function getTopHen(eggs: EggLog[], hens: Hen[]): { name: string; count: number } | null {
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekEggs = eggs.filter((e: any) => e.hen_id && new Date(e.date) >= weekAgo);
+  const weekEggs = eggs.filter((e) => e.hen_id && new Date(e.date) >= weekAgo);
   const henCounts: Record<string, number> = {};
-  weekEggs.forEach((e: any) => { henCounts[e.hen_id] = (henCounts[e.hen_id] || 0) + e.count; });
+  weekEggs.forEach((e) => { henCounts[e.hen_id] = (henCounts[e.hen_id] || 0) + e.count; });
   const topId = Object.entries(henCounts).sort(([, a], [, b]) => b - a)[0];
   if (!topId) return null;
-  const hen = hens.find((h: any) => h.id === topId[0]);
+  const hen = hens.find((h) => h.id === topId[0]);
   return hen ? { name: hen.name, count: topId[1] } : null;
 }
 
@@ -148,7 +154,7 @@ function getDayName(dateStr: string): string {
   return days[new Date(dateStr).getDay()];
 }
 
-function getDailyTipCard(currentTemp: number | null, weatherCode: number, aiTip: any, seasonal: { text: string; emoji: string }) {
+function getDailyTipCard(currentTemp: number | null, weatherCode: number, aiTip: { tip_text?: string } | null, seasonal: { text: string; emoji: string }) {
   if (currentTemp != null && (currentTemp < 0 || currentTemp > 25 || (weatherCode >= 60 && weatherCode <= 77))) {
     return { emoji: currentTemp < 0 ? '🥶' : currentTemp > 25 ? '🥵' : '🌧️', label: 'Vädervarning', text: getWeatherTip(currentTemp, weatherCode) };
   }
@@ -161,7 +167,7 @@ function InsightRow({
   id, icon: Icon, title, preview, badge, defaultOpen, openIds, setOpenIds, children,
 }: {
   id: string;
-  icon: any;
+  icon: LucideIcon;
   title: string;
   preview: string;
   badge?: { label: string; tone?: 'warning' | 'primary' };
@@ -239,34 +245,35 @@ export default function DashboardV2() {
   const weatherCode = weatherData?.current?.weathercode ?? 0;
 
   const todayStr = localCalendarDate(now);
-  const todayEggs = eggs.filter((e: any) => e.date === todayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
+  const todayEggs = eggs.filter((e) => e.date === todayStr).reduce((s, e) => s + (e.count || 0), 0);
 
   const yesterdayDate = new Date(now);
   yesterdayDate.setDate(yesterdayDate.getDate() - 1);
   const yesterdayStr = localCalendarDate(yesterdayDate);
-  const yesterdayEggs = eggs.filter((e: any) => e.date === yesterdayStr).reduce((s: number, e: any) => s + (e.count || 0), 0);
+  const yesterdayEggs = eggs.filter((e) => e.date === yesterdayStr).reduce((s, e) => s + (e.count || 0), 0);
 
   const weekAgo = new Date(now);
   weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekEggs = eggs.filter((e: any) => new Date(e.date) >= weekAgo).reduce((s: number, e: any) => s + (e.count || 0), 0);
+  const weekEggs = eggs.filter((e) => new Date(e.date) >= weekAgo).reduce((s, e) => s + (e.count || 0), 0);
+  const totalEggsLogged = eggs.reduce((s, e) => s + (e.count || 0), 0);
 
   // Previous week (8-14 days ago) for "mot förra"
   const twoWeeksAgo = new Date(now);
   twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
   const prevWeekEggs = eggs
-    .filter((e: any) => new Date(e.date) >= twoWeeksAgo && new Date(e.date) < weekAgo)
-    .reduce((s: number, e: any) => s + (e.count || 0), 0);
+    .filter((e) => new Date(e.date) >= twoWeeksAgo && new Date(e.date) < weekAgo)
+    .reduce((s, e) => s + (e.count || 0), 0);
   const weekDelta = weekEggs - prevWeekEggs;
   const eggsPerDay = weekEggs / 7;
 
-  const activeHens = (hens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster').length;
-  const activeRoosters = (hens as any[]).filter((h: any) => h.is_active && h.hen_type === 'rooster').length;
+  const activeHens = hens.filter((h) => h.is_active && h.hen_type !== 'rooster').length;
+  const activeRoosters = hens.filter((h) => h.is_active && h.hen_type === 'rooster').length;
   const streak = calculateStreak(eggs);
-  const topHen = getTopHen(eggs, hens as any[]);
+  const topHen = getTopHen(eggs, hens);
   const seasonal = getSeasonalTip();
 
   const achievements = useMemo(
-    () => buildAchievements(eggs, hens as any[], streak, feedRecords as any[], transactions as any[], chores as any[]),
+    () => buildAchievements(eggs, hens, streak, feedRecords, transactions, chores),
     [eggs, hens, streak, feedRecords, transactions, chores]
   );
 
@@ -283,13 +290,13 @@ export default function DashboardV2() {
   const diaryMutation = useMutation({
     mutationFn: (text: string) => api.createHealthLog({ date: todayLocal(), type: 'diary', description: text }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['health-logs'] }); toast({ title: '📝 Dagboksinlägg sparat!' }); setDiaryOpen(false); setDiaryText(''); },
-    onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
+    onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
 
-  const diaryEntries = (healthLogs as any[])
-    .filter((l: any) => l.type === 'diary' && l.description)
+  const diaryEntries = healthLogs
+    .filter((l) => l.type === 'diary' && l.description)
     .slice(0, 4)
-    .map((l: any) => ({
+    .map((l) => ({
       date: new Date(l.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }),
       text: l.description,
     }));
@@ -303,17 +310,17 @@ export default function DashboardV2() {
   const forecast = weatherData?.daily;
 
   // Adaptive nudges
-  const firstEggDate = eggs.length > 0 ? new Date(Math.min(...eggs.map((e: any) => new Date(e.date).getTime()))) : null;
+  const firstEggDate = eggs.length > 0 ? new Date(Math.min(...eggs.map((e) => new Date(e.date).getTime()))) : null;
   const daysSinceFirstEgg = firstEggDate ? Math.floor((Date.now() - firstEggDate.getTime()) / (1000 * 60 * 60 * 24)) : 0;
   const hasImported = localStorage.getItem('honsgarden-imported') === '1';
   const showImportCard = !hasImported && daysSinceFirstEgg < 7;
-  const hasFeedRecords = (feedRecords as any[]).length > 0;
-  const hasTransactions = (transactions as any[]).length > 0;
+  const hasFeedRecords = feedRecords.length > 0;
+  const hasTransactions = transactions.length > 0;
   const feedDismissed = localStorage.getItem('dashboard-feed-nudge-dismissed') === '1';
   const financeDismissed = localStorage.getItem('dashboard-finance-nudge-dismissed') === '1';
   const showFeedNudge = !hasFeedRecords && !feedDismissed;
   const showFinanceNudge = !hasTransactions && !financeDismissed;
-  const showDiary = daysSinceFirstEgg >= 7 || (healthLogs as any[]).some((l: any) => l.type === 'diary');
+  const showDiary = daysSinceFirstEgg >= 7 || healthLogs.some((l) => l.type === 'diary');
   const showCalendar = eggs.length > 0;
 
   // Calendar bounds: earliest month = first egg month, latest = current month
@@ -346,7 +353,7 @@ export default function DashboardV2() {
   const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
   const eggCalendarData: Record<number, number> = {};
-  eggs.forEach((e: any) => {
+  eggs.forEach((e) => {
     const d = new Date(e.date);
     if (d.getMonth() === viewedMonth.getMonth() && d.getFullYear() === viewedMonth.getFullYear()) {
       const day = d.getDate();
@@ -367,14 +374,14 @@ export default function DashboardV2() {
 
   const selectedDayEvents = useMemo(() => {
     if (!selectedDateKey) return [] as Array<{ id: string; icon: string; label: string; detail?: string }>;
-    const matches = (d: any) => {
+    const matches = (d: string | null | undefined) => {
       if (!d) return false;
       try { return localCalendarDate(new Date(d)) === selectedDateKey; } catch { return false; }
     };
     const items: Array<{ id: string; icon: string; label: string; detail?: string }> = [];
 
-    (eggs as any[]).filter((e) => matches(e.date)).forEach((e, i) => {
-      const henName = (hens as any[]).find((h) => h.id === e.hen_id)?.name;
+    eggs.filter((e) => matches(e.date)).forEach((e, i) => {
+      const henName = hens.find((h) => h.id === e.hen_id)?.name;
       items.push({
         id: `egg-${e.id ?? i}`,
         icon: '🥚',
@@ -383,7 +390,7 @@ export default function DashboardV2() {
       });
     });
 
-    (healthLogs as any[]).filter((l) => matches(l.date)).forEach((l, i) => {
+    healthLogs.filter((l) => matches(l.date)).forEach((l, i) => {
       const isDiary = l.type === 'diary';
       items.push({
         id: `health-${l.id ?? i}`,
@@ -393,7 +400,7 @@ export default function DashboardV2() {
       });
     });
 
-    (feedRecords as any[]).filter((f) => matches(f.date)).forEach((f, i) => {
+    feedRecords.filter((f) => matches(f.date)).forEach((f, i) => {
       items.push({
         id: `feed-${f.id ?? i}`,
         icon: '🌾',
@@ -402,7 +409,7 @@ export default function DashboardV2() {
       });
     });
 
-    (transactions as any[]).filter((t) => matches(t.date)).forEach((t, i) => {
+    transactions.filter((t) => matches(t.date)).forEach((t, i) => {
       const amt = Number(t.amount || 0);
       items.push({
         id: `tx-${t.id ?? i}`,
@@ -412,14 +419,20 @@ export default function DashboardV2() {
       });
     });
 
-    (chores as any[]).filter((c) => matches(c.due_at || c.completed_at || c.date)).forEach((c, i) => {
-      items.push({
-        id: `chore-${c.id ?? i}`,
-        icon: c.completed_at ? '✅' : '📋',
-        label: c.title || 'Syssla',
-        detail: c.completed_at ? 'Klar' : (c.description || undefined),
+    // Sysslor: visa de med förfallodatum den valda dagen. Klarmarkering
+    // vet vi bara för idag (getDailyChores räknar dagens completions).
+    const isTodaySelected = selectedDateKey === todayStr;
+    chores
+      .filter((c) => matches(c.next_due_at) || (isTodaySelected && c.completed))
+      .forEach((c, i) => {
+        const done = isTodaySelected && c.completed;
+        items.push({
+          id: `chore-${c.id ?? i}`,
+          icon: done ? '✅' : '📋',
+          label: c.title || 'Syssla',
+          detail: done ? 'Klar' : (c.description || undefined),
+        });
       });
-    });
 
     return items;
   }, [selectedDateKey, eggs, hens, healthLogs, feedRecords, transactions, chores]);
@@ -435,12 +448,12 @@ export default function DashboardV2() {
   // Chores for reminders
   const upcomingChores = useMemo(() => {
     const now24h = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return (chores as any[]).filter((c: any) => {
+    return chores.filter((c) => {
       if (!c.next_due_at || c.completed) return false;
       return new Date(c.next_due_at) <= now24h;
     });
   }, [chores]);
-  const pastDueChores = upcomingChores.filter((c: any) => new Date(c.next_due_at) < new Date());
+  const pastDueChores = upcomingChores.filter((c) => new Date(c.next_due_at) < new Date());
 
   const reminderCount = upcomingChores.length;
   const hasReminders = reminderCount > 0;
@@ -470,29 +483,37 @@ export default function DashboardV2() {
 
       {/* Onboarding-checklista */}
       <OnboardingChecklistCard
-        hensCount={(hens as any[]).length}
+        hensCount={hens.length}
         eggsCount={eggs.length}
-        feedRecordsCount={(feedRecords as any[]).length}
+        feedRecordsCount={feedRecords.length}
       />
+
+      {/* Streak-räddning – visas när streaken riskerar att brytas idag */}
+      <StreakRescueCard streak={streak} todayEggs={todayEggs} />
+
+      {/* Veckans värptävling – flockens ranking senaste 7 dagarna */}
+      <HenRaceCard eggs={eggs} hens={hens} />
 
       {/* Snabblogg – dagens ägg (+/−) */}
-      <QuickEggLogCard
-        todayEggs={todayEggs}
-        todayEggRowIds={(eggs as any[])
-          .filter((e: any) => e.date === todayStr)
-          .sort((a: any, b: any) => (b.created_at || '').localeCompare(a.created_at || ''))
-          .map((e: any) => e.id)}
-      />
+      <div id="quick-egg-log">
+        <QuickEggLogCard
+          todayEggs={todayEggs}
+          todayEggRowIds={eggs
+            .filter((e) => e.date === todayStr)
+            .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+            .map((e) => e.id)}
+        />
+      </div>
 
       {/* Activation: get first egg logged */}
-      {(hens as any[]).length > 0 && eggs.length === 0 && (
-        <FirstEggActivationCard henName={(hens as any[])[0]?.name} />
+      {hens.length > 0 && eggs.length === 0 && (
+        <FirstEggActivationCard henName={hens[0]?.name} />
       )}
 
 
       {/* Recap of activity since last visit */}
       {eggs.length > 0 && (
-        <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs as any[]} />
+        <SinceLastVisitCard eggs={eggs} healthLogs={healthLogs} />
       )}
 
       {/* Diskret installationsprompt – visas först vid 3:e dashboardbesöket */}
@@ -581,7 +602,7 @@ export default function DashboardV2() {
               >
                 <div className={`rounded-xl p-3 ${pastDueChores.length > 0 ? 'bg-destructive/5' : 'bg-warning/5'} border border-border/40`}>
                   <div className="space-y-1.5">
-                    {upcomingChores.slice(0, 3).map((chore: any) => {
+                    {upcomingChores.slice(0, 3).map((chore) => {
                       const isPast = new Date(chore.next_due_at) < new Date();
                       return (
                         <div key={chore.id} className="flex items-center gap-2">
@@ -666,6 +687,13 @@ export default function DashboardV2() {
         </CardContent>
       </Card>
 
+      {/* Smart premium-trigger – visas vid höga engagemangsögonblick */}
+      <SmartUpsellCard
+        streak={streak}
+        totalEggs={totalEggsLogged}
+        henCount={activeHens}
+      />
+
       {/* ─── 3. Dagens tips ─── */}
       <Card className="border-border/50 shadow-sm">
         <CardContent className="p-5">
@@ -681,7 +709,7 @@ export default function DashboardV2() {
 
           <p
             className="text-sm text-foreground leading-relaxed mt-3"
-            dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
+            dangerouslySetInnerHTML={{ __html: boldMarkdownToSafeHtml(tipCard.text) }}
           />
           {tipCard.text.length > 200 && (
             <Button variant="ghost" size="sm" onClick={() => setTipSheetOpen(true)} className="mt-2 h-8 px-2 rounded-lg text-xs text-primary">
@@ -977,10 +1005,10 @@ export default function DashboardV2() {
               </CardContent>
             </Card>
           </div>
-          <Achievements achievements={achievements} eggs={eggs} hens={hens as any[]} streak={streak} />
+          <Achievements achievements={achievements} eggs={eggs} hens={hens} streak={streak} />
           <ShareCard
             weekEggs={weekEggs}
-            totalEggs={eggs.reduce((s: number, e: any) => s + (e.count || 0), 0)}
+            totalEggs={eggs.reduce((s, e) => s + (e.count || 0), 0)}
             henCount={activeHens}
             streak={streak}
             userName={user?.name?.split(' ')[0]}
@@ -1034,7 +1062,7 @@ export default function DashboardV2() {
           </SheetHeader>
           <div
             className="text-sm text-foreground leading-relaxed pb-6"
-            dangerouslySetInnerHTML={{ __html: tipCard.text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>') }}
+            dangerouslySetInnerHTML={{ __html: boldMarkdownToSafeHtml(tipCard.text) }}
           />
         </SheetContent>
       </Sheet>

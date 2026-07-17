@@ -52,6 +52,15 @@ export type AnalyticsEventMap = {
   'First Egg Logged': {
     source?: AnalyticsSource;
   };
+  'Smart Upsell Shown': {
+    trigger?: string;
+  };
+  'Smart Upsell Clicked': {
+    trigger?: string;
+  };
+  'Smart Upsell Dismissed': {
+    trigger?: string;
+  };
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;

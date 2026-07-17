@@ -94,12 +94,12 @@ export default function Reminders() {
     queryKey: ['reminders'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('reminders' as any)
+        .from('reminders')
         .select('*')
         .neq('status', 'archived')
         .order('due_date', { ascending: true });
       if (error) throw error;
-      return (data as any as ReminderRow[]) ?? [];
+      return (data ?? []) as ReminderRow[];
     },
   });
 
@@ -114,7 +114,7 @@ export default function Reminders() {
     mutationFn: async () => {
       if (!user?.id) throw new Error('Ej inloggad');
       const overdue = daysUntil(newDate) < 0;
-      const { error } = await supabase.from('reminders' as any).insert({
+      const { error } = await supabase.from('reminders').insert({
         user_id: user.id,
         title: newTitle.trim(),
         notes: newNotes.trim() || null,
@@ -141,19 +141,19 @@ export default function Reminders() {
     mutationFn: async (r: ReminderRow) => {
       if (r.status === 'done') {
         // Undo
-        const { error } = await supabase.from('reminders' as any)
+        const { error } = await supabase.from('reminders')
           .update({ status: daysUntil(r.due_date) < 0 ? 'overdue' : 'upcoming', completed_at: null })
           .eq('id', r.id);
         if (error) throw error;
       } else {
         // Mark done. If recurring, also insert next occurrence.
-        const { error } = await supabase.from('reminders' as any)
+        const { error } = await supabase.from('reminders')
           .update({ status: 'done', completed_at: new Date().toISOString() })
           .eq('id', r.id);
         if (error) throw error;
         if (r.recurrence !== 'none' && user?.id) {
           const nextDate = addToDate(r.due_date, r.recurrence);
-          await supabase.from('reminders' as any).insert({
+          await supabase.from('reminders').insert({
             user_id: user.id,
             title: r.title,
             notes: r.notes,
@@ -175,7 +175,7 @@ export default function Reminders() {
 
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('reminders' as any).update({ status: 'archived' }).eq('id', id);
+      const { error } = await supabase.from('reminders').update({ status: 'archived' }).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -187,7 +187,7 @@ export default function Reminders() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('reminders' as any).delete().eq('id', id);
+      const { error } = await supabase.from('reminders').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
