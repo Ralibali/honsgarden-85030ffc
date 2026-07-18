@@ -47,6 +47,8 @@ import {
   ExternalLink,
   Locate,
 } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
+
 
 function setMeta(name: string, content: string) {
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
