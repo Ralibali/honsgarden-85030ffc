@@ -178,14 +178,6 @@ export default function MarketplaceMap() {
   const markerRefs = React.useRef<Record<string, L.Marker>>({});
 
   useEffect(() => {
-    const title = ort
-      ? `Köp färska ägg i ${ort.name} – karta | Hönsgården`
-      : "Köp färska ägg nära dig – karta | Hönsgården";
-    const desc = ort
-      ? `Hitta lokala hönsgårdar som säljer färska ägg i ${ort.name}. Se alla aktiva säljare på en karta.`
-      : "Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige.";
-    document.title = title;
-    setMeta("description", desc);
     if (ort) return;
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
@@ -199,6 +191,7 @@ export default function MarketplaceMap() {
       { enableHighAccuracy: false, timeout: 4000, maximumAge: 60_000 * 30 },
     );
   }, [ort]);
+
 
   const { data: listings = [], isLoading } = useQuery({
     queryKey: ["marketplace-map-listings"],
