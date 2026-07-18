@@ -13,14 +13,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePageTitle } from '@/hooks/usePageTitle';
+import { useSeo } from '@/hooks/useSeo';
 import { CATEGORIES, REGIONS, hasContactInfo, type MarketplaceCategory } from '@/lib/marketplace';
 
 const MAX_IMAGES = 8;
 const MAX_SIZE = 5 * 1024 * 1024;
 
 export default function MarketplaceNew() {
-  usePageTitle('Lägg in annons');
+  useSeo({
+    title: 'Lägg in annons på Hönsmarknaden | Hönsgården',
+    description: 'Sälj höns, kycklingar, ägg, ruvmaskiner och tillbehör gratis på Hönsgårdens marknad. Nå tusentals hönsägare i hela Sverige.',
+    path: '/marknad/ny',
+    noindex: true,
+  });
+
   const navigate = useNavigate();
   const { user, isAuthenticated, loading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
