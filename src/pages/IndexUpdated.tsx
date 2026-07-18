@@ -170,6 +170,7 @@ export default function IndexUpdated() {
       <section className="py-16 sm:py-24 bg-background">
         <div className="container max-w-6xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-10">
+            <Badge className="mb-3 bg-primary/10 text-primary border-primary/20">Funktioner</Badge>
             <h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Det här erbjuder Hönsgården idag</h2>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hönsgården är inte bara en ägglogg längre. Det är ett komplett arbetsbord för dig som vill förstå flocken, sköta vardagen, sälja ägg och bygga bättre rutiner över tid.</p>
           </motion.div>
@@ -183,7 +184,7 @@ export default function IndexUpdated() {
         <div className="container max-w-6xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><Badge className="mb-3 bg-primary/10 text-primary border-primary/20">För dig som säljer ägg</Badge><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Agdas äggbod gör lokal äggförsäljning enklare</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Skapa en säljsida, visa bild och pris, ta emot bokningar och följ upp kunder, betalning, hämtning och värde direkt i Hönsgården.</p></motion.div>
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {agdaFeatures.map((f) => <motion.div key={f.title} variants={staggerItem} className="p-6 rounded-2xl bg-card border border-border shadow-sm"><div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4"><f.icon className="h-5 w-5 text-primary" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.div>)}
+            {agdaFeatures.map((f) => <motion.div key={f.title} variants={staggerItem} className="group p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"><div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><f.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.div>)}
           </motion.div>
           <motion.div {...fadeUp(0.1)} className="mt-10 rounded-3xl bg-background border border-primary/15 p-6 sm:p-8 text-center shadow-sm"><p className="text-sm text-muted-foreground mb-2">Exempel på säljlänk</p><p className="font-mono text-sm sm:text-base text-foreground break-all bg-muted/40 rounded-xl px-4 py-3 mb-5">https://honsgarden.se/s/bergs-agg</p><Button asChild size="lg" className="gap-2"><a href="/login?mode=register">Skapa din första säljsida <ArrowRight className="h-4 w-4" /></a></Button></motion.div>
         </div>
@@ -192,7 +193,9 @@ export default function IndexUpdated() {
       <section className="py-16 sm:py-24 bg-background">
         <div className="container max-w-6xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Så fungerar Agdas äggbod i praktiken</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Från första säljlistan till uppföljning av betalning, hämtning och återkommande kunder.</p></motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Tidslinje som binder samman stegen (desktop) */}
+            <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] border-t-2 border-dashed border-primary/20" aria-hidden />
             {agdaSteps.map((s) => <motion.div key={s.step} variants={staggerItem}><Card className="h-full border-primary/15 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"><CardContent className="p-5 text-center"><span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold mb-3 shadow-sm">{s.step}</span><h3 className="font-serif text-base text-foreground mb-2">{s.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p></CardContent></Card></motion.div>)}
           </motion.div>
         </div>
@@ -201,18 +204,18 @@ export default function IndexUpdated() {
       <section className="py-16 sm:py-24 bg-secondary/20">
         <div className="container max-w-6xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">För vem passar Hönsgården?</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Oavsett om du har några få hönor, kläcker kycklingar eller säljer ägg lokalt får du bättre ordning.</p></motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {audience.map((a) => <Card key={a.title} className="shadow-sm"><CardContent className="p-6"><div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center mb-4"><a.icon className="h-5 w-5 text-primary" /></div><h3 className="font-serif text-lg text-foreground mb-2">{a.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{a.desc}</p></CardContent></Card>)}
-          </div>
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {audience.map((a) => <motion.div key={a.title} variants={staggerItem}><Card className="group h-full shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"><CardContent className="p-6"><div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><a.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-2">{a.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{a.desc}</p></CardContent></Card></motion.div>)}
+          </motion.div>
         </div>
       </section>
 
       <section className="py-16 sm:py-24 bg-background">
         <div className="container max-w-5xl mx-auto px-5 sm:px-6">
           <motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Tryggt och enkelt att komma igång</h2></motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {trustItems.map((item) => <div key={item} className="rounded-2xl bg-card border border-border px-4 py-3 flex items-center gap-2 text-sm text-foreground"><ShieldCheck className="h-4 w-4 text-primary shrink-0" />{item}</div>)}
-          </div>
+          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {trustItems.map((item) => <motion.div key={item} variants={staggerItem} className="rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm px-4 py-3 flex items-center gap-2 text-sm text-foreground transition-all duration-200"><ShieldCheck className="h-4 w-4 text-primary shrink-0" />{item}</motion.div>)}
+          </motion.div>
         </div>
       </section>
 
@@ -228,7 +231,7 @@ export default function IndexUpdated() {
       </section>
 
       <section className="relative z-10 py-20 sm:py-28" style={{ background: 'linear-gradient(180deg, hsl(var(--background)) 0%, #f5f0e8 50%, hsl(var(--background)) 100%)' }}>
-        <div className="container max-w-2xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-2">Vanliga frågor</h2></motion.div><motion.div {...fadeUp(0.1)}><Accordion type="single" collapsible className="space-y-2">{faqs.map((f, i) => <AccordionItem key={i} value={`faq-${i}`} className="border border-border rounded-xl overflow-hidden px-1"><AccordionTrigger className="text-sm sm:text-base font-medium text-foreground hover:no-underline px-4 text-left">{f.q}</AccordionTrigger><AccordionContent className="text-sm text-muted-foreground px-4 pb-4 leading-relaxed">{f.a}</AccordionContent></AccordionItem>)}</Accordion></motion.div></div>
+        <div className="container max-w-2xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-2">Vanliga frågor</h2></motion.div><motion.div {...fadeUp(0.1)}><Accordion type="single" collapsible className="space-y-2">{faqs.map((f, i) => <AccordionItem key={i} value={`faq-${i}`} className="border border-border bg-card hover:border-primary/30 transition-colors rounded-xl overflow-hidden px-1"><AccordionTrigger className="text-sm sm:text-base font-medium text-foreground hover:no-underline px-4 text-left">{f.q}</AccordionTrigger><AccordionContent className="text-sm text-muted-foreground px-4 pb-4 leading-relaxed">{f.a}</AccordionContent></AccordionItem>)}</Accordion></motion.div></div>
       </section>
 
       <section className="relative z-10 pb-10 sm:pb-16">

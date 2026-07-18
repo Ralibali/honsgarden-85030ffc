@@ -36,7 +36,9 @@ export default function LandingNavbar() {
       <div className="container max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2">
-          <Bird className="h-5 w-5 text-primary" />
+          <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
+            <Bird className="h-4 w-4 text-primary" />
+          </span>
           <span className="font-serif text-lg text-foreground">Hönsgården</span>
         </a>
 
@@ -54,7 +56,7 @@ export default function LandingNavbar() {
           <Button asChild variant="ghost" size="sm">
             <a href="/login?mode=login">Logga in</a>
           </Button>
-          <Button asChild size="sm">
+          <Button asChild size="sm" className="rounded-xl shadow-[0_4px_16px_hsl(var(--primary)/0.3)]">
             <a href="/login?mode=register">Kom igång gratis</a>
           </Button>
         </div>
