@@ -13,6 +13,15 @@ const CATEGORIES = [
   "nyborjare", "raser", "tradgard", "hem", "friluftsliv",
 ];
 
+// Mirrors src/data/honsraserBreedProfiles.ts – drives /honsraser/:slug
+const HONSRASER_SLUGS = [
+  "silkeshons","brahma","cochin","orpington","wyandotte","maran","araucana",
+  "australorp","sussex","vit-leghorn","rhode-island-red","plymouth-rock",
+  "bielefelder","vorwerk","welsumer","barnevelder","faverolle","new-hampshire",
+  "sebright","hedemorahona","gotlandshona","olandsk-hona",
+  "bohuslan-dals-svarthona","kindahona","frisisk-hona",
+];
+
 // SEO_SOURCES removed: /raser, /problem, /skotsel, /manad routes are not
 // registered in App.tsx, so emitting them in the sitemap produces 404s for
 // crawlers. Re-add here only when matching <Route path="..."> entries exist.
