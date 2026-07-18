@@ -397,7 +397,8 @@ export default function Login() {
                   <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed">
                     Jag godkänner{' '}
                     <a href="/terms" target="_blank" rel="noreferrer" className="text-primary hover:underline">användarvillkoren</a>
-                    {' '}och har läst integritetspolicyn.
+                    {' '}och har läst{' '}
+                    <a href="/integritet" target="_blank" rel="noreferrer" className="text-primary hover:underline">integritetspolicyn</a>.
                   </label>
                 </div>
 

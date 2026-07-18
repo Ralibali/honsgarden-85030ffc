@@ -51,7 +51,7 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
       { labelKey: 'links.help', href: 'mailto:info@auroramedia.se' },
       { labelKey: 'links.contact', href: 'mailto:info@auroramedia.se' },
       { labelKey: 'links.about', href: '/om-oss' },
-      { labelKey: 'links.privacy', href: '/terms' },
+      { labelKey: 'links.privacy', href: '/integritet' },
       { labelKey: 'links.terms', href: '/terms' },
     ],
   },

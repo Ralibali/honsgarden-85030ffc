@@ -40,6 +40,7 @@ const Community = lazyWithRetry(() => import("./pages/Community"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const Terms = lazyWithRetry(() => import("./pages/Terms"));
+const Integritet = lazyWithRetry(() => import("./pages/Integritet"));
 const HenProfile = lazyWithRetry(() => import("./pages/HenProfile"));
 const WeeklyReport = lazyWithRetry(() => import("./pages/WeeklyReport"));
 const YearReport = lazyWithRetry(() => import("./pages/YearReport"));
@@ -183,6 +184,7 @@ const AppRoutes = () => (
         <Route path="/bestallning/:token" element={<OrderPortal />} />
         <Route path="/login" element={<Login />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/integritet" element={<Integritet />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/om-oss" element={<About />} />
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
