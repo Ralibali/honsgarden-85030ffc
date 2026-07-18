@@ -66,7 +66,7 @@ export default function PublicEggSaleV3() {
     queryKey: ['public-egg-sale-listing-v3', slug],
     enabled: shouldLoadSlug,
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from('public_egg_sale_listings').select('*').eq('slug', slug).eq('is_active', true).maybeSingle();
+      const { data, error } = await (supabase as any).from('public_egg_sale_listings').select('id,user_id,slug,title,description,image_url,packs_available,eggs_per_pack,price_per_pack,location,pickup_info,contact_info,swish_number,swish_name,swish_message,p6_price,p12_price,p30_price,is_active,reserved_packs,sold_out_manually,created_at,updated_at,stock_packs,latitude,longitude,listing_kind,verified_at,expires_at,theme,sections,price_tiers,reko_enabled,reko_group_name,reko_pickup_location,reko_next_pickup_at,reko_recurring_biweekly').eq('slug', slug).eq('is_active', true).maybeSingle();
       if (error) throw error;
       return data;
     },
