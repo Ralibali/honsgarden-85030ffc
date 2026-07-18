@@ -13,6 +13,15 @@ const CATEGORIES = [
   "nyborjare", "raser", "tradgard", "hem", "friluftsliv",
 ];
 
+// Mirrors src/data/honsraserBreedProfiles.ts – drives /honsraser/:slug
+const HONSRASER_SLUGS = [
+  "silkeshons","brahma","cochin","orpington","wyandotte","maran","araucana",
+  "australorp","sussex","vit-leghorn","rhode-island-red","plymouth-rock",
+  "bielefelder","vorwerk","welsumer","barnevelder","faverolle","new-hampshire",
+  "sebright","hedemorahona","gotlandshona","olandsk-hona",
+  "bohuslan-dals-svarthona","kindahona","frisisk-hona",
+];
+
 // SEO_SOURCES removed: /raser, /problem, /skotsel, /manad routes are not
 // registered in App.tsx, so emitting them in the sitemap produces 404s for
 // crawlers. Re-add here only when matching <Route path="..."> entries exist.
@@ -161,6 +170,20 @@ Deno.serve(async (req) => {
   </url>
 `;
   }
+
+  // Breed pages /honsraser/:slug
+  for (const slug of HONSRASER_SLUGS) {
+    xml += `  <url>
+    <loc>${BASE_URL}/honsraser/${slug}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/honsraser/${slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/honsraser/${slug}" />
+  </url>
+`;
+  }
+
 
   // Active public egg-sale listings /s/:slug
   if (eggSaleListings) {
