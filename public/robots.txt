@@ -8,6 +8,8 @@ Disallow: /app
 Disallow: /login
 Disallow: /reset-password
 Disallow: /inbjudan
+Disallow: /karta/bekrafta
+Disallow: /karta/hantera
 
 # AI-sök och AI-crawlers får läsa publikt material.
 # De privata app-sidorna ovan är fortsatt blockerade.
