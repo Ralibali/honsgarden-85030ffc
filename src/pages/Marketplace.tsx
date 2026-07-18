@@ -27,11 +27,6 @@ export default function Marketplace() {
   const seoPath = categoryPage ? `/marknad/k/${categoryPage.slug}` : '/marknad';
 
   usePageTitle(pageTitle);
-  useSeo({
-    title: categoryPage ? pageTitle : 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
-    description: seoDescription,
-    path: seoPath,
-  });
 
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +43,62 @@ export default function Marketplace() {
   const listings = onlyFavorites
     ? rawListings.filter((l) => favoriteIds.has(l.id))
     : rawListings;
+
+  const jsonLd = useMemo(() => {
+    const url = `https://honsgarden.se${seoPath}`;
+    const graph: Record<string, any>[] = [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#collection`,
+        url,
+        name: categoryPage?.h1 ?? 'Marknad',
+        description: seoDescription,
+        isPartOf: { '@type': 'WebSite', name: 'Hönsgården', url: 'https://honsgarden.se' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Hem', item: 'https://honsgarden.se/' },
+          { '@type': 'ListItem', position: 2, name: 'Marknad', item: 'https://honsgarden.se/marknad' },
+          ...(categoryPage
+            ? [{ '@type': 'ListItem', position: 3, name: categoryPage.h1, item: url }]
+            : []),
+        ],
+      },
+    ];
+    if (rawListings.length) {
+      graph.push({
+        '@type': 'ItemList',
+        name: categoryPage?.h1 ?? 'Aktuella annonser',
+        numberOfItems: Math.min(rawListings.length, 30),
+        itemListElement: rawListings.slice(0, 30).map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: `https://honsgarden.se/marknad/${l.slug}`,
+          name: l.title,
+        })),
+      });
+    }
+    if (categoryPage?.faq?.length) {
+      graph.push({
+        '@type': 'FAQPage',
+        mainEntity: categoryPage.faq.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      });
+    }
+    return graph;
+  }, [seoPath, seoDescription, categoryPage, rawListings]);
+
+  useSeo({
+    title: categoryPage ? pageTitle : 'Marknad – Köp & sälj höns, utrustning & lantliv | Hönsgården',
+    description: seoDescription,
+    path: seoPath,
+    jsonLd,
+  });
+
 
 
   const handleToggleFavorite = (e: MouseEvent, listingId: string) => {
