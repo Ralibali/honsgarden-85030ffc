@@ -210,6 +210,59 @@ export default function MarketplaceMap() {
     },
   });
 
+  const seoPath = ort ? `/karta?ort=${ort.slug}` : "/karta";
+  const seoTitle = ort
+    ? `Köp färska ägg i ${ort.name} – karta | Hönsgården`
+    : "Köp färska ägg nära dig – karta | Hönsgården";
+  const seoDesc = ort
+    ? `Hitta lokala hönsgårdar som säljer färska ägg i ${ort.name}. Se alla aktiva säljare på en karta.`
+    : "Hitta lokala hönsgårdar som säljer färska ägg nära dig. Se alla aktiva säljare på en karta över Sverige.";
+
+  const mapJsonLd = useMemo(() => {
+    const url = `https://honsgarden.se${seoPath}`;
+    const sellers = (listings || []).filter((l) => l.latitude != null && l.longitude != null);
+    const graph: Record<string, any>[] = [
+      {
+        '@type': 'CollectionPage',
+        '@id': `${url}#collection`,
+        url,
+        name: seoTitle,
+        description: seoDesc,
+        isPartOf: { '@type': 'WebSite', name: 'Hönsgården', url: 'https://honsgarden.se' },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Hem', item: 'https://honsgarden.se/' },
+          { '@type': 'ListItem', position: 2, name: 'Karta', item: 'https://honsgarden.se/karta' },
+          ...(ort ? [{ '@type': 'ListItem', position: 3, name: ort.name, item: url }] : []),
+        ],
+      },
+    ];
+    if (sellers.length) {
+      graph.push({
+        '@type': 'ItemList',
+        name: 'Lokala äggförsäljare',
+        numberOfItems: Math.min(sellers.length, 30),
+        itemListElement: sellers.slice(0, 30).map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          item: {
+            '@type': 'LocalBusiness',
+            name: l.title ?? 'Äggförsäljare',
+            url: `https://honsgarden.se/s/${l.slug}`,
+            address: l.location ? { '@type': 'PostalAddress', addressLocality: l.location, addressCountry: 'SE' } : undefined,
+            geo: { '@type': 'GeoCoordinates', latitude: l.latitude, longitude: l.longitude },
+          },
+        })),
+      });
+    }
+    return graph;
+  }, [seoPath, seoTitle, seoDesc, ort, listings]);
+
+  useSeo({ title: seoTitle, description: seoDesc, path: seoPath, jsonLd: mapJsonLd });
+
+
   // Apply ort scope, search, filters, sort
   const displayed = useMemo(() => {
     let list = listings.slice();
