@@ -171,6 +171,20 @@ Deno.serve(async (req) => {
 `;
   }
 
+  // Breed pages /honsraser/:slug
+  for (const slug of HONSRASER_SLUGS) {
+    xml += `  <url>
+    <loc>${BASE_URL}/honsraser/${slug}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/honsraser/${slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/honsraser/${slug}" />
+  </url>
+`;
+  }
+
+
   // Active public egg-sale listings /s/:slug
   if (eggSaleListings) {
     for (const listing of eggSaleListings) {
