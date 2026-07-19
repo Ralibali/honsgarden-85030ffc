@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,41 +150,24 @@ serve(async (req) => {
       return jsonResponse({ intro: null, alerts: [] });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) return jsonResponse({ error: "LOVABLE_API_KEY missing" }, 500);
+    const ai = await callAi({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserPrompt(ctx) },
+      ],
+      tools: [TOOL],
+      toolChoice: { type: "function", function: { name: "give_deviation_alerts" } },
+    });
 
-    let aiResponse: Response;
-    try {
-      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserPrompt(ctx) },
-          ],
-          tools: [TOOL],
-          tool_choice: { type: "function", function: { name: "give_deviation_alerts" } },
-        }),
-      });
-    } catch (err) {
-      console.error("[dashboard-alerts] fetch failed:", err);
-      return jsonResponse({ error: "AI gateway unreachable" }, 502);
-    }
-
-    if (!aiResponse.ok) {
-      const t = await aiResponse.text().catch(() => "");
-      console.error("[dashboard-alerts] AI error:", aiResponse.status, t);
-      if (aiResponse.status === 429) return jsonResponse({ error: "Rate limit" }, 429);
-      if (aiResponse.status === 402) return jsonResponse({ error: "Credits exhausted" }, 402);
+    if (!ai.ok) {
+      console.error("[dashboard-alerts] AI error:", ai.status, ai.error);
+      if (ai.status === 429) return jsonResponse({ error: "Rate limit" }, 429);
+      if (ai.status === 402) return jsonResponse({ error: "Credits exhausted" }, 402);
       return jsonResponse({ error: "AI generation failed" }, 502);
     }
 
-    const data = await aiResponse.json().catch(() => null);
+    const data = ai.raw;
     const argsRaw = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!argsRaw) return jsonResponse({ error: "Empty AI response" }, 502);
 

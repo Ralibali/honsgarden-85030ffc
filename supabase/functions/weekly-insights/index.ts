@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -183,43 +184,26 @@ serve(async (req) => {
     const requestBody = await req.json().catch(() => ({}));
     const weekData = normalizeWeekData(requestBody?.weekData);
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return jsonResponse({ error: "LOVABLE_API_KEY not configured" }, 500);
+    const ai = await callAi({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserPrompt(weekData) },
+      ],
+      tools: [TOOL],
+      toolChoice: { type: "function", function: { name: "weekly_report" } },
+      maxTokens: 900,
+      temperature: 0.4,
+    });
 
-    let aiResponse: Response;
-    try {
-      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: buildUserPrompt(weekData) },
-          ],
-          tools: [TOOL],
-          tool_choice: { type: "function", function: { name: "weekly_report" } },
-          max_tokens: 900,
-          temperature: 0.4,
-        }),
-      });
-    } catch (error) {
-      console.error("[weekly-insights] AI fetch failed:", error);
-      return jsonResponse({ error: "AI gateway unreachable" }, 502);
-    }
-
-    if (!aiResponse.ok) {
-      const responseText = await aiResponse.text().catch(() => "");
-      console.error("[weekly-insights] AI error:", aiResponse.status, responseText.slice(0, 500));
-      if (aiResponse.status === 429) return jsonResponse({ error: "Rate limit, försök igen senare." }, 429);
-      if (aiResponse.status === 402) return jsonResponse({ error: "Krediter slut." }, 402);
+    if (!ai.ok) {
+      console.error("[weekly-insights] AI error:", ai.status, ai.error.slice(0, 500));
+      if (ai.status === 429) return jsonResponse({ error: "Rate limit, försök igen senare." }, 429);
+      if (ai.status === 402) return jsonResponse({ error: "Krediter slut." }, 402);
       return jsonResponse({ error: "AI generation failed" }, 502);
     }
 
-    const data = await aiResponse.json().catch(() => null);
+    const data = ai.raw;
     const toolCall = data?.choices?.[0]?.message?.tool_calls?.[0];
     const argsRaw = toolCall?.function?.arguments;
 

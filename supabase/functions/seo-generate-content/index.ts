@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -47,7 +48,6 @@ async function generateOne(
   adminClient: ReturnType<typeof createClient>,
   type: SeoType,
   id: string,
-  lovableApiKey: string,
   autoPublish = false,
 ) {
   const config = configs[type];
@@ -69,34 +69,29 @@ Krav:
 - faq ska vara array av {question, answer} objekt.
 - JSON-listor ska vara arrays av objekt, inte strängar.`;
 
-  const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: "Du är en svensk SEO-redaktör för Hönsgården med fokus på saklighet, säker djurhållning och tydlig faktakontroll." },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 5000,
-    }),
+  const ai = await callAi({
+    model: "google/gemini-3-flash-preview",
+    messages: [
+      { role: "system", content: "Du är en svensk SEO-redaktör för Hönsgården med fokus på saklighet, säker djurhållning och tydlig faktakontroll." },
+      { role: "user", content: prompt },
+    ],
+    maxTokens: 5000,
   });
 
-  if (!aiResponse.ok) {
+  if (!ai.ok) {
     await adminClient.from(config.table).update({ generation_status: "failed" }).eq("id", id);
-    if (aiResponse.status === 429) throw new Error("Lovable AI rate limit — försök igen senare.");
-    if (aiResponse.status === 402) throw new Error("Lovable AI-krediter är slut.");
+    if (ai.status === 429) throw new Error("AI rate limit — försök igen senare.");
+    if (ai.status === 402) throw new Error("AI-krediter är slut.");
     throw new Error("AI-generering misslyckades");
   }
 
-  const aiData = await aiResponse.json();
-  const generated = parseJsonObject(aiData.choices?.[0]?.message?.content ?? "{}");
+  const generated = parseJsonObject(ai.text || "{}");
   const patch: Record<string, unknown> = Object.fromEntries(
     config.fields.map((field) => [field, generated[field] ?? null]),
   );
   patch.generation_status = "completed";
   patch.last_generated_at = new Date().toISOString();
-  patch.ai_model_used = "google/gemini-3-flash-preview";
+  patch.ai_model_used = `${ai.provider}/${ai.model}`;
   if (autoPublish) patch.published = true;
 
   const { error: updateError } = await adminClient.from(config.table).update(patch).eq("id", id);
@@ -115,9 +110,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
-    if (!lovableApiKey) return jsonResponse({ error: "AI är inte konfigurerat" }, 500);
-
     const isServiceCall = authHeader === `Bearer ${serviceKey}`;
     if (!isServiceCall) {
       const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });
@@ -141,7 +133,7 @@ serve(async (req) => {
         results[type] = { done: 0, failed: 0 };
         for (const row of rows ?? []) {
           try {
-            await generateOne(adminClient, type, row.id, lovableApiKey, autoPublish);
+            await generateOne(adminClient, type, row.id, autoPublish);
             results[type].done += 1;
           } catch (error) {
             results[type].failed += 1;
@@ -153,7 +145,7 @@ serve(async (req) => {
     }
 
     if (!body?.type || !body?.id || !configs[body.type]) return jsonResponse({ error: "Invalid request" }, 400);
-    const result = await generateOne(adminClient, body.type, body.id, lovableApiKey, autoPublish);
+    const result = await generateOne(adminClient, body.type, body.id, autoPublish);
     return jsonResponse({ success: true, ...result });
   } catch (error) {
     console.error("seo-generate-content error", error);

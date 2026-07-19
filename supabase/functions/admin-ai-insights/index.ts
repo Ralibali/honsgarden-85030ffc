@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,17 +53,6 @@ Deno.serve(async (req) => {
 
     const { summary } = await req.json();
 
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableApiKey) {
-      return new Response(
-        JSON.stringify({ error: "AI not configured" }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
     const prompt = `Du är en produktanalytiker för appen "Hönsgården" – en svensk app för hönsägare att logga ägg, hantera hönor, spåra foder och ekonomi.
 
 Analysera följande användardata och ge 5–7 konkreta, prioriterade förbättringsförslag som ägaren kan genomföra. Svara på svenska.
@@ -79,30 +69,19 @@ ${JSON.stringify(summary, null, 2)}
 
 Svara i klartext utan markdown-rubriker. Numrera förslagen. Var specifik och handlingsbar.`;
 
-    const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${lovableApiKey}`,
-          "Content-Type": "application/json",
+    const ai = await callAi({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
         },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            {
-              role: "user",
-              content: prompt,
-            },
-          ],
-          max_tokens: 1500,
-        }),
-      }
-    );
+      ],
+      maxTokens: 1500,
+    });
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error("AI error:", errText);
+    if (!ai.ok) {
+      console.error("AI error:", ai.status, ai.error);
       return new Response(
         JSON.stringify({ error: "AI request failed" }),
         {
@@ -112,9 +91,7 @@ Svara i klartext utan markdown-rubriker. Numrera förslagen. Var specifik och ha
       );
     }
 
-    const aiData = await aiResponse.json();
-    const tips =
-      aiData.choices?.[0]?.message?.content || "Kunde inte generera tips.";
+    const tips = ai.text || "Kunde inte generera tips.";
 
     return new Response(JSON.stringify({ tips }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

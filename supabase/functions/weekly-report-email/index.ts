@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { callAi } from "../_shared/ai.ts";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 const APP_URL = "https://honsgarden.lovable.app/app";
@@ -14,9 +15,8 @@ Deno.serve(async (req) => {
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-  if (!serviceKey || !lovableKey) {
+  if (!serviceKey) {
     console.error("Missing required env vars");
     return new Response(JSON.stringify({ error: "config" }), { status: 500 });
   }
@@ -116,29 +116,17 @@ Deno.serve(async (req) => {
       let aiInsight = "";
       try {
         const season = getSeason(now);
-        const aiRes = await fetch(
-          "https://ai.gateway.lovable.dev/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${lovableKey}`,
-              "Content-Type": "application/json",
+        const ai = await callAi({
+          model: "google/gemini-2.5-flash-lite",
+          messages: [
+            {
+              role: "user",
+              content: `Du är en kunnig hönsgårdsrådgivare. Ge ETT kort, personligt tips (max 40 ord) på svenska baserat på: ${totalEggs} ägg denna vecka, ${henCount} höns, säsong: ${season}. Var uppmuntrande. Svara med bara tipset, inget annat.`,
             },
-            body: JSON.stringify({
-              model: "google/gemini-2.5-flash-lite",
-              messages: [
-                {
-                  role: "user",
-                  content: `Du är en kunnig hönsgårdsrådgivare. Ge ETT kort, personligt tips (max 40 ord) på svenska baserat på: ${totalEggs} ägg denna vecka, ${henCount} höns, säsong: ${season}. Var uppmuntrande. Svara med bara tipset, inget annat.`,
-                },
-              ],
-            }),
-          }
-        );
-        if (aiRes.ok) {
-          const aiData = await aiRes.json();
-          aiInsight =
-            aiData.choices?.[0]?.message?.content?.trim() || "";
+          ],
+        });
+        if (ai.ok) {
+          aiInsight = ai.text.trim();
         }
       } catch {
         // Non-blocking

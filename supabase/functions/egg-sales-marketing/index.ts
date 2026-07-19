@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAi } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -102,36 +103,23 @@ serve(async (req) => {
     if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
 
     const input = await req.json().catch(() => ({}));
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      return jsonResponse({ ...fallback(input), source: "fallback" });
-    }
-
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildPrompt(input) },
-        ],
-        tools: [TOOL],
-        tool_choice: { type: "function", function: { name: "egg_sales_marketing" } },
-      }),
+    const ai = await callAi({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildPrompt(input) },
+      ],
+      tools: [TOOL],
+      toolChoice: { type: "function", function: { name: "egg_sales_marketing" } },
     });
 
-    if (!aiResponse.ok) {
-      const t = await aiResponse.text().catch(() => "");
-      console.error("[egg-sales-marketing] AI error:", aiResponse.status, t);
+    if (!ai.ok) {
+      console.error("[egg-sales-marketing] AI error:", ai.status, ai.error);
       return jsonResponse({ ...fallback(input), source: "fallback" });
     }
 
-    const data = await aiResponse.json().catch(() => null);
+    const data = ai.raw;
     const argsRaw = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     let generated: any = null;
     if (argsRaw) {

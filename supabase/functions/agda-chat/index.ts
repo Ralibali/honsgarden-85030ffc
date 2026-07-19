@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAiStream } from "../_shared/ai.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -401,8 +402,6 @@ ${KNOWLEDGE_BASE}`;
       { role: "user", content: message },
     ];
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return jsonResponse({ error: "AI-nyckel saknas" }, 500);
     const model = "google/gemini-3-flash-preview";
 
     let logId: string | null = null;
@@ -419,35 +418,19 @@ ${KNOWLEDGE_BASE}`;
     if (insertError) return jsonResponse({ error: "Kunde inte registrera AI-användningen" }, 503);
     logId = inserted?.id ?? null;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        max_tokens: 1_000,
-        temperature: 0.5,
-        stream: true,
-        stream_options: { include_usage: true },
-      }),
-    });
+    const ai = await callAiStream({ model, messages, maxTokens: 1_000, temperature: 0.5 });
 
-    if (!aiRes.ok) {
-      const errorText = await aiRes.text().catch(() => "");
+    if (!ai.ok) {
       if (logId) {
         await adminClient.from("agda_chat_logs").update({
-          error: `AI ${aiRes.status}: ${errorText.slice(0, 500)}`,
+          error: `AI ${ai.status}: ${ai.error.slice(0, 500)}`,
           completed_at: new Date().toISOString(),
         }).eq("id", logId);
       }
-      if (aiRes.status === 429) return jsonResponse({ error: "Agda har hög belastning. Försök igen senare." }, 429);
-      if (aiRes.status === 402) return jsonResponse({ error: "AI-krediter slut. Kontakta support." }, 402);
+      if (ai.status === 429) return jsonResponse({ error: "Agda har hög belastning. Försök igen senare." }, 429);
+      if (ai.status === 402) return jsonResponse({ error: "AI-krediter slut. Kontakta support." }, 402);
       return jsonResponse({ error: "AI-tjänsten svarade inte" }, 502);
     }
-    if (!aiRes.body) return jsonResponse({ error: "Tomt AI-svar" }, 502);
 
     let fullText = "";
     let usage: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number } | null = null;
@@ -495,7 +478,7 @@ ${KNOWLEDGE_BASE}`;
       },
     });
 
-    return new Response(aiRes.body.pipeThrough(transform), {
+    return new Response(ai.body.pipeThrough(transform), {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
