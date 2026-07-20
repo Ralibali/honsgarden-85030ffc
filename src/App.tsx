@@ -39,6 +39,7 @@ const Premium = lazyWithRetry(() => import("./pages/Premium"));
 const Community = lazyWithRetry(() => import("./pages/Community"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
+const Shop = lazyWithRetry(() => import("./pages/Shop"));
 const Terms = lazyWithRetry(() => import("./pages/Terms"));
 const Integritet = lazyWithRetry(() => import("./pages/Integritet"));
 const HenProfile = lazyWithRetry(() => import("./pages/HenProfile"));
@@ -222,6 +223,7 @@ const AppRoutes = () => (
           <Route path="premium" element={<Premium />} />
           <Route path="community" element={<Community />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="butik" element={<Shop />} />
           <Route path="hens/:henId" element={<HenProfile />} />
           <Route path="weekly-report" element={<WeeklyReport />} />
           <Route path="year-report" element={<YearReport />} />

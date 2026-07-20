@@ -106,10 +106,39 @@ serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Webbshop: engångsbetalning för en shop-order
+        if (session.mode === "payment" && session.metadata?.shop_order_id) {
+          const { error } = await supabase
+            .from("shop_orders")
+            .update({
+              status: "paid",
+              paid_at: new Date().toISOString(),
+              customer_email: session.customer_details?.email ?? session.customer_email ?? null,
+              amount_total_ore: session.amount_total ?? undefined,
+            })
+            .eq("id", session.metadata.shop_order_id);
+          if (error) console.error("[stripe-webhook] shop order update error:", error.message);
+          else console.log("[stripe-webhook] shop order paid:", session.metadata.shop_order_id);
+          break;
+        }
+
         if (session.mode !== "subscription" || !session.subscription) break;
         const subId = typeof session.subscription === "string" ? session.subscription : session.subscription.id;
         const sub = await stripe.subscriptions.retrieve(subId);
         await syncSubscription(sub);
+        break;
+      }
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.mode === "payment" && session.metadata?.shop_order_id) {
+          const { error } = await supabase
+            .from("shop_orders")
+            .update({ status: "expired" })
+            .eq("id", session.metadata.shop_order_id)
+            .eq("status", "pending");
+          if (error) console.error("[stripe-webhook] shop order expire error:", error.message);
+        }
         break;
       }
       case "customer.subscription.created":

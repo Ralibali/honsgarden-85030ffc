@@ -25,6 +25,7 @@ import {
   Sun,
   Moon,
   PieChart,
+  ShoppingBag,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
@@ -105,7 +106,7 @@ export function MobileNav() {
   }, [user?.id]);
 
   const groups = isAdmin
-    ? [...moreGroups, { label: 'Admin', items: [{ title: 'Admin', url: '/app/admin', icon: Shield }] }]
+    ? [...moreGroups, { label: 'Admin', items: [{ title: 'Butik', url: '/app/butik', icon: ShoppingBag }, { title: 'Admin', url: '/app/admin', icon: Shield }] }]
     : moreGroups;
 
   return (

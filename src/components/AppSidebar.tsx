@@ -3,7 +3,7 @@ import {
   Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe,
   ClipboardCheck, Crown, Shield, Feather, Bot, CalendarDays, Users,
   ReceiptText, Newspaper, CloudSun, Stethoscope, Heart, Boxes, FileText, Tag,
-  ChevronDown, Sun, Moon, PieChart,
+  ChevronDown, Sun, Moon, PieChart, ShoppingBag,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -76,6 +76,7 @@ const groups: NavGroup[] = [
       { titleKey: 'community', url: '/app/community', icon: Users },
       { titleKey: 'premium', url: '/app/premium', icon: Crown },
       { titleKey: 'settings', url: '/app/settings', icon: Settings },
+      { titleKey: 'butik', url: '/app/butik', icon: ShoppingBag, adminOnly: true },
       { titleKey: 'admin', url: '/app/admin', icon: Shield, adminOnly: true },
     ],
   },
