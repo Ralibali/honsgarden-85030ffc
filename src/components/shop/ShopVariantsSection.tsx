@@ -72,12 +72,21 @@ export default function ShopVariantsSection({ productId }: Props) {
       setVariants((prev) => prev.filter((v) => v.id !== id));
       return;
     }
+    // Kolla om varianten refereras i ordrar (snapshot)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: usage } = await (supabase as any).rpc('shop_variant_order_usage', { p_variant_id: id });
+    const usageCount = typeof usage === 'number' ? usage : Number(usage ?? 0);
+    const warn = usageCount > 0
+      ? `Denna variant förekommer i ${usageCount} tidigare ordrar (som ögonblicksbild). Vi rekommenderar att avaktivera varianten istället för att radera – ordrar och historik behålls då. Vill du fortsätta att ta bort raden?`
+      : 'Ta bort variant permanent?';
+    if (!window.confirm(warn)) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from('shop_product_variants').delete().eq('id', id);
     if (error) { toast({ title: 'Kunde inte ta bort variant', description: error.message, variant: 'destructive' }); return; }
     setVariants((prev) => prev.filter((v) => v.id !== id));
     toast({ title: 'Variant borttagen' });
   };
+
 
   const saveAll = async () => {
     setSaving(true);
