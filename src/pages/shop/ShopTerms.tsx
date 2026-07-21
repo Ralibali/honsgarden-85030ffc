@@ -10,26 +10,44 @@ export default function ShopTerms() {
     path: '/butik/villkor',
   });
 
-  const support = settings?.supportEmail?.trim() || 'info@auroramedia.se';
+  const support = settings?.supportEmail?.trim() || '';
   const deliveryText = settings?.deliveryText?.trim() || '';
+  const deliveryMethod = settings?.deliveryMethod?.trim() || '';
   const freeThresholdOre = settings?.freeShippingThresholdOre;
   const shippingOre = settings?.shippingOre;
+  const companyName = settings?.companyName?.trim() || '';
+  const orgNumber = settings?.companyOrgNumber?.trim() || '';
+  const address = settings?.companyAddress?.trim() || '';
+  const returnAddress = settings?.returnAddress?.trim() || '';
+  const publicEnabled = !!settings?.publicEnabled;
+
+  const missing = !companyName || !orgNumber || !address || !support || !deliveryText || !deliveryMethod;
 
   return (
     <div className="min-h-dvh bg-warm-cream/30 py-10 px-4">
       <article className="max-w-2xl mx-auto bg-white border rounded-3xl p-8 shadow-sm prose prose-neutral">
         <h1 className="font-serif">Köpvillkor</h1>
-        <p className="text-sm text-muted-foreground">
-          Dessa villkor gäller för köp i Hönsgården Butiken. Före lansering ska företagsuppgifter
-          nedan fyllas i av administratören.
-        </p>
+
+        {!publicEnabled && missing && (
+          <div className="not-prose rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 mb-4">
+            <strong>Adminförhandsvisning:</strong> följande uppgifter saknas och måste fyllas i innan
+            butiken öppnas: {[
+              !companyName && 'företagsnamn',
+              !orgNumber && 'organisationsnummer',
+              !address && 'postadress',
+              !support && 'support-e-post',
+              !deliveryText && 'leveranstext',
+              !deliveryMethod && 'leveransmetod',
+            ].filter(Boolean).join(', ')}.
+          </div>
+        )}
 
         <h2>Företagsuppgifter</h2>
         <p>
-          Säljare: <em>[Företagsnamn – uppdateras av administratör]</em><br />
-          Organisationsnummer: <em>[org.nr – uppdateras av administratör]</em><br />
-          Adress: <em>[postadress – uppdateras av administratör]</em><br />
-          E-post: <a href={`mailto:${support}`}>{support}</a>
+          Säljare: {companyName || <em>[ej ifyllt]</em>}<br />
+          Organisationsnummer: {orgNumber || <em>[ej ifyllt]</em>}<br />
+          Adress: {address ? <span style={{ whiteSpace: 'pre-line' }}>{address}</span> : <em>[ej ifylld]</em>}<br />
+          E-post: {support ? <a href={`mailto:${support}`}>{support}</a> : <em>[ej ifylld]</em>}
         </p>
 
         <h2>Priser och betalning</h2>
@@ -42,10 +60,9 @@ export default function ShopTerms() {
         {deliveryText ? (
           <p>{deliveryText} Vi skickar för närvarande endast inom Sverige.</p>
         ) : (
-          <p>
-            Leveranstid och fraktbolag anges vid kassan. Vi skickar för närvarande endast inom Sverige.
-          </p>
+          <p>Leveranstid anges vid kassan. Vi skickar för närvarande endast inom Sverige.</p>
         )}
+        {deliveryMethod && <p>Leveransmetod: {deliveryMethod}.</p>}
         {typeof shippingOre === 'number' && typeof freeThresholdOre === 'number' && freeThresholdOre > 0 && (
           <p>
             Standardfrakt: {Math.round(shippingOre / 100)} kr. Vid ordervärde över{' '}
@@ -56,8 +73,8 @@ export default function ShopTerms() {
         <h2>Ångerrätt</h2>
         <p>
           Konsumenter har enligt distansavtalslagen 14 dagars ångerrätt räknat från det att varan
-          mottagits. Ångerrätten är huvudregeln – för att utnyttja den meddelar du oss inom 14 dagar
-          och skickar tillbaka varan i väsentligen oförändrat skick.
+          mottagits. För att utnyttja den meddelar du oss inom 14 dagar och skickar tillbaka varan
+          i väsentligen oförändrat skick.
         </p>
         <p>
           Undantag <em>kan</em> gälla för varor som tillverkats enligt konsumentens anvisningar eller
@@ -65,9 +82,14 @@ export default function ShopTerms() {
           gällande konsumentlagstiftning och framgår tydligt av produktinformationen innan köp.
         </p>
         <p>
-          För att utnyttja ångerrätten – kontakta oss på <a href={`mailto:${support}`}>{support}</a>.
+          För att utnyttja ångerrätten – kontakta oss{support && (<> på <a href={`mailto:${support}`}>{support}</a></>)}.
           Kunden står för returfrakten om inte annat överenskommits.
         </p>
+        {returnAddress && (
+          <p>
+            Returadress: <span style={{ whiteSpace: 'pre-line' }}>{returnAddress}</span>
+          </p>
+        )}
 
         <h2>Reklamation</h2>
         <p>
