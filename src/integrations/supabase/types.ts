@@ -4348,6 +4348,62 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_withdrawal_requests: {
+        Row: {
+          admin_note: string | null
+          confirmation_code: string
+          created_at: string
+          customer_email: string
+          customer_message: string | null
+          id: string
+          order_id: string
+          order_number: string
+          receipt_method: string
+          requested_at: string
+          requested_items: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string | null
+          confirmation_code: string
+          created_at?: string
+          customer_email: string
+          customer_message?: string | null
+          id?: string
+          order_id: string
+          order_number: string
+          receipt_method: string
+          requested_at?: string
+          requested_items: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string | null
+          confirmation_code?: string
+          created_at?: string
+          customer_email?: string
+          customer_message?: string | null
+          id?: string
+          order_id?: string
+          order_number?: string
+          receipt_method?: string
+          requested_at?: string
+          requested_items?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_withdrawal_requests_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "shop_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string

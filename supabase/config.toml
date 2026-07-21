@@ -65,3 +65,9 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.geocode-egg-listings]
     verify_jwt = false
+  [functions.shop-checkout]
+    verify_jwt = false
+  [functions.shop-order-receipt]
+    verify_jwt = false
+  [functions.shop-withdrawal-request]
+    verify_jwt = false

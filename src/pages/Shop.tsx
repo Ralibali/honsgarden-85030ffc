@@ -240,9 +240,8 @@ export default function Shop() {
 
   const saveProduct = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      const slugify = (s: string) =>
-        s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const { normalizeSlug, isValidSlug, SLUG_CONFLICT_ERROR, isSlugUniqueViolation } =
+        await import('@/lib/shop/validation');
       const basePayload = {
         name: values.name,
         description: values.description,
@@ -261,26 +260,31 @@ export default function Shop() {
         stock: values.stock,
         sort_order: values.sort_order,
         active: values.active,
+        is_example: false,
       };
-      const desiredSlug = values.slug ? slugify(values.slug) : slugify(values.name);
-      if (!desiredSlug) throw new Error('URL-slug saknas eller är ogiltig.');
+      const desiredSlug = normalizeSlug(values.slug || values.name);
+      if (!isValidSlug(desiredSlug)) throw new Error('URL-slug saknas eller är ogiltig.');
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: conflict } = await (supabase as any)
         .from('shop_products').select('id').eq('slug', desiredSlug).maybeSingle();
       const slugTaken = conflict && (!editing || conflict.id !== editing.id);
+      if (slugTaken) throw new Error(SLUG_CONFLICT_ERROR);
 
-      if (editing) {
-        if (slugTaken) throw new Error('En annan produkt använder redan denna URL-slug.');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('shop_products')
-          .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
-        if (error) throw error;
-      } else {
-        const finalSlug = slugTaken ? `${desiredSlug}-${Math.random().toString(36).slice(2, 6)}` : desiredSlug;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: finalSlug }]);
-        if (error) throw error;
+      try {
+        if (editing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error } = await (supabase as any).from('shop_products')
+            .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
+          if (error) throw error;
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: desiredSlug }]);
+          if (error) throw error;
+        }
+      } catch (e) {
+        if (isSlugUniqueViolation(e)) throw new Error(SLUG_CONFLICT_ERROR);
+        throw e;
       }
     },
     onSuccess: () => {

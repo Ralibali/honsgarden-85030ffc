@@ -4,7 +4,7 @@ const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Normalisera en fri text till slug-format: gemener, bindestreck, ASCII. */
 export function normalizeSlug(input: string): string {
-  return input
+  return (input || '')
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -22,9 +22,7 @@ export function isValidHttpUrl(url: string): boolean {
   try {
     const u = new URL(url);
     return u.protocol === 'http:' || u.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 /** Rimlig e-post: förenklad men effektiv – matchar samma regex som DB-gaten. */
@@ -59,6 +57,7 @@ export interface LaunchGateInput {
   deliveryText: string;
   deliveryMethod: string;
   termsReviewedAt: string | null;
+  withdrawalEnabled?: boolean;
 }
 export function computeLaunchChecklist(s: LaunchGateInput) {
   return {
@@ -69,6 +68,7 @@ export function computeLaunchChecklist(s: LaunchGateInput) {
     delivery_text: s.deliveryText.trim() !== '',
     delivery_method: s.deliveryMethod.trim() !== '',
     terms_reviewed: !!s.termsReviewedAt,
+    withdrawal_enabled: s.withdrawalEnabled !== false,
   };
 }
 export function isLaunchReady(s: LaunchGateInput): boolean {
@@ -84,4 +84,15 @@ export function findDuplicateSkus(variants: Array<{ sku: string | null }>): stri
     seen.set(s, (seen.get(s) ?? 0) + 1);
   }
   return [...seen.entries()].filter(([, n]) => n > 1).map(([s]) => s);
+}
+
+/** Standardiserat felmeddelande vid slugkonflikt – används både UI-side och service-side. */
+export const SLUG_CONFLICT_ERROR = 'Den webbadressen används redan. Välj en annan URL-slug.';
+
+/** Kontrollera om Postgres-fel motsvarar unique constraint på slug. */
+export function isSlugUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: string; message?: string };
+  const msg = String(e.message ?? '').toLowerCase();
+  return e.code === '23505' && (msg.includes('slug') || msg.includes('shop_products_slug'));
 }
