@@ -348,6 +348,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                       <img src={src} alt="" className="w-full h-full object-cover" />
                       <button type="button"
                         onClick={() => setImages(images.filter((_, j) => j !== i))}
+                        aria-label="Ta bort bild" title="Ta bort bild"
                         className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center">
                         <X className="h-3 w-3" />
                       </button>
