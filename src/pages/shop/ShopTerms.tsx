@@ -10,21 +10,29 @@ export default function ShopTerms() {
     path: '/butik/villkor',
   });
 
-  const support = settings?.supportEmail ?? 'info@auroramedia.se';
+  const support = settings?.supportEmail || 'info@auroramedia.se';
+  const companyName = settings?.companyName?.trim();
+  const orgNr = settings?.companyOrgNumber?.trim();
+  const address = settings?.companyAddress?.trim();
+  const returnAddr = settings?.returnAddress?.trim() || address;
+  const deliveryMethod = settings?.deliveryMethod || 'Postnord';
+  const daysMin = settings?.deliveryDaysMin ?? 1;
+  const daysMax = settings?.deliveryDaysMax ?? 3;
+  const freeShipping = Math.round((settings?.freeShippingThresholdOre ?? 49900) / 100);
 
   return (
     <div className="min-h-dvh bg-warm-cream/30 py-10 px-4">
       <article className="max-w-2xl mx-auto bg-white border rounded-3xl p-8 shadow-sm prose prose-neutral">
         <h1 className="font-serif">Köpvillkor</h1>
         <p className="text-sm text-muted-foreground">
-          Dessa villkor gäller för köp i Hönsgården Butiken. Företagsuppgifter fylls i innan lansering.
+          Dessa villkor gäller för köp i Hönsgården Butiken.
         </p>
 
         <h2>Företagsuppgifter</h2>
         <p>
-          Säljare: <em>[Företagsnamn]</em><br />
-          Organisationsnummer: <em>[org.nr]</em><br />
-          Adress: <em>[postadress]</em><br />
+          Säljare: {companyName || <em>[Företagsnamn saknas – uppdatera i admin]</em>}<br />
+          {orgNr && <>Organisationsnummer: {orgNr}<br /></>}
+          {address && <>Adress: {address}<br /></>}
           E-post: <a href={`mailto:${support}`}>{support}</a>
         </p>
 
@@ -35,8 +43,8 @@ export default function ShopTerms() {
 
         <h2>Leverans</h2>
         <p>
-          Vi packar och skickar din order inom 1–3 arbetsdagar. Standardleverans sker med Postnord inom Sverige.
-          Frakt tillkommer enligt priser på kassasidan; från 499 kr är frakten fri.
+          Vi packar och skickar din order inom {daysMin}–{daysMax} arbetsdagar. Standardleverans sker med {deliveryMethod} inom Sverige.
+          Frakt tillkommer enligt priser på kassasidan; från {freeShipping} kr är frakten fri.
           Vi skickar för närvarande endast inom Sverige.
         </p>
 
@@ -48,7 +56,7 @@ export default function ShopTerms() {
         </p>
         <p>
           För att utnyttja ångerrätten – kontakta oss på <a href={`mailto:${support}`}>{support}</a>.
-          Kunden står för returfrakten om inte annat överenskommits.
+          {returnAddr && <> Returer skickas till: {returnAddr}.</>} Kunden står för returfrakten om inte annat överenskommits.
         </p>
 
         <h2>Reklamation</h2>
