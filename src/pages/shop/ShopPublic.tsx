@@ -38,7 +38,7 @@ export default function ShopPublic() {
 
   useSeo({
     title: 'Hönsgården Butiken – produkter för svenska hönsägare',
-    description: 'Utvalda produkter för dig med höns – kartonger, tillbehör och kläder från Hönsgården. Snabb leverans, säker betalning via Stripe.',
+    description: 'Utvalda produkter för dig med höns – kartonger, tillbehör och kläder från Hönsgården. Säker betalning via Stripe.',
     path: '/butik',
   });
 
