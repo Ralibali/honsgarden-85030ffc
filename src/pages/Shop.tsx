@@ -262,14 +262,22 @@ export default function Shop() {
         sort_order: values.sort_order,
         active: values.active,
       };
-      const slug = values.slug ? slugify(values.slug) : slugify(values.name);
+      const desiredSlug = values.slug ? slugify(values.slug) : slugify(values.name);
+      if (!desiredSlug) throw new Error('URL-slug saknas eller är ogiltig.');
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: conflict } = await (supabase as any)
+        .from('shop_products').select('id').eq('slug', desiredSlug).maybeSingle();
+      const slugTaken = conflict && (!editing || conflict.id !== editing.id);
+
       if (editing) {
+        if (slugTaken) throw new Error('En annan produkt använder redan denna URL-slug.');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any).from('shop_products')
-          .update({ ...basePayload, slug: slug || editing.slug }).eq('id', editing.id);
+          .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
         if (error) throw error;
       } else {
-        const finalSlug = (slug || 'produkt') + '-' + Math.random().toString(36).slice(2, 6);
+        const finalSlug = slugTaken ? `${desiredSlug}-${Math.random().toString(36).slice(2, 6)}` : desiredSlug;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: finalSlug }]);
         if (error) throw error;
@@ -277,9 +285,18 @@ export default function Shop() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shop-products'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-products-public'] });
       toast({ title: editing ? 'Produkten uppdaterad' : 'Produkten tillagd' });
     },
+    onError: (e) => {
+      toast({
+        title: 'Kunde inte spara produkten',
+        description: e instanceof Error ? e.message : String(e),
+        variant: 'destructive',
+      });
+    },
   });
+
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
