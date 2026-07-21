@@ -353,7 +353,7 @@ export default function Shop() {
         }
       />
 
-      <Tabs defaultValue="oversikt" className="space-y-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
         <TabsList className="rounded-xl flex-wrap h-auto">
           <TabsTrigger value="oversikt" className="rounded-lg gap-1.5"><LayoutDashboard className="h-4 w-4" /> Översikt</TabsTrigger>
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
@@ -364,7 +364,7 @@ export default function Shop() {
 
         {/* ---------------- ÖVERSIKT ---------------- */}
         <TabsContent value="oversikt" className="space-y-4 mt-0">
-          <ShopOverview orders={orders} products={products} loading={ordersLoading || productsLoading} />
+          <ShopOverview orders={orders} products={products} variants={variants} loading={ordersLoading || productsLoading} onOpenOrders={() => setActiveTab("ordrar")} onOpenProducts={() => setActiveTab("produkter")} />
         </TabsContent>
 
 
