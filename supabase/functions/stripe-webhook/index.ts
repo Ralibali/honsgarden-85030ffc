@@ -109,17 +109,31 @@ serve(async (req) => {
 
         // Webbshop: engångsbetalning för en shop-order
         if (session.mode === "payment" && session.metadata?.shop_order_id) {
-          const { error } = await supabase
-            .from("shop_orders")
-            .update({
-              status: "paid",
-              paid_at: new Date().toISOString(),
-              customer_email: session.customer_details?.email ?? session.customer_email ?? null,
-              amount_total_ore: session.amount_total ?? undefined,
-            })
-            .eq("id", session.metadata.shop_order_id);
-          if (error) console.error("[stripe-webhook] shop order update error:", error.message);
-          else console.log("[stripe-webhook] shop order paid:", session.metadata.shop_order_id);
+          const shipping = session.shipping_details ?? session.customer_details?.address ? (session.shipping_details ?? { address: session.customer_details?.address, name: session.customer_details?.name }) : null;
+          const shippingAddress = shipping?.address ? {
+            line1: shipping.address.line1 ?? null,
+            line2: shipping.address.line2 ?? null,
+            city: shipping.address.city ?? null,
+            postal_code: shipping.address.postal_code ?? null,
+            state: shipping.address.state ?? null,
+            country: shipping.address.country ?? null,
+          } : null;
+          const paymentIntentId = typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id ?? null;
+
+          // Atomisk finalisering: markerar betalt + drar lager exakt en gång
+          const { error: finalizeErr } = await supabase.rpc("shop_finalize_paid_order", {
+            p_order_id: session.metadata.shop_order_id,
+            p_amount_total_ore: session.amount_total ?? null,
+            p_customer_email: session.customer_details?.email ?? session.customer_email ?? null,
+            p_customer_name: shipping?.name ?? session.customer_details?.name ?? null,
+            p_customer_phone: session.customer_details?.phone ?? null,
+            p_shipping_address: shippingAddress,
+            p_payment_intent_id: paymentIntentId,
+          });
+          if (finalizeErr) console.error("[stripe-webhook] shop finalize error:", finalizeErr.message);
+          else console.log("[stripe-webhook] shop order finalized:", session.metadata.shop_order_id);
           break;
         }
 
@@ -138,6 +152,19 @@ serve(async (req) => {
             .eq("id", session.metadata.shop_order_id)
             .eq("status", "pending");
           if (error) console.error("[stripe-webhook] shop order expire error:", error.message);
+        }
+        break;
+      }
+      case "payment_intent.payment_failed": {
+        const intent = event.data.object as Stripe.PaymentIntent;
+        const orderId = intent.metadata?.shop_order_id;
+        if (orderId) {
+          const reason = intent.last_payment_error?.message ?? "Okänt fel";
+          await supabase
+            .from("shop_orders")
+            .update({ admin_note: `Betalning misslyckades: ${reason}` })
+            .eq("id", orderId)
+            .eq("status", "pending");
         }
         break;
       }

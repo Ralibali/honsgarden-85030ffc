@@ -27,6 +27,7 @@ import {
 import ShopCartSheet from '@/components/shop/ShopCartSheet';
 import ShopProductForm, { type ProductFormValues } from '@/components/shop/ShopProductForm';
 import ShopOrders from '@/components/shop/ShopOrders';
+import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
@@ -224,7 +225,10 @@ export default function Shop() {
 
   const saveProduct = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      const payload = {
+      const slugify = (s: string) =>
+        s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const basePayload = {
         name: values.name,
         description: values.description,
         emoji: values.emoji,
@@ -235,10 +239,11 @@ export default function Shop() {
         active: values.active,
       };
       if (editing) {
-        const { error } = await supabase.from('shop_products').update(payload).eq('id', editing.id);
+        const { error } = await supabase.from('shop_products').update(basePayload).eq('id', editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('shop_products').insert(payload);
+        const slug = slugify(values.name) + '-' + Math.random().toString(36).slice(2, 8);
+        const { error } = await supabase.from('shop_products').insert([{ ...basePayload, slug }]);
         if (error) throw error;
       }
     },
@@ -308,6 +313,7 @@ export default function Shop() {
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
+          <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
         </TabsList>
 
         {/* ---------------- BUTIK ---------------- */}
@@ -504,6 +510,11 @@ export default function Shop() {
             Betalda ordrar markeras automatiskt via din befintliga Stripe-webhook.
           </div>
           <ShopOrders orders={orders} loading={ordersLoading} />
+        </TabsContent>
+
+        {/* ---------------- INSTÄLLNINGAR ---------------- */}
+        <TabsContent value="installningar" className="mt-0">
+          <ShopAdminSettings />
         </TabsContent>
       </Tabs>
 

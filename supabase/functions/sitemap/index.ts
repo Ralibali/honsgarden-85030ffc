@@ -70,6 +70,25 @@ Deno.serve(async (req) => {
     .select("slug, updated_at")
     .eq("status", "active");
 
+  // Publik butik: aktivera bara /butik + produktsidor om butiken är offentlig
+  const { data: shopSettingRow } = await supabase
+    .from("system_settings")
+    .select("value")
+    .eq("key", "shop_public_enabled")
+    .maybeSingle();
+  const rawShopFlag = shopSettingRow?.value;
+  const shopPublicEnabled =
+    rawShopFlag === true ||
+    rawShopFlag === "true" ||
+    (typeof rawShopFlag === "string" && rawShopFlag.replace(/"/g, "") === "true");
+
+  const { data: shopProducts } = shopPublicEnabled
+    ? await supabase
+        .from("shop_products")
+        .select("slug, updated_at")
+        .eq("active", true)
+    : { data: [] as { slug: string | null; updated_at: string | null }[] };
+
   const MARKETPLACE_CATEGORY_SLUGS = ["hons-till-salu", "klackagg", "tillbehor", "honshus"];
 
 
@@ -107,6 +126,7 @@ Deno.serve(async (req) => {
     { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
     { loc: "/marknad", priority: "0.85", changefreq: "daily" },
+    ...(shopPublicEnabled ? [{ loc: "/butik", priority: "0.85", changefreq: "weekly" }] : []),
   ];
 
 
@@ -183,6 +203,24 @@ Deno.serve(async (req) => {
   </url>
 `;
   }
+
+  // Shop products /butik/:slug (endast om butiken är offentlig)
+  if (shopPublicEnabled && shopProducts) {
+    for (const product of shopProducts) {
+      if (!product.slug) continue;
+      const lastmod = (product.updated_at || now).split("T")[0];
+      xml += `  <url>
+    <loc>${BASE_URL}/butik/${product.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/butik/${product.slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/butik/${product.slug}" />
+  </url>
+`;
+    }
+  }
+
 
 
   // Active public egg-sale listings /s/:slug

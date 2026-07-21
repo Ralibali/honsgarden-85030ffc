@@ -86,6 +86,10 @@ const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
+const ShopPublic = lazyWithRetry(() => import("./pages/shop/ShopPublic"));
+const ShopProductPage = lazyWithRetry(() => import("./pages/shop/ShopProductPage"));
+const ShopThankYou = lazyWithRetry(() => import("./pages/shop/ShopThankYou"));
+const ShopTerms = lazyWithRetry(() => import("./pages/shop/ShopTerms"));
 
 
 // Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
@@ -202,6 +206,10 @@ const AppRoutes = () => (
         <Route path="/marknad/ny" element={<MarketplaceNew />} />
         <Route path="/marknad/k/:kategori" element={<Marketplace />} />
         <Route path="/marknad/:slug" element={<MarketplaceDetail />} />
+        <Route path="/butik" element={<ShopPublic />} />
+        <Route path="/butik/tack" element={<ShopThankYou />} />
+        <Route path="/butik/villkor" element={<ShopTerms />} />
+        <Route path="/butik/:slug" element={<ShopProductPage />} />
 
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
