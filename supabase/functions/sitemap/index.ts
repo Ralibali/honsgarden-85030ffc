@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
     { loc: "/marknad", priority: "0.85", changefreq: "daily" },
+    ...(shopPublicEnabled ? [{ loc: "/butik", priority: "0.85", changefreq: "weekly" }] : []),
   ];
 
 
