@@ -227,47 +227,61 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = safeOrigin(req);
 
-    const session = await stripe.checkout.sessions.create({
-      customer_email: userEmail ?? undefined,
-      line_items: lineItems,
-      mode: "payment",
-      allow_promotion_codes: true,
-      phone_number_collection: { enabled: true },
-      shipping_address_collection: { allowed_countries: ["SE"] },
-      shipping_options: shipping > 0
-        ? [{
-            shipping_rate_data: {
-              type: "fixed_amount",
-              fixed_amount: { amount: shipping, currency: "sek" },
-              display_name: "Standardleverans (PostNord)",
-              delivery_estimate: {
-                minimum: { unit: "business_day", value: 1 },
-                maximum: { unit: "business_day", value: 3 },
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        customer_email: userEmail ?? undefined,
+        line_items: lineItems,
+        mode: "payment",
+        allow_promotion_codes: true,
+        phone_number_collection: { enabled: true },
+        shipping_address_collection: { allowed_countries: ["SE"] },
+        shipping_options: shipping > 0
+          ? [{
+              shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: shipping, currency: "sek" },
+                display_name: "Standardleverans (PostNord)",
+                delivery_estimate: {
+                  minimum: { unit: "business_day", value: 1 },
+                  maximum: { unit: "business_day", value: 3 },
+                },
               },
-            },
-          }]
-        : [{
-            shipping_rate_data: {
-              type: "fixed_amount",
-              fixed_amount: { amount: 0, currency: "sek" },
-              display_name: "Fri frakt",
-            },
-          }],
-      metadata: {
-        shop_order_id: order.id,
-        shop_order_number: order.order_number,
-        shop_public_token: order.public_token,
-        ...(userId ? { supabase_user_id: userId } : {}),
-      },
-      payment_intent_data: {
+            }]
+          : [{
+              shipping_rate_data: {
+                type: "fixed_amount",
+                fixed_amount: { amount: 0, currency: "sek" },
+                display_name: "Fri frakt",
+              },
+            }],
         metadata: {
           shop_order_id: order.id,
           shop_order_number: order.order_number,
+          shop_public_token: order.public_token,
+          ...(userId ? { supabase_user_id: userId } : {}),
         },
-      },
-      success_url: `${origin}/butik/tack?token=${encodeURIComponent(order.public_token)}`,
-      cancel_url: `${origin}/butik?canceled=1`,
-    });
+        payment_intent_data: {
+          metadata: {
+            shop_order_id: order.id,
+            shop_order_number: order.order_number,
+          },
+        },
+        success_url: `${origin}/butik/tack?token=${encodeURIComponent(order.public_token)}`,
+        cancel_url: `${origin}/butik?canceled=1`,
+      });
+    } catch (stripeErr) {
+      // Rulla tillbaka den pending order vi hann skapa
+      await supabaseAdmin
+        .from("shop_orders")
+        .update({
+          status: "canceled",
+          admin_note: `Stripe-checkout misslyckades: ${stripeErr instanceof Error ? stripeErr.message : String(stripeErr)}`,
+        })
+        .eq("id", order.id)
+        .eq("status", "pending");
+      throw stripeErr;
+    }
 
     await supabaseAdmin
       .from("shop_orders")
