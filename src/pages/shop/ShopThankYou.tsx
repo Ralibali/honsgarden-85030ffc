@@ -33,7 +33,7 @@ export default function ShopThankYou() {
   useSeo({
     title: 'Tack för din beställning – Hönsgården Butiken',
     description: 'Bekräftelse på din order från Hönsgården Butiken.',
-    canonicalPath: '/butik/tack',
+    path: '/butik/tack',
     noindex: true,
   });
 

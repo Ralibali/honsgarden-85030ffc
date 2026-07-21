@@ -64,7 +64,7 @@ export default function ShopProductPage() {
   useSeo({
     title: product ? `${product.name} – Hönsgården Butiken` : 'Produkt – Hönsgården Butiken',
     description: product?.description || 'Produkter för svenska hönsägare från Hönsgården.',
-    canonicalPath: product ? `/butik/${product.slug}` : '/butik',
+    path: product ? `/butik/${product.slug}` : '/butik',
     ogImage: images[0],
     jsonLd,
   });

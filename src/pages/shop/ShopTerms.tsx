@@ -7,7 +7,7 @@ export default function ShopTerms() {
   useSeo({
     title: 'Köpvillkor – Hönsgården Butiken',
     description: 'Köpvillkor, leverans och returer för Hönsgården Butiken.',
-    canonicalPath: '/butik/villkor',
+    path: '/butik/villkor',
   });
 
   const support = settings?.supportEmail ?? 'info@auroramedia.se';

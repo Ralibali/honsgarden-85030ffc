@@ -39,7 +39,7 @@ export default function ShopPublic() {
   useSeo({
     title: 'Hönsgården Butiken – produkter för svenska hönsägare',
     description: 'Utvalda produkter för dig med höns – kartonger, tillbehör och kläder från Hönsgården. Snabb leverans, säker betalning via Stripe.',
-    canonicalPath: '/butik',
+    path: '/butik',
   });
 
   const categories = useMemo(() => {
@@ -227,7 +227,7 @@ function ClosedSoon({ supportEmail }: { supportEmail: string }) {
   useSeo({
     title: 'Hönsgården Butiken – öppnar snart',
     description: 'Butiken öppnar snart. Kontakta oss om du vill bli meddelad när vi lanserar.',
-    canonicalPath: '/butik',
+    path: '/butik',
     noindex: true,
   });
   return (
