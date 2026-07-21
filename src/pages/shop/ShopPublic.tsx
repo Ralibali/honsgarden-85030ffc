@@ -227,6 +227,7 @@ function ShopFooter({ settings }: { settings?: { supportEmail: string } }) {
         </div>
         <div className="flex gap-4 flex-wrap">
           <Link to="/butik/villkor" className="hover:underline">Köpvillkor</Link>
+          <Link to="/butik/angra" className="hover:underline">Ångra köp</Link>
           <Link to="/integritet" className="hover:underline">Integritet</Link>
           <a href={`mailto:${settings?.supportEmail ?? 'info@auroramedia.se'}`} className="hover:underline">Kontakt</a>
         </div>
