@@ -35,7 +35,10 @@ export function validateShippingDays(min: string | number | null, max: string | 
   { ok: true; min: number | null; max: number | null } | { ok: false; error: string } {
   const parse = (v: string | number | null): number | null | 'invalid' => {
     if (v === null || v === undefined || v === '') return null;
-    const num = typeof v === 'number' ? v : parseInt(String(v).trim(), 10);
+    const s = String(v).trim();
+    if (s === '') return null;
+    if (typeof v === 'string' && !/^\d+$/.test(s)) return 'invalid';
+    const num = typeof v === 'number' ? v : parseInt(s, 10);
     if (!Number.isInteger(num) || num < 0) return 'invalid';
     return num;
   };
