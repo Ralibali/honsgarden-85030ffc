@@ -511,6 +511,11 @@ export default function Shop() {
           </div>
           <ShopOrders orders={orders} loading={ordersLoading} />
         </TabsContent>
+
+        {/* ---------------- INSTÄLLNINGAR ---------------- */}
+        <TabsContent value="installningar" className="mt-0">
+          <ShopAdminSettings />
+        </TabsContent>
       </Tabs>
 
       {/* Varukorgs-knapp */}
