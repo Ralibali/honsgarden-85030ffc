@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { DEMO_USER_PROFILE } from '@/lib/demoData';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
@@ -337,4 +338,23 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
+}
+
+/**
+ * Ger /demo en fiktiv premium-användare utan riktig inloggning,
+ * så att demon kan visa hela produkten med exempeldata.
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
+  const demoValue: AuthContextType = {
+    user: DEMO_USER_PROFILE,
+    loading: false,
+    isAuthenticated: true,
+    login: async () => {},
+    register: async () => ({}),
+    logout: async () => {},
+    refreshSubscription: async () => {},
+    reloadProfile: async () => {},
+  };
+  return <AuthContext.Provider value={demoValue}>{children}</AuthContext.Provider>;
 }
