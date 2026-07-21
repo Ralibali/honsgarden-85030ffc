@@ -4133,6 +4133,218 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_orders: {
+        Row: {
+          admin_note: string | null
+          amount_total_ore: number
+          completed_at: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          discount_ore: number
+          fulfillment_status: string
+          id: string
+          items: Json
+          order_number: string | null
+          paid_at: string | null
+          payment_intent_id: string | null
+          public_token: string | null
+          shipped_at: string | null
+          shipping_address: Json | null
+          shipping_ore: number
+          status: string
+          stock_applied: boolean
+          stripe_session_id: string | null
+          subtotal_ore: number
+          tracking_number: string | null
+          tracking_url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          amount_total_ore?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_ore?: number
+          fulfillment_status?: string
+          id?: string
+          items?: Json
+          order_number?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          public_token?: string | null
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          shipping_ore?: number
+          status?: string
+          stock_applied?: boolean
+          stripe_session_id?: string | null
+          subtotal_ore?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          amount_total_ore?: number
+          completed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          discount_ore?: number
+          fulfillment_status?: string
+          id?: string
+          items?: Json
+          order_number?: string | null
+          paid_at?: string | null
+          payment_intent_id?: string | null
+          public_token?: string | null
+          shipped_at?: string | null
+          shipping_address?: Json | null
+          shipping_ore?: number
+          status?: string
+          stock_applied?: boolean
+          stripe_session_id?: string | null
+          subtotal_ore?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      shop_product_variants: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          options: Json
+          price_override_ore: number | null
+          product_id: string
+          sku: string | null
+          sort_order: number
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          options?: Json
+          price_override_ore?: number | null
+          product_id: string
+          sku?: string | null
+          sort_order?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          options?: Json
+          price_override_ore?: number | null
+          product_id?: string
+          sku?: string | null
+          sort_order?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "shop_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_products: {
+        Row: {
+          active: boolean
+          badge: string | null
+          category: string | null
+          created_at: string
+          description: string
+          emoji: string
+          featured: boolean
+          features: string[]
+          id: string
+          image_url: string | null
+          images: string[]
+          long_description: string | null
+          name: string
+          price_ore: number
+          shipping_days_max: number | null
+          shipping_days_min: number | null
+          slug: string
+          sort_order: number
+          specifications: Json
+          stock: number | null
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          active?: boolean
+          badge?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          emoji?: string
+          featured?: boolean
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          images?: string[]
+          long_description?: string | null
+          name: string
+          price_ore: number
+          shipping_days_max?: number | null
+          shipping_days_min?: number | null
+          slug: string
+          sort_order?: number
+          specifications?: Json
+          stock?: number | null
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          active?: boolean
+          badge?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          emoji?: string
+          featured?: boolean
+          features?: string[]
+          id?: string
+          image_url?: string | null
+          images?: string[]
+          long_description?: string | null
+          name?: string
+          price_ore?: number
+          shipping_days_max?: number | null
+          shipping_days_min?: number | null
+          slug?: string
+          sort_order?: number
+          specifications?: Json
+          stock?: number | null
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -4659,6 +4871,7 @@ export type Database = {
           last_booked_at: string
         }[]
       }
+      get_shop_settings: { Args: never; Returns: Json }
       get_user_farm_ids: { Args: { _uid: string }; Returns: string[] }
       get_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       grant_premium_days: {
@@ -4736,6 +4949,19 @@ export type Database = {
         Args: { _is_lifetime: boolean; _user_id: string }
         Returns: undefined
       }
+      shop_finalize_paid_order: {
+        Args: {
+          p_amount_total_ore?: number
+          p_customer_email?: string
+          p_customer_name?: string
+          p_customer_phone?: string
+          p_order_id: string
+          p_payment_intent_id?: string
+          p_shipping_address?: Json
+        }
+        Returns: Json
+      }
+      shop_public_enabled: { Args: never; Returns: boolean }
       transition_egg_booking_status: {
         Args: { p_booking_id: string; p_new_status: string; p_note?: string }
         Returns: Json
