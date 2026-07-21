@@ -131,7 +131,7 @@ describe('shop slug validation', () => {
   });
   it('slugkonflikt ger ett tydligt svenskt felmeddelande utan random-suffix', () => {
     expect(SLUG_CONFLICT_ERROR).toMatch(/webbadress/i);
-    expect(SLUG_CONFLICT_ERROR).not.toMatch(/[0-9a-f]{4,}/);
+    expect(SLUG_CONFLICT_ERROR).not.toMatch(/-[0-9a-f]{3,}$/);
   });
   it('detekterar unique-constraint på slug', () => {
     expect(isSlugUniqueViolation({ code: '23505', message: 'shop_products_slug_key' })).toBe(true);
