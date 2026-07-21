@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ShoppingBag, Lock, Plus, Pencil, Trash2, Loader2, ShieldCheck,
-  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff,
+  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
