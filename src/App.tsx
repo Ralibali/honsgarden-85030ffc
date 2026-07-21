@@ -86,6 +86,10 @@ const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
+const ShopPublic = lazyWithRetry(() => import("./pages/shop/ShopPublic"));
+const ShopProductPage = lazyWithRetry(() => import("./pages/shop/ShopProductPage"));
+const ShopThankYou = lazyWithRetry(() => import("./pages/shop/ShopThankYou"));
+const ShopTerms = lazyWithRetry(() => import("./pages/shop/ShopTerms"));
 
 
 // Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
