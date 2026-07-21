@@ -278,6 +278,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                     <Badge key={i} variant="secondary" className="gap-1 pr-1">
                       {f}
                       <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
+                        aria-label={`Ta bort fördel ${f}`} title="Ta bort fördel"
                         className="hover:text-destructive"><X className="h-3 w-3" /></button>
                     </Badge>
                   ))}
