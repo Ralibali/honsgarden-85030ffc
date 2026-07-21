@@ -365,7 +365,9 @@ export default function Shop() {
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
+          <TabsTrigger value="anger" className="rounded-lg gap-1.5"><Undo2 className="h-4 w-4" /> Ångerärenden</TabsTrigger>
           <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
+
         </TabsList>
 
         {/* ---------------- ÖVERSIKT ---------------- */}
