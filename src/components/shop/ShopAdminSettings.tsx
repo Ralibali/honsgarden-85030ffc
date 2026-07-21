@@ -43,18 +43,25 @@ export default function ShopAdminSettings() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any).rpc('get_shop_settings').then(({ data }: { data: Record<string, unknown> | null }) => {
-      const raw = data ?? {};
+    (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from('system_settings')
+        .select('key,value')
+        .in('key', [
+          'shop_public_enabled', 'shop_shipping_ore', 'shop_free_shipping_threshold_ore',
+          'shop_support_email', 'shop_delivery_text',
+        ]);
+      const map = new Map<string, unknown>((data ?? []).map((r: { key: string; value: unknown }) => [r.key, r.value]));
       setS({
-        publicEnabled: read(raw['shop_public_enabled'], DEFAULTS.publicEnabled),
-        shippingOre: read(raw['shop_shipping_ore'], DEFAULTS.shippingOre),
-        freeShippingThresholdOre: read(raw['shop_free_shipping_threshold_ore'], DEFAULTS.freeShippingThresholdOre),
-        supportEmail: read(raw['shop_support_email'], DEFAULTS.supportEmail),
-        deliveryText: read(raw['shop_delivery_text'], DEFAULTS.deliveryText),
+        publicEnabled: read(map.get('shop_public_enabled'), DEFAULTS.publicEnabled),
+        shippingOre: read(map.get('shop_shipping_ore'), DEFAULTS.shippingOre),
+        freeShippingThresholdOre: read(map.get('shop_free_shipping_threshold_ore'), DEFAULTS.freeShippingThresholdOre),
+        supportEmail: read(map.get('shop_support_email'), DEFAULTS.supportEmail),
+        deliveryText: read(map.get('shop_delivery_text'), DEFAULTS.deliveryText),
       });
       setLoading(false);
-    });
+    })();
   }, []);
 
   const save = async () => {

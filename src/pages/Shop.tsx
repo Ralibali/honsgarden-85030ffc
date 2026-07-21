@@ -27,6 +27,7 @@ import {
 import ShopCartSheet from '@/components/shop/ShopCartSheet';
 import ShopProductForm, { type ProductFormValues } from '@/components/shop/ShopProductForm';
 import ShopOrders from '@/components/shop/ShopOrders';
+import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
@@ -312,6 +313,7 @@ export default function Shop() {
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
+          <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
         </TabsList>
 
         {/* ---------------- BUTIK ---------------- */}
