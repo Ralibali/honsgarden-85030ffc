@@ -6,7 +6,7 @@ export default function ShopTerms() {
   const { data: settings } = useShopSettings();
   useSeo({
     title: 'Köpvillkor – Hönsgården Butiken',
-    description: 'Köpvillkor, leverans och returer för Hönsgården Butiken.',
+    description: 'Köpvillkor, leverans och ångerrätt för Hönsgården Butiken.',
     path: '/butik/villkor',
   });
 
@@ -70,25 +70,28 @@ export default function ShopTerms() {
           </p>
         )}
 
-        <h2>Ångerrätt</h2>
+        <h2>Ångerrätt (14 dagar)</h2>
         <p>
-          Konsumenter har enligt distansavtalslagen 14 dagars ångerrätt räknat från det att varan
-          mottagits. För att utnyttja den meddelar du oss inom 14 dagar och skickar tillbaka varan
-          i väsentligen oförändrat skick.
+          Konsumenter har enligt distansavtalslagen 14 dagars ångerrätt räknat från det att
+          varan mottagits. För att utnyttja den meddelar du oss inom 14 dagar och skickar
+          tillbaka varan i väsentligen oförändrat skick.
         </p>
         <p>
-          Undantag <em>kan</em> gälla för varor som tillverkats enligt konsumentens anvisningar eller
-          som fått en tydlig personlig prägel. Sådana undantag bedöms i det enskilda fallet enligt
-          gällande konsumentlagstiftning och framgår tydligt av produktinformationen innan köp.
+          Undantag <em>kan</em> gälla för varor som tillverkats enligt konsumentens anvisningar
+          eller som fått en tydlig personlig prägel. Sådana undantag bedöms i det enskilda fallet
+          enligt gällande konsumentlagstiftning och framgår tydligt av produktinformationen innan köp.
         </p>
         <p>
-          För att utnyttja ångerrätten – kontakta oss{support && (<> på <a href={`mailto:${support}`}>{support}</a></>)}.
-          Kunden står för returfrakten om inte annat överenskommits.
+          Det enklaste sättet att meddela ångerrätt är att använda vår digitala ångerfunktion:{' '}
+          <Link to="/butik/angra"><strong>Ångra köp</strong></Link>. Du kan även meddela oss på annat
+          tydligt sätt{support && (<> – exempelvis via <a href={`mailto:${support}`}>{support}</a></>)};
+          det står dig fritt att välja form. Ett mottagningsbevis från formuläret bekräftar att
+          begäran är mottagen men innebär inte att den automatiskt är godkänd eller att
+          återbetalning skett – varje ärende bedöms individuellt.
         </p>
+        <p>Kunden står för returfrakten om inte annat överenskommits.</p>
         {returnAddress && (
-          <p>
-            Returadress: <span style={{ whiteSpace: 'pre-line' }}>{returnAddress}</span>
-          </p>
+          <p>Returadress: <span style={{ whiteSpace: 'pre-line' }}>{returnAddress}</span></p>
         )}
 
         <h2>Reklamation</h2>
@@ -103,9 +106,7 @@ export default function ShopTerms() {
         </p>
 
         <h2>Tvist</h2>
-        <p>
-          Vi följer Allmänna reklamationsnämndens rekommendationer vid tvister.
-        </p>
+        <p>Vi följer Allmänna reklamationsnämndens rekommendationer vid tvister.</p>
 
         <p className="text-sm text-muted-foreground">
           <Link to="/butik">← Tillbaka till butiken</Link>

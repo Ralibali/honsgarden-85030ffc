@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ShoppingBag, Lock, Plus, Pencil, Trash2, Loader2, ShieldCheck,
-  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard,
+  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard, Undo2,
+
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -29,6 +30,7 @@ import ShopProductForm, { type ProductFormValues } from '@/components/shop/ShopP
 import ShopOrders from '@/components/shop/ShopOrders';
 import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
 import ShopOverview from '@/components/shop/ShopOverview';
+import ShopWithdrawalRequests from '@/components/shop/ShopWithdrawalRequests';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
@@ -240,9 +242,8 @@ export default function Shop() {
 
   const saveProduct = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      const slugify = (s: string) =>
-        s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const { normalizeSlug, isValidSlug, SLUG_CONFLICT_ERROR, isSlugUniqueViolation } =
+        await import('@/lib/shop/validation');
       const basePayload = {
         name: values.name,
         description: values.description,
@@ -261,26 +262,31 @@ export default function Shop() {
         stock: values.stock,
         sort_order: values.sort_order,
         active: values.active,
+        is_example: false,
       };
-      const desiredSlug = values.slug ? slugify(values.slug) : slugify(values.name);
-      if (!desiredSlug) throw new Error('URL-slug saknas eller är ogiltig.');
+      const desiredSlug = normalizeSlug(values.slug || values.name);
+      if (!isValidSlug(desiredSlug)) throw new Error('URL-slug saknas eller är ogiltig.');
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: conflict } = await (supabase as any)
         .from('shop_products').select('id').eq('slug', desiredSlug).maybeSingle();
       const slugTaken = conflict && (!editing || conflict.id !== editing.id);
+      if (slugTaken) throw new Error(SLUG_CONFLICT_ERROR);
 
-      if (editing) {
-        if (slugTaken) throw new Error('En annan produkt använder redan denna URL-slug.');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('shop_products')
-          .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
-        if (error) throw error;
-      } else {
-        const finalSlug = slugTaken ? `${desiredSlug}-${Math.random().toString(36).slice(2, 6)}` : desiredSlug;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: finalSlug }]);
-        if (error) throw error;
+      try {
+        if (editing) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error } = await (supabase as any).from('shop_products')
+            .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
+          if (error) throw error;
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: desiredSlug }]);
+          if (error) throw error;
+        }
+      } catch (e) {
+        if (isSlugUniqueViolation(e)) throw new Error(SLUG_CONFLICT_ERROR);
+        throw e;
       }
     },
     onSuccess: () => {
@@ -359,7 +365,9 @@ export default function Shop() {
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
+          <TabsTrigger value="anger" className="rounded-lg gap-1.5"><Undo2 className="h-4 w-4" /> Ångerärenden</TabsTrigger>
           <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
+
         </TabsList>
 
         {/* ---------------- ÖVERSIKT ---------------- */}
@@ -563,6 +571,13 @@ export default function Shop() {
           </div>
           <ShopOrders orders={orders} loading={ordersLoading} />
         </TabsContent>
+
+        {/* ---------------- ÅNGERÄRENDEN ---------------- */}
+        <TabsContent value="anger" className="mt-0">
+          <ShopWithdrawalRequests />
+        </TabsContent>
+
+
 
         {/* ---------------- INSTÄLLNINGAR ---------------- */}
         <TabsContent value="installningar" className="mt-0">

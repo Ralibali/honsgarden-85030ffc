@@ -90,6 +90,7 @@ const ShopPublic = lazyWithRetry(() => import("./pages/shop/ShopPublic"));
 const ShopProductPage = lazyWithRetry(() => import("./pages/shop/ShopProductPage"));
 const ShopThankYou = lazyWithRetry(() => import("./pages/shop/ShopThankYou"));
 const ShopTerms = lazyWithRetry(() => import("./pages/shop/ShopTerms"));
+const ShopWithdrawal = lazyWithRetry(() => import("./pages/shop/ShopWithdrawal"));
 
 
 // Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
@@ -209,7 +210,9 @@ const AppRoutes = () => (
         <Route path="/butik" element={<ShopPublic />} />
         <Route path="/butik/tack" element={<ShopThankYou />} />
         <Route path="/butik/villkor" element={<ShopTerms />} />
+        <Route path="/butik/angra" element={<ShopWithdrawal />} />
         <Route path="/butik/:slug" element={<ShopProductPage />} />
+
 
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />

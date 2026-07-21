@@ -104,7 +104,7 @@ export default function ShopPublic() {
       {/* Trust bar */}
       <section className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-          <TrustItem icon={<Heart className="h-5 w-5 text-primary" aria-hidden />} title="Utvalt för hönsägare" body="Produkter vi själva använder i vardagen – inga fyllnadsartiklar." />
+          <TrustItem icon={<Heart className="h-5 w-5 text-primary" aria-hidden />} title="Utvalt för hönsägare" body="Ett fokuserat sortiment för livet med höns." />
           <TrustItem icon={<ShieldCheck className="h-5 w-5 text-primary" aria-hidden />} title="Säker betalning" body="Kortbetalning via Stripe. Ingen kortinformation lagras hos oss." />
           <TrustItem
             icon={<Truck className="h-5 w-5 text-primary" aria-hidden />}
@@ -227,6 +227,7 @@ function ShopFooter({ settings }: { settings?: { supportEmail: string } }) {
         </div>
         <div className="flex gap-4 flex-wrap">
           <Link to="/butik/villkor" className="hover:underline">Köpvillkor</Link>
+          <Link to="/butik/angra" className="hover:underline">Ångra köp</Link>
           <Link to="/integritet" className="hover:underline">Integritet</Link>
           <a href={`mailto:${settings?.supportEmail ?? 'info@auroramedia.se'}`} className="hover:underline">Kontakt</a>
         </div>
