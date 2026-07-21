@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import type { Tables } from '@/integrations/supabase/types';
 import ShopVariantsSection from './ShopVariantsSection';
+import { normalizeSlug, isValidSlug, isValidHttpUrl, validateShippingDays } from '@/lib/shop/validation';
 
 type ShopProduct = Tables<'shop_products'>;
 
