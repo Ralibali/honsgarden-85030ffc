@@ -280,7 +280,7 @@ export default function ShopAdminSettings() {
             <Input id="dmax" inputMode="numeric" value={dMaxText} placeholder="ej beslutat"
               onChange={(e) => setDMaxText(e.target.value)} /></div>
         </div>
-        {!shipDaysCheck.ok && <p className="text-xs text-destructive">{shipDaysCheck.error}</p>}
+        {shipDaysCheck.ok !== true && <p className="text-xs text-destructive">{shipDaysCheck.error}</p>}
         <div><Label htmlFor="method">Leveransmetod</Label>
           <Input id="method" value={s.deliveryMethod}
             onChange={(e) => setS({ ...s, deliveryMethod: e.target.value })}
