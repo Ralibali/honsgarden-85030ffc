@@ -9,6 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Globe, Loader2, CheckCircle2, AlertTriangle, Building2, Truck, ShieldCheck } from 'lucide-react';
+import {
+  computeLaunchChecklist, isLaunchReady, isValidEmail,
+} from '@/lib/shop/validation';
 
 interface Settings {
   publicEnabled: boolean;
@@ -16,6 +19,7 @@ interface Settings {
   freeShippingThresholdOre: number;
   supportEmail: string;
   deliveryText: string;
+  deliveryMethod: string;
   deliveryDaysMin: number;
   deliveryDaysMax: number;
   companyName: string;
@@ -29,8 +33,9 @@ const DEFAULTS: Settings = {
   publicEnabled: false,
   shippingOre: 5900,
   freeShippingThresholdOre: 49900,
-  supportEmail: 'info@auroramedia.se',
+  supportEmail: '',
   deliveryText: '',
+  deliveryMethod: '',
   deliveryDaysMin: 1,
   deliveryDaysMax: 3,
   companyName: '',
@@ -46,6 +51,7 @@ const KEY_MAP: Record<keyof Settings, string> = {
   freeShippingThresholdOre: 'shop_free_shipping_threshold_ore',
   supportEmail: 'shop_support_email',
   deliveryText: 'shop_delivery_text',
+  deliveryMethod: 'shop_delivery_method',
   deliveryDaysMin: 'shop_delivery_days_min',
   deliveryDaysMax: 'shop_delivery_days_max',
   companyName: 'shop_company_name',
@@ -86,6 +92,7 @@ export default function ShopAdminSettings() {
         freeShippingThresholdOre: read(map.get(KEY_MAP.freeShippingThresholdOre), DEFAULTS.freeShippingThresholdOre),
         supportEmail: read(map.get(KEY_MAP.supportEmail), DEFAULTS.supportEmail),
         deliveryText: read(map.get(KEY_MAP.deliveryText), DEFAULTS.deliveryText),
+        deliveryMethod: read(map.get(KEY_MAP.deliveryMethod), DEFAULTS.deliveryMethod),
         deliveryDaysMin: read(map.get(KEY_MAP.deliveryDaysMin), DEFAULTS.deliveryDaysMin),
         deliveryDaysMax: read(map.get(KEY_MAP.deliveryDaysMax), DEFAULTS.deliveryDaysMax),
         companyName: read(map.get(KEY_MAP.companyName), DEFAULTS.companyName),
@@ -103,15 +110,8 @@ export default function ShopAdminSettings() {
     })();
   }, []);
 
-  const check = {
-    company_name: s.companyName.trim() !== '',
-    org_number: s.companyOrgNumber.trim() !== '',
-    address: s.companyAddress.trim() !== '',
-    support_email: s.supportEmail.trim() !== '',
-    delivery_text: s.deliveryText.trim() !== '',
-    terms_reviewed: !!s.termsReviewedAt,
-  };
-  const readyToLaunch = Object.values(check).every(Boolean);
+  const check = computeLaunchChecklist(s);
+  const readyToLaunch = isLaunchReady(s);
 
   const save = async () => {
     setSaving(true);
@@ -121,6 +121,7 @@ export default function ShopAdminSettings() {
         [KEY_MAP.freeShippingThresholdOre, s.freeShippingThresholdOre],
         [KEY_MAP.supportEmail, s.supportEmail],
         [KEY_MAP.deliveryText, s.deliveryText],
+        [KEY_MAP.deliveryMethod, s.deliveryMethod],
         [KEY_MAP.deliveryDaysMin, s.deliveryDaysMin],
         [KEY_MAP.deliveryDaysMax, s.deliveryDaysMax],
         [KEY_MAP.companyName, s.companyName],
@@ -144,7 +145,7 @@ export default function ShopAdminSettings() {
       if (msg.includes('launch_gate_incomplete')) {
         toast({
           title: 'Butiken kan inte öppnas ännu',
-          description: 'Fyll i företagsuppgifter, leveranstext och markera köpvillkoren som granskade.',
+          description: 'Servern kräver komplett företagsinfo, leveransmetod, leveranstext och granskade köpvillkor.',
           variant: 'destructive',
         });
       } else {
@@ -192,8 +193,9 @@ export default function ShopAdminSettings() {
             ['company_name', 'Företagsnamn ifyllt'],
             ['org_number', 'Organisationsnummer ifyllt'],
             ['address', 'Postadress ifylld'],
-            ['support_email', 'Support-e-post ifylld'],
+            ['support_email', 'Support-e-post ifylld och giltig'],
             ['delivery_text', 'Leveranstext ifylld'],
+            ['delivery_method', 'Leveransmetod ifylld'],
             ['terms_reviewed', 'Köpvillkor granskade'],
           ].map(([k, label]) => (
             <li key={k} className="flex items-center gap-2">
@@ -218,18 +220,18 @@ export default function ShopAdminSettings() {
           <div>
             <Label htmlFor="company_name">Företagsnamn</Label>
             <Input id="company_name" value={s.companyName}
-              onChange={(e) => setS({ ...s, companyName: e.target.value })} placeholder="AB Höns & Ägg" />
+              onChange={(e) => setS({ ...s, companyName: e.target.value })} />
           </div>
           <div>
             <Label htmlFor="org">Organisationsnummer</Label>
             <Input id="org" value={s.companyOrgNumber}
-              onChange={(e) => setS({ ...s, companyOrgNumber: e.target.value })} placeholder="556677-8899" />
+              onChange={(e) => setS({ ...s, companyOrgNumber: e.target.value })} />
           </div>
         </div>
         <div>
           <Label htmlFor="addr">Postadress</Label>
           <Textarea id="addr" rows={2} value={s.companyAddress}
-            onChange={(e) => setS({ ...s, companyAddress: e.target.value })} placeholder="Gatunamn 1, 123 45 Ort" />
+            onChange={(e) => setS({ ...s, companyAddress: e.target.value })} />
         </div>
         <div>
           <Label htmlFor="ret">Returadress (om annan än postadress)</Label>
@@ -271,18 +273,24 @@ export default function ShopAdminSettings() {
           </div>
         </div>
         <div>
+          <Label htmlFor="method">Leveransmetod</Label>
+          <Input id="method" value={s.deliveryMethod}
+            onChange={(e) => setS({ ...s, deliveryMethod: e.target.value })}
+            placeholder="Beskriv hur du skickar (t.ex. valfritt fraktbolag, upphämtning)" />
+        </div>
+        <div>
           <Label htmlFor="delivery">Leveranstext (visas i butiken)</Label>
           <Textarea id="delivery" rows={2} value={s.deliveryText}
             onChange={(e) => setS({ ...s, deliveryText: e.target.value })}
-            placeholder="Beskriv leveranstid och frakt utan att låsa dig vid ett specifikt fraktbolag." />
-          <p className="text-xs text-muted-foreground mt-1">
-            Tips: nämn inte ett specifikt fraktbolag om du kan byta – skriv t.ex. "Skickas inom 1–3 arbetsdagar".
-          </p>
+            placeholder="Beskriv leveransen med dina egna ord." />
         </div>
         <div>
           <Label htmlFor="support">Support-e-post</Label>
           <Input id="support" type="email" value={s.supportEmail}
             onChange={(e) => setS({ ...s, supportEmail: e.target.value })} />
+          {s.supportEmail && !isValidEmail(s.supportEmail) && (
+            <p className="text-xs text-destructive mt-1">Ogiltig e-postadress.</p>
+          )}
         </div>
       </Card>
 
@@ -294,7 +302,7 @@ export default function ShopAdminSettings() {
         </div>
         <p className="text-sm text-muted-foreground">
           Öppna <a className="underline text-primary" href="/butik/villkor" target="_blank" rel="noreferrer">/butik/villkor</a>{' '}
-          och läs igenom att företagsuppgifter, ångerrätt och leveransuppgifter stämmer.
+          och kontrollera att företagsuppgifter, ångerrätt och leveransuppgifter stämmer.
           Bekräfta här när du är klar – det krävs innan butiken kan öppnas.
         </p>
         <div className="flex items-center justify-between rounded-xl border px-3 py-2.5">
