@@ -275,7 +275,7 @@ export default function ShopProductPage() {
         cart={cart}
         setCart={setCart}
         products={allProducts ?? []}
-        settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '' }}
+        settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '', companyName: '', companyOrgNumber: '', companyAddress: '', returnAddress: '', deliveryMethod: 'Postnord', deliveryDaysMin: 1, deliveryDaysMax: 3, termsReviewedAt: null }}
       />
     </div>
   );
