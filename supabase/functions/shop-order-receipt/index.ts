@@ -2,22 +2,45 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS_DEFAULT = [
+  "https://honsgarden.se",
+  "https://www.honsgarden.se",
+  "https://honsgarden.app",
+  "https://www.honsgarden.app",
+  "https://honsgarden.lovable.app",
+];
 
-function json(body: unknown, status = 200) {
+function corsHeadersFor(req: Request): Record<string, string> {
+  const requested = req.headers.get("origin") ?? "";
+  const configured = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? "")
+    .split(",").map((v) => v.trim()).filter(Boolean);
+  const allowed = new Set([...ALLOWED_ORIGINS_DEFAULT, ...configured]);
+  let origin = "https://honsgarden.se";
+  try {
+    const url = new URL(requested);
+    const isLocal = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+    if (allowed.has(url.origin) || isLocal) origin = url.origin;
+  } catch { /* keep default */ }
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+function json(body: unknown, status: number, headers: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...headers, "Content-Type": "application/json" },
   });
 }
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, corsHeaders);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -28,7 +51,7 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const token = typeof body?.token === "string" ? body.token.trim() : "";
-    if (!token || token.length < 20 || token.length > 128) return json({ error: "Ogiltig token" }, 400);
+    if (!token || token.length < 20 || token.length > 128) return json({ error: "Ogiltig token" }, 400, corsHeaders);
 
     const { data: order, error } = await admin
       .from("shop_orders")
@@ -37,9 +60,8 @@ serve(async (req) => {
       .maybeSingle();
 
     if (error) throw error;
-    if (!order) return json({ error: "Order hittades inte" }, 404);
+    if (!order) return json({ error: "Order hittades inte" }, 404, corsHeaders);
 
-    // Maskera e-post lätt (visa bara första + domän) i publikt kvitto
     const maskedEmail = order.customer_email
       ? order.customer_email.replace(/(^.).*(@.*)$/, "$1***$2")
       : null;
@@ -61,10 +83,10 @@ serve(async (req) => {
         tracking_number: order.tracking_number,
         tracking_url: order.tracking_url,
       },
-    });
+    }, 200, corsHeaders);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[shop-order-receipt]", message);
-    return json({ error: "Kunde inte hämta kvitto" }, 500);
+    return json({ error: "Kunde inte hämta kvitto" }, 500, corsHeaders);
   }
 });

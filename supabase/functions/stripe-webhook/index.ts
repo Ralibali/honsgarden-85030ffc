@@ -109,6 +109,7 @@ serve(async (req) => {
 
         // Webbshop: engångsbetalning för en shop-order
         if (session.mode === "payment" && session.metadata?.shop_order_id) {
+          const orderId = session.metadata.shop_order_id;
           const shipping = session.shipping_details ?? session.customer_details?.address ? (session.shipping_details ?? { address: session.customer_details?.address, name: session.customer_details?.name }) : null;
           const shippingAddress = shipping?.address ? {
             line1: shipping.address.line1 ?? null,
@@ -122,10 +123,35 @@ serve(async (req) => {
             ? session.payment_intent
             : session.payment_intent?.id ?? null;
 
-          // Atomisk finalisering: markerar betalt + drar lager exakt en gång
+          // Bekräfta att Stripe-beloppet matchar den order vi skapade – annars flagga och avbryt.
+          const { data: dbOrder } = await supabase
+            .from("shop_orders")
+            .select("id, subtotal_ore, shipping_ore, amount_total_ore, stock_applied, status")
+            .eq("id", orderId)
+            .maybeSingle();
+          if (!dbOrder) {
+            console.error("[stripe-webhook] shop order not found:", orderId);
+            break;
+          }
+          const stripeTotal = session.amount_total ?? 0;
+          const expectedTotal = (dbOrder.subtotal_ore ?? 0) + (dbOrder.shipping_ore ?? 0);
+          // Tillåt liten tolerans nedåt för promokoder, men aldrig uppåt. Blockera stora avvikelser.
+          const tolerance = Math.max(100, Math.round(expectedTotal * 0.05));
+          if (stripeTotal > expectedTotal + tolerance || stripeTotal < expectedTotal - tolerance) {
+            console.error("[stripe-webhook] AMOUNT MISMATCH", { orderId, stripeTotal, expectedTotal });
+            await supabase
+              .from("shop_orders")
+              .update({
+                admin_note: `KRITISKT: Belopp matchar inte. Stripe=${stripeTotal} öre, förväntat ${expectedTotal} öre. Kontrollera manuellt innan uppfyllning.`,
+                fulfillment_status: "processing",
+              })
+              .eq("id", orderId);
+            // Fortsätt ändå men markera – vi vill inte förlora en betald order.
+          }
+
           const { error: finalizeErr } = await supabase.rpc("shop_finalize_paid_order", {
-            p_order_id: session.metadata.shop_order_id,
-            p_amount_total_ore: session.amount_total ?? null,
+            p_order_id: orderId,
+            p_amount_total_ore: stripeTotal,
             p_customer_email: session.customer_details?.email ?? session.customer_email ?? null,
             p_customer_name: shipping?.name ?? session.customer_details?.name ?? null,
             p_customer_phone: session.customer_details?.phone ?? null,
@@ -133,7 +159,7 @@ serve(async (req) => {
             p_payment_intent_id: paymentIntentId,
           });
           if (finalizeErr) console.error("[stripe-webhook] shop finalize error:", finalizeErr.message);
-          else console.log("[stripe-webhook] shop order finalized:", session.metadata.shop_order_id);
+          else console.log("[stripe-webhook] shop order finalized:", orderId);
           break;
         }
 
