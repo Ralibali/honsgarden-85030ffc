@@ -119,7 +119,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
     const shipMinVal = shipMin.trim() === '' ? null : parseInt(shipMin, 10);
     const shipMaxVal = shipMax.trim() === '' ? null : parseInt(shipMax, 10);
     const shipCheck = validateShippingDays(shipMinVal, shipMaxVal);
-    if (!shipCheck.ok) { setError(shipCheck.error ?? 'Ogiltig leveranstid.'); return; }
+    if (shipCheck.ok === false) { setError(shipCheck.error); return; }
     if (imageUrl.trim() && !isValidHttpUrl(imageUrl.trim())) {
       setError('Huvudbildens URL måste börja med http:// eller https://.'); return;
     }
