@@ -290,7 +290,7 @@ export default function ShopProductPage() {
         cart={cart}
         setCart={setCart}
         products={allProducts ?? []}
-        settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '' }}
+        settings={settings ?? DEFAULT_SETTINGS}
         adminPreview={isAdmin && !(settings?.publicEnabled ?? false)}
       />
     </div>
