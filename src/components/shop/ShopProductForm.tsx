@@ -101,17 +101,30 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
     setNewImage(''); setNewFeature('');
   }, [open, product]);
 
-  const autoSlug = useMemo(() => slugify(name), [name]);
+  const autoSlug = useMemo(() => normalizeSlug(name), [name]);
   const effectiveSlug = slugTouched || slug ? slug : autoSlug;
 
   const handleSave = async () => {
     const parsed = parseFloat(priceKr.replace(/\s/g, '').replace(',', '.'));
     if (!name.trim()) { setError('Produkten behöver ett namn.'); return; }
+    const finalSlug = normalizeSlug(effectiveSlug) || normalizeSlug(name);
+    if (!isValidSlug(finalSlug)) {
+      setError('URL-slug måste bara innehålla små bokstäver, siffror och bindestreck.'); return;
+    }
     if (!Number.isFinite(parsed) || parsed < 0.5) { setError('Ange ett pris på minst 0,50 kr.'); return; }
     const stockParsed = stockText.trim() === '' ? null : parseInt(stockText, 10);
     if (stockParsed !== null && (!Number.isInteger(stockParsed) || stockParsed < 0)) {
       setError('Lagersaldo måste vara ett heltal (eller tomt för obegränsat).'); return;
     }
+    const shipMinVal = shipMin.trim() === '' ? null : parseInt(shipMin, 10);
+    const shipMaxVal = shipMax.trim() === '' ? null : parseInt(shipMax, 10);
+    const shipCheck = validateShippingDays(shipMinVal, shipMaxVal);
+    if (!shipCheck.ok) { setError(shipCheck.error); return; }
+    if (imageUrl.trim() && !isValidHttpUrl(imageUrl.trim())) {
+      setError('Huvudbildens URL måste börja med http:// eller https://.'); return;
+    }
+    const badImage = images.find((u) => !isValidHttpUrl(u));
+    if (badImage) { setError('Alla bild-URL:er måste börja med http:// eller https://.'); return; }
     const specsObj: Record<string, string> = {};
     specs.forEach((s) => { if (s.key.trim()) specsObj[s.key.trim()] = s.value; });
 
@@ -120,7 +133,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
     try {
       await onSave({
         name: name.trim(),
-        slug: slugify(effectiveSlug) || slugify(name),
+        slug: finalSlug,
         description: description.trim(),
         long_description: longDescription.trim(),
         emoji,
@@ -131,8 +144,8 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
         category: category.trim(),
         badge: badge.trim(),
         featured,
-        shipping_days_min: shipMin.trim() === '' ? null : parseInt(shipMin, 10),
-        shipping_days_max: shipMax.trim() === '' ? null : parseInt(shipMax, 10),
+        shipping_days_min: shipMinVal,
+        shipping_days_max: shipMaxVal,
         priceOre: Math.round(parsed * 100),
         stock: stockParsed,
         sort_order: parseInt(sortOrder, 10) || 0,
