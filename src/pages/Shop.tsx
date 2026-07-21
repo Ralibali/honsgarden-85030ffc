@@ -572,6 +572,13 @@ export default function Shop() {
           <ShopOrders orders={orders} loading={ordersLoading} />
         </TabsContent>
 
+        {/* ---------------- ÅNGERÄRENDEN ---------------- */}
+        <TabsContent value="anger" className="mt-0">
+          <ShopWithdrawalRequests />
+        </TabsContent>
+
+
+
         {/* ---------------- INSTÄLLNINGAR ---------------- */}
         <TabsContent value="installningar" className="mt-0">
           <ShopAdminSettings />
