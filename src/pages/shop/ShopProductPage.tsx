@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSeo } from '@/hooks/useSeo';
-import { primaryImage, priceForVariant, stockForVariant, useShopProduct, useShopProducts, useShopSettings } from '@/lib/shop/api';
+import { primaryImage, priceForVariant, stockForVariant, useShopProduct, useShopProducts, useShopSettings, DEFAULT_SETTINGS } from '@/lib/shop/api';
 import { addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem } from '@/lib/shopCart';
 import { CartDrawer } from '@/components/shop/public/CartDrawer';
 import { toast } from '@/hooks/use-toast';

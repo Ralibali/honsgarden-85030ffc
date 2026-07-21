@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSeo } from '@/hooks/useSeo';
-import { useShopProducts, useShopSettings, type ShopProduct } from '@/lib/shop/api';
+import { useShopProducts, useShopSettings, DEFAULT_SETTINGS, type ShopProduct } from '@/lib/shop/api';
 import { addToCart, cartCount, loadCart, saveCart, type CartItem } from '@/lib/shopCart';
 import { ProductCard } from '@/components/shop/public/ProductCard';
 import { CartDrawer } from '@/components/shop/public/CartDrawer';
