@@ -46,10 +46,7 @@ interface ShopProductFormProps {
   onSave: (values: ProductFormValues) => Promise<void>;
 }
 
-function slugify(s: string) {
-  return s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+// Slug via delad validation.ts – ingen duplicerad slugify här.
 
 export default function ShopProductForm({ open, onOpenChange, product, onSave }: ShopProductFormProps) {
   const [name, setName] = useState('');
