@@ -180,6 +180,20 @@ export default function Shop() {
     enabled: isAdmin,
   });
 
+  const { data: variants = [] } = useQuery({
+    queryKey: ['shop-variants-all'],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).from('shop_product_variants').select('*');
+      if (error) throw error;
+      return (data ?? []) as Tables<'shop_product_variants'>[];
+    },
+    enabled: isAdmin,
+  });
+
+  const [activeTab, setActiveTab] = useState('oversikt');
+
+
   useEffect(() => { saveCart(cart); }, [cart]);
 
   const kopState = searchParams.get('kop');
