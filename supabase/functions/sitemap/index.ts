@@ -204,6 +204,24 @@ Deno.serve(async (req) => {
 `;
   }
 
+  // Shop products /butik/:slug (endast om butiken är offentlig)
+  if (shopPublicEnabled && shopProducts) {
+    for (const product of shopProducts) {
+      if (!product.slug) continue;
+      const lastmod = (product.updated_at || now).split("T")[0];
+      xml += `  <url>
+    <loc>${BASE_URL}/butik/${product.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="sv" href="${BASE_URL}/butik/${product.slug}" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="${BASE_URL}/butik/${product.slug}" />
+  </url>
+`;
+    }
+  }
+
+
 
   // Active public egg-sale listings /s/:slug
   if (eggSaleListings) {
