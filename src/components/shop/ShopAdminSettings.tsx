@@ -137,7 +137,7 @@ export default function ShopAdminSettings() {
   const readyToLaunch = isLaunchReady(s);
 
   const save = async () => {
-    if (!shipDaysCheck.ok) {
+    if (shipDaysCheck.ok !== true) {
       toast({ title: 'Ogiltiga leveransdagar', description: shipDaysCheck.error, variant: 'destructive' });
       return;
     }
