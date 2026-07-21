@@ -9,6 +9,7 @@ import { primaryImage, priceForVariant, stockForVariant, useShopProduct, useShop
 import { addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem } from '@/lib/shopCart';
 import { CartDrawer } from '@/components/shop/public/CartDrawer';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function ShopProductPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -22,6 +23,20 @@ export default function ShopProductPage() {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user;
+      if (!user) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).rpc('has_role', { _user_id: user.id, _role: 'admin' });
+      if (alive) setIsAdmin(!!data);
+    })();
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => { saveCart(cart); }, [cart]);
   useEffect(() => {
@@ -276,6 +291,7 @@ export default function ShopProductPage() {
         setCart={setCart}
         products={allProducts ?? []}
         settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '' }}
+        adminPreview={isAdmin && !(settings?.publicEnabled ?? false)}
       />
     </div>
   );

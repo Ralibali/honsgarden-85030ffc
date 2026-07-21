@@ -22,7 +22,8 @@ const DEFAULTS: Settings = {
   shippingOre: 5900,
   freeShippingThresholdOre: 49900,
   supportEmail: 'info@auroramedia.se',
-  deliveryText: 'Vi packar din order inom 1–3 arbetsdagar och skickar med Postnord.',
+  // Neutral leveranstext: administratör beskriver leverans själv innan lansering.
+  deliveryText: '',
 };
 
 function read<T>(v: unknown, fb: T): T {

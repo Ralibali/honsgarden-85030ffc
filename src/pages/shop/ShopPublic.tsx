@@ -188,6 +188,7 @@ export default function ShopPublic() {
         setCart={setCart}
         products={products ?? []}
         settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '' }}
+        adminPreview={isAdmin && !publicEnabled}
       />
     </div>
   );

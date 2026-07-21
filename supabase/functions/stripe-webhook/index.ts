@@ -109,7 +109,10 @@ serve(async (req) => {
 
         // Webbshop: engångsbetalning för en shop-order
         if (session.mode === "payment" && session.metadata?.shop_order_id) {
-          const shipping = session.shipping_details ?? session.customer_details?.address ? (session.shipping_details ?? { address: session.customer_details?.address, name: session.customer_details?.name }) : null;
+          const orderId = session.metadata.shop_order_id;
+          const shipping = session.shipping_details ?? session.customer_details?.address
+            ? (session.shipping_details ?? { address: session.customer_details?.address, name: session.customer_details?.name })
+            : null;
           const shippingAddress = shipping?.address ? {
             line1: shipping.address.line1 ?? null,
             line2: shipping.address.line2 ?? null,
@@ -122,18 +125,63 @@ serve(async (req) => {
             ? session.payment_intent
             : session.payment_intent?.id ?? null;
 
-          // Atomisk finalisering: markerar betalt + drar lager exakt en gång
-          const { error: finalizeErr } = await supabase.rpc("shop_finalize_paid_order", {
-            p_order_id: session.metadata.shop_order_id,
-            p_amount_total_ore: session.amount_total ?? null,
+          const stripeTotal = session.amount_total ?? 0;
+          const discountOre = session.total_details?.amount_discount ?? 0;
+
+          // Hämta orderns egna belopp för strikt kontroll.
+          const { data: dbOrder, error: fetchErr } = await supabase
+            .from("shop_orders")
+            .select("id, subtotal_ore, shipping_ore, status, stock_applied")
+            .eq("id", orderId)
+            .maybeSingle();
+          if (fetchErr) {
+            console.error("[stripe-webhook] shop order fetch error:", fetchErr.message);
+            break;
+          }
+          if (!dbOrder) {
+            console.error("[stripe-webhook] shop order not found:", orderId);
+            break;
+          }
+
+          const expectedTotal = (dbOrder.subtotal_ore ?? 0) + (dbOrder.shipping_ore ?? 0) - Math.max(0, discountOre);
+          if (stripeTotal < 0 || expectedTotal < 0 || stripeTotal !== expectedTotal) {
+            console.error("[stripe-webhook] AMOUNT MISMATCH", {
+              orderId, stripeTotal, expectedTotal, discountOre,
+            });
+            await supabase
+              .from("shop_orders")
+              .update({
+                admin_note:
+                  `KRITISKT: Belopp matchar inte. Stripe=${stripeTotal} öre, ` +
+                  `förväntat ${expectedTotal} öre ` +
+                  `(subtotal ${dbOrder.subtotal_ore ?? 0} + frakt ${dbOrder.shipping_ore ?? 0} - rabatt ${discountOre}). ` +
+                  `Order kvar i status pending – hantera manuellt.`,
+              })
+              .eq("id", orderId);
+            break;
+          }
+
+          // Beloppet stämmer – finalisera atomiskt i DB. Kontrollen görs igen där under radlås.
+          const { data: rpcResult, error: finalizeErr } = await supabase.rpc("shop_finalize_paid_order", {
+            p_order_id: orderId,
+            p_amount_total_ore: stripeTotal,
+            p_discount_ore: discountOre,
             p_customer_email: session.customer_details?.email ?? session.customer_email ?? null,
             p_customer_name: shipping?.name ?? session.customer_details?.name ?? null,
             p_customer_phone: session.customer_details?.phone ?? null,
             p_shipping_address: shippingAddress,
             p_payment_intent_id: paymentIntentId,
           });
-          if (finalizeErr) console.error("[stripe-webhook] shop finalize error:", finalizeErr.message);
-          else console.log("[stripe-webhook] shop order finalized:", session.metadata.shop_order_id);
+          if (finalizeErr) {
+            console.error("[stripe-webhook] shop finalize RPC error:", finalizeErr.message);
+            break;
+          }
+          const rpc = (rpcResult ?? {}) as { ok?: boolean; reason?: string };
+          if (!rpc.ok) {
+            console.error("[stripe-webhook] shop finalize refused:", rpc.reason, "order:", orderId);
+            break;
+          }
+          console.log("[stripe-webhook] shop order finalized:", orderId);
           break;
         }
 
