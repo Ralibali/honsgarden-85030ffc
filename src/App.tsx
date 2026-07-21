@@ -206,6 +206,10 @@ const AppRoutes = () => (
         <Route path="/marknad/ny" element={<MarketplaceNew />} />
         <Route path="/marknad/k/:kategori" element={<Marketplace />} />
         <Route path="/marknad/:slug" element={<MarketplaceDetail />} />
+        <Route path="/butik" element={<ShopPublic />} />
+        <Route path="/butik/tack" element={<ShopThankYou />} />
+        <Route path="/butik/villkor" element={<ShopTerms />} />
+        <Route path="/butik/:slug" element={<ShopProductPage />} />
 
         <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<Dashboard />} />
