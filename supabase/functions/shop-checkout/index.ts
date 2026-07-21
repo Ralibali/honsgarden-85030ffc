@@ -97,7 +97,7 @@ serve(async (req) => {
     }
 
     // Publik toggle – blockera om butiken är stängd (om inte admin med preview-flagga).
-    const body = await req.json(, corsHeaders).catch(() => ({}));
+    const body = await req.json().catch(() => ({}));
     const previewMode = !!body?.preview && isAdmin;
     const { data: enabledRow } = await supabaseAdmin.rpc("shop_public_enabled");
     if (!enabledRow && !isAdmin) return json({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
@@ -275,7 +275,7 @@ serve(async (req) => {
       .eq("id", order.id);
 
     if (!session.url) throw new Error("Stripe did not return a checkout URL");
-    return json({ url: session.url, order_id: order.id, order_number: order.order_number }, corsHeaders);
+    return json({ url: session.url, order_id: order.id, order_number: order.order_number }, 200, corsHeaders);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[shop-checkout]", message);
