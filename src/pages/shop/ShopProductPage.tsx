@@ -213,12 +213,18 @@ export default function ShopProductPage() {
           </div>
 
           <div className="mt-6 space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2"><Truck className="h-4 w-4" aria-hidden />{settings?.deliveryText ?? 'Fri frakt från 499 kr.'}</div>
+            {settings?.deliveryText?.trim() && (
+              <div className="flex items-center gap-2"><Truck className="h-4 w-4" aria-hidden />{settings.deliveryText}</div>
+            )}
+            {!settings?.deliveryText?.trim() && settings?.deliveryMethod?.trim() && (
+              <div className="flex items-center gap-2"><Truck className="h-4 w-4" aria-hidden />Leverans via {settings.deliveryMethod}.</div>
+            )}
             <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" aria-hidden />Säker betalning via Stripe.</div>
-            {product.shipping_days_min && product.shipping_days_max && (
+            {product.shipping_days_min !== null && product.shipping_days_max !== null && (
               <div>Beräknad leverans {product.shipping_days_min}–{product.shipping_days_max} arbetsdagar.</div>
             )}
           </div>
+
 
           {product.features.length > 0 && (
             <div className="mt-6">
