@@ -4283,6 +4283,7 @@ export type Database = {
           id: string
           image_url: string | null
           images: string[]
+          is_example: boolean
           long_description: string | null
           name: string
           price_ore: number
@@ -4307,6 +4308,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[]
+          is_example?: boolean
           long_description?: string | null
           name: string
           price_ore: number
@@ -4331,6 +4333,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           images?: string[]
+          is_example?: boolean
           long_description?: string | null
           name?: string
           price_ore?: number
@@ -4949,6 +4952,16 @@ export type Database = {
         Args: { _is_lifetime: boolean; _user_id: string }
         Returns: undefined
       }
+      shop_admin_update_order_fulfillment: {
+        Args: {
+          p_admin_note?: string
+          p_fulfillment_status: string
+          p_order_id: string
+          p_tracking_number?: string
+          p_tracking_url?: string
+        }
+        Returns: Json
+      }
       shop_finalize_paid_order: {
         Args: {
           p_amount_total_ore: number
@@ -4964,6 +4977,10 @@ export type Database = {
       }
       shop_launch_checklist: { Args: never; Returns: Json }
       shop_public_enabled: { Args: never; Returns: boolean }
+      shop_variant_order_usage: {
+        Args: { p_variant_id: string }
+        Returns: number
+      }
       transition_egg_booking_status: {
         Args: { p_booking_id: string; p_new_status: string; p_note?: string }
         Returns: Json

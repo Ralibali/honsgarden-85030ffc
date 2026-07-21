@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSeo } from '@/hooks/useSeo';
-import { useShopProducts, useShopSettings, type ShopProduct } from '@/lib/shop/api';
+import { useShopProducts, useShopSettings, DEFAULT_SETTINGS, type ShopProduct } from '@/lib/shop/api';
 import { addToCart, cartCount, loadCart, saveCart, type CartItem } from '@/lib/shopCart';
 import { ProductCard } from '@/components/shop/public/ProductCard';
 import { CartDrawer } from '@/components/shop/public/CartDrawer';
@@ -91,7 +91,7 @@ export default function ShopPublic() {
             Utvalda produkter för svenska hönsägare
           </h1>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Från äggkartonger med eget tryck till varma kläder för morgonrundan – nogsamt utvalt och testat i vår egen hönsgård.
+            Ett handplockat sortiment för dig med höns i trädgården – från äggkartonger till kläder för morgonrundan.
           </p>
           <div className="mt-6">
             <Button size="lg" asChild>
@@ -104,11 +104,22 @@ export default function ShopPublic() {
       {/* Trust bar */}
       <section className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <TrustItem icon={<Heart className="h-5 w-5 text-primary" aria-hidden />} title="Utvalt för hönsägare" body="Produkter vi själva använder i vardagen – inga fyllnadsartiklar." />
           <TrustItem icon={<ShieldCheck className="h-5 w-5 text-primary" aria-hidden />} title="Säker betalning" body="Kortbetalning via Stripe. Ingen kortinformation lagras hos oss." />
-          <TrustItem icon={<Truck className="h-5 w-5 text-primary" aria-hidden />} title="Snabb leverans" body={settings?.deliveryText ?? 'Vi packar din order inom 1–3 arbetsdagar.'} />
-          <TrustItem icon={<Heart className="h-5 w-5 text-primary" aria-hidden />} title="Personlig support" body={`Kontakta oss på ${settings?.supportEmail ?? 'info@auroramedia.se'} – vi svarar personligen.`} />
+          <TrustItem
+            icon={<Truck className="h-5 w-5 text-primary" aria-hidden />}
+            title="Leveransinformation"
+            body={
+              settings?.deliveryText?.trim()
+                ? settings.deliveryText
+                : settings?.deliveryMethod?.trim()
+                  ? `Leverans via ${settings.deliveryMethod}.`
+                  : 'Leveranssätt och tid visas i kassan.'
+            }
+          />
         </div>
       </section>
+
 
       {/* Filter & products */}
       <section id="produkter" className="max-w-6xl mx-auto px-4 py-10">
@@ -187,7 +198,7 @@ export default function ShopPublic() {
         cart={cart}
         setCart={setCart}
         products={products ?? []}
-        settings={settings ?? { publicEnabled: false, shippingOre: 5900, freeShippingThresholdOre: 49900, supportEmail: '', deliveryText: '' }}
+        settings={settings ?? DEFAULT_SETTINGS}
         adminPreview={isAdmin && !publicEnabled}
       />
     </div>

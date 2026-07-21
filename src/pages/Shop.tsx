@@ -180,6 +180,20 @@ export default function Shop() {
     enabled: isAdmin,
   });
 
+  const { data: variants = [] } = useQuery({
+    queryKey: ['shop-variants-all'],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).from('shop_product_variants').select('*');
+      if (error) throw error;
+      return (data ?? []) as Tables<'shop_product_variants'>[];
+    },
+    enabled: isAdmin,
+  });
+
+  const [activeTab, setActiveTab] = useState('oversikt');
+
+
   useEffect(() => { saveCart(cart); }, [cart]);
 
   const kopState = searchParams.get('kop');
@@ -248,14 +262,22 @@ export default function Shop() {
         sort_order: values.sort_order,
         active: values.active,
       };
-      const slug = values.slug ? slugify(values.slug) : slugify(values.name);
+      const desiredSlug = values.slug ? slugify(values.slug) : slugify(values.name);
+      if (!desiredSlug) throw new Error('URL-slug saknas eller är ogiltig.');
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: conflict } = await (supabase as any)
+        .from('shop_products').select('id').eq('slug', desiredSlug).maybeSingle();
+      const slugTaken = conflict && (!editing || conflict.id !== editing.id);
+
       if (editing) {
+        if (slugTaken) throw new Error('En annan produkt använder redan denna URL-slug.');
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any).from('shop_products')
-          .update({ ...basePayload, slug: slug || editing.slug }).eq('id', editing.id);
+          .update({ ...basePayload, slug: desiredSlug }).eq('id', editing.id);
         if (error) throw error;
       } else {
-        const finalSlug = (slug || 'produkt') + '-' + Math.random().toString(36).slice(2, 6);
+        const finalSlug = slugTaken ? `${desiredSlug}-${Math.random().toString(36).slice(2, 6)}` : desiredSlug;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: finalSlug }]);
         if (error) throw error;
@@ -263,9 +285,18 @@ export default function Shop() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shop-products'] });
+      queryClient.invalidateQueries({ queryKey: ['shop-products-public'] });
       toast({ title: editing ? 'Produkten uppdaterad' : 'Produkten tillagd' });
     },
+    onError: (e) => {
+      toast({
+        title: 'Kunde inte spara produkten',
+        description: e instanceof Error ? e.message : String(e),
+        variant: 'destructive',
+      });
+    },
   });
+
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
@@ -322,7 +353,7 @@ export default function Shop() {
         }
       />
 
-      <Tabs defaultValue="oversikt" className="space-y-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
         <TabsList className="rounded-xl flex-wrap h-auto">
           <TabsTrigger value="oversikt" className="rounded-lg gap-1.5"><LayoutDashboard className="h-4 w-4" /> Översikt</TabsTrigger>
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
@@ -333,7 +364,7 @@ export default function Shop() {
 
         {/* ---------------- ÖVERSIKT ---------------- */}
         <TabsContent value="oversikt" className="space-y-4 mt-0">
-          <ShopOverview orders={orders} products={products} loading={ordersLoading || productsLoading} />
+          <ShopOverview orders={orders} products={products} variants={variants} loading={ordersLoading || productsLoading} onOpenOrders={() => setActiveTab("ordrar")} onOpenProducts={() => setActiveTab("produkter")} />
         </TabsContent>
 
 
