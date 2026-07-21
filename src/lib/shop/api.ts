@@ -29,6 +29,7 @@ export interface ShopProduct {
   badge: string | null;
   category: string | null;
   featured: boolean;
+  is_example: boolean;
   price_ore: number;
   stock: number | null;
   active: boolean;
@@ -42,30 +43,68 @@ export interface ShopSettings extends ShippingSettings {
   publicEnabled: boolean;
   supportEmail: string;
   deliveryText: string;
+  deliveryMethod: string;
+  deliveryDaysMin: number | null;
+  deliveryDaysMax: number | null;
+  companyName: string;
+  companyOrgNumber: string;
+  companyAddress: string;
+  returnAddress: string;
+  termsReviewedAt: string | null;
 }
 
-const DEFAULT_SETTINGS: ShopSettings = {
+export const DEFAULT_SETTINGS: ShopSettings = {
   publicEnabled: false,
   shippingOre: 5900,
   freeShippingThresholdOre: 49900,
-  supportEmail: 'info@auroramedia.se',
-  // Neutralt: ingen låst transportör och inget löfte om exakt leveranstid.
+  supportEmail: '',
   deliveryText: '',
+  deliveryMethod: '',
+  deliveryDaysMin: null,
+  deliveryDaysMax: null,
+  companyName: '',
+  companyOrgNumber: '',
+  companyAddress: '',
+  returnAddress: '',
+  termsReviewedAt: null,
 };
 
-function readSetting<T>(row: unknown, fallback: T): T {
+/** Robust parsning av jsonb-värden från system_settings. */
+export function readSettingString(row: unknown, fallback = ''): string {
   if (row === null || row === undefined) return fallback;
-  if (typeof row === typeof fallback) return row as T;
   if (typeof row === 'string') {
-    // JSONB kan ha strängar med citattecken
-    if ((row.startsWith('"') && row.endsWith('"'))) return row.slice(1, -1) as unknown as T;
-    if (typeof fallback === 'number') {
-      const n = Number(row); return (Number.isFinite(n) ? n : fallback) as unknown as T;
-    }
-    if (typeof fallback === 'boolean') return (row === 'true') as unknown as T;
-    return row as unknown as T;
+    const s = row.trim();
+    if (s === '' || s === 'null') return fallback;
+    if (s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1);
+    return s;
   }
-  return row as T;
+  if (typeof row === 'number' || typeof row === 'boolean') return String(row);
+  return fallback;
+}
+
+export function readSettingBool(row: unknown, fallback = false): boolean {
+  if (row === null || row === undefined) return fallback;
+  if (typeof row === 'boolean') return row;
+  const s = readSettingString(row, '').toLowerCase();
+  if (s === 'true' || s === '1') return true;
+  if (s === 'false' || s === '0') return false;
+  return fallback;
+}
+
+export function readSettingNumber(row: unknown, fallback: number | null): number | null {
+  if (row === null || row === undefined) return fallback;
+  if (typeof row === 'number' && Number.isFinite(row)) return row;
+  const s = readSettingString(row, '');
+  if (s === '' || s === 'null') return fallback;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function readSettingDate(row: unknown): string | null {
+  const s = readSettingString(row, '');
+  if (!s || s === 'null') return null;
+  const d = new Date(s);
+  return Number.isFinite(d.getTime()) ? s : null;
 }
 
 export function useShopSettings() {
@@ -78,11 +117,19 @@ export function useShopSettings() {
       if (error) return DEFAULT_SETTINGS;
       const raw = (data ?? {}) as Record<string, unknown>;
       return {
-        publicEnabled: readSetting(raw['shop_public_enabled'], DEFAULT_SETTINGS.publicEnabled),
-        shippingOre: readSetting(raw['shop_shipping_ore'], DEFAULT_SETTINGS.shippingOre),
-        freeShippingThresholdOre: readSetting(raw['shop_free_shipping_threshold_ore'], DEFAULT_SETTINGS.freeShippingThresholdOre),
-        supportEmail: readSetting(raw['shop_support_email'], DEFAULT_SETTINGS.supportEmail),
-        deliveryText: readSetting(raw['shop_delivery_text'], DEFAULT_SETTINGS.deliveryText),
+        publicEnabled: readSettingBool(raw['shop_public_enabled'], DEFAULT_SETTINGS.publicEnabled),
+        shippingOre: readSettingNumber(raw['shop_shipping_ore'], DEFAULT_SETTINGS.shippingOre) ?? DEFAULT_SETTINGS.shippingOre,
+        freeShippingThresholdOre: readSettingNumber(raw['shop_free_shipping_threshold_ore'], DEFAULT_SETTINGS.freeShippingThresholdOre) ?? DEFAULT_SETTINGS.freeShippingThresholdOre,
+        supportEmail: readSettingString(raw['shop_support_email'], DEFAULT_SETTINGS.supportEmail),
+        deliveryText: readSettingString(raw['shop_delivery_text'], DEFAULT_SETTINGS.deliveryText),
+        deliveryMethod: readSettingString(raw['shop_delivery_method'], DEFAULT_SETTINGS.deliveryMethod),
+        deliveryDaysMin: readSettingNumber(raw['shop_delivery_days_min'], null),
+        deliveryDaysMax: readSettingNumber(raw['shop_delivery_days_max'], null),
+        companyName: readSettingString(raw['shop_company_name'], ''),
+        companyOrgNumber: readSettingString(raw['shop_company_org_number'], ''),
+        companyAddress: readSettingString(raw['shop_company_address'], ''),
+        returnAddress: readSettingString(raw['shop_return_address'], ''),
+        termsReviewedAt: readSettingDate(raw['shop_terms_reviewed_at']),
       };
     },
   });
@@ -104,6 +151,7 @@ function normalizeProduct(p: any, variants: any[] = []): ShopProduct {
     badge: p.badge ?? null,
     category: p.category ?? null,
     featured: !!p.featured,
+    is_example: !!p.is_example,
     price_ore: p.price_ore,
     stock: p.stock,
     active: !!p.active,
