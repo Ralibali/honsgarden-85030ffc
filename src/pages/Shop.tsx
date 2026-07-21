@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ShoppingBag, Lock, Plus, Pencil, Trash2, Loader2, ShieldCheck,
-  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff,
+  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -28,6 +28,7 @@ import ShopCartSheet from '@/components/shop/ShopCartSheet';
 import ShopProductForm, { type ProductFormValues } from '@/components/shop/ShopProductForm';
 import ShopOrders from '@/components/shop/ShopOrders';
 import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
+import ShopOverview from '@/components/shop/ShopOverview';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
@@ -231,19 +232,32 @@ export default function Shop() {
       const basePayload = {
         name: values.name,
         description: values.description,
+        long_description: values.long_description || null,
         emoji: values.emoji,
         image_url: values.image_url || null,
+        images: values.images ?? [],
+        features: values.features ?? [],
+        specifications: values.specifications ?? {},
+        category: values.category || null,
+        badge: values.badge || null,
+        featured: !!values.featured,
+        shipping_days_min: values.shipping_days_min,
+        shipping_days_max: values.shipping_days_max,
         price_ore: values.priceOre,
         stock: values.stock,
         sort_order: values.sort_order,
         active: values.active,
       };
+      const slug = values.slug ? slugify(values.slug) : slugify(values.name);
       if (editing) {
-        const { error } = await supabase.from('shop_products').update(basePayload).eq('id', editing.id);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('shop_products')
+          .update({ ...basePayload, slug: slug || editing.slug }).eq('id', editing.id);
         if (error) throw error;
       } else {
-        const slug = slugify(values.name) + '-' + Math.random().toString(36).slice(2, 8);
-        const { error } = await supabase.from('shop_products').insert([{ ...basePayload, slug }]);
+        const finalSlug = (slug || 'produkt') + '-' + Math.random().toString(36).slice(2, 6);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase as any).from('shop_products').insert([{ ...basePayload, slug: finalSlug }]);
         if (error) throw error;
       }
     },
@@ -308,13 +322,20 @@ export default function Shop() {
         }
       />
 
-      <Tabs defaultValue="butik" className="space-y-5">
-        <TabsList className="rounded-xl">
+      <Tabs defaultValue="oversikt" className="space-y-5">
+        <TabsList className="rounded-xl flex-wrap h-auto">
+          <TabsTrigger value="oversikt" className="rounded-lg gap-1.5"><LayoutDashboard className="h-4 w-4" /> Översikt</TabsTrigger>
           <TabsTrigger value="butik" className="rounded-lg gap-1.5"><ShoppingBag className="h-4 w-4" /> Butik</TabsTrigger>
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
           <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
         </TabsList>
+
+        {/* ---------------- ÖVERSIKT ---------------- */}
+        <TabsContent value="oversikt" className="space-y-4 mt-0">
+          <ShopOverview orders={orders} products={products} loading={ordersLoading || productsLoading} />
+        </TabsContent>
+
 
         {/* ---------------- BUTIK ---------------- */}
         <TabsContent value="butik" className="space-y-6 mt-0">
