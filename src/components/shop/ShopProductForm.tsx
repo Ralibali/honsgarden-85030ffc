@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import type { Tables } from '@/integrations/supabase/types';
 import ShopVariantsSection from './ShopVariantsSection';
+import { normalizeSlug, isValidSlug, isValidHttpUrl, validateShippingDays } from '@/lib/shop/validation';
 
 type ShopProduct = Tables<'shop_products'>;
 
@@ -45,10 +46,7 @@ interface ShopProductFormProps {
   onSave: (values: ProductFormValues) => Promise<void>;
 }
 
-function slugify(s: string) {
-  return s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
+// Slug via delad validation.ts – ingen duplicerad slugify här.
 
 export default function ShopProductForm({ open, onOpenChange, product, onSave }: ShopProductFormProps) {
   const [name, setName] = useState('');
@@ -103,17 +101,30 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
     setNewImage(''); setNewFeature('');
   }, [open, product]);
 
-  const autoSlug = useMemo(() => slugify(name), [name]);
+  const autoSlug = useMemo(() => normalizeSlug(name), [name]);
   const effectiveSlug = slugTouched || slug ? slug : autoSlug;
 
   const handleSave = async () => {
     const parsed = parseFloat(priceKr.replace(/\s/g, '').replace(',', '.'));
     if (!name.trim()) { setError('Produkten behöver ett namn.'); return; }
+    const finalSlug = normalizeSlug(effectiveSlug) || normalizeSlug(name);
+    if (!isValidSlug(finalSlug)) {
+      setError('URL-slug måste bara innehålla små bokstäver, siffror och bindestreck.'); return;
+    }
     if (!Number.isFinite(parsed) || parsed < 0.5) { setError('Ange ett pris på minst 0,50 kr.'); return; }
     const stockParsed = stockText.trim() === '' ? null : parseInt(stockText, 10);
     if (stockParsed !== null && (!Number.isInteger(stockParsed) || stockParsed < 0)) {
       setError('Lagersaldo måste vara ett heltal (eller tomt för obegränsat).'); return;
     }
+    const shipMinVal = shipMin.trim() === '' ? null : parseInt(shipMin, 10);
+    const shipMaxVal = shipMax.trim() === '' ? null : parseInt(shipMax, 10);
+    const shipCheck = validateShippingDays(shipMinVal, shipMaxVal);
+    if (shipCheck.ok === false) { setError(shipCheck.error); return; }
+    if (imageUrl.trim() && !isValidHttpUrl(imageUrl.trim())) {
+      setError('Huvudbildens URL måste börja med http:// eller https://.'); return;
+    }
+    const badImage = images.find((u) => !isValidHttpUrl(u));
+    if (badImage) { setError('Alla bild-URL:er måste börja med http:// eller https://.'); return; }
     const specsObj: Record<string, string> = {};
     specs.forEach((s) => { if (s.key.trim()) specsObj[s.key.trim()] = s.value; });
 
@@ -122,7 +133,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
     try {
       await onSave({
         name: name.trim(),
-        slug: slugify(effectiveSlug) || slugify(name),
+        slug: finalSlug,
         description: description.trim(),
         long_description: longDescription.trim(),
         emoji,
@@ -133,8 +144,8 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
         category: category.trim(),
         badge: badge.trim(),
         featured,
-        shipping_days_min: shipMin.trim() === '' ? null : parseInt(shipMin, 10),
-        shipping_days_max: shipMax.trim() === '' ? null : parseInt(shipMax, 10),
+        shipping_days_min: shipMinVal,
+        shipping_days_max: shipMaxVal,
         priceOre: Math.round(parsed * 100),
         stock: stockParsed,
         sort_order: parseInt(sortOrder, 10) || 0,
@@ -267,6 +278,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                     <Badge key={i} variant="secondary" className="gap-1 pr-1">
                       {f}
                       <button type="button" onClick={() => setFeatures(features.filter((_, j) => j !== i))}
+                        aria-label={`Ta bort fördel ${f}`} title="Ta bort fördel"
                         className="hover:text-destructive"><X className="h-3 w-3" /></button>
                     </Badge>
                   ))}
@@ -282,6 +294,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                   <Input value={sp.value} onChange={(e) => setSpecs(specs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
                     placeholder="100% ekologisk bomull" className="rounded-xl" />
                   <Button type="button" variant="ghost" size="icon" className="rounded-xl"
+                    aria-label="Ta bort specifikation" title="Ta bort specifikation"
                     onClick={() => setSpecs(specs.filter((_, j) => j !== i))}>
                     <X className="h-4 w-4" />
                   </Button>
@@ -335,6 +348,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                       <img src={src} alt="" className="w-full h-full object-cover" />
                       <button type="button"
                         onClick={() => setImages(images.filter((_, j) => j !== i))}
+                        aria-label="Ta bort bild" title="Ta bort bild"
                         className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center">
                         <X className="h-3 w-3" />
                       </button>

@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card } from '@/components/ui/card';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Loader2, Layers } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { findDuplicateSkus } from '@/lib/shop/validation';
 
 interface Variant {
   id: string;
@@ -21,14 +26,17 @@ interface Variant {
 }
 
 interface Props {
-  productId: string | null; // null = ny produkt, dölj varianter tills sparad
+  productId: string | null;
+  basePriceOre?: number | null;
 }
 
-/** Enkel CRUD för varianter (t.ex. storlek/färg) direkt kopplat till en produkt. */
-export default function ShopVariantsSection({ productId }: Props) {
+export default function ShopVariantsSection({ productId, basePriceOre = null }: Props) {
   const [variants, setVariants] = useState<Variant[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmState, setConfirmState] = useState<
+    { id: string; usageCount: number } | null
+  >(null);
 
   useEffect(() => {
     if (!productId) { setVariants([]); return; }
@@ -41,6 +49,8 @@ export default function ShopVariantsSection({ productId }: Props) {
       setLoading(false);
     })();
   }, [productId]);
+
+  const duplicateSkus = useMemo(() => findDuplicateSkus(variants), [variants]);
 
   if (!productId) {
     return (
@@ -67,19 +77,21 @@ export default function ShopVariantsSection({ productId }: Props) {
   const update = (id: string, patch: Partial<Variant>) =>
     setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
 
-  const remove = async (id: string) => {
+  const requestRemove = async (id: string) => {
     if (id.startsWith('new-')) {
       setVariants((prev) => prev.filter((v) => v.id !== id));
       return;
     }
-    // Kolla om varianten refereras i ordrar (snapshot)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: usage } = await (supabase as any).rpc('shop_variant_order_usage', { p_variant_id: id });
     const usageCount = typeof usage === 'number' ? usage : Number(usage ?? 0);
-    const warn = usageCount > 0
-      ? `Denna variant förekommer i ${usageCount} tidigare ordrar (som ögonblicksbild). Vi rekommenderar att avaktivera varianten istället för att radera – ordrar och historik behålls då. Vill du fortsätta att ta bort raden?`
-      : 'Ta bort variant permanent?';
-    if (!window.confirm(warn)) return;
+    setConfirmState({ id, usageCount });
+  };
+
+  const confirmRemove = async () => {
+    if (!confirmState) return;
+    const id = confirmState.id;
+    setConfirmState(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from('shop_product_variants').delete().eq('id', id);
     if (error) { toast({ title: 'Kunde inte ta bort variant', description: error.message, variant: 'destructive' }); return; }
@@ -87,12 +99,38 @@ export default function ShopVariantsSection({ productId }: Props) {
     toast({ title: 'Variant borttagen' });
   };
 
-
   const saveAll = async () => {
+    // Validering före save
+    for (const v of variants) {
+      if (!v.name.trim()) {
+        toast({ title: 'Namn saknas', description: 'Alla varianter måste ha ett namn.', variant: 'destructive' });
+        return;
+      }
+      if (v.price_override_ore !== null && v.price_override_ore < 0) {
+        toast({ title: 'Ogiltigt pris', description: 'Prisöverskrivning får inte vara negativ.', variant: 'destructive' });
+        return;
+      }
+      if (v.stock !== null && v.stock < 0) {
+        toast({ title: 'Ogiltigt lager', description: 'Lager får inte vara negativt.', variant: 'destructive' });
+        return;
+      }
+      if (v.options) {
+        for (const [k, val] of Object.entries(v.options)) {
+          if (!k.trim() || !String(val).trim()) {
+            toast({ title: 'Ofullständigt alternativ', description: 'Både nyckel och värde krävs.', variant: 'destructive' });
+            return;
+          }
+        }
+      }
+    }
+    if (duplicateSkus.length > 0) {
+      toast({ title: 'Dubbletter av SKU', description: `Följande används flera gånger: ${duplicateSkus.join(', ')}`, variant: 'destructive' });
+      return;
+    }
+
     setSaving(true);
     try {
       for (const v of variants) {
-        if (!v.name.trim()) continue;
         const payload = {
           product_id: productId,
           name: v.name.trim(),
@@ -114,7 +152,6 @@ export default function ShopVariantsSection({ productId }: Props) {
         }
       }
       toast({ title: 'Varianter sparade' });
-      // reload
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('shop_product_variants').select('*').eq('product_id', productId).order('sort_order');
@@ -126,6 +163,12 @@ export default function ShopVariantsSection({ productId }: Props) {
     }
   };
 
+  const effectivePrice = (v: Variant): string => {
+    const ore = v.price_override_ore ?? basePriceOre ?? null;
+    if (ore == null) return '—';
+    return `${(ore / 100).toFixed(2).replace('.', ',')} kr`;
+  };
+
   return (
     <Card className="p-4 rounded-2xl space-y-3">
       <div className="flex items-center justify-between">
@@ -134,10 +177,16 @@ export default function ShopVariantsSection({ productId }: Props) {
           <p className="font-medium">Varianter</p>
           <span className="text-xs text-muted-foreground">({variants.length})</span>
         </div>
-        <Button size="sm" variant="outline" className="rounded-xl" onClick={addRow}>
+        <Button size="sm" variant="outline" className="rounded-xl" onClick={addRow} aria-label="Lägg till ny variant">
           <Plus className="h-4 w-4 mr-1" /> Ny variant
         </Button>
       </div>
+
+      {duplicateSkus.length > 0 && (
+        <p className="text-xs text-destructive" role="alert">
+          Dubbletter av SKU: {duplicateSkus.join(', ')}
+        </p>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Laddar…</p>
@@ -149,17 +198,18 @@ export default function ShopVariantsSection({ productId }: Props) {
             <div key={v.id} className="rounded-xl border p-3 space-y-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-xs">Namn</Label>
-                  <Input value={v.name} onChange={(e) => update(v.id, { name: e.target.value })} placeholder="T.ex. Storlek M" />
+                  <Label className="text-xs" htmlFor={`v-name-${v.id}`}>Namn</Label>
+                  <Input id={`v-name-${v.id}`} value={v.name} onChange={(e) => update(v.id, { name: e.target.value })} placeholder="T.ex. Storlek M" />
                 </div>
                 <div>
-                  <Label className="text-xs">SKU</Label>
-                  <Input value={v.sku ?? ''} onChange={(e) => update(v.id, { sku: e.target.value })} placeholder="TSHIRT-M" />
+                  <Label className="text-xs" htmlFor={`v-sku-${v.id}`}>SKU</Label>
+                  <Input id={`v-sku-${v.id}`} value={v.sku ?? ''} onChange={(e) => update(v.id, { sku: e.target.value })} placeholder="TSHIRT-M" />
                 </div>
               </div>
               <div>
-                <Label className="text-xs">Alternativ (nyckel=värde, kommaseparerat)</Label>
+                <Label className="text-xs" htmlFor={`v-opts-${v.id}`}>Alternativ (nyckel=värde, kommaseparerat)</Label>
                 <Input
+                  id={`v-opts-${v.id}`}
                   value={v.options ? Object.entries(v.options).map(([k, val]) => `${k}=${val}`).join(', ') : ''}
                   onChange={(e) => {
                     const opts: Record<string, string> = {};
@@ -174,8 +224,9 @@ export default function ShopVariantsSection({ productId }: Props) {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <Label className="text-xs">Pris (kr, tomt = ärver)</Label>
+                  <Label className="text-xs" htmlFor={`v-price-${v.id}`}>Pris (kr, tomt = ärver)</Label>
                   <Input
+                    id={`v-price-${v.id}`}
                     inputMode="decimal"
                     value={v.price_override_ore !== null ? (v.price_override_ore / 100).toString() : ''}
                     onChange={(e) => {
@@ -187,8 +238,9 @@ export default function ShopVariantsSection({ productId }: Props) {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Lager</Label>
+                  <Label className="text-xs" htmlFor={`v-stock-${v.id}`}>Lager</Label>
                   <Input
+                    id={`v-stock-${v.id}`}
                     inputMode="numeric"
                     value={v.stock === null ? '' : String(v.stock)}
                     onChange={(e) => {
@@ -199,8 +251,9 @@ export default function ShopVariantsSection({ productId }: Props) {
                   />
                 </div>
                 <div>
-                  <Label className="text-xs">Sortering</Label>
+                  <Label className="text-xs" htmlFor={`v-sort-${v.id}`}>Sortering</Label>
                   <Input
+                    id={`v-sort-${v.id}`}
                     inputMode="numeric"
                     value={String(v.sort_order)}
                     onChange={(e) => update(v.id, { sort_order: parseInt(e.target.value, 10) || 0 })}
@@ -212,7 +265,14 @@ export default function ShopVariantsSection({ productId }: Props) {
                   <Switch checked={v.active} onCheckedChange={(a) => update(v.id, { active: a })} />
                   Aktiv
                 </label>
-                <Button size="sm" variant="ghost" onClick={() => remove(v.id)} className="text-muted-foreground hover:text-destructive">
+                <p className="text-xs text-muted-foreground">Effektivt pris: {effectivePrice(v)}</p>
+                <Button
+                  size="sm" variant="ghost"
+                  onClick={() => requestRemove(v.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={`Ta bort variant ${v.name || 'utan namn'}`}
+                  title="Ta bort variant"
+                >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -227,6 +287,25 @@ export default function ShopVariantsSection({ productId }: Props) {
           Spara varianter
         </Button>
       </div>
+
+      <AlertDialog open={confirmState !== null} onOpenChange={(o) => !o && setConfirmState(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ta bort variant?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmState && confirmState.usageCount > 0
+                ? `Denna variant förekommer i ${confirmState.usageCount} tidigare ordrar (som ögonblicksbild). Vi rekommenderar att avaktivera varianten istället för att radera – ordrar och historik behålls då. Vill du fortsätta ta bort raden?`
+                : 'Ta bort variant permanent?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive hover:bg-destructive/90">
+              Ta bort
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
