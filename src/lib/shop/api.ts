@@ -42,14 +42,6 @@ export interface ShopSettings extends ShippingSettings {
   publicEnabled: boolean;
   supportEmail: string;
   deliveryText: string;
-  companyName: string;
-  companyOrgNumber: string;
-  companyAddress: string;
-  returnAddress: string;
-  deliveryMethod: string;
-  deliveryDaysMin: number;
-  deliveryDaysMax: number;
-  termsReviewedAt: string | null;
 }
 
 const DEFAULT_SETTINGS: ShopSettings = {
@@ -57,21 +49,15 @@ const DEFAULT_SETTINGS: ShopSettings = {
   shippingOre: 5900,
   freeShippingThresholdOre: 49900,
   supportEmail: 'info@auroramedia.se',
-  deliveryText: 'Vi packar din order inom 1–3 arbetsdagar och skickar med Postnord.',
-  companyName: '',
-  companyOrgNumber: '',
-  companyAddress: '',
-  returnAddress: '',
-  deliveryMethod: 'Postnord',
-  deliveryDaysMin: 1,
-  deliveryDaysMax: 3,
-  termsReviewedAt: null,
+  // Neutralt: ingen låst transportör och inget löfte om exakt leveranstid.
+  deliveryText: '',
 };
 
 function readSetting<T>(row: unknown, fallback: T): T {
   if (row === null || row === undefined) return fallback;
   if (typeof row === typeof fallback) return row as T;
   if (typeof row === 'string') {
+    // JSONB kan ha strängar med citattecken
     if ((row.startsWith('"') && row.endsWith('"'))) return row.slice(1, -1) as unknown as T;
     if (typeof fallback === 'number') {
       const n = Number(row); return (Number.isFinite(n) ? n : fallback) as unknown as T;
@@ -91,24 +77,12 @@ export function useShopSettings() {
       const { data, error } = await (supabase as any).rpc('get_shop_settings');
       if (error) return DEFAULT_SETTINGS;
       const raw = (data ?? {}) as Record<string, unknown>;
-      const termsRaw = raw['shop_terms_reviewed_at'];
-      const termsReviewedAt = typeof termsRaw === 'string'
-        ? termsRaw.replace(/^"|"$/g, '') || null
-        : (termsRaw ? String(termsRaw) : null);
       return {
         publicEnabled: readSetting(raw['shop_public_enabled'], DEFAULT_SETTINGS.publicEnabled),
         shippingOre: readSetting(raw['shop_shipping_ore'], DEFAULT_SETTINGS.shippingOre),
         freeShippingThresholdOre: readSetting(raw['shop_free_shipping_threshold_ore'], DEFAULT_SETTINGS.freeShippingThresholdOre),
         supportEmail: readSetting(raw['shop_support_email'], DEFAULT_SETTINGS.supportEmail),
         deliveryText: readSetting(raw['shop_delivery_text'], DEFAULT_SETTINGS.deliveryText),
-        companyName: readSetting(raw['shop_company_name'], DEFAULT_SETTINGS.companyName),
-        companyOrgNumber: readSetting(raw['shop_company_org_number'], DEFAULT_SETTINGS.companyOrgNumber),
-        companyAddress: readSetting(raw['shop_company_address'], DEFAULT_SETTINGS.companyAddress),
-        returnAddress: readSetting(raw['shop_return_address'], DEFAULT_SETTINGS.returnAddress),
-        deliveryMethod: readSetting(raw['shop_delivery_method'], DEFAULT_SETTINGS.deliveryMethod),
-        deliveryDaysMin: readSetting(raw['shop_delivery_days_min'], DEFAULT_SETTINGS.deliveryDaysMin),
-        deliveryDaysMax: readSetting(raw['shop_delivery_days_max'], DEFAULT_SETTINGS.deliveryDaysMax),
-        termsReviewedAt,
       };
     },
   });

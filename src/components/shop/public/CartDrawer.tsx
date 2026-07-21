@@ -19,9 +19,11 @@ interface Props {
   setCart: (updater: (prev: CartItem[]) => CartItem[]) => void;
   products: ShopProduct[];
   settings: ShopSettings;
+  /** Sätts av ShopPublic när admin förhandsvisar butiken trots att den inte är publik. */
+  adminPreview?: boolean;
 }
 
-export function CartDrawer({ open, onOpenChange, cart, setCart, products, settings }: Props) {
+export function CartDrawer({ open, onOpenChange, cart, setCart, products, settings, adminPreview = false }: Props) {
   const [loading, setLoading] = useState(false);
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
@@ -53,6 +55,7 @@ export function CartDrawer({ open, onOpenChange, cart, setCart, products, settin
             variant_id: it.variant_id ?? null,
             quantity: it.quantity,
           })),
+          preview: adminPreview,
         },
       });
       if (error) throw error;

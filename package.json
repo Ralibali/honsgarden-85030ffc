@@ -9,6 +9,7 @@
     "build": "vite build && node scripts/prerender-blog-posts.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

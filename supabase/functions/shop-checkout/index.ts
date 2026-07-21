@@ -3,59 +3,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-
-const ALLOWED_ORIGINS_DEFAULT = [
-  "https://honsgarden.se",
-  "https://www.honsgarden.se",
-  "https://honsgarden.app",
-  "https://www.honsgarden.app",
-  "https://honsgarden.lovable.app",
-];
-
-function allowedOriginsSet(): Set<string> {
-  const configured = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? "")
-    .split(",").map((v) => v.trim()).filter(Boolean);
-  return new Set([...ALLOWED_ORIGINS_DEFAULT, ...configured]);
-}
-
-function corsHeadersFor(req: Request): Record<string, string> {
-  const requested = req.headers.get("origin") ?? "";
-  const allowed = allowedOriginsSet();
-  let origin = "https://honsgarden.se";
-  try {
-    const url = new URL(requested);
-    const isLocal = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
-    if (allowed.has(url.origin) || isLocal) origin = url.origin;
-  } catch { /* keep default */ }
-  return {
-    "Access-Control-Allow-Origin": origin,
-    "Vary": "Origin",
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-  };
-}
-
-function json(body: unknown, status: number, headers: Record<string, string>) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...headers, "Content-Type": "application/json" },
-  });
-}
-
-function safeOrigin(req: Request): string {
-  const fallback = "https://honsgarden.se";
-  const requested = req.headers.get("origin");
-  if (!requested) return fallback;
-  try {
-    const url = new URL(requested);
-    const allowed = allowedOriginsSet();
-    const isLocal = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
-    return allowed.has(url.origin) || isLocal ? url.origin : fallback;
-  } catch {
-    return fallback;
-  }
-}
+import { evaluateCors, jsonResponse, safeSuccessOrigin } from "../_shared/cors.ts";
 
 interface CartItemInput {
   product_id: string;
@@ -63,23 +11,34 @@ interface CartItemInput {
   quantity: number;
 }
 
+const GENERIC_FAILURE = "Kunde inte starta betalning. Försök igen om en stund.";
+
 serve(async (req) => {
-  const corsHeaders = corsHeadersFor(req);
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, corsHeaders);
+  const cors = evaluateCors(req);
+
+  if (req.method === "OPTIONS") {
+    if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
+    return new Response(null, { headers: cors.headers });
+  }
+  if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
+  if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, cors.headers);
+
+  const corsHeaders = cors.headers;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+
+  if (!supabaseUrl || !anonKey || !serviceRoleKey || !stripeKey) {
+    console.error("[shop-checkout] misconfigured environment");
+    return jsonResponse({ error: GENERIC_FAILURE }, 500, corsHeaders);
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
+  let pendingOrderId: string | null = null;
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
-    if (!supabaseUrl || !anonKey || !serviceRoleKey || !stripeKey) {
-      throw new Error("Shop checkout is not fully configured");
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-
-    // Optional auth – om användaren är inloggad förifyller vi email.
+    // ---- Optional auth ----
     let userId: string | null = null;
     let userEmail: string | null = null;
     let isAdmin = false;
@@ -91,27 +50,30 @@ serve(async (req) => {
       if (data.user) {
         userId = data.user.id;
         userEmail = data.user.email ?? null;
-        const { data: adminData } = await supabaseAdmin.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+        const { data: adminData } = await supabaseAdmin.rpc("has_role", {
+          _user_id: data.user.id,
+          _role: "admin",
+        });
         isAdmin = !!adminData;
       }
     }
 
-    // Publik toggle – blockera om butiken är stängd (om inte admin med preview-flagga).
     const body = await req.json().catch(() => ({}));
-    const previewMode = !!body?.preview && isAdmin;
+    // preview är GILTIG endast för validerad admin. Vanlig gäst får aldrig kringgå toggle.
+    const previewRequested = !!body?.preview;
+    const previewMode = previewRequested && isAdmin;
+
     const { data: enabledRow } = await supabaseAdmin.rpc("shop_public_enabled");
-    if (!enabledRow && !isAdmin) return json({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
-    if (!enabledRow && !previewMode) {
-      // Admin behöver skicka preview: true för att köra köp i stängt läge.
-      return json({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
+    const publicEnabled = !!enabledRow;
+    if (!publicEnabled && !previewMode) {
+      return jsonResponse({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
     }
 
     // ---- Items ----
     const rawItems: CartItemInput[] = Array.isArray(body?.items) ? body.items : [];
-    if (rawItems.length === 0) return json({ error: "Kundvagnen är tom" }, 400, corsHeaders);
-    if (rawItems.length > 50) return json({ error: "För många varor" }, 400, corsHeaders);
+    if (rawItems.length === 0) return jsonResponse({ error: "Kundvagnen är tom" }, 400, corsHeaders);
+    if (rawItems.length > 50) return jsonResponse({ error: "För många varor" }, 400, corsHeaders);
 
-    // Slå ihop dubbletter (samma product+variant)
     const merged = new Map<string, CartItemInput>();
     for (const it of rawItems) {
       if (typeof it?.product_id !== "string") continue;
@@ -124,7 +86,7 @@ serve(async (req) => {
       else merged.set(key, { product_id: it.product_id, variant_id: variantId, quantity: qty });
     }
     const items = Array.from(merged.values());
-    if (items.length === 0) return json({ error: "Kundvagnen är tom" }, 400, corsHeaders);
+    if (items.length === 0) return jsonResponse({ error: "Kundvagnen är tom" }, 400, corsHeaders);
 
     const productIds = [...new Set(items.map((it) => it.product_id))];
     const variantIds = items.map((it) => it.variant_id).filter((v): v is string => !!v);
@@ -132,7 +94,10 @@ serve(async (req) => {
     const [{ data: products, error: pErr }, { data: variants, error: vErr }] = await Promise.all([
       supabaseAdmin.from("shop_products").select("id, name, price_ore, active, stock, slug").in("id", productIds),
       variantIds.length > 0
-        ? supabaseAdmin.from("shop_product_variants").select("id, product_id, name, price_override_ore, stock, active, sku").in("id", variantIds)
+        ? supabaseAdmin
+            .from("shop_product_variants")
+            .select("id, product_id, name, price_override_ore, stock, active, sku")
+            .in("id", variantIds)
         : Promise.resolve({ data: [], error: null }),
     ]);
     if (pErr) throw new Error(`Product lookup failed: ${pErr.message}`);
@@ -145,14 +110,21 @@ serve(async (req) => {
 
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
     const orderItems: Array<{
-      product_id: string; variant_id: string | null; name: string; variant_name?: string;
-      sku?: string | null; quantity: number; unit_price_ore: number;
+      product_id: string;
+      variant_id: string | null;
+      name: string;
+      variant_name?: string;
+      sku?: string | null;
+      quantity: number;
+      unit_price_ore: number;
     }> = [];
     let subtotalOre = 0;
 
     for (const it of items) {
       const product = productById.get(it.product_id);
-      if (!product || !product.active) return json({ error: "En produkt i kundvagnen finns inte längre" }, 400, corsHeaders);
+      if (!product || !product.active) {
+        return jsonResponse({ error: "En produkt i kundvagnen finns inte längre" }, 400, corsHeaders);
+      }
 
       let unitPrice = product.price_ore as number;
       let stock: number | null = product.stock ?? null;
@@ -161,7 +133,7 @@ serve(async (req) => {
       if (it.variant_id) {
         const variant = variantById.get(it.variant_id);
         if (!variant || !variant.active || variant.product_id !== product.id) {
-          return json({ error: "En vald variant är inte tillgänglig" }, 400, corsHeaders);
+          return jsonResponse({ error: "En vald variant är inte tillgänglig" }, 400, corsHeaders);
         }
         if (variant.price_override_ore != null) unitPrice = variant.price_override_ore;
         stock = variant.stock ?? null;
@@ -169,7 +141,11 @@ serve(async (req) => {
         sku = variant.sku ?? null;
       }
       if (stock !== null && stock < it.quantity) {
-        return json({ error: `Endast ${stock} kvar av ${product.name}${variantName ? ' – ' + variantName : ''}` }, 400, corsHeaders);
+        return jsonResponse(
+          { error: `Endast ${stock} kvar av ${product.name}${variantName ? " – " + variantName : ""}` },
+          400,
+          corsHeaders,
+        );
       }
 
       subtotalOre += unitPrice * it.quantity;
@@ -192,14 +168,19 @@ serve(async (req) => {
       });
     }
 
-    if (subtotalOre < 300) return json({ error: "Beloppet är för litet för kortbetalning" }, 400, corsHeaders);
+    if (subtotalOre < 300) {
+      return jsonResponse({ error: "Beloppet är för litet för kortbetalning" }, 400, corsHeaders);
+    }
 
     // ---- Shipping från settings ----
     const { data: settingsData } = await supabaseAdmin.rpc("get_shop_settings");
     const raw = (settingsData ?? {}) as Record<string, unknown>;
     const parseNum = (v: unknown, fb: number) => {
       if (typeof v === "number") return v;
-      if (typeof v === "string") { const n = Number(v.replace(/^"|"$/g, "")); return Number.isFinite(n) ? n : fb; }
+      if (typeof v === "string") {
+        const n = Number(v.replace(/^"|"$/g, ""));
+        return Number.isFinite(n) ? n : fb;
+      }
       return fb;
     };
     const shippingOre = parseNum(raw["shop_shipping_ore"], 5900);
@@ -223,9 +204,10 @@ serve(async (req) => {
       .select("id, order_number, public_token")
       .single();
     if (orderError || !order) throw new Error(`Could not create order: ${orderError?.message}`);
+    pendingOrderId = order.id;
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-    const origin = safeOrigin(req);
+    const origin = safeSuccessOrigin(req);
 
     let session: Stripe.Checkout.Session;
     try {
@@ -241,10 +223,10 @@ serve(async (req) => {
               shipping_rate_data: {
                 type: "fixed_amount",
                 fixed_amount: { amount: shipping, currency: "sek" },
-                display_name: "Standardleverans (PostNord)",
+                display_name: "Standardleverans",
                 delivery_estimate: {
                   minimum: { unit: "business_day", value: 1 },
-                  maximum: { unit: "business_day", value: 3 },
+                  maximum: { unit: "business_day", value: 5 },
                 },
               },
             }]
@@ -271,16 +253,31 @@ serve(async (req) => {
         cancel_url: `${origin}/butik?canceled=1`,
       });
     } catch (stripeErr) {
-      // Rulla tillbaka den pending order vi hann skapa
+      const detail = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
+      console.error("[shop-checkout] stripe session error:", detail);
       await supabaseAdmin
         .from("shop_orders")
         .update({
           status: "canceled",
-          admin_note: `Stripe-checkout misslyckades: ${stripeErr instanceof Error ? stripeErr.message : String(stripeErr)}`,
+          admin_note: `Stripe-checkout misslyckades: ${detail}`,
         })
         .eq("id", order.id)
         .eq("status", "pending");
-      throw stripeErr;
+      return jsonResponse({ error: GENERIC_FAILURE }, 502, corsHeaders);
+    }
+
+    if (!session.url) {
+      console.error("[shop-checkout] stripe session missing url", session.id);
+      await supabaseAdmin
+        .from("shop_orders")
+        .update({
+          status: "canceled",
+          stripe_session_id: session.id,
+          admin_note: "Stripe returnerade ingen betallänk – pending order avbruten.",
+        })
+        .eq("id", order.id)
+        .eq("status", "pending");
+      return jsonResponse({ error: GENERIC_FAILURE }, 502, corsHeaders);
     }
 
     await supabaseAdmin
@@ -288,11 +285,24 @@ serve(async (req) => {
       .update({ stripe_session_id: session.id })
       .eq("id", order.id);
 
-    if (!session.url) throw new Error("Stripe did not return a checkout URL");
-    return json({ url: session.url, order_id: order.id, order_number: order.order_number }, 200, corsHeaders);
+    return jsonResponse(
+      { url: session.url, order_id: order.id, order_number: order.order_number },
+      200,
+      corsHeaders,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("[shop-checkout]", message);
-    return json({ error: "Kunde inte starta betalning. Försök igen om en stund." }, 500, corsHeaders);
+    console.error("[shop-checkout] internal error:", message);
+    if (pendingOrderId) {
+      await supabaseAdmin
+        .from("shop_orders")
+        .update({
+          status: "canceled",
+          admin_note: `Internt fel under checkout: ${message}`,
+        })
+        .eq("id", pendingOrderId)
+        .eq("status", "pending");
+    }
+    return jsonResponse({ error: GENERIC_FAILURE }, 500, corsHeaders);
   }
 });

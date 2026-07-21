@@ -4951,10 +4951,11 @@ export type Database = {
       }
       shop_finalize_paid_order: {
         Args: {
-          p_amount_total_ore?: number
+          p_amount_total_ore: number
           p_customer_email?: string
           p_customer_name?: string
           p_customer_phone?: string
+          p_discount_ore?: number
           p_order_id: string
           p_payment_intent_id?: string
           p_shipping_address?: Json
