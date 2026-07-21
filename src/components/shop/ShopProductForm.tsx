@@ -294,6 +294,7 @@ export default function ShopProductForm({ open, onOpenChange, product, onSave }:
                   <Input value={sp.value} onChange={(e) => setSpecs(specs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
                     placeholder="100% ekologisk bomull" className="rounded-xl" />
                   <Button type="button" variant="ghost" size="icon" className="rounded-xl"
+                    aria-label="Ta bort specifikation" title="Ta bort specifikation"
                     onClick={() => setSpecs(specs.filter((_, j) => j !== i))}>
                     <X className="h-4 w-4" />
                   </Button>
