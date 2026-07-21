@@ -97,19 +97,19 @@ serve(async (req) => {
     }
 
     // Publik toggle – blockera om butiken är stängd (om inte admin med preview-flagga).
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json(, corsHeaders).catch(() => ({}));
     const previewMode = !!body?.preview && isAdmin;
     const { data: enabledRow } = await supabaseAdmin.rpc("shop_public_enabled");
-    if (!enabledRow && !isAdmin) return json({ error: "Butiken är inte öppen ännu" }, 403);
+    if (!enabledRow && !isAdmin) return json({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
     if (!enabledRow && !previewMode) {
       // Admin behöver skicka preview: true för att köra köp i stängt läge.
-      return json({ error: "Butiken är inte öppen ännu" }, 403);
+      return json({ error: "Butiken är inte öppen ännu" }, 403, corsHeaders);
     }
 
     // ---- Items ----
     const rawItems: CartItemInput[] = Array.isArray(body?.items) ? body.items : [];
-    if (rawItems.length === 0) return json({ error: "Kundvagnen är tom" }, 400);
-    if (rawItems.length > 50) return json({ error: "För många varor" }, 400);
+    if (rawItems.length === 0) return json({ error: "Kundvagnen är tom" }, 400, corsHeaders);
+    if (rawItems.length > 50) return json({ error: "För många varor" }, 400, corsHeaders);
 
     // Slå ihop dubbletter (samma product+variant)
     const merged = new Map<string, CartItemInput>();
@@ -124,7 +124,7 @@ serve(async (req) => {
       else merged.set(key, { product_id: it.product_id, variant_id: variantId, quantity: qty });
     }
     const items = Array.from(merged.values());
-    if (items.length === 0) return json({ error: "Kundvagnen är tom" }, 400);
+    if (items.length === 0) return json({ error: "Kundvagnen är tom" }, 400, corsHeaders);
 
     const productIds = [...new Set(items.map((it) => it.product_id))];
     const variantIds = items.map((it) => it.variant_id).filter((v): v is string => !!v);
@@ -152,7 +152,7 @@ serve(async (req) => {
 
     for (const it of items) {
       const product = productById.get(it.product_id);
-      if (!product || !product.active) return json({ error: "En produkt i kundvagnen finns inte längre" }, 400);
+      if (!product || !product.active) return json({ error: "En produkt i kundvagnen finns inte längre" }, 400, corsHeaders);
 
       let unitPrice = product.price_ore as number;
       let stock: number | null = product.stock ?? null;
@@ -161,7 +161,7 @@ serve(async (req) => {
       if (it.variant_id) {
         const variant = variantById.get(it.variant_id);
         if (!variant || !variant.active || variant.product_id !== product.id) {
-          return json({ error: "En vald variant är inte tillgänglig" }, 400);
+          return json({ error: "En vald variant är inte tillgänglig" }, 400, corsHeaders);
         }
         if (variant.price_override_ore != null) unitPrice = variant.price_override_ore;
         stock = variant.stock ?? null;
@@ -169,7 +169,7 @@ serve(async (req) => {
         sku = variant.sku ?? null;
       }
       if (stock !== null && stock < it.quantity) {
-        return json({ error: `Endast ${stock} kvar av ${product.name}${variantName ? ' – ' + variantName : ''}` }, 400);
+        return json({ error: `Endast ${stock} kvar av ${product.name}${variantName ? ' – ' + variantName : ''}` }, 400, corsHeaders);
       }
 
       subtotalOre += unitPrice * it.quantity;
@@ -192,7 +192,7 @@ serve(async (req) => {
       });
     }
 
-    if (subtotalOre < 300) return json({ error: "Beloppet är för litet för kortbetalning" }, 400);
+    if (subtotalOre < 300) return json({ error: "Beloppet är för litet för kortbetalning" }, 400, corsHeaders);
 
     // ---- Shipping från settings ----
     const { data: settingsData } = await supabaseAdmin.rpc("get_shop_settings");
@@ -275,10 +275,10 @@ serve(async (req) => {
       .eq("id", order.id);
 
     if (!session.url) throw new Error("Stripe did not return a checkout URL");
-    return json({ url: session.url, order_id: order.id, order_number: order.order_number });
+    return json({ url: session.url, order_id: order.id, order_number: order.order_number }, corsHeaders);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[shop-checkout]", message);
-    return json({ error: "Kunde inte starta betalning. Försök igen om en stund." }, 500);
+    return json({ error: "Kunde inte starta betalning. Försök igen om en stund." }, 500, corsHeaders);
   }
 });
