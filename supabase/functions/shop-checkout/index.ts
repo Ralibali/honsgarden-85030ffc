@@ -4,12 +4,6 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
-
 const ALLOWED_ORIGINS_DEFAULT = [
   "https://honsgarden.se",
   "https://www.honsgarden.se",
@@ -18,10 +12,34 @@ const ALLOWED_ORIGINS_DEFAULT = [
   "https://honsgarden.lovable.app",
 ];
 
-function json(body: unknown, status = 200) {
+function allowedOriginsSet(): Set<string> {
+  const configured = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? "")
+    .split(",").map((v) => v.trim()).filter(Boolean);
+  return new Set([...ALLOWED_ORIGINS_DEFAULT, ...configured]);
+}
+
+function corsHeadersFor(req: Request): Record<string, string> {
+  const requested = req.headers.get("origin") ?? "";
+  const allowed = allowedOriginsSet();
+  let origin = "https://honsgarden.se";
+  try {
+    const url = new URL(requested);
+    const isLocal = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
+    if (allowed.has(url.origin) || isLocal) origin = url.origin;
+  } catch { /* keep default */ }
+  return {
+    "Access-Control-Allow-Origin": origin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
+}
+
+function json(body: unknown, status: number, headers: Record<string, string>) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...headers, "Content-Type": "application/json" },
   });
 }
 
@@ -31,8 +49,7 @@ function safeOrigin(req: Request): string {
   if (!requested) return fallback;
   try {
     const url = new URL(requested);
-    const configured = (Deno.env.get("APP_ALLOWED_ORIGINS") ?? "").split(",").map(v => v.trim()).filter(Boolean);
-    const allowed = new Set([...ALLOWED_ORIGINS_DEFAULT, ...configured]);
+    const allowed = allowedOriginsSet();
     const isLocal = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
     return allowed.has(url.origin) || isLocal ? url.origin : fallback;
   } catch {
@@ -47,8 +64,9 @@ interface CartItemInput {
 }
 
 serve(async (req) => {
+  const corsHeaders = corsHeadersFor(req);
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, corsHeaders);
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
