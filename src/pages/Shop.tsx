@@ -30,6 +30,7 @@ import ShopProductForm, { type ProductFormValues } from '@/components/shop/ShopP
 import ShopOrders from '@/components/shop/ShopOrders';
 import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
 import ShopOverview from '@/components/shop/ShopOverview';
+import ShopWithdrawalRequests from '@/components/shop/ShopWithdrawalRequests';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
