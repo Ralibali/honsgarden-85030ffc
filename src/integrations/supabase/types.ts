@@ -4962,6 +4962,7 @@ export type Database = {
         }
         Returns: Json
       }
+      shop_launch_checklist: { Args: never; Returns: Json }
       shop_public_enabled: { Args: never; Returns: boolean }
       transition_egg_booking_status: {
         Args: { p_booking_id: string; p_new_status: string; p_note?: string }
