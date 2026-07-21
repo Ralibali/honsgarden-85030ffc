@@ -224,7 +224,10 @@ export default function Shop() {
 
   const saveProduct = useMutation({
     mutationFn: async (values: ProductFormValues) => {
-      const payload = {
+      const slugify = (s: string) =>
+        s.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const basePayload = {
         name: values.name,
         description: values.description,
         emoji: values.emoji,
@@ -235,10 +238,11 @@ export default function Shop() {
         active: values.active,
       };
       if (editing) {
-        const { error } = await supabase.from('shop_products').update(payload).eq('id', editing.id);
+        const { error } = await supabase.from('shop_products').update(basePayload).eq('id', editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('shop_products').insert(payload);
+        const slug = slugify(values.name) + '-' + Math.random().toString(36).slice(2, 8);
+        const { error } = await supabase.from('shop_products').insert([{ ...basePayload, slug }]);
         if (error) throw error;
       }
     },
