@@ -10,6 +10,13 @@ import DashboardV2 from '@/pages/DashboardV2';
 
 const DEMO_USER_ID = 'demo-user';
 
+/** Trattmätning: klick på registrerings-CTA i demon. */
+function trackDemoCta() {
+  void import('@/lib/analytics').then(({ trackEvent }) =>
+    trackEvent('CTA Register Clicked', { source: 'demo_banner' }),
+  );
+}
+
 /** Förhindra att onboarding-guide, checklista och dagsmodal täcker demon. */
 function suppressOneTimeOverlays() {
   try {
@@ -79,7 +86,7 @@ export default function DemoApp() {
                   Du ser den riktiga appen med exempeldata från Lillgården – inget sparas
                 </p>
               </div>
-              <Button asChild size="sm" className="rounded-xl shrink-0 shadow-[0_4px_16px_hsl(var(--primary)/0.3)]">
+              <Button asChild size="sm" className="rounded-xl shrink-0 shadow-[0_4px_16px_hsl(var(--primary)/0.3)]" onClick={trackDemoCta}>
                 <a href="/login?mode=register">Skapa konto gratis</a>
               </Button>
             </div>
@@ -99,7 +106,7 @@ export default function DemoApp() {
                   <Lock className="h-3 w-3 shrink-0" /> Din egen data sparas säkert – gratis att börja
                 </p>
               </div>
-              <Button asChild className="rounded-xl shrink-0">
+              <Button asChild className="rounded-xl shrink-0" onClick={trackDemoCta}>
                 <a href="/login?mode=register">Kom igång gratis</a>
               </Button>
             </div>

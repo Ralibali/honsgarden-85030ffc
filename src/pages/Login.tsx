@@ -15,6 +15,7 @@ import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES, detectTimezone, type CountryCode } from '@/lib/countries';
 import { validatePostalCode } from '@/lib/postalCode';
 import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
+import GoogleAuthButton, { AuthDivider } from '@/components/GoogleAuthButton';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 const TERMS_VERSION = '2026-07-12';
@@ -62,6 +63,15 @@ export default function Login() {
   useEffect(() => {
     if (!authLoading && isAuthenticated) navigate('/app', { replace: true });
   }, [authLoading, isAuthenticated, navigate]);
+
+  // Trattmätning: besökaren har nått registreringsformuläret
+  useEffect(() => {
+    if (authMode === 'register') {
+      void import('@/lib/analytics').then(({ trackEvent }) =>
+        trackEvent('Signup Started', { source: 'signup_form' }),
+      );
+    }
+  }, [authMode]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -288,6 +298,8 @@ export default function Login() {
                 <h3 className="font-serif text-3xl text-foreground mb-2">Logga in</h3>
                 <p className="text-muted-foreground">Välkommen tillbaka till Hönsgården.</p>
               </div>
+              <GoogleAuthButton mode="login" />
+              <AuthDivider />
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="email" className="text-muted-foreground">E-post</Label>
@@ -327,6 +339,8 @@ export default function Login() {
                   <p className="text-sm text-primary font-medium">Sju dagars Premium ingår gratis!</p>
                 </div>
               </div>
+              <GoogleAuthButton mode="register" />
+              <AuthDivider />
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="name" className="text-muted-foreground">Namn</Label>

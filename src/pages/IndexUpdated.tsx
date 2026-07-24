@@ -94,6 +94,13 @@ const faqs = [
   { q: 'Vad ingår i Plus?', a: 'Plus ger mer AI-stöd, rapporter, avancerade insikter, obegränsat antal hönor och smartare hjälp för ekonomi, flock och vardagsrutiner.' },
 ];
 
+/** Trattmätning: spårar klick på registrerings-CTA:er med källa. */
+function trackRegisterCta(source: 'landing_hero' | 'landing_navbar' | 'landing_final_cta') {
+  void import('@/lib/analytics').then(({ trackEvent }) =>
+    trackEvent('CTA Register Clicked', { source }),
+  );
+}
+
 export default function IndexUpdated() {
   useSeo({
     title: 'Hönsgården – ägglogg, flock, Agdas äggbod och AI',
@@ -151,7 +158,7 @@ export default function IndexUpdated() {
                 Hönsgården samlar ägglogg, flock, hönsprofiler, statistik, foderkostnad, kalender, väder, community, rapporter och Agdas äggbod på samma plats. Logga vardagen, förstå mönstren och sälj ägg utan Excel-kaos.
               </motion.p>
               <motion.div {...fadeUp(0.12)} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-5">
-                <Button asChild size="lg" className="h-12 sm:h-13 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]"><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-4 w-4" /></a></Button>
+                <Button asChild size="lg" className="h-12 sm:h-13 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]" onClick={() => trackRegisterCta('landing_hero')}><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-4 w-4" /></a></Button>
                 <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base"><a href="/demo">Prova utan konto</a></Button>
                 <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base border-primary/30 text-primary hover:bg-primary/5"><a href="/salja-agg">Se Agdas äggbod</a></Button>
               </motion.div>
@@ -235,7 +242,7 @@ export default function IndexUpdated() {
       </section>
 
       <section className="relative z-10 pb-10 sm:pb-16">
-        <div className="container max-w-3xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center"><motion.div className="text-5xl mb-4 inline-block" animate={{ y: [0, -8, 0], rotate: [0, -6, 0, 6, 0] }} transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}>🐔</motion.div><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2><p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">När du loggar ägg, foder, hälsa, försäljning, väder och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.</p><Button asChild size="lg" className="h-14 px-10 text-lg gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:scale-[1.02] transition-transform"><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-5 w-5" /></a></Button><p className="text-xs text-muted-foreground mt-4">Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p></motion.div></div>
+        <div className="container max-w-3xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center"><motion.div className="text-5xl mb-4 inline-block" animate={{ y: [0, -8, 0], rotate: [0, -6, 0, 6, 0] }} transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}>🐔</motion.div><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2><p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">När du loggar ägg, foder, hälsa, försäljning, väder och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.</p><Button asChild size="lg" className="h-14 px-10 text-lg gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:scale-[1.02] transition-transform" onClick={() => trackRegisterCta('landing_final_cta')}><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-5 w-5" /></a></Button><p className="text-xs text-muted-foreground mt-4">Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p></motion.div></div>
       </section>
 
       <Suspense fallback={null}><LandingFooter /></Suspense>

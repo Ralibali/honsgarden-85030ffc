@@ -11,6 +11,13 @@ const navLinks = [
   { label: 'Blogg', href: '/blogg' },
 ];
 
+/** Trattmätning: klick på navbarens registrerings-CTA. */
+function trackNavbarCta() {
+  void import('@/lib/analytics').then(({ trackEvent }) =>
+    trackEvent('CTA Register Clicked', { source: 'landing_navbar' }),
+  );
+}
+
 export default function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -56,7 +63,7 @@ export default function LandingNavbar() {
           <Button asChild variant="ghost" size="sm">
             <a href="/login?mode=login">Logga in</a>
           </Button>
-          <Button asChild size="sm" className="rounded-xl shadow-[0_4px_16px_hsl(var(--primary)/0.3)]">
+          <Button asChild size="sm" className="rounded-xl shadow-[0_4px_16px_hsl(var(--primary)/0.3)]" onClick={trackNavbarCta}>
             <a href="/login?mode=register">Kom igång gratis</a>
           </Button>
         </div>
@@ -96,7 +103,7 @@ export default function LandingNavbar() {
                 <Button asChild variant="outline" size="sm" className="flex-1">
                   <a href="/login?mode=login">Logga in</a>
                 </Button>
-                <Button asChild size="sm" className="flex-1">
+                <Button asChild size="sm" className="flex-1" onClick={trackNavbarCta}>
                   <a href="/login?mode=register">Kom igång gratis</a>
                 </Button>
               </div>

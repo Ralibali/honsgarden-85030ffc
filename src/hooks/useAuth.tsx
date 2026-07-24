@@ -20,6 +20,7 @@ interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: (mode?: 'login' | 'register') => Promise<void>;
   register: (email: string, password: string, name: string, meta?: Record<string, any>) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -272,6 +273,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [startPeriodicSync, stopPeriodicSync]);
 
+  const loginWithGoogle = async (mode: 'login' | 'register' = 'login') => {
+    const { trackEvent } = await import('@/lib/analytics');
+    trackEvent('OAuth Started', { provider: 'google', mode });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/app`,
+      },
+    });
+    if (error) throw error;
+  };
+
   const login = async (email: string, password: string) => {
     await clearPrivateClientCaches();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -328,7 +341,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated: !!user, refreshSubscription, reloadProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, isAuthenticated: !!user, refreshSubscription, reloadProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -351,6 +364,7 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     loading: false,
     isAuthenticated: true,
     login: async () => {},
+    loginWithGoogle: async () => {},
     register: async () => ({}),
     logout: async () => {},
     refreshSubscription: async () => {},

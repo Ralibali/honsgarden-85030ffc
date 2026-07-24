@@ -30,14 +30,34 @@ export type AnalyticsSource =
   | 'hen_profile'
   | 'quick_fab'
   | 'quick_log_card'
-  | 'signup_form';
+  | 'signup_form'
+  | 'landing_hero'
+  | 'landing_navbar'
+  | 'landing_final_cta'
+  | 'demo_banner';
+
+/** Tillåtna OAuth-leverantörer (låg kardinalitet). */
+export type AnalyticsOAuthProvider = 'google';
+
+/** Tillåtna auth-lägen (låg kardinalitet). */
+export type AnalyticsAuthMode = 'login' | 'register';
 
 /**
  * Strikt event-map. Endast dessa event får skickas.
  * Håll properties låga och icke-identifierande.
  */
 export type AnalyticsEventMap = {
+  'Signup Started': {
+    source?: AnalyticsSource;
+  };
   'Signup Completed': {
+    source?: AnalyticsSource;
+  };
+  'OAuth Started': {
+    provider?: AnalyticsOAuthProvider;
+    mode?: AnalyticsAuthMode;
+  };
+  'CTA Register Clicked': {
     source?: AnalyticsSource;
   };
   'Premium Checkout Started': {
