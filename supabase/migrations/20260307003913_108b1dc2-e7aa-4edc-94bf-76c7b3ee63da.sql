@@ -1,0 +1,1 @@
+ALTER TABLE public.blog_posts ADD COLUMN glossary_ids uuid[] DEFAULT '{}'::uuid[];

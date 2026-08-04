@@ -1,0 +1,296 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
+import SeoCanonical from "./components/SeoCanonical";
+
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import React, { Suspense } from "react";
+import CookieConsent from "./components/CookieConsent";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { usePageTracking, useAutoClickTracking } from "@/hooks/useTracking";
+import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
+import { SuspenseFallback } from "./components/SuspenseFallback";
+
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import SettingsPage from "./pages/Settings";
+const Profile = lazyWithRetry(() => import("./pages/Profile"));
+
+const PwaUpdatePrompt = lazyWithRetry(() => import("./components/PwaUpdatePrompt"));
+
+import Index from "./pages/IndexUpdated";
+import Login from "./pages/Login";
+
+const AppLayout = lazyWithRetry(() => import("./components/AppLayout"));
+const Dashboard = lazyWithRetry(() => import("./pages/DashboardV2"));
+const Eggs = lazyWithRetry(() => import("./pages/Eggs"));
+const Hens = lazyWithRetry(() => import("./pages/Hens"));
+const Finance = lazyWithRetry(() => import("./pages/Finance"));
+const Statistics = lazyWithRetry(() => import("./pages/Statistics"));
+const Feed = lazyWithRetry(() => import("./pages/Feed"));
+const Reminders = lazyWithRetry(() => import("./pages/Reminders"));
+const Hatching = lazyWithRetry(() => import("./pages/Hatching"));
+const DailyTasks = lazyWithRetry(() => import("./pages/DailyTasks"));
+const Feedback = lazyWithRetry(() => import("./pages/Feedback"));
+const Premium = lazyWithRetry(() => import("./pages/Premium"));
+const Community = lazyWithRetry(() => import("./pages/Community"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Admin = lazyWithRetry(() => import("./pages/Admin"));
+const Shop = lazyWithRetry(() => import("./pages/Shop"));
+const Terms = lazyWithRetry(() => import("./pages/Terms"));
+const Integritet = lazyWithRetry(() => import("./pages/Integritet"));
+const HenProfile = lazyWithRetry(() => import("./pages/HenProfile"));
+const WeeklyReport = lazyWithRetry(() => import("./pages/WeeklyReport"));
+const YearReport = lazyWithRetry(() => import("./pages/YearReport"));
+const SmartFarmReport = lazyWithRetry(() => import("./pages/SmartFarmReport"));
+const Guides = lazyWithRetry(() => import("./pages/Guides"));
+const GuideArticle = lazyWithRetry(() => import("./pages/GuideArticle"));
+const BlogCategory = lazyWithRetry(() => import("./pages/BlogCategory"));
+const BlogTag = lazyWithRetry(() => import("./pages/BlogTag"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const EggCalculator = lazyWithRetry(() => import("./pages/EggCalculator"));
+const AcceptInvite = lazyWithRetry(() => import("./pages/AcceptInvite"));
+const Agda = lazyWithRetry(() => import("./pages/Agda"));
+const Overview = lazyWithRetry(() => import("./pages/Overview"));
+const Import = lazyWithRetry(() => import("./pages/Import"));
+const SeasonalCalendar = lazyWithRetry(() => import("./pages/SeasonalCalendar"));
+const SeoLandingPage = lazyWithRetry(() => import("./pages/SeoLandingPage"));
+const HonsrasLanding = lazyWithRetry(() => import("./pages/HonsrasLanding"));
+const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
+const EggSaleCustomize = lazyWithRetry(() => import("./pages/EggSaleCustomize"));
+const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
+const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
+const RTokenDispatch = lazyWithRetry(() => import("./pages/RTokenDispatch"));
+const EggSaleDashboard = lazyWithRetry(() => import("./pages/EggSaleDashboard"));
+const CancelBooking = lazyWithRetry(() => import("./pages/CancelBooking"));
+const OrderPortal = lazyWithRetry(() => import("./pages/OrderPortal"));
+const News = lazyWithRetry(() => import("./pages/News"));
+const Weather = lazyWithRetry(() => import("./pages/Weather"));
+const WeatherHistoryDetail = lazyWithRetry(() => import("./pages/WeatherHistoryDetail"));
+const SaljaAgg = lazyWithRetry(() => import("./pages/SaljaAgg"));
+const SaljaAggOrt = lazyWithRetry(() => import("./pages/SaljaAggOrt"));
+const Health = lazyWithRetry(() => import("./pages/Health"));
+const Breeding = lazyWithRetry(() => import("./pages/Breeding"));
+const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
+const Reports = lazyWithRetry(() => import("./pages/Reports"));
+const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
+const MapListingConfirm = lazyWithRetry(() => import("./pages/MapListingConfirm"));
+const MapListingManage = lazyWithRetry(() => import("./pages/MapListingManage"));
+const DemoApp = lazyWithRetry(() => import("./pages/DemoApp"));
+const Marketplace = lazyWithRetry(() => import("./pages/Marketplace"));
+const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
+const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
+const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
+const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
+const ShopPublic = lazyWithRetry(() => import("./pages/shop/ShopPublic"));
+const ShopProductPage = lazyWithRetry(() => import("./pages/shop/ShopProductPage"));
+const ShopThankYou = lazyWithRetry(() => import("./pages/shop/ShopThankYou"));
+const ShopTerms = lazyWithRetry(() => import("./pages/shop/ShopTerms"));
+const ShopWithdrawal = lazyWithRetry(() => import("./pages/shop/ShopWithdrawal"));
+
+
+// Slugs som har egna prerendrade regelguider – vi vill INTE redirecta dem
+// till /blogg. Håll i sync med `src/data/regulationGuides.mjs`.
+const REGULATION_GUIDE_SLUGS = new Set([
+  'registrera-hons-jordbruksverket',
+  'salja-agg-regler',
+]);
+
+const GuiderRedirect = () => {
+  const { slug } = useParams<{ slug?: string }>();
+  if (slug && REGULATION_GUIDE_SLUGS.has(slug)) {
+    // Låt den dedikerade route:n hantera det (matchas nedan).
+    return null;
+  }
+  const target = slug ? `/blogg/${slug}` : '/blogg';
+  return <Navigate to={target} replace />;
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+      gcTime: 24 * 60 * 60 * 1000, // 24h for persistence to work
+    },
+  },
+});
+
+const PERSISTED_KEYS = new Set(['eggs', 'hens', 'flocks']);
+const persister = typeof window !== 'undefined'
+  ? createSyncStoragePersister({ storage: window.localStorage, key: 'honsgarden_rq_cache_v1' })
+  : undefined;
+
+const LoadingFallback = () => <SuspenseFallback fullScreen />;
+
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) return <LoadingFallback />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+function CacheClearer() {
+  const { user } = useAuth();
+  const prevUserId = React.useRef<string | null>(user?.id ?? null);
+
+  React.useEffect(() => {
+    if (user?.id !== prevUserId.current) {
+      queryClient.clear();
+      prevUserId.current = user?.id ?? null;
+    }
+  }, [user?.id]);
+
+  return null;
+}
+
+function PageTracker() {
+  usePageTracking();
+  useAutoClickTracking();
+  usePwaInstallTracking();
+  return null;
+}
+
+const AppRoutes = () => (
+  <BrowserRouter>
+    <PageTracker />
+    <SeoCanonical />
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/index" element={<Navigate to="/" replace />} />
+        <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="/app-for-honsagare" element={<SeoLandingPage pageKey="app-for-honsagare" />} />
+        <Route path="/agglogg" element={<SeoLandingPage pageKey="agglogg" />} />
+        <Route path="/honskalender" element={<SeoLandingPage pageKey="honskalender" />} />
+        <Route path="/foderkostnad-hons" element={<SeoLandingPage pageKey="foderkostnad-hons" />} />
+        <Route path="/klackningskalender" element={<SeoLandingPage pageKey="klackningskalender" />} />
+        <Route path="/borja-med-hons" element={<SeoLandingPage pageKey="borja-med-hons" />} />
+        <Route path="/honsraser" element={<HonsrasLanding slug="honsraser" />} />
+        <Route path="/honsraser-lista" element={<HonsrasLanding slug="honsraser-lista" />} />
+        <Route path="/honsraser/:slug" element={<HonsrasLanding />} />
+        <Route path="/dvarghons" element={<HonsrasLanding slug="dvarghons" canonicalPath="/honsraser/dvarghons" />} />
+        <Route path="/skansk-blommehona" element={<HonsrasLanding slug="skansk-blommehona" canonicalPath="/honsraser/skansk-blommehona" />} />
+        <Route path="/salja-agg" element={<SaljaAgg />} />
+        <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
+        <Route path="/karta" element={<MarketplaceMap />} />
+        <Route path="/karta/bekrafta" element={<MapListingConfirm />} />
+        <Route path="/karta/hantera/:token" element={<MapListingManage />} />
+        <Route path="/demo" element={<DemoApp />} />
+        <Route path="/s/agg" element={<PublicEggSale />} />
+        <Route path="/s/:slug" element={<PublicEggSale />} />
+        <Route path="/r/:token" element={<RTokenDispatch />} />
+        <Route path="/avboka/:token" element={<CancelBooking />} />
+        <Route path="/bestallning/:token" element={<OrderPortal />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/integritet" element={<Integritet />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/om-oss" element={<About />} />
+        <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
+        <Route path="/inbjudan/:token" element={<AcceptInvite />} />
+        <Route path="/guider" element={<GuiderRedirect />} />
+        <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />
+        <Route path="/guider/salja-agg-regler" element={<RegulationGuide slug="salja-agg-regler" />} />
+        <Route path="/guider/:slug" element={<GuiderRedirect />} />
+        <Route path="/blogg" element={<Guides />} />
+        <Route path="/blogg/kategori/:category" element={<BlogCategory />} />
+        <Route path="/blogg/tagg/:tag" element={<BlogTag />} />
+        <Route path="/blogg/:slug" element={<GuideArticle />} />
+        <Route path="/marknad" element={<Marketplace />} />
+        <Route path="/marknad/ny" element={<MarketplaceNew />} />
+        <Route path="/marknad/k/:kategori" element={<Marketplace />} />
+        <Route path="/marknad/:slug" element={<MarketplaceDetail />} />
+        <Route path="/butik" element={<ShopPublic />} />
+        <Route path="/butik/tack" element={<ShopThankYou />} />
+        <Route path="/butik/villkor" element={<ShopTerms />} />
+        <Route path="/butik/angra" element={<ShopWithdrawal />} />
+        <Route path="/butik/:slug" element={<ShopProductPage />} />
+
+
+        <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Navigate to="/app" replace />} />
+          <Route path="eggs" element={<Eggs />} />
+          <Route path="hens" element={<Hens />} />
+          <Route path="feed" element={<Feed />} />
+          <Route path="reminders" element={<Reminders />} />
+          <Route path="hatching" element={<Navigate to="/app/avel?tab=hatching" replace />} />
+          <Route path="tasks" element={<DailyTasks />} />
+          <Route path="finance" element={<Finance />} />
+          <Route path="egg-sales" element={<EggSales />} />
+          <Route path="egg-sales/anpassa" element={<EggSaleCustomize />} />
+          <Route path="egg-sales/dashboard" element={<EggSaleDashboard />} />
+          <Route path="statistics" element={<Statistics />} />
+          <Route path="overview" element={<Overview />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="feedback" element={<Feedback />} />
+          <Route path="premium" element={<Premium />} />
+          <Route path="community" element={<Community />} />
+          <Route path="admin" element={<Admin />} />
+          <Route path="butik" element={<Shop />} />
+          <Route path="hens/:henId" element={<HenProfile />} />
+          <Route path="weekly-report" element={<WeeklyReport />} />
+          <Route path="year-report" element={<YearReport />} />
+          <Route path="smart-report" element={<Navigate to="/app/rapporter?tab=smart" replace />} />
+          <Route path="agda" element={<Agda />} />
+          <Route path="import" element={<Import />} />
+          <Route path="calendar" element={<SeasonalCalendar />} />
+          <Route path="news" element={<News />} />
+          <Route path="weather" element={<Weather />} />
+          <Route path="weather/history/:date" element={<WeatherHistoryDetail />} />
+          <Route path="halsa" element={<Health />} />
+          <Route path="avel" element={<Breeding />} />
+          <Route path="lager" element={<Inventory />} />
+          <Route path="rapporter" element={<Reports />} />
+          <Route path="marknad/mina" element={<MarketplaceMine />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  </BrowserRouter>
+);
+
+const App = () => (
+  <ErrorBoundary>
+    <HelmetProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: persister!,
+          maxAge: 24 * 60 * 60 * 1000,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (q) => {
+              const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
+              return typeof key === 'string' && PERSISTED_KEYS.has(key);
+            },
+          },
+        }}
+      >
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <AuthProvider>
+            <CacheClearer />
+            <AppRoutes />
+            <CookieConsent />
+            <Suspense fallback={null}>
+              <PwaUpdatePrompt />
+            </Suspense>
+          </AuthProvider>
+        </TooltipProvider>
+      </PersistQueryClientProvider>
+    </HelmetProvider>
+  </ErrorBoundary>
+);
+
+export default App;
+

@@ -1,0 +1,75 @@
+{
+  "seo": {
+    "title": "About Honsgarden — the app for eggs, flock and sales",
+    "description": "Honsgarden helps backyard chicken keepers log eggs, track the flock, sell eggs with Agda's egg shop, get statistics, reports, community and AI assistance."
+  },
+  "nav": {
+    "sell_eggs": "Sell eggs",
+    "blog": "Blog",
+    "get_started": "Get started"
+  },
+  "header": {
+    "badge": "About {{brand}}",
+    "title": "We're building the control panel for backyard chicken keepers",
+    "subtitle": "Honsgarden started as a digital egg log and has grown into a complete tool for following your flock, understanding costs, managing routines, selling eggs, sharing experiences and getting smarter help every day."
+  },
+  "why": {
+    "title": "Why {{brand}} exists",
+    "p1": "Keeping chickens is full of small details: today's eggs, the hens' behavior, feed, weather, cleaning, mites, molting, hatchings and sometimes local egg sales. Most of it otherwise ends up in your head, on your phone, on sticky notes or in a spreadsheet.",
+    "p2": "Honsgarden gathers it all in one place. You can log quickly, see patterns over time and get a better overview without it feeling like admin work.",
+    "p3": "With Agda's egg shop you can also create sales pages, take bookings, keep track of customers and follow payment and pickup. That makes Honsgarden a farm journal, dashboard and sales tool in one."
+  },
+  "offering": {
+    "title": "What Honsgarden offers",
+    "items": [
+      "Egg log and history",
+      "Hen profiles and flock overview",
+      "Statistics, trends and reports",
+      "Feed cost and finance",
+      "Calendar, routines and reminders",
+      "Hatching calendar",
+      "Weather and its impact",
+      "Community with posts",
+      "Feedback and product suggestions",
+      "Agda's egg shop for local egg sales",
+      "Bookings, customers, payment status and export",
+      "Agda AI and premium insights"
+    ]
+  },
+  "values": {
+    "title": "What we believe in",
+    "items": [
+      { "title": "Built for real chicken life", "desc": "Honsgarden should work when you're standing by the coop, not only at your desk." },
+      { "title": "From gut feel to clarity", "desc": "Eggs, feed, weather, health and sales become useful patterns over time." },
+      { "title": "Less spreadsheet", "desc": "Agda's egg shop helps you sell eggs with a link, payments, bookings, customer list and export." },
+      { "title": "Community and feedback", "desc": "Chicken keepers can share posts, questions and tips — and help us build the right things next." },
+      { "title": "Smart help from Agda", "desc": "AI support, reports and suggestions make the app more useful without feeling complicated." },
+      { "title": "Your data is yours", "desc": "You should feel safe with the information about your flock, your routines and your sales." }
+    ]
+  },
+  "team": {
+    "title": "The team",
+    "name": "The Honsgarden team",
+    "role": "Product, engineering & content",
+    "bio": "We build Honsgarden for chicken keepers who want more clarity without getting stuck in spreadsheets. Focus is on easy daily logging, a clear overview and practical tools for eggs, flock, sales and routines."
+  },
+  "contact": {
+    "title": "Contact us",
+    "email_label": "Email",
+    "country_label": "Country",
+    "country_value": "Sweden 🇸🇪",
+    "founded_label": "Founded",
+    "founded_value": "2024"
+  },
+  "cta": {
+    "title": "Want more clarity on your chicken farm?",
+    "subtitle": "Create a free account and start with the egg log, flock or your first sales page in Agda's egg shop.",
+    "button": "Get started now"
+  },
+  "footer": {
+    "home": "Home",
+    "sell_eggs": "Sell eggs",
+    "blog": "Blog",
+    "terms": "Terms"
+  }
+}

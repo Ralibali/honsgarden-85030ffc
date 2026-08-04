@@ -1,0 +1,112 @@
+CREATE OR REPLACE FUNCTION public.send_booking_confirmation_to_buyer()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  _listing RECORD;
+  _slot RECORD;
+  _cancel_token text;
+  _order_link text;
+  _amount numeric;
+  _swish_msg text;
+  _slot_text text := '';
+  _pickup_info text := '';
+  _message_id text;
+  _maps_link text := '';
+  _maps_html text := '';
+  _maps_target text;
+BEGIN
+  IF NEW.customer_email IS NULL OR length(NEW.customer_email) < 5 THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT * INTO _listing FROM public.public_egg_sale_listings WHERE id = NEW.listing_id;
+  IF _listing IS NULL THEN RETURN NEW; END IF;
+
+  IF NEW.pickup_slot_id IS NOT NULL THEN
+    SELECT * INTO _slot FROM public.egg_sale_pickup_slots WHERE id = NEW.pickup_slot_id;
+    IF _slot IS NOT NULL THEN
+      _slot_text := to_char(_slot.starts_at AT TIME ZONE 'Europe/Stockholm', 'YYYY-MM-DD HH24:MI')
+        || ' – ' || to_char(_slot.ends_at AT TIME ZONE 'Europe/Stockholm', 'HH24:MI');
+    END IF;
+  END IF;
+
+  SELECT token INTO _cancel_token FROM public.egg_sale_booking_tokens WHERE booking_id = NEW.id;
+  _order_link := 'https://honsgarden.lovable.app/bestallning/' || COALESCE(_cancel_token, '');
+
+  _amount := NEW.packs * COALESCE(_listing.price_per_pack, 0);
+  _swish_msg := COALESCE(_listing.swish_message, 'Äggbokning') || ' ' || NEW.customer_name;
+  _pickup_info := COALESCE(_listing.pickup_info, '');
+
+  IF _listing.latitude IS NOT NULL AND _listing.longitude IS NOT NULL THEN
+    _maps_link := 'https://www.google.com/maps/dir/?api=1&destination='
+      || _listing.latitude::text || ',' || _listing.longitude::text;
+  ELSE
+    _maps_target := trim(COALESCE(_listing.location, '') || ' ' || COALESCE(_listing.pickup_info, ''));
+    IF length(_maps_target) > 2 THEN
+      _maps_link := 'https://www.google.com/maps/dir/?api=1&destination='
+        || replace(replace(_maps_target, ' ', '+'), E'\n', '+');
+    END IF;
+  END IF;
+
+  IF _maps_link <> '' THEN
+    _maps_html := '<p style="margin:14px 0 6px;font-size:13px;color:hsl(22,12%,44%);">Vägbeskrivning</p>'
+      || '<a href="' || _maps_link || '" style="color:hsl(142,32%,34%);font-size:14px;text-decoration:underline;">📍 Öppna i Google Maps →</a>';
+  END IF;
+
+  _message_id := 'buyer-confirm-' || NEW.id::text || '-' || extract(epoch from now())::bigint::text;
+
+  PERFORM public.enqueue_email(
+    'transactional_emails',
+    jsonb_build_object(
+      'run_id', gen_random_uuid()::text,
+      'to', NEW.customer_email,
+      'from', 'Hönsgården <noreply@notify.honsgarden.se>',
+      'sender_domain', 'notify.honsgarden.se',
+      'subject', 'Förfrågan mottagen: din äggbokning hos ' || COALESCE(_listing.swish_name, _listing.title, 'säljaren'),
+      'html', '<div style="font-family: Inter, Arial, sans-serif; max-width: 540px; padding: 30px 25px;">'
+        || '<img src="https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png" width="140" alt="Hönsgården" style="margin:0 0 24px;" />'
+        || '<h1 style="font-family: Young Serif, Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Tack ' || NEW.customer_name || '! 🥚</h1>'
+        || '<p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">Din förfrågan om <strong>' || NEW.packs || ' förpackning' || CASE WHEN NEW.packs>1 THEN 'ar' ELSE '' END || '</strong> hos <strong>' || COALESCE(_listing.title, 'säljaren') || '</strong> är mottagen. Säljaren bekräftar tillgång och hämtning och hör av sig – ingen betalning behövs förrän vid upphämtning.</p>'
+        || '<div style="background: hsl(35,32%,97%); border: 1px solid hsl(22,15%,90%); border-radius: 14px; padding: 18px 20px; margin: 0 0 20px;">'
+        || '<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Pris (betalas vid upphämtning)</p>'
+        || '<p style="margin:0 0 14px;font-size:18px;color:hsl(22,18%,12%);font-weight:700;">' || round(_amount)::text || ' kr</p>'
+        || CASE WHEN _listing.swish_number IS NOT NULL THEN
+             '<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Swisha till</p>'
+             || '<p style="margin:0 0 14px;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">' || _listing.swish_number || ' (' || COALESCE(_listing.swish_name,'') || ')</p>'
+             || '<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Meddelande i Swish</p>'
+             || '<p style="margin:0 0 10px;font-size:14px;color:hsl(22,18%,12%);">' || _swish_msg || '</p>'
+             || '<p style="margin:0 0 14px;font-size:12px;color:hsl(22,12%,44%);font-style:italic;">Swisha först vid upphämtning, efter att säljaren bekräftat din bokning.</p>'
+           ELSE '' END
+        || CASE WHEN _slot_text <> '' THEN
+             '<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Hämtningstid</p>'
+             || '<p style="margin:0 0 14px;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">' || _slot_text || '</p>'
+           ELSE '' END
+        || CASE WHEN _pickup_info <> '' THEN
+             '<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Hämtning</p>'
+             || '<p style="margin:0;font-size:14px;color:hsl(22,18%,12%);">' || _pickup_info || '</p>'
+           ELSE '' END
+        || _maps_html
+        || '</div>'
+        || CASE WHEN _cancel_token IS NOT NULL THEN
+             '<a href="' || _order_link || '" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block; margin: 0 0 16px;">Öppna din beställning →</a>'
+             || '<p style="font-size:12px;color:hsl(22,12%,44%);margin:8px 0 0;">Här kan du när som helst se din bokning, byta upphämtningstid, hitta vägbeskrivningen eller avboka.</p>'
+           ELSE '' END
+        || '<p style="font-size: 12px; color: #999; margin: 30px 0 0;">Du får detta mejl för att du gjort en bokning via Agdas bod på Hönsgården.</p>'
+        || '</div>',
+      'text', 'Tack ' || NEW.customer_name || '! Din förfrågan om ' || NEW.packs || ' förp. hos ' || COALESCE(_listing.title,'säljaren') || ' är mottagen. Säljaren bekräftar och hör av sig. Pris (betalas vid upphämtning): ' || round(_amount)::text || ' kr'
+        || CASE WHEN _listing.swish_number IS NOT NULL THEN '. Swisha först vid upphämtning till ' || _listing.swish_number ELSE '' END
+        || CASE WHEN _slot_text <> '' THEN '. Hämtning: ' || _slot_text ELSE '' END
+        || CASE WHEN _maps_link <> '' THEN '. Vägbeskrivning: ' || _maps_link ELSE '' END
+        || CASE WHEN _cancel_token IS NOT NULL THEN '. Hantera din beställning: ' || _order_link ELSE '' END,
+      'purpose', 'transactional',
+      'label', 'buyer-booking-confirmation',
+      'message_id', _message_id,
+      'queued_at', now()::text
+    )
+  );
+  RETURN NEW;
+END;
+$function$;

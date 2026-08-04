@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>Hönsgården</ShortName>
+  <Description>Sök artiklar om höns, ägg och hållbart lantliv på Hönsgården</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Url type="text/html" template="https://honsgarden.se/blogg?q={searchTerms}" />
+  <Image width="16" height="16" type="image/x-icon">https://honsgarden.se/favicon.ico</Image>
+</OpenSearchDescription>
