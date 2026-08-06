@@ -508,7 +508,7 @@ export default function DashboardV2() {
       <StreakRescueCard streak={streak} todayEggs={todayEggs} />
 
       {/* Veckans värptävling – flockens ranking senaste 7 dagarna */}
-      <HenRaceCard eggs={eggs} hens={hens} />
+      {!hideHenRace && <HenRaceCard eggs={eggs} hens={hens} />}
 
       {/* Snabblogg – dagens ägg (+/−) */}
       <div id="quick-egg-log">
