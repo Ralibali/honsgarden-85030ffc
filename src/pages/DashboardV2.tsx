@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import type { EggLog, Hen } from '@/lib/api';
 import { boldMarkdownToSafeHtml } from '@/lib/safeHtml';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
@@ -229,8 +230,23 @@ export default function DashboardV2() {
   const [showMoreSection, setShowMoreSection] = useState(false);
   const [tipSheetOpen, setTipSheetOpen] = useState(false);
   const [openInsights, setOpenInsights] = useState<Set<string>>(new Set());
+  const [hideHenRace, setHideHenRace] = useState(false);
   const now = new Date();
   const onboardingVisible = useOnboardingVisible();
+
+  // Load dashboard widget preferences from profile
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    supabase.from('profiles').select('preferences').eq('user_id', user.id).maybeSingle().then(({ data }) => {
+      if (cancelled) return;
+      if (data?.preferences && typeof data.preferences === 'object') {
+        const prefs = data.preferences as Record<string, unknown>;
+        setHideHenRace(prefs.hide_weekly_hen_race === true);
+      }
+    }, () => {});
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs(), staleTime: 60_000 });
   const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens(), staleTime: 60_000 });
@@ -492,7 +508,7 @@ export default function DashboardV2() {
       <StreakRescueCard streak={streak} todayEggs={todayEggs} />
 
       {/* Veckans värptävling – flockens ranking senaste 7 dagarna */}
-      <HenRaceCard eggs={eggs} hens={hens} />
+      {!hideHenRace && <HenRaceCard eggs={eggs} hens={hens} />}
 
       {/* Snabblogg – dagens ägg (+/−) */}
       <div id="quick-egg-log">

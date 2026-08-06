@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   User, Bell, Shield, LogOut, Loader2, MessageSquare, Mail,
   FileText, HelpCircle, Crown, Download, Upload, Palette, Moon, Sun,
-  Heart, ExternalLink, Info, Trash2, CheckCircle2, Clock, Send, RotateCcw, ArrowRight, RefreshCw,
+  Heart, ExternalLink, Info, Trash2, CheckCircle2, Clock, Send, RotateCcw, ArrowRight, RefreshCw, Trophy,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
@@ -104,6 +104,7 @@ export default function SettingsPage() {
   const [morningReminder, setMorningReminder] = useState(true);
   const [eveningReminder, setEveningReminder] = useState(true);
   const [weeklyReportEmail, setWeeklyReportEmail] = useState(true);
+  const [showHenRace, setShowHenRace] = useState(true);
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
@@ -135,6 +136,7 @@ export default function SettingsPage() {
       if (data?.preferences && typeof data.preferences === 'object') {
         const prefs = data.preferences as Record<string, unknown>;
         setWeeklyReportEmail(prefs.weekly_report_email !== false);
+        setShowHenRace(prefs.hide_weekly_hen_race !== true);
       }
     }, () => {});
     return () => { cancelled = true; };
@@ -488,7 +490,29 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <div className="border-t border-border/30 pt-4 mt-2">
+            <div className="border-t border-border/30 pt-4 mt-2">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <Trophy className="h-4.5 w-4.5 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Veckans värptävling</p>
+                    <p className="text-xs text-muted-foreground">Visa ranking av hönorna på dashboarden</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={showHenRace}
+                  onCheckedChange={async (checked) => {
+                    setShowHenRace(checked);
+                    if (!user?.id) return;
+                    const { data: current } = await supabase.from('profiles').select('preferences').eq('user_id', user.id).maybeSingle();
+                    const prefs = (current?.preferences && typeof current.preferences === 'object' ? current.preferences : {}) as Record<string, unknown>;
+                    await supabase.from('profiles').update({ preferences: { ...prefs, hide_weekly_hen_race: !checked } }).eq('user_id', user.id);
+                    toast({ title: checked ? 'Värptävlingen visas igen 🏆' : 'Värptävlingen dold' });
+                  }}
+                />
+              </div>
+            </div>
+            <div className="border-t border-border/30 pt-4 mt-2">
             <PushNotificationsRow />
           </div>
           <Button variant="outline" onClick={() => saveReminderMutation.mutate({ morning_reminder: morningReminder, evening_reminder: eveningReminder })} disabled={saveReminderMutation.isPending} className="rounded-xl">
