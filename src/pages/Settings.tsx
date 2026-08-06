@@ -136,6 +136,7 @@ export default function SettingsPage() {
       if (data?.preferences && typeof data.preferences === 'object') {
         const prefs = data.preferences as Record<string, unknown>;
         setWeeklyReportEmail(prefs.weekly_report_email !== false);
+        setShowHenRace(prefs.hide_weekly_hen_race !== true);
       }
     }, () => {});
     return () => { cancelled = true; };
