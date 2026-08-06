@@ -10,6 +10,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { supabase } from '@/integrations/supabase/client';
 import type { EggLog, Hen } from '@/lib/api';
 import { boldMarkdownToSafeHtml } from '@/lib/safeHtml';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
