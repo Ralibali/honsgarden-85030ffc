@@ -230,67 +230,39 @@ export default function Admin() {
 
       <Tabs defaultValue="insights" className="space-y-4">
         <TabsList className="flex w-full flex-wrap gap-1 h-auto rounded-xl p-1">
-          <TabsTrigger value="insights" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Lightbulb className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Insikter</span><span className="sm:hidden">💡</span>
-          </TabsTrigger>
-          <TabsTrigger value="revenue" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <DollarSign className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Intäkter</span><span className="sm:hidden">💰</span>
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Eye className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Analys</span><span className="sm:hidden">📊</span>
-          </TabsTrigger>
-          <TabsTrigger value="pwa" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Smartphone className="h-3.5 w-3.5" /> <span className="hidden sm:inline">PWA</span><span className="sm:hidden">📱</span>
-          </TabsTrigger>
-          <TabsTrigger value="users" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Users className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Användare</span><span className="sm:hidden">Users</span>
-          </TabsTrigger>
-          <TabsTrigger value="subscriptions" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Crown className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Pren.</span><span className="sm:hidden">Prem</span>
-          </TabsTrigger>
-          <TabsTrigger value="referrals" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Gift className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Värvning</span><span className="sm:hidden">🎁</span>
-          </TabsTrigger>
-          <TabsTrigger value="blog" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <BookOpen className="h-3.5 w-3.5" /> Blogg
-          </TabsTrigger>
-          <TabsTrigger value="seo" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Search className="h-3.5 w-3.5" /> SEO
-          </TabsTrigger>
-          <TabsTrigger value="glossary" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Link2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Länkord</span><span className="sm:hidden">Länkar</span>
-          </TabsTrigger>
-          <TabsTrigger value="feedback" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <MessageSquare className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Feedback</span><span className="sm:hidden">FB</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Bell className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Notiser</span><span className="sm:hidden">🔔</span>
-          </TabsTrigger>
-          <TabsTrigger value="marketing" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Mail className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Marknad</span><span className="sm:hidden">📧</span>
-          </TabsTrigger>
-          <TabsTrigger value="moderation" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <MessageSquare className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Moderation</span><span className="sm:hidden">🛡️</span>
-          </TabsTrigger>
-          <TabsTrigger value="agda" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Egg className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agdas bod</span><span className="sm:hidden">🥚</span>
-          </TabsTrigger>
-          <TabsTrigger value="agda-chat" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Agda AI</span><span className="sm:hidden">🤖</span>
-          </TabsTrigger>
-          <TabsTrigger value="errors" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <AlertTriangle className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Fel-loggar</span><span className="sm:hidden">🐞</span>
-          </TabsTrigger>
-          <TabsTrigger value="affiliate" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Link2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Affiliate</span><span className="sm:hidden">💰</span>
-          </TabsTrigger>
-          <TabsTrigger value="affiliate-analytics" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <TrendingUp className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Aff.analys</span><span className="sm:hidden">📈</span>
-          </TabsTrigger>
-          <TabsTrigger value="leads" className="text-xs sm:text-sm gap-1 rounded-lg">
-            <Search className="h-3.5 w-3.5" /> Leads
-          </TabsTrigger>
+          {[
+            { value: 'insights', icon: Lightbulb, label: 'Insikter' },
+            { value: 'revenue', icon: DollarSign, label: 'Intäkter' },
+            { value: 'analytics', icon: Eye, label: 'Analys' },
+            { value: 'pwa', icon: Smartphone, label: 'PWA' },
+            { value: 'users', icon: Users, label: 'Användare' },
+            { value: 'subscriptions', icon: Crown, label: 'Pren.' },
+            { value: 'referrals', icon: Gift, label: 'Värvning' },
+            { value: 'blog', icon: BookOpen, label: 'Blogg' },
+            { value: 'seo', icon: Search, label: 'SEO' },
+            { value: 'glossary', icon: Link2, label: 'Länkord' },
+            { value: 'feedback', icon: MessageSquare, label: 'Feedback' },
+            { value: 'notifications', icon: Bell, label: 'Notiser' },
+            { value: 'marketing', icon: Mail, label: 'Marknad' },
+            { value: 'moderation', icon: MessageSquare, label: 'Moderation' },
+            { value: 'agda', icon: Egg, label: 'Agdas bod' },
+            { value: 'agda-chat', icon: Sparkles, label: 'Agda AI' },
+            { value: 'errors', icon: AlertTriangle, label: 'Fel-loggar' },
+            { value: 'affiliate', icon: Link2, label: 'Affiliate' },
+            { value: 'affiliate-analytics', icon: TrendingUp, label: 'Aff.analys' },
+            { value: 'leads', icon: Search, label: 'Leads' },
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.value}
+              value={tab.value}
+              className="text-[11px] sm:text-sm gap-1.5 rounded-lg px-2.5 py-1.5 whitespace-nowrap"
+            >
+              <tab.icon className="h-3.5 w-3.5 shrink-0" />
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
+
 
         {/* Insights tab */}
         <TabsContent value="insights" className="space-y-3">
