@@ -259,11 +259,11 @@ export default function SaljaAggOrt() {
         {/* Lokal kontext - djuplodande SEO-innehåll */}
         <section className="py-14 sm:py-20">
           <div className="container max-w-3xl mx-auto px-5 sm:px-6">
-            <motion.div {...fadeUp()} className="space-y-10 text-foreground">
-              <div className="space-y-4">
-                <h2 className="font-serif text-2xl sm:text-3xl">Sälja ägg i {ort.name} – så ser läget ut idag</h2>
-                <p className="text-[15px] leading-relaxed text-muted-foreground">{content.intro}</p>
-                <p className="text-[15px] leading-relaxed text-muted-foreground">{content.marknadAvsnitt}</p>
+            <motion.div {...fadeUp()} className="space-y-12 text-foreground">
+              <div className="space-y-5 pt-8 border-t border-border/40">
+                <h2 className="font-serif text-2xl sm:text-3xl leading-tight">Sälja ägg i {ort.name} – så ser läget ut idag</h2>
+                <p className="text-[15px] sm:text-base leading-relaxed text-muted-foreground">{content.intro}</p>
+                <p className="text-[15px] sm:text-base leading-relaxed text-muted-foreground">{content.marknadAvsnitt}</p>
               </div>
 
               <div className="space-y-4">
