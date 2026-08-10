@@ -87,10 +87,14 @@ async function getCurrentUserId(): Promise<string | null> {
 // - "Lock was stolen by another request": Supabase gotrue-js/WebLocks race när
 //   flera flikar/instanser konkurrerar om samma auth-lås på iOS Safari. Ofarligt.
 // - "NavigatorLockAcquireTimeoutError": samma tema.
+// - "Script error." (utan stack/filnamn): webbläsarens anonymiserade cross-origin-fel,
+//   oftast från tredjepartsskript (analytics/Safari-extensions). Innehåller ingen
+//   användbar information och kan inte felsökas – ignoreras.
 const IGNORED_ERROR_PATTERNS: RegExp[] = [
   /Lock was stolen by another request/i,
   /NavigatorLockAcquireTimeout/i,
   /Acquiring an exclusive Navigator LockManager lock .* immediately failed/i,
+  /^Script error\.?$/i,
 ];
 
 function shouldIgnore(message: string): boolean {
