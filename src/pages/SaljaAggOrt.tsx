@@ -187,27 +187,41 @@ export default function SaljaAggOrt() {
         </nav>
 
         {/* HERO */}
-        <section className="relative pt-8 pb-16 sm:pt-14 sm:pb-24 overflow-hidden noise-bg">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-warning/[0.04] to-transparent pointer-events-none" />
+        <section className="relative pt-10 pb-16 sm:pt-20 sm:pb-28 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-warning/[0.03] to-transparent pointer-events-none" />
           <div className="container max-w-6xl mx-auto px-5 sm:px-6 relative">
-            <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
+            <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-12 items-center">
               <motion.div {...fadeUp()} className="max-w-3xl">
-                <Badge className="mb-4 bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1.5">
-                  <MapPin className="h-3 w-3" /> {ort.lan}
-                </Badge>
-                <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-foreground leading-[1.05] mb-5">
-                  Sälja ägg i <span className="text-primary">{ort.name}</span> – gratis säljsida på 2 minuter
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/8 border border-primary/15 text-primary text-xs font-medium mb-6">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {ort.lan}
+                </div>
+                <h1 className="font-serif text-[32px] sm:text-5xl lg:text-[56px] text-foreground leading-[1.1] mb-6 tracking-tight">
+                  Sälja ägg i{' '}
+                  <span className="text-primary italic underline decoration-primary/25 underline-offset-[6px]">
+                    {ort.name}
+                  </span>{' '}
+                  – gratis säljsida på 2 minuter
                 </h1>
-                <p className="text-base sm:text-lg text-muted-foreground mb-7 leading-relaxed max-w-2xl">
+                <p className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl">
                   Skapa en lokal säljsida för {ort.name}. Köpare bokar själva, betalar med Swish och du behåller hela försäljningen – inga avgifter.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button asChild size="lg" className="h-12 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]">
+                  <Button
+                    asChild
+                    size="lg"
+                    className="h-13 px-8 text-base gap-2 rounded-2xl shadow-[0_10px_30px_-8px_hsl(var(--primary)/0.35)] hover:shadow-[0_14px_36px_-8px_hsl(var(--primary)/0.45)] transition-shadow"
+                  >
                     <Link to={`/login?mode=register&utm_source=ort_page&utm_campaign=salja_agg&utm_content=${ort.slug}`}>
                       Skapa min säljsida gratis <ArrowRight className="h-5 w-5" />
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" className="h-12 px-7 text-base gap-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="lg"
+                    className="h-13 px-7 text-base gap-2 rounded-2xl bg-background border-border hover:bg-muted/50"
+                  >
                     <Link to={`/karta?ort=${ort.slug}`}>
                       <MapPin className="h-4 w-4" />
                       Säljare i {ort.name}
@@ -215,24 +229,26 @@ export default function SaljaAggOrt() {
                   </Button>
                 </div>
                 {sellerCount > 0 && (
-                  <p className="mt-4 text-xs text-muted-foreground">
-                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary mr-1.5 align-middle" />
+                  <p className="mt-5 text-sm text-muted-foreground">
+                    <span className="inline-block h-2 w-2 rounded-full bg-primary mr-2 align-middle" />
                     {sellerCount} säljare i {ort.name} just nu
                   </p>
                 )}
-
               </motion.div>
 
               <motion.figure {...fadeUp(0.1)} className="hidden lg:block">
-                <img
-                  src={ASSET_BY_KEY[images.coop.assetKey]}
-                  alt={images.coop.alt}
-                  loading="eager"
-                  width={640}
-                  height={480}
-                  className="w-full h-auto rounded-3xl shadow-xl object-cover aspect-[4/3]"
-                />
-                <figcaption className="mt-2 text-xs text-muted-foreground text-center">
+                <div className="relative">
+                  <div className="absolute -inset-3 bg-gradient-to-br from-primary/10 to-warning/10 rounded-[32px] blur-2xl" />
+                  <img
+                    src={ASSET_BY_KEY[images.coop.assetKey]}
+                    alt={images.coop.alt}
+                    loading="eager"
+                    width={640}
+                    height={480}
+                    className="relative w-full h-auto rounded-[32px] shadow-2xl shadow-foreground/5 object-cover aspect-[4/3] border border-border/30"
+                  />
+                </div>
+                <figcaption className="mt-3 text-xs text-muted-foreground text-center">
                   {images.coop.caption}
                 </figcaption>
               </motion.figure>
