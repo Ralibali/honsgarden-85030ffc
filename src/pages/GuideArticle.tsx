@@ -559,7 +559,7 @@ export default function GuideArticle() {
           <Link to="/blogg" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" /> Blogg
           </Link>
-          <Link to="/login">
+          <Link to="/login?mode=register">
             <Button size="sm" className="rounded-xl text-xs gap-1">
               <Egg className="h-3 w-3" /> Kom igång
             </Button>

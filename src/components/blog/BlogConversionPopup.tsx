@@ -123,7 +123,7 @@ export default function BlogConversionPopup() {
               <DialogDescription className="text-sm text-muted-foreground mb-5">
                 Vi har lagt till dig och skickar våra bästa hönstips varje vecka.
               </DialogDescription>
-              <Link to="/auth" onClick={() => setOpen(false)}>
+              <Link to="/login?mode=register" onClick={() => setOpen(false)}>
                 <Button size="lg" className="w-full gap-2">
                   Skapa gratiskonto i appen <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -166,7 +166,7 @@ export default function BlogConversionPopup() {
                   Vill du gå hela vägen?
                 </p>
                 <Link
-                  to="/auth"
+                  to="/login?mode=register"
                   onClick={() => {
                     markDismissed();
                     setOpen(false);

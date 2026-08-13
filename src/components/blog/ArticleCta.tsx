@@ -49,7 +49,7 @@ export default function ArticleCta({ category, variant = 'inline' }: ArticleCtaP
           <h3 className="font-serif text-lg sm:text-xl text-foreground leading-snug">{title}</h3>
           <p className="text-sm text-muted-foreground mt-1">{text}</p>
         </div>
-        <Link to="/login" className="shrink-0">
+        <Link to="/login?mode=register" className="shrink-0">
           <Button className="rounded-xl gap-2 w-full sm:w-auto">
             <Egg className="h-4 w-4" /> Skapa gratis konto
           </Button>
