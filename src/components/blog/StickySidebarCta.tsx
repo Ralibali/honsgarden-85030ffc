@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Egg, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { trackEvent } from '@/lib/analytics';
 
 /**
  * Kompakt sticky CTA i artikelns sidospalt (desktop).
@@ -31,7 +32,12 @@ export default function StickySidebarCta() {
         ))}
       </ul>
       <Button asChild size="sm" className="w-full rounded-xl text-xs h-8">
-        <Link to="/login?mode=register">Skapa konto</Link>
+        <Link
+          to="/login?mode=register&source=blog_sidebar"
+          onClick={() => trackEvent('CTA Register Clicked', { source: 'blog_sidebar' })}
+        >
+          Skapa konto
+        </Link>
       </Button>
       <p className="text-[10px] text-muted-foreground/70 text-center mt-2">Gratis · ingen app krävs</p>
     </motion.div>

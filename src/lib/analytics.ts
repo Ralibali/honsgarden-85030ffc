@@ -34,7 +34,12 @@ export type AnalyticsSource =
   | 'landing_hero'
   | 'landing_navbar'
   | 'landing_final_cta'
-  | 'demo_banner';
+  | 'demo_banner'
+  | 'blog_header'
+  | 'blog_inline'
+  | 'blog_final'
+  | 'blog_sidebar'
+  | 'blog_popup';
 
 /** Tillåtna OAuth-leverantörer (låg kardinalitet). */
 export type AnalyticsOAuthProvider = 'google' | 'apple';
@@ -154,4 +159,38 @@ export function trackFirstEggIfNew(source: AnalyticsSource): void {
   } catch {
     // localStorage kan vara blockerat i privat läge
   }
+}
+
+/** Alla tillåtna source-värden i runtime (för validering av query-params). */
+export const ANALYTICS_SOURCES = [
+  'premium_page',
+  'dashboard',
+  'eggs_page',
+  'hen_profile',
+  'quick_fab',
+  'quick_log_card',
+  'signup_form',
+  'landing_hero',
+  'landing_navbar',
+  'landing_final_cta',
+  'demo_banner',
+  'blog_header',
+  'blog_inline',
+  'blog_final',
+  'blog_sidebar',
+  'blog_popup',
+] as const satisfies readonly AnalyticsSource[];
+
+/**
+ * Validera en (potentiellt godtycklig) sträng från t.ex. en query-param mot
+ * de tillåtna source-värdena. Fritext släpps aldrig igenom till analytics.
+ */
+export function parseAnalyticsSource(
+  value: string | null | undefined,
+  fallback: AnalyticsSource = 'signup_form',
+): AnalyticsSource {
+  if (!value) return fallback;
+  return (ANALYTICS_SOURCES as readonly string[]).includes(value)
+    ? (value as AnalyticsSource)
+    : fallback;
 }
