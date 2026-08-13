@@ -100,7 +100,7 @@ function renderArticle(post) {
   const content = sanitizeHtml(injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)));
 
   return `<div class="min-h-screen bg-background">
-<header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/blogg" class="text-sm text-muted-foreground hover:text-foreground">← Blogg</a><a href="/login?mode=register" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
+<header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/blogg" class="text-sm text-muted-foreground hover:text-foreground">← Blogg</a><a href="/login?mode=register&amp;source=blog_header" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
 <main class="max-w-4xl mx-auto px-4 py-8" id="main-content"><article>
 <nav class="text-xs text-muted-foreground mb-5"><a href="/">Hem</a> / <a href="/blogg">Blogg</a> / ${escapeHtml(post.title)}</nav>
 <div class="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">${post.category ? `<span class="rounded-full border border-border px-2 py-1">${escapeHtml(post.category)}</span>` : ''}${date ? `<time datetime="${escapeHtml(post.published_at)}">${date}</time>` : ''}<span>${post.reading_time_minutes || Math.max(1, Math.ceil(stripTags(post.content).split(/\s+/).length / 220))} min läsning</span></div>
@@ -291,7 +291,7 @@ function renderRegulationGuideBody(guide, updatedFormatted) {
   const relLinks = guide.relatedLinks.map((l) => `<li><a href="${escapeHtml(l.href)}" class="text-primary underline">${escapeHtml(l.label)}</a></li>`).join('');
 
   return `<div class="min-h-screen bg-background">
-<header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/" class="font-serif text-lg">🐔 Hönsgården</a><a href="/login?mode=register" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
+<header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/" class="font-serif text-lg">🐔 Hönsgården</a><a href="/login?mode=register&amp;source=blog_header" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
 <main class="max-w-3xl mx-auto px-4 py-8" id="main-content">
 <nav class="text-xs text-muted-foreground mb-4"><a href="/">Start</a> / <a href="/blogg">Guider</a> / ${escapeHtml(guide.h1)}</nav>
 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">Regelguide</div>

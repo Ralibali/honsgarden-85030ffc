@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Egg, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 
 const STORAGE_KEY = 'blog-popup-v1';
 const DISMISS_DAYS = 30;
 const SCROLL_TRIGGER = 0.5; // 50 %
+export const REGISTER_HREF = '/login?mode=register&source=blog_popup';
 
 function wasRecentlyDismissed(): boolean {
   try {
@@ -123,7 +125,13 @@ export default function BlogConversionPopup() {
               <DialogDescription className="text-sm text-muted-foreground mb-5">
                 Vi har lagt till dig och skickar våra bästa hönstips varje vecka.
               </DialogDescription>
-              <Link to="/login?mode=register" onClick={() => setOpen(false)}>
+              <Link
+                to={REGISTER_HREF}
+                onClick={() => {
+                  trackEvent('CTA Register Clicked', { source: 'blog_popup' });
+                  setOpen(false);
+                }}
+              >
                 <Button size="lg" className="w-full gap-2">
                   Skapa gratiskonto i appen <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -166,8 +174,9 @@ export default function BlogConversionPopup() {
                   Vill du gå hela vägen?
                 </p>
                 <Link
-                  to="/login?mode=register"
+                  to={REGISTER_HREF}
                   onClick={() => {
+                    trackEvent('CTA Register Clicked', { source: 'blog_popup' });
                     markDismissed();
                     setOpen(false);
                   }}
