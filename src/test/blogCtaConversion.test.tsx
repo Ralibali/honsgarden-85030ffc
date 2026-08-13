@@ -3,6 +3,15 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      insert: vi.fn(),
+    })),
+  },
+}));
+
 import ArticleCta from '@/components/blog/ArticleCta';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { REGISTER_HREF } from '@/components/blog/BlogConversionPopup';
