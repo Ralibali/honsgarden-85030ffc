@@ -12,6 +12,7 @@ import NewsletterSignup from '@/components/NewsletterSignup';
 import ArticleCta from '@/components/blog/ArticleCta';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
+import { trackEvent } from '@/lib/analytics';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
 import RecommendedProducts from '@/components/affiliate/RecommendedProducts';

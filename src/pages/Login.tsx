@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { parseAnalyticsSource } from '@/lib/analytics';
 import heroFarm from '@/assets/hero-farm.webp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,8 @@ export default function Login() {
   });
 
   const initialMode = searchParams.get('mode');
+  // Valideras mot tillåtna AnalyticsSource-värden – aldrig fritext till analytics.
+  const signupSource = parseAnalyticsSource(searchParams.get('source'));
   const [authMode, setAuthMode] = useState<AuthMode>(
     initialMode === 'register' ? 'register' : initialMode === 'login' ? 'login' : 'welcome'
   );
@@ -69,10 +72,10 @@ export default function Login() {
   useEffect(() => {
     if (authMode === 'register') {
       void import('@/lib/analytics').then(({ trackEvent }) =>
-        trackEvent('Signup Started', { source: 'signup_form' }),
+        trackEvent('Signup Started', { source: signupSource }),
       );
     }
-  }, [authMode]);
+  }, [authMode, signupSource]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,7 +133,7 @@ export default function Login() {
       // Analytics: faktisk lyckad signup (efter att register() returnerat utan att kasta).
       // Inga personuppgifter skickas – endast en source-property med låg kardinalitet.
       const { trackEvent } = await import('@/lib/analytics');
-      trackEvent('Signup Completed', { source: 'signup_form' });
+      trackEvent('Signup Completed', { source: signupSource });
       if (referralCode.trim() && data?.user?.id) {
         try {
           await supabase.rpc('process_referral', {
