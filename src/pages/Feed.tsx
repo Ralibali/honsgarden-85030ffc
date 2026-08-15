@@ -3,8 +3,8 @@ import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Package, TrendingDown, Egg, Calculator, ShoppingCart, Loader2, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Plus, Package, Egg, Calculator, Loader2, Trash2, Wheat, CalendarDays } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -26,6 +26,10 @@ const FEED_CATEGORIES: { value: string; label: string }[] = [
   { value: 'treats', label: 'Godis / mjölmask' },
   { value: 'other', label: 'Annat' },
 ];
+
+function formatKr(value: number) {
+  return `${Number(value || 0).toLocaleString('sv-SE', { maximumFractionDigits: 1 })} kr`;
+}
 
 export default function Feed() {
   const queryClient = useQueryClient();
@@ -57,11 +61,19 @@ export default function Feed() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed-stats'] });
       queryClient.invalidateQueries({ queryKey: ['feed-inventory'] });
-      toast({ title: 'Foderinköpet är sparat! 🥣' });
+      toast({ title: 'Foderinköpet är sparat 🌾' });
       setOpen(false);
-      setNewType(''); setNewCost(''); setNewKg(''); setNewBrand(''); setNewCategory('');
+      setNewType('');
+      setNewCost('');
+      setNewKg('');
+      setNewBrand('');
+      setNewCategory('');
     },
-    onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte spara foderinköpet just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
+    onError: () => toast({
+      title: 'Något gick fel',
+      description: 'Vi kunde inte spara foderinköpet just nu. Kontrollera anslutningen och försök igen.',
+      variant: 'destructive',
+    }),
   });
 
   const deleteMutation = useMutation({
@@ -69,6 +81,7 @@ export default function Feed() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['feed-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['feed-inventory'] });
       toast({ title: 'Foderinköpet är borttaget' });
     },
   });
@@ -85,143 +98,185 @@ export default function Feed() {
     } as any);
   };
 
-  const totalCost = feedStats?.total_cost || feedRecords.reduce((s: number, p: any) => s + (p.cost || 0), 0);
-  const totalKg = feedStats?.total_kg || feedRecords.reduce((s: number, p: any) => s + (p.amount_kg || 0), 0);
-  const costPerEgg = feedStats?.cost_per_egg || 0;
+  const totalCost = Number(feedStats?.total_cost || feedRecords.reduce((sum: number, record: any) => sum + (record.cost || 0), 0));
+  const totalKg = Number(feedStats?.total_kg || feedRecords.reduce((sum: number, record: any) => sum + (record.amount_kg || 0), 0));
+  const costPerEgg = Number(feedStats?.cost_per_egg || 0);
+  const totalEggs = Number(feedStats?.total_eggs || 0);
+  const daysRemaining = Number(feedInventory?.days_remaining || 0);
 
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto space-y-4 animate-fade-in">
         <Skeleton className="h-10 w-48" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">{[1,2,3,4].map(i => <Skeleton key={i} className="h-24" />)}</div>
+        <Skeleton className="h-44 rounded-3xl" />
+        <Skeleton className="h-32 rounded-3xl" />
       </div>
     );
   }
 
   return (
     <PremiumGate feature="Foderspårning" featureKey="feed" blur>
-    <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <PageHeader
-        title="Foder"
-        emoji="🥣"
-        subtitle="Spåra foderinköp och kostnad per ägg"
-        actions={<Button className="gap-2" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nytt inköp</Button>}
-      />
-      <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="rounded-2xl">
-            <DialogHeader><DialogTitle className="font-serif">Registrera foderinköp</DialogTitle></DialogHeader>
-            <div className="space-y-3 pt-2">
-              <Input className="rounded-xl" placeholder="Beskrivning (t.ex. Hönsfoder 25 kg)" value={newType} onChange={(e) => setNewType(e.target.value)} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input className="rounded-xl" placeholder="Märke (t.ex. Granngården)" value={newBrand} onChange={(e) => setNewBrand(e.target.value)} />
-                <Select value={newCategory} onValueChange={setNewCategory}>
-                  <SelectTrigger className="rounded-xl h-10"><SelectValue placeholder="Fodertyp (valfritt)" /></SelectTrigger>
-                  <SelectContent>
-                    {FEED_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+      <div className="feed-journal max-w-5xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
+        <PageHeader
+          title="Foder"
+          emoji="🌾"
+          subtitle="Vad går åt – och vad kostar äggen egentligen?"
+          actions={(
+            <Button className="gap-2 rounded-xl" onClick={() => setOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Lägg in inköp
+            </Button>
+          )}
+        />
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="rounded-3xl sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="font-serif text-xl">Vad köpte du till flocken?</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div>
+                <label className="data-label mb-1.5 block">Beskrivning</label>
+                <Input
+                  className="rounded-xl h-11"
+                  placeholder="T.ex. Hönsfoder 25 kg"
+                  value={newType}
+                  onChange={(event) => setNewType(event.target.value)}
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input className="rounded-xl" placeholder="Kostnad (kr)" type="number" value={newCost} onChange={(e) => setNewCost(e.target.value)} />
-                <Input className="rounded-xl" placeholder="Vikt (kg)" type="number" value={newKg} onChange={(e) => setNewKg(e.target.value)} />
+                <div>
+                  <label className="data-label mb-1.5 block">Märke <span className="normal-case font-normal">(valfritt)</span></label>
+                  <Input className="rounded-xl h-11" placeholder="T.ex. Granngården" value={newBrand} onChange={(event) => setNewBrand(event.target.value)} />
+                </div>
+                <div>
+                  <label className="data-label mb-1.5 block">Typ <span className="normal-case font-normal">(valfritt)</span></label>
+                  <Select value={newCategory} onValueChange={setNewCategory}>
+                    <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="Välj fodertyp" /></SelectTrigger>
+                    <SelectContent>
+                      {FEED_CATEGORIES.map((category) => (
+                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <p className="text-[11px] text-muted-foreground">Märke + fodertyp gör det möjligt att jämföra kostnader och få bättre köprekommendationer.</p>
-              <Button className="w-full rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newType || !newCost}>
-                {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-                Spara inköp
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="data-label mb-1.5 block">Pris</label>
+                  <Input className="rounded-xl h-11" placeholder="kr" type="number" inputMode="decimal" value={newCost} onChange={(event) => setNewCost(event.target.value)} />
+                </div>
+                <div>
+                  <label className="data-label mb-1.5 block">Vikt</label>
+                  <Input className="rounded-xl h-11" placeholder="kg" type="number" inputMode="decimal" value={newKg} onChange={(event) => setNewKg(event.target.value)} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Det räcker med beskrivning och pris. Vikt, märke och fodertyp gör jämförelserna bättre senare.
+              </p>
+              <Button className="w-full h-11 rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newType || !newCost}>
+                {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
+                Spara i foderjournalen
               </Button>
             </div>
           </DialogContent>
-      </Dialog>
+        </Dialog>
 
-      {feedRecords.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="Inga foderinköp ännu"
-          description="Lägg in ditt första foderinköp så kan Hönsgården börja räkna på foderkostnad, total förbrukning och ungefärlig kostnad per ägg."
-          actionLabel="Lägg till foderinköp"
-          onAction={() => setOpen(true)}
-          secondaryLabel="Logga ägg först"
-          onSecondaryAction={() => window.location.assign('/app/eggs')}
-        />
-      ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
-              <CardContent className="p-3 sm:p-4 text-center">
-                <ShoppingCart className="h-4 w-4 text-primary mx-auto mb-1" />
-                <p className="stat-number text-xl text-foreground">{totalCost} kr</p>
-                <p className="data-label text-[10px] mt-1">Total foderkostnad</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '70ms', animationFillMode: 'backwards' }}>
-              <CardContent className="p-3 sm:p-4 text-center">
-                <Package className="h-4 w-4 text-accent mx-auto mb-1" />
-                <p className="stat-number text-xl text-foreground">{totalKg} kg</p>
-                <p className="data-label text-[10px] mt-1">Totalt foder</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '140ms', animationFillMode: 'backwards' }}>
-              <CardContent className="p-3 sm:p-4 text-center">
-                <Egg className="h-4 w-4 text-warning mx-auto mb-1" />
-                <p className="stat-number text-xl text-foreground">{feedStats?.total_eggs || '–'}</p>
-                <p className="data-label text-[10px] mt-1">Ägg totalt</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border shadow-sm border-l-4 border-l-primary animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '210ms', animationFillMode: 'backwards' }}>
-              <CardContent className="p-3 sm:p-4 text-center">
-                <Calculator className="h-4 w-4 text-primary mx-auto mb-1" />
-                <p className="stat-number text-xl text-primary">{costPerEgg ? `${costPerEgg.toFixed(1)} kr` : '–'}</p>
-                <p className="data-label text-[10px] mt-1">Kostnad/ägg</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {feedInventory && (
-            <Card className="bg-primary/5 border-primary/20 shadow-sm">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <TrendingDown className="h-4 w-4 text-primary" />
-                  <span className="font-serif text-sm text-primary">Förbrukningsprognos</span>
+        {feedRecords.length === 0 ? (
+          <EmptyState
+            icon={Wheat}
+            title="Foderjournalen är redo"
+            description="Lägg in nästa säck eller påse du köper. Därifrån kan Hönsgården börja räkna på förbrukning och ungefär vad fodret kostar per ägg."
+            actionLabel="Lägg in första inköpet"
+            onAction={() => setOpen(true)}
+            secondaryLabel="Logga dagens ägg"
+            onSecondaryAction={() => window.location.assign('/app/eggs')}
+          />
+        ) : (
+          <>
+            <Card className="feed-journal__story overflow-hidden">
+              <CardContent className="p-5 sm:p-7">
+                <div className="flex items-start gap-4">
+                  <div className="feed-journal__story-icon"><Wheat className="h-5 w-5" /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className="data-label">Så ser fodret ut just nu</p>
+                    <h2 className="font-serif text-xl sm:text-2xl text-foreground mt-1 leading-tight">
+                      {costPerEgg > 0
+                        ? `Ungefär ${formatKr(costPerEgg)} i foder per ägg`
+                        : `${formatKr(totalCost)} loggat i foder hittills`}
+                    </h2>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+                      {totalKg > 0 ? `Du har loggat ${totalKg.toLocaleString('sv-SE')} kg foder` : 'Du har börjat bygga din foderhistorik'}
+                      {totalEggs > 0 ? ` tillsammans med ${totalEggs.toLocaleString('sv-SE')} ägg.` : '.'}
+                      {daysRemaining > 0 ? ` Med nuvarande takt ser lagret ut att räcka ungefär ${daysRemaining} dagar till.` : ''}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-sm text-foreground">
-                  {feedInventory.days_remaining ? `Fodret räcker i ca ${feedInventory.days_remaining} dagar` : 'Logga några fler foderposter så kan vi visa en bättre prognos.'}
-                </p>
               </CardContent>
             </Card>
-          )}
 
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="px-4 sm:px-6">
-              <CardTitle className="font-serif text-base sm:text-lg">Inköpshistorik</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {feedRecords.map((p: any) => {
-                  const id = p._id || p.id;
-                  return (
-                    <div key={id} className="flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-secondary/50 transition-colors">
-                      <div className="min-w-0 mr-3">
-                        <p className="text-xs sm:text-sm font-medium text-foreground truncate">{p.feed_type || p.type}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">{p.date} · {p.amount_kg || p.kg} kg</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="stat-number text-sm text-destructive">-{p.cost} kr</span>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground" onClick={() => deleteMutation.mutate(id)} aria-label="Ta bort foderinköp">
+            <div className="feed-journal__facts grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <FeedFact icon={Package} value={totalKg > 0 ? `${totalKg.toLocaleString('sv-SE')} kg` : '–'} label="foder loggat" text="Ger en bild av hur mycket som faktiskt går åt." />
+              <FeedFact icon={Calculator} value={formatKr(totalCost)} label="lagt på foder" text="Summan av inköpen du har sparat här." />
+              <FeedFact icon={Egg} value={costPerEgg > 0 ? formatKr(costPerEgg) : '–'} label="per ägg" text={costPerEgg > 0 ? 'En enkel uppskattning utifrån foder och loggade ägg.' : 'Visas när det finns tillräckligt med äggdata.'} />
+            </div>
+
+            <Card className="feed-journal__history overflow-hidden">
+              <CardHeader className="px-4 sm:px-6 pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <CardTitle className="font-serif text-lg">Foderjournal</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">Dina inköp, nyast först.</p>
+                  </div>
+                  <span className="feed-journal__count">{feedRecords.length} {feedRecords.length === 1 ? 'inköp' : 'inköp'}</span>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/60">
+                  {feedRecords.map((record: any) => {
+                    const id = record._id || record.id;
+                    const kg = Number(record.amount_kg || record.kg || 0);
+                    return (
+                      <div key={id} className="feed-journal__row px-4 sm:px-6 py-3.5">
+                        <div className="feed-journal__date-mark"><CalendarDays className="h-3.5 w-3.5" /></div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">{record.feed_type || record.type}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {record.date}{kg > 0 ? ` · ${kg.toLocaleString('sv-SE')} kg` : ''}{record.brand ? ` · ${record.brand}` : ''}
+                          </p>
+                        </div>
+                        <span className="font-semibold text-sm text-foreground tabular-nums shrink-0">{formatKr(Number(record.cost || 0))}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-muted-foreground/60 hover:text-destructive shrink-0"
+                          onClick={() => deleteMutation.mutate(id)}
+                          aria-label="Ta bort foderinköp"
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-      <AffiliateProductStrip category="foder" title="Foder & tillbehör" />
-    </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        <AffiliateProductStrip category="foder" title="Foder & tillbehör" />
+      </div>
     </PremiumGate>
   );
 }
 
+function FeedFact({ icon: Icon, value, label, text }: { icon: React.ElementType; value: string; label: string; text: string }) {
+  return (
+    <div className="feed-journal__fact">
+      <span className="feed-journal__fact-icon"><Icon className="h-4 w-4" /></span>
+      <strong>{value}</strong>
+      <span>{label}</span>
+      <p>{text}</p>
+    </div>
+  );
+}
