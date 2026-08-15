@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import OnboardingChecklistCard from '../dashboard/OnboardingChecklistCard';
@@ -33,22 +33,28 @@ describe('OnboardingChecklistCard', () => {
     mockGetFlocks.mockResolvedValue([]);
   });
 
-  it('visar checklistan för en helt ny användare', async () => {
+  it('visar den lugna första-veckan-resan för en helt ny användare', async () => {
     renderCard({ hensCount: 0, eggsCount: 0, feedRecordsCount: 0 });
-    expect(await screen.findByText('Kom igång på fem minuter')).toBeInTheDocument();
-    expect(screen.getByText('Skapa din första flock')).toBeInTheDocument();
-    expect(screen.getByText('Lägg till hönor')).toBeInTheDocument();
+
+    expect(await screen.findByText('En liten sak i taget räcker')).toBeInTheDocument();
+    expect(screen.getByText('Ge hönsgården en plats')).toBeInTheDocument();
+    expect(screen.getByText('0 av 5')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Se hela resan' }));
+
+    expect(screen.getByText('Presentera dina hönor')).toBeInTheDocument();
     expect(screen.getByText('Logga första ägget')).toBeInTheDocument();
-    expect(screen.getByText('Ange foderkostnad')).toBeInTheDocument();
+    expect(screen.getByText('Låt ekonomin bli begriplig')).toBeInTheDocument();
+    expect(screen.getByText('Låt mönstren växa fram')).toBeInTheDocument();
   });
 
   it('räknar framsteg utifrån verklig data', async () => {
     mockGetFlocks.mockResolvedValue([{ id: 'f1', name: 'Hönshuset' }]);
     renderCard({ hensCount: 3, eggsCount: 2, feedRecordsCount: 0 });
-    // Flock (mockad) + hönor + ägg = 3 klara steg; foder och statistik återstår
-    expect(
-      await screen.findByText((_, el) => el?.textContent?.trim() === 'Kom igång · 3/5 klart'),
-    ).toBeInTheDocument();
+
+    // Flock (mockad) + hönor + ägg = 3 klara steg; foder och insikter återstår.
+    expect(await screen.findByText('3 av 5')).toBeInTheDocument();
+    expect(screen.getByText('Låt ekonomin bli begriplig')).toBeInTheDocument();
   });
 
   it('är dold om användaren stängt den tidigare', () => {
