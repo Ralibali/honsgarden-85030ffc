@@ -1,71 +1,71 @@
 {
   "seo": {
-    "title": "Hönsgården Plus – AI-coach, ekonomi & insikter för hönsgården",
-    "description": "Uppgradera till Hönsgården Plus för AI-coach, veckorapporter, avvikelsevarningar, ekonomiverktyg och kläckningskalender. 39 kr/mån eller 299 kr/år – avsluta när du vill.",
-    "og_image_alt": "Hönsgården Plus – AI och ekonomi för hönsgårdar"
+    "title": "Hönsgården Plus – Agda, insikter och ekonomi för din hönsgård",
+    "description": "Hönsgården Plus hjälper dig förstå flocken bättre med Agda, veckorapporter, avvikelsevarningar, ekonomi, statistik och kläckningsstöd. 39 kr/mån eller 299 kr/år.",
+    "og_image_alt": "Hönsgården Plus – mer hjälp i vardagen med höns"
   },
   "hero": {
-    "badge": "Premium med AI, insikter och ekonomi",
-    "title": "Gör Hönsgården till din smarta gårdsassistent",
-    "free_trial": "🎁 Sju dagars gratis premium för nya användare",
-    "sync_status": "Synka premiumstatus"
+    "badge": "Lite mer hjälp i vardagen",
+    "title": "Mer hjälp när din hönsgård börjar leva i appen",
+    "free_trial": "🌿 Prova Plus i lugn och ro i 7 dagar",
+    "sync_status": "Kontrollera Plus-status"
   },
   "active": {
-    "title": "Du har Premium aktivt",
-    "subtitle": "Hantera abonnemang, kort och kvitton via Stripe kundportal.",
-    "manage": "Hantera abonnemang"
+    "title": "Plus är igång",
+    "subtitle": "Agda, insikter och de smartare verktygen finns där när du behöver dem.",
+    "manage": "Hantera Plus"
   },
-  "social_proof": "Används av hönsägare i hela Sverige 🇸🇪",
+  "social_proof": "Byggt för vardagen med höns – inte för dashboards.",
   "plans": {
     "yearly": {
       "name": "Plus årsvis",
       "price": "299 kr",
       "period": "/ år",
-      "description": "Motsvarar 24,90 kr/mån",
-      "badge": "Spara 169 kr",
-      "cta": "Välj årsplan"
+      "description": "För dig som vill låta Hönsgården följa flocken genom hela året.",
+      "badge": "Mest för pengarna",
+      "cta": "Välj ett år med Plus"
     },
     "monthly": {
       "name": "Plus månadsvis",
       "price": "39 kr",
       "period": "/ månad",
-      "description": "Flexibelt abonnemang. Avsluta när du vill.",
-      "sub_price": "= en kartong ägg i månaden",
-      "cta": "Välj månadsplan"
+      "description": "Prova i din egen takt och avsluta när du vill.",
+      "sub_price": "ungefär som en kartong ägg i månaden",
+      "cta": "Välj Plus månadsvis"
     },
-    "legacy_notice": "Var med från start? Ditt gamla pris gäller för alltid.",
-    "active_label": "Premium är aktivt"
+    "legacy_notice": "Var du med från start? Ditt gamla pris fortsätter att gälla.",
+    "active_label": "Plus är aktivt"
   },
   "features": {
-    "title": "Det här ingår i Plus",
-    "subtitle": "Trial, betalande premium och lifetime hålls isär i systemet.",
+    "title": "Det Plus hjälper dig med",
+    "subtitle": "Mindre att hålla i huvudet. Mer förståelse för det som händer i flocken.",
     "items": [
-      "Agda AI-coachen — personliga råd om just dina hönor",
-      "Veckorapport varje söndag med tydliga nästa steg",
-      "Vet vad varje ägg kostar — foder, ekonomi och export",
-      "Larm när något avviker i flocken, innan det blir ett problem",
-      "Kläckningskalender som håller koll på alla 21 dagarna",
-      "Full statistik, äggmål, PDF/CSV och alla framtida funktioner"
+      "Fråga Agda om just din flock och få råd som tar hänsyn till det du har loggat",
+      "Få en lugn veckosammanfattning som berättar vad som faktiskt är värt att lägga märke till",
+      "Förstå ungefär vad varje ägg kostar när du lägger in foder och ekonomi",
+      "Fånga upp tydliga förändringar i värpningen utan att själv behöva leta i grafer",
+      "Låt kläckningskalendern hålla ordning på dagarna när du har ägg i kläckaren",
+      "Fördjupa dig i statistik, rapporter och historik när du själv vill"
     ]
   },
-  "sticky_cta": "Prova 7 dagar gratis",
+  "sticky_cta": "Prova Plus gratis i 7 dagar",
   "toasts": {
-    "welcome_title": "Välkommen till Premium! 🎉",
-    "welcome_desc": "Nu har du AI, insikter och ekonomiverktygen.",
+    "welcome_title": "Välkommen till Plus 🌿",
+    "welcome_desc": "Nu finns Agda och de smartare verktygen redo när du behöver dem.",
     "still_processing_title": "Betalningen behandlas fortfarande",
-    "still_processing_desc": "Apple Pay och vissa kortbetalningar kan ta någon minut. Tryck på Synka premiumstatus om sidan inte uppdateras automatiskt.",
-    "sync_ok_title": "Premiumstatus kontrollerad ✅",
+    "still_processing_desc": "Apple Pay och vissa kortbetalningar kan ta någon minut. Tryck på Kontrollera Plus-status om sidan inte uppdateras automatiskt.",
+    "sync_ok_title": "Plus-status kontrollerad ✅",
     "sync_ok_desc": "Vi har synkat din prenumeration mot betalningssystemet.",
-    "sync_fail_title": "Kunde inte synka just nu",
+    "sync_fail_title": "Kunde inte kontrollera Plus just nu",
     "sync_fail_desc": "Försök igen om en stund.",
     "portal_error_title": "Något gick fel",
     "portal_error_desc": "Kunde inte öppna kundportalen.",
     "login_required_title": "Logga in först",
-    "login_required_desc": "Du behöver vara inloggad för att uppgradera.",
-    "already_sub_title": "Du har redan en aktiv prenumeration",
-    "already_sub_desc": "Vi öppnar kundportalen där du kan hantera den.",
-    "checkout_fail_title": "Kunde inte starta betalning",
-    "checkout_fail_desc": "Något gick fel.",
+    "login_required_desc": "Du behöver vara inloggad för att välja Plus.",
+    "already_sub_title": "Plus är redan aktivt",
+    "already_sub_desc": "Vi öppnar kundportalen där du kan hantera prenumerationen.",
+    "checkout_fail_title": "Kunde inte starta betalningen",
+    "checkout_fail_desc": "Något gick fel. Försök igen om en stund.",
     "no_checkout_url": "Ingen checkout-URL returnerades"
   },
   "trust": {
