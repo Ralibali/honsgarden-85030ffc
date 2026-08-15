@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Crown, X, ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -18,11 +18,6 @@ interface SmartUpsellCardProps {
   henCount: number;
 }
 
-/**
- * Personlig premium-trigger som visas vid höga engagemangsögonblick
- * (lång streak, mycket loggad data). Frekvensbegränsad och stängbar –
- * aldrig en vanlig reklambanner.
- */
 export default function SmartUpsellCard({ streak, totalEggs, henCount }: SmartUpsellCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -34,11 +29,9 @@ export default function SmartUpsellCard({ streak, totalEggs, henCount }: SmartUp
     if (!user?.id) return null;
     const signals: UpsellSignals = { streak, totalEggs, henCount, isPremium };
     return evaluateUpsell(signals, loadUpsellState(user.id), now, user.id);
-    // now är fryst vid mount – en bedömning per sidladdning räcker
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, streak, totalEggs, henCount, isPremium]);
 
-  // Registrera visningen (frekvens spärras i motorn)
   useEffect(() => {
     if (!message || !user?.id) return;
     const state = loadUpsellState(user.id);
@@ -63,54 +56,62 @@ export default function SmartUpsellCard({ streak, totalEggs, henCount }: SmartUp
     navigate('/app/premium');
   };
 
+  const proof = streak >= 3
+    ? `${streak} dagar i rad`
+    : totalEggs >= 25
+      ? `${totalEggs} ägg i historiken`
+      : henCount > 0
+        ? `${henCount} ${henCount === 1 ? 'höna' : 'hönor'} i flocken`
+        : null;
+
   return (
     <AnimatePresence>
-      <motion.div
+      <motion.section
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        className="earned-plus-nudge"
+        aria-label="Ett tips om Hönsgården Plus"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-amber-300/40 bg-gradient-to-br from-amber-50 via-card to-primary/5 dark:from-amber-950/30 dark:via-card dark:to-primary/10 shadow-sm">
-          {/* Diskret glöd i hörnet */}
-          <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-amber-300/20 blur-2xl" />
+        <div className="earned-plus-nudge__card">
+          <div className="earned-plus-nudge__stamp" aria-hidden="true">{message.emoji}</div>
 
-          <div className="relative p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl" role="img" aria-hidden>
-                  {message.emoji}
-                </span>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                  <Crown className="h-3 w-3" /> Plus-tips
-                </p>
-              </div>
-              <button
-                onClick={handleDismiss}
-                aria-label="Stäng tips"
-                className="shrink-0 h-6 w-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition flex items-center justify-center"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+          <button
+            onClick={handleDismiss}
+            aria-label="Stäng tipset"
+            className="earned-plus-nudge__dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <div className="relative">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="earned-plus-nudge__eyebrow">
+                <Sparkles className="h-3.5 w-3.5" />
+                Hönsgården växer med dig
+              </p>
+              {proof && <span className="earned-plus-nudge__proof">{proof}</span>}
             </div>
 
-            <h3 className="font-serif text-lg text-foreground mt-2 leading-snug">{message.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{message.body}</p>
+            <h3 className="font-serif text-xl sm:text-2xl text-foreground mt-2 leading-tight">{message.title}</h3>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed max-w-2xl">{message.body}</p>
 
-            <div className="flex items-center gap-3 mt-4">
-              <Button size="sm" className="rounded-xl gap-1.5" onClick={handleCta}>
-                {message.cta} <ArrowRight className="h-3.5 w-3.5" />
+            <div className="flex flex-wrap items-center gap-3 mt-4">
+              <Button size="sm" className="rounded-xl gap-1.5 px-4" onClick={handleCta}>
+                {message.cta}
+                <ArrowRight className="h-3.5 w-3.5" />
               </Button>
               <button
                 onClick={handleDismiss}
-                className="text-xs text-muted-foreground hover:text-foreground transition"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Inte nu
+                Jag fortsätter som vanligt
               </button>
             </div>
           </div>
         </div>
-      </motion.div>
+      </motion.section>
     </AnimatePresence>
   );
 }
