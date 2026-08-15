@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bird, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLandingAtmosphere } from '@/hooks/useLandingAtmosphere';
 
 const navLinks = [
   { label: 'Funktioner', href: '#funktioner' },
@@ -19,6 +20,8 @@ function trackNavbarCta() {
 }
 
 export default function LandingNavbar() {
+  useLandingAtmosphere();
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -41,7 +44,6 @@ export default function LandingNavbar() {
       aria-label="Huvudnavigation"
     >
       <div className="container max-w-6xl mx-auto px-5 sm:px-6 flex items-center justify-between h-16">
-        {/* Logo */}
         <a href="/" className="flex items-center gap-2">
           <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center">
             <Bird className="h-4 w-4 text-primary" />
@@ -49,7 +51,6 @@ export default function LandingNavbar() {
           <span className="font-serif text-lg text-foreground">Hönsgården</span>
         </a>
 
-        {/* Desktop links */}
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
             <a
@@ -68,17 +69,16 @@ export default function LandingNavbar() {
           </Button>
         </div>
 
-        {/* Mobile hamburger */}
         <button
           className="md:hidden p-2 text-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? 'Stäng meny' : 'Öppna meny'}
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
