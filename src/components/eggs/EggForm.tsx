@@ -6,8 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Minus, Plus, ShieldAlert } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActiveKarens } from '@/hooks/useActiveKarens';
-
-
 import type { Flock, Hen } from '@/lib/api';
 
 interface EggFormProps {
@@ -17,6 +15,8 @@ interface EggFormProps {
   onSubmit: (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => void;
   onCancel: () => void;
 }
+
+const QUICK_COUNTS = [1, 2, 3, 4, 5, 6, 8, 10] as const;
 
 export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: EggFormProps) {
   const [date, setDate] = useState(todayLocal());
@@ -54,21 +54,21 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
   };
 
   return (
-    <Card className="bg-card border-border border-l-4 border-l-primary animate-fade-in shadow-sm overflow-hidden">
+    <Card className="egg-log-composer bg-card border-border animate-fade-in shadow-sm overflow-hidden">
       <CardContent className="p-4 sm:p-6 space-y-5">
-        <div>
-          <p className="data-label mb-1">Snabbloggning</p>
-          <h3 className="font-serif text-xl sm:text-2xl text-foreground">Hur många ägg fick du idag?</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Datumet är redan ifyllt. Justera bara antal och spara.</p>
+        <div className="egg-log-composer__intro">
+          <p className="data-label mb-1">Dagens ägg</p>
+          <h3 className="font-serif text-xl sm:text-2xl text-foreground">Hur många hittade du?</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Tryck på antalet och spara. Du kan välja flock eller höna om du vill.</p>
         </div>
 
-        <div className="rounded-2xl bg-primary/5 border border-primary/15 p-4 sm:p-5 text-center">
+        <div className="egg-counter rounded-2xl bg-primary/5 border border-primary/15 p-4 sm:p-5 text-center">
           <div className="flex items-center justify-center gap-3 sm:gap-5">
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-2xl active:scale-95"
+              className="egg-counter__step h-12 w-12 rounded-2xl active:scale-95"
               onClick={decrement}
               disabled={count <= 0 || isPending}
               aria-label="Minska antal ägg"
@@ -83,7 +83,7 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
                 min={0}
                 value={count}
                 onChange={(e) => setCount(Math.max(0, Number(e.target.value) || 0))}
-                className="h-16 text-center text-4xl font-bold rounded-2xl bg-background"
+                className="egg-counter__input h-16 text-center text-4xl font-bold rounded-2xl bg-background"
                 aria-label="Antal ägg"
               />
               <p className="text-xs text-muted-foreground mt-1">ägg</p>
@@ -92,7 +92,7 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
             <Button
               type="button"
               size="icon"
-              className="h-12 w-12 rounded-2xl active:scale-95"
+              className="egg-counter__step egg-counter__step--plus h-12 w-12 rounded-2xl active:scale-95"
               onClick={increment}
               disabled={isPending}
               aria-label="Öka antal ägg"
@@ -100,9 +100,31 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
               <Plus className="h-5 w-5" />
             </Button>
           </div>
+
+          <div className="egg-quick-counts mt-4" aria-label="Snabbval antal ägg">
+            <p className="text-[10px] uppercase tracking-[0.13em] text-muted-foreground mb-2">Snabbval</p>
+            <div className="grid grid-cols-8 gap-1.5">
+              {QUICK_COUNTS.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setCount(value)}
+                  disabled={isPending}
+                  aria-pressed={count === value}
+                  className={`egg-quick-count rounded-xl min-h-9 text-xs font-semibold tabular-nums transition-all active:scale-95 ${
+                    count === value
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-background/65 text-foreground border border-border/50 hover:border-primary/30'
+                  }`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="egg-log-details grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label className="data-label mb-1.5 block">Datum</label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 rounded-xl" />
@@ -153,12 +175,12 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button onClick={handleSubmit} disabled={isPending || count <= 0} className="h-11 rounded-xl active:scale-95 transition-transform flex-1">
+        <div className="egg-log-actions flex flex-col sm:flex-row gap-2">
+          <Button onClick={handleSubmit} disabled={isPending || count <= 0} className="h-12 rounded-xl active:scale-95 transition-transform flex-1 text-sm font-semibold">
             {isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-            Spara dagens ägg
+            {count > 0 ? `Spara ${count} ${count === 1 ? 'ägg' : 'ägg'}` : 'Välj antal ägg'}
           </Button>
-          <Button variant="outline" onClick={onCancel} className="h-11 rounded-xl">Avbryt</Button>
+          <Button variant="outline" onClick={onCancel} className="h-12 rounded-xl">Avbryt</Button>
         </div>
       </CardContent>
     </Card>
