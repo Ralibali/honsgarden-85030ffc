@@ -15,6 +15,7 @@ import "./honsgarden-agda-v4.css";
 import "./honsgarden-insights-v4.css";
 import "./honsgarden-conversion-v5.css";
 import "./honsgarden-routines-v5.css";
+import "./honsgarden-settings-v5.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
