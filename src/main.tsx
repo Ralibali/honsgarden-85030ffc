@@ -17,8 +17,10 @@ import "./honsgarden-conversion-v5.css";
 import "./honsgarden-routines-v5.css";
 import "./honsgarden-settings-v5.css";
 import "./honsgarden-mobile-v5.css";
+import "./honsgarden-atmosphere-v6.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
+import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
 
 // Restore theme preference before render to avoid flash
@@ -26,6 +28,10 @@ const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'dark') {
   document.documentElement.classList.add('dark');
 }
+
+// Keep day/night presentation tied to the visitor's real local wall clock.
+// This also protects the dashboard from showing a morning greeting after midnight.
+installFarmAtmosphereRuntime();
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
