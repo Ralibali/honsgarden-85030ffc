@@ -34,10 +34,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 
 const primaryItems = [
-  { title: 'Hem', url: '/app', icon: Home },
-  { title: 'Logga', url: '/app/eggs', icon: Egg },
-  { title: 'Hönor', url: '/app/hens', icon: Bird },
-  { title: 'Statistik', url: '/app/statistics', icon: BarChart3 },
+  { title: 'Idag', url: '/app', icon: Home },
+  { title: 'Ägg', url: '/app/eggs', icon: Egg },
+  { title: 'Flock', url: '/app/hens', icon: Bird },
+  { title: 'Gården', url: '/app/tasks', icon: ClipboardCheck },
   { title: 'Mer', url: '#more', icon: MoreHorizontal },
 ];
 
@@ -45,9 +45,9 @@ const moreGroups = [
   {
     label: 'Dagligt',
     items: [
-      { title: 'Dashboard', url: '/app', icon: Home },
+      { title: 'Idag', url: '/app', icon: Home },
       { title: 'Logga ägg', url: '/app/eggs', icon: Egg },
-      { title: 'Uppgifter', url: '/app/tasks', icon: ClipboardCheck },
+      { title: 'Gården', url: '/app/tasks', icon: ClipboardCheck },
       { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
       { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
     ],
@@ -141,7 +141,6 @@ export function MobileNav() {
                 </div>
               ))}
 
-              {/* Theme toggle shortcut */}
               <div className="pt-2 border-t border-border/40">
                 <button
                   type="button"

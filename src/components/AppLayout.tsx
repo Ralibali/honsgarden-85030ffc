@@ -7,7 +7,7 @@ import { MobileNav } from './MobileNav';
 import { QuickEggFAB } from './QuickEggFAB';
 import CommandPalette from './CommandPalette';
 import AppComingSoonDialog from './AppComingSoonDialog';
-import { SuspenseFallback } from '@/components/SuspenseFallback';
+import { SuspenseFallback } from './SuspenseFallback';
 import { Menu, Feather, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
@@ -33,7 +33,7 @@ export default function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-dvh flex w-full noise-bg">
+      <div className="honsgarden-app-shell min-h-dvh flex w-full noise-bg">
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-h-dvh overflow-x-hidden">

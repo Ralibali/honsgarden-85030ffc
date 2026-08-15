@@ -1,0 +1,248 @@
+/* Hönsgården 2.0 – warm, calm and personal application language. */
+
+.honsgarden-app-shell {
+  --background: 43 45% 97%;
+  --foreground: 148 27% 16%;
+  --card: 42 38% 98%;
+  --card-foreground: 148 27% 16%;
+  --popover: 42 38% 98%;
+  --popover-foreground: 148 27% 16%;
+  --primary: 142 36% 25%;
+  --primary-foreground: 45 60% 97%;
+  --secondary: 38 37% 91%;
+  --secondary-foreground: 145 25% 20%;
+  --muted: 39 30% 92%;
+  --muted-foreground: 72 10% 42%;
+  --accent: 43 43% 88%;
+  --accent-foreground: 145 28% 20%;
+  --border: 38 26% 84%;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(243,229,190,.34), transparent 24rem),
+    linear-gradient(180deg, #fbf8f1 0%, #f7f2e8 100%);
+  color: hsl(var(--foreground));
+}
+
+.dark .honsgarden-app-shell {
+  --background: 145 24% 9%;
+  --foreground: 43 35% 92%;
+  --card: 145 20% 12%;
+  --card-foreground: 43 35% 92%;
+  --popover: 145 20% 12%;
+  --popover-foreground: 43 35% 92%;
+  --primary: 93 30% 60%;
+  --primary-foreground: 145 28% 10%;
+  --secondary: 145 16% 17%;
+  --secondary-foreground: 43 30% 91%;
+  --muted: 145 14% 16%;
+  --muted-foreground: 43 12% 66%;
+  --accent: 145 18% 19%;
+  --accent-foreground: 43 30% 92%;
+  --border: 145 13% 23%;
+  background: linear-gradient(180deg, #122019 0%, #0d1813 100%);
+}
+
+.honsgarden-app-shell.noise-bg::before { opacity: .025 !important; }
+
+.honsgarden-app-shell > div.flex-1 > header {
+  border-color: rgba(121,105,77,.13) !important;
+  background: rgba(250,247,239,.84) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+.dark .honsgarden-app-shell > div.flex-1 > header {
+  background: rgba(15,28,21,.88) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.honsgarden-app-shell main#main-content {
+  padding-top: 14px !important;
+}
+
+/* Dashboard becomes “my farm today”, with the farm itself setting the emotional tone. */
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+  position: relative;
+  padding-top: 172px;
+  isolation: isolate;
+}
+
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before {
+  content: '';
+  position: absolute;
+  z-index: -2;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  border-radius: 28px;
+  background: #294333 url('/hero-farm-v2.webp') 52% 53% / cover no-repeat;
+  box-shadow: 0 18px 48px rgba(42,56,42,.14);
+}
+
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(21,43,29,.04), rgba(14,32,23,.28));
+  pointer-events: none;
+}
+
+/* Softer content rhythm: fewer floating SaaS tiles, more journal-like surfaces. */
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > div:not([role='dialog']),
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > section {
+  scroll-margin-top: 5rem;
+}
+
+.honsgarden-app-shell main#main-content [class*='rounded-xl'][class*='border'],
+.honsgarden-app-shell main#main-content [class*='rounded-2xl'][class*='border'] {
+  border-color: rgba(126,106,73,.17) !important;
+  box-shadow: 0 12px 34px rgba(55,62,43,.045);
+}
+
+.honsgarden-app-shell main#main-content .bg-card {
+  background-color: rgba(253,250,243,.94) !important;
+}
+
+.dark .honsgarden-app-shell main#main-content .bg-card {
+  background-color: rgba(23,38,29,.94) !important;
+}
+
+.honsgarden-app-shell main#main-content h1,
+.honsgarden-app-shell main#main-content h2,
+.honsgarden-app-shell main#main-content h3 {
+  text-wrap: balance;
+}
+
+.honsgarden-app-shell main#main-content h1.font-serif {
+  color: #183c29 !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  letter-spacing: -.03em;
+}
+
+.dark .honsgarden-app-shell main#main-content h1.font-serif { color: #f5eddd !important; }
+
+.honsgarden-app-shell .data-label {
+  color: #887a5f !important;
+  letter-spacing: .12em;
+}
+
+/* Egg logging is the daily primary action. */
+.honsgarden-app-shell #quick-egg-log > * {
+  border-radius: 24px !important;
+  overflow: hidden;
+}
+
+.honsgarden-app-shell #quick-egg-log button {
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.honsgarden-app-shell #quick-egg-log button:active { transform: scale(.96); }
+
+.honsgarden-app-shell button[class*='bg-primary'],
+.honsgarden-app-shell a[class*='bg-primary'] {
+  box-shadow: 0 8px 20px rgba(29,73,46,.12);
+}
+
+/* Mobile brand header: quiet, editorial and less like an admin product. */
+.honsgarden-app-shell header.md\:hidden {
+  min-height: 62px !important;
+  padding-inline: 18px !important;
+}
+
+.honsgarden-app-shell header.md\:hidden .font-serif {
+  font-size: 1.18rem !important;
+  letter-spacing: -.025em;
+}
+
+/* Bottom navigation becomes a tactile tab bar. */
+.honsgarden-app-shell nav.fixed.bottom-0 {
+  left: 10px !important;
+  right: 10px !important;
+  bottom: max(8px, env(safe-area-inset-bottom)) !important;
+  border: 1px solid rgba(109,91,62,.16) !important;
+  border-radius: 22px !important;
+  background: rgba(252,249,242,.93) !important;
+  box-shadow: 0 18px 42px rgba(37,48,35,.16) !important;
+  overflow: hidden;
+  padding-bottom: 0 !important;
+}
+
+.dark .honsgarden-app-shell nav.fixed.bottom-0 {
+  background: rgba(20,34,26,.94) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+.honsgarden-app-shell nav.fixed.bottom-0 > div {
+  height: 66px !important;
+  padding-inline: 5px !important;
+}
+
+.honsgarden-app-shell nav.fixed.bottom-0 a,
+.honsgarden-app-shell nav.fixed.bottom-0 button {
+  min-width: 58px;
+  border-radius: 16px !important;
+  padding: 8px 9px !important;
+}
+
+.honsgarden-app-shell nav.fixed.bottom-0 a.text-primary,
+.honsgarden-app-shell nav.fixed.bottom-0 button.text-primary {
+  background: rgba(44,91,58,.1) !important;
+}
+
+.honsgarden-app-shell nav.fixed.bottom-0 span {
+  font-size: 10px !important;
+  letter-spacing: -.01em;
+}
+
+/* More-menu is a calm sheet rather than a dense launcher. */
+.honsgarden-app-shell .fixed.inset-0.z-\[70\] > div:last-child {
+  left: 10px !important;
+  right: 10px !important;
+  bottom: 84px !important;
+  border-radius: 26px !important;
+  background: rgba(253,250,244,.97) !important;
+  border-color: rgba(118,97,64,.16) !important;
+  box-shadow: 0 26px 70px rgba(31,43,32,.2) !important;
+}
+
+.dark .honsgarden-app-shell .fixed.inset-0.z-\[70\] > div:last-child {
+  background: rgba(21,36,27,.98) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+
+@media (max-width: 767px) {
+  .honsgarden-app-shell main#main-content {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    padding-bottom: calc(6.7rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+    padding-top: 158px;
+    gap: 17px;
+  }
+
+  .honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before,
+  .honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+    height: 138px;
+    border-radius: 23px;
+  }
+
+  .honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before {
+    background-position: 54% 52%;
+  }
+
+  .honsgarden-app-shell main#main-content [class*='rounded-xl'][class*='border'],
+  .honsgarden-app-shell main#main-content [class*='rounded-2xl'][class*='border'] {
+    border-radius: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell * { scroll-behavior: auto !important; }
+}

@@ -1,0 +1,258 @@
+/* Hönsgården 2.0 – an editorial, emotional farm-first landing experience. */
+
+#main-content > section:first-of-type {
+  min-height: min(900px, 100svh) !important;
+  background: #173226 !important;
+  overflow: hidden;
+}
+
+#main-content > section:first-of-type::before {
+  inset: -1% !important;
+  background: #203529 url('/hero-farm-v2.webp') 50% 50% / cover no-repeat !important;
+  transform: scale(1.025) !important;
+  filter: brightness(var(--hero-brightness, 1)) saturate(var(--hero-saturation, 1.05)) contrast(var(--hero-contrast, 1.02)) hue-rotate(var(--hero-hue, 0deg)) !important;
+  animation: honsgarden-farm-drift 24s ease-in-out infinite alternate !important;
+}
+
+#main-content > section:first-of-type::after {
+  background:
+    linear-gradient(90deg, rgba(250,246,236,.95) 0%, rgba(250,246,236,.82) 24%, rgba(250,246,236,.24) 49%, rgba(10,22,16,.02) 67%),
+    linear-gradient(180deg, rgba(250,246,236,.18), transparent 36%, rgba(11,24,17,.18) 100%) !important;
+}
+
+/* Remove the old glass/SaaS box. Let the farm be the product story. */
+#main-content > section:first-of-type > .container > .grid > div:first-child {
+  max-width: 690px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* The previous copy remains in the DOM for graceful fallback; the visual expression is calmer and more human. */
+#main-content > section:first-of-type h1 {
+  max-width: 670px !important;
+  margin: 0 0 22px !important;
+  color: #173226 !important;
+  font-size: 0 !important;
+  line-height: 1 !important;
+  letter-spacing: -.045em !important;
+  text-shadow: none !important;
+}
+
+#main-content > section:first-of-type h1::before {
+  content: 'Lite enklare att ha höns.\A Lite roligare att följa dem.';
+  white-space: pre-line;
+  display: block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3rem, 5.2vw, 5.25rem);
+  line-height: .98;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+
+#main-content > section:first-of-type h1 span { display: none !important; }
+
+#main-content > section:first-of-type p {
+  max-width: 540px !important;
+  margin: 0 0 28px !important;
+  color: rgba(24,48,36,.82) !important;
+  font-size: 0 !important;
+  line-height: 1.58 !important;
+}
+
+#main-content > section:first-of-type p::before {
+  content: 'Hönsgården hjälper dig att hålla koll på flocken, äggen och allt det där lilla – året runt.';
+  display: block;
+  font-size: clamp(1.05rem, 1.5vw, 1.22rem);
+  line-height: 1.58;
+}
+
+#main-content > section:first-of-type > .container > .grid > div:first-child > :nth-child(4) {
+  justify-content: flex-start !important;
+  gap: 12px !important;
+}
+
+#main-content > section:first-of-type a[href='/login?mode=register'] {
+  min-height: 52px !important;
+  padding-inline: 27px !important;
+  border-radius: 999px !important;
+  background: #173f2a !important;
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgba(18,58,38,.22) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+}
+
+#main-content > section:first-of-type a[href='/login?mode=register']:hover {
+  background: #0f3220 !important;
+  transform: translateY(-1px);
+}
+
+#main-content > section:first-of-type a[href='/demo'] {
+  min-height: 52px !important;
+  padding-inline: 25px !important;
+  border-radius: 999px !important;
+  color: #183b29 !important;
+  background: rgba(252,249,242,.72) !important;
+  border: 1px solid rgba(31,62,43,.2) !important;
+  box-shadow: 0 8px 24px rgba(30,47,35,.08) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Softer brand treatment below the hero: editorial, warm, not a wall of SaaS cards. */
+#main-content > section:not(:first-of-type) {
+  background-color: #fbf8f1;
+}
+
+#main-content > section:not(:first-of-type) h2,
+#main-content > section:not(:first-of-type) h3 {
+  letter-spacing: -.02em;
+}
+
+#main-content > section:not(:first-of-type) .shadow-sm,
+#main-content > section:not(:first-of-type) .shadow-md {
+  box-shadow: 0 14px 42px rgba(41,52,38,.065) !important;
+}
+
+/* Navbar is legible without becoming a separate SaaS bar. */
+#main-content > nav.bg-transparent {
+  background: linear-gradient(180deg, rgba(248,245,236,.78), rgba(248,245,236,.34) 58%, transparent) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
+
+#main-content > nav.bg-transparent > .container .text-foreground,
+#main-content > nav.bg-transparent > .container .text-muted-foreground,
+#main-content > nav.bg-transparent > .container button,
+#main-content > nav.bg-transparent > .container a[href='/login?mode=login'] {
+  color: #183629 !important;
+  text-shadow: 0 1px 14px rgba(255,255,255,.55) !important;
+}
+
+html[data-hero-time='dusk'] #main-content > section:first-of-type::after {
+  background:
+    linear-gradient(90deg, rgba(32,33,25,.78) 0%, rgba(43,39,28,.56) 27%, rgba(19,24,21,.08) 56%),
+    linear-gradient(180deg, rgba(21,27,25,.1), transparent 45%, rgba(9,17,13,.34)) !important;
+}
+
+html[data-hero-time='dusk'] #main-content > section:first-of-type h1,
+html[data-hero-time='dusk'] #main-content > section:first-of-type p,
+html[data-hero-time='night'] #main-content > section:first-of-type h1,
+html[data-hero-time='night'] #main-content > section:first-of-type p {
+  color: #fffaf0 !important;
+  text-shadow: 0 2px 24px rgba(0,0,0,.35) !important;
+}
+
+html[data-hero-time='night'] #main-content > section:first-of-type::after {
+  background-image:
+    radial-gradient(circle at 56% 9%, #fff 0 1px, transparent 1.6px),
+    radial-gradient(circle at 61% 19%, rgba(220,235,255,.96) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 67% 7%, #fff 0 .9px, transparent 1.5px),
+    radial-gradient(circle at 72% 29%, #fff 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 78% 15%, rgba(210,230,255,.96) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 84% 35%, #fff 0 1px, transparent 1.6px),
+    radial-gradient(circle at 89% 12%, rgba(255,245,220,.96) 0 1.1px, transparent 1.7px),
+    radial-gradient(circle at 94% 27%, #fff 0 1px, transparent 1.6px),
+    radial-gradient(circle at 75% 44%, rgba(220,235,255,.94) 0 1px, transparent 1.6px),
+    radial-gradient(ellipse at 78% 18%, rgba(155,190,240,.15), transparent 30%),
+    linear-gradient(90deg, rgba(5,14,11,.82), rgba(4,10,12,.36) 45%, rgba(1,7,18,.24)),
+    linear-gradient(180deg, rgba(2,8,18,.22), transparent 42%, rgba(2,8,8,.36)) !important;
+  animation: honsgarden-stars 5.5s ease-in-out infinite alternate !important;
+}
+
+html[data-hero-time='dusk'] #main-content > nav.bg-transparent,
+html[data-hero-time='night'] #main-content > nav.bg-transparent {
+  background: linear-gradient(180deg, rgba(3,12,13,.56), rgba(3,12,13,.18) 65%, transparent) !important;
+}
+
+html[data-hero-time='dusk'] #main-content > nav.bg-transparent > .container .text-foreground,
+html[data-hero-time='dusk'] #main-content > nav.bg-transparent > .container .text-muted-foreground,
+html[data-hero-time='dusk'] #main-content > nav.bg-transparent > .container button,
+html[data-hero-time='dusk'] #main-content > nav.bg-transparent > .container a,
+html[data-hero-time='night'] #main-content > nav.bg-transparent > .container .text-foreground,
+html[data-hero-time='night'] #main-content > nav.bg-transparent > .container .text-muted-foreground,
+html[data-hero-time='night'] #main-content > nav.bg-transparent > .container button,
+html[data-hero-time='night'] #main-content > nav.bg-transparent > .container a {
+  color: rgba(255,255,255,.96) !important;
+  text-shadow: 0 2px 18px rgba(0,0,0,.42) !important;
+}
+
+@media (max-width: 767px) {
+  #main-content > section:first-of-type {
+    min-height: 820px !important;
+    padding: 92px 0 30px !important;
+    justify-content: flex-start !important;
+  }
+
+  #main-content > section:first-of-type::before {
+    inset: 0 !important;
+    background-position: 55% 50% !important;
+    transform: scale(1.015) !important;
+  }
+
+  #main-content > section:first-of-type::after {
+    background:
+      linear-gradient(180deg, rgba(250,247,239,.93) 0%, rgba(250,247,239,.68) 27%, rgba(250,247,239,.06) 48%, rgba(9,22,14,.18) 76%, rgba(8,17,12,.44) 100%) !important;
+  }
+
+  #main-content > section:first-of-type > .container {
+    padding: 64px 22px 0 !important;
+  }
+
+  #main-content > section:first-of-type > .container > .grid > div:first-child {
+    width: 100% !important;
+    max-width: 570px !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  #main-content > section:first-of-type h1::before {
+    font-size: clamp(2.45rem, 11.2vw, 3.55rem);
+    line-height: 1.01;
+    letter-spacing: -.04em;
+  }
+
+  #main-content > section:first-of-type h1 { margin-bottom: 16px !important; }
+  #main-content > section:first-of-type p { margin-bottom: 20px !important; }
+  #main-content > section:first-of-type p::before { font-size: 1rem; line-height: 1.48; }
+
+  #main-content > section:first-of-type > .container > .grid > div:first-child > :nth-child(4) {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 9px !important;
+  }
+
+  #main-content > section:first-of-type > .container > .grid > div:first-child > :nth-child(4) > a {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    padding-inline: 12px !important;
+    font-size: .88rem !important;
+  }
+
+  html[data-hero-time='dusk'] #main-content > section:first-of-type::after,
+  html[data-hero-time='night'] #main-content > section:first-of-type::after {
+    background:
+      linear-gradient(180deg, rgba(3,12,12,.65) 0%, rgba(3,12,12,.36) 32%, rgba(2,9,12,.04) 55%, rgba(2,8,8,.45) 100%) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  #main-content > section:first-of-type { min-height: 780px !important; }
+  #main-content > section:first-of-type > .container { padding-inline: 18px !important; }
+  #main-content > section:first-of-type > .container > .grid > div:first-child > :nth-child(4) {
+    flex-direction: column !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #main-content > section:first-of-type::before { animation: none !important; }
+}
+
+@keyframes honsgarden-farm-drift {
+  from { transform: scale(1.02) translate3d(0,0,0); }
+  to { transform: scale(1.055) translate3d(-.7%, -.35%, 0); }
+}
