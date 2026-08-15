@@ -7,6 +7,7 @@ import "./honsgarden-home-v2.css";
 import "./honsgarden-home-v2-component.css";
 import "./honsgarden-app-v2.css";
 import "./honsgarden-core-v3.css";
+import "./honsgarden-yard-v3.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
