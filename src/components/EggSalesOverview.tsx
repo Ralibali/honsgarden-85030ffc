@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ArrowDownRight, ArrowUpRight, Minus, Package, ShoppingBasket, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Minus, Package, ShoppingBasket, TrendingUp, Wallet } from 'lucide-react';
 
 type Booking = {
   id: string;
@@ -22,17 +22,17 @@ type Listing = {
 const RANGE_DAYS = 30;
 
 function startOfDay(date: Date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function formatKr(value: number) {
   return `${Math.round(value).toLocaleString('sv-SE')} kr`;
 }
 
-function formatShortDate(d: Date) {
-  return d.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+function formatShortDate(date: Date) {
+  return date.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
 }
 
 async function getCurrentUserId() {
@@ -41,12 +41,23 @@ async function getCurrentUserId() {
   return data.user.id;
 }
 
+function comparisonSentence(current: number, previous: number, noun: string) {
+  if (current === 0 && previous === 0) return `Inga ${noun} ännu – här börjar historiken när första bokningen kommer.`;
+  if (previous === 0 && current > 0) return `Första ${noun} har börjat komma in. Fin start.`;
+  const diff = current - previous;
+  if (diff > 0) return `${diff} fler ${noun} än under de 30 dagarna innan.`;
+  if (diff < 0) return `${Math.abs(diff)} färre ${noun} än under de 30 dagarna innan.`;
+  return `Samma nivå som de 30 dagarna innan.`;
+}
+
 export default function EggSalesOverview() {
+  const [showChart, setShowChart] = useState(false);
+
   const { data: listings = [] } = useQuery({
     queryKey: ['egg-sales-overview-listings'],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('public_egg_sale_listings')
         .select('id, price_per_pack')
         .eq('user_id', userId);
@@ -61,8 +72,8 @@ export default function EggSalesOverview() {
     queryFn: async () => {
       const userId = await getCurrentUserId();
       const since = new Date();
-      since.setDate(since.getDate() - (RANGE_DAYS * 2)); // hämta 60 dagar för jämförelse
-      const { data, error } = await (supabase as any)
+      since.setDate(since.getDate() - RANGE_DAYS * 2);
+      const { data, error } = await supabase
         .from('public_egg_sale_bookings')
         .select('id, listing_id, packs, status, created_at')
         .eq('seller_user_id', userId)
@@ -76,222 +87,201 @@ export default function EggSalesOverview() {
 
   const priceFor = useMemo(() => {
     const map = new Map<string, number>();
-    listings.forEach((l) => map.set(l.id, Number(l.price_per_pack || 0)));
+    listings.forEach((listing) => map.set(listing.id, Number(listing.price_per_pack || 0)));
     return (listingId: string) => map.get(listingId) ?? 0;
   }, [listings]);
 
   const { series, current, previous } = useMemo(() => {
     const today = startOfDay(new Date());
     const days: { date: Date; key: string; label: string }[] = [];
+
     for (let i = RANGE_DAYS - 1; i >= 0; i -= 1) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      days.push({ date: d, key: d.toISOString().slice(0, 10), label: formatShortDate(d) });
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      days.push({ date, key: date.toISOString().slice(0, 10), label: formatShortDate(date) });
     }
 
     const buckets = new Map<string, { bookings: number; packs: number; value: number }>();
-    days.forEach((d) => buckets.set(d.key, { bookings: 0, packs: 0, value: 0 }));
+    days.forEach((day) => buckets.set(day.key, { bookings: 0, packs: 0, value: 0 }));
 
     const periodStart = days[0].date;
-    const prevStart = new Date(periodStart);
-    prevStart.setDate(prevStart.getDate() - RANGE_DAYS);
+    const previousStart = new Date(periodStart);
+    previousStart.setDate(previousStart.getDate() - RANGE_DAYS);
 
-    const curr = { bookings: 0, packs: 0, value: 0 };
-    const prev = { bookings: 0, packs: 0, value: 0 };
+    const currentPeriod = { bookings: 0, packs: 0, value: 0 };
+    const previousPeriod = { bookings: 0, packs: 0, value: 0 };
 
-    bookings.forEach((b) => {
-      if (!b.created_at || b.status === 'cancelled') return;
-      const created = new Date(b.created_at);
-      const day = startOfDay(created);
-      const value = Number(b.packs || 0) * priceFor(b.listing_id);
-      const packs = Number(b.packs || 0);
+    bookings.forEach((booking) => {
+      if (!booking.created_at || booking.status === 'cancelled') return;
 
-      if (day >= periodStart) {
-        const key = day.toISOString().slice(0, 10);
+      const created = startOfDay(new Date(booking.created_at));
+      const packs = Number(booking.packs || 0);
+      const value = packs * priceFor(booking.listing_id);
+
+      if (created >= periodStart) {
+        const key = created.toISOString().slice(0, 10);
         const bucket = buckets.get(key);
         if (bucket) {
           bucket.bookings += 1;
           bucket.packs += packs;
           bucket.value += value;
         }
-        curr.bookings += 1;
-        curr.packs += packs;
-        curr.value += value;
-      } else if (day >= prevStart && day < periodStart) {
-        prev.bookings += 1;
-        prev.packs += packs;
-        prev.value += value;
+        currentPeriod.bookings += 1;
+        currentPeriod.packs += packs;
+        currentPeriod.value += value;
+      } else if (created >= previousStart && created < periodStart) {
+        previousPeriod.bookings += 1;
+        previousPeriod.packs += packs;
+        previousPeriod.value += value;
       }
     });
 
-    const series = days.map((d) => ({
-      label: d.label,
-      bookings: buckets.get(d.key)?.bookings ?? 0,
-      value: buckets.get(d.key)?.value ?? 0,
-      packs: buckets.get(d.key)?.packs ?? 0,
-    }));
-
-    return { series, current: curr, previous: prev };
+    return {
+      series: days.map((day) => ({
+        label: day.label,
+        bookings: buckets.get(day.key)?.bookings ?? 0,
+        value: buckets.get(day.key)?.value ?? 0,
+        packs: buckets.get(day.key)?.packs ?? 0,
+      })),
+      current: currentPeriod,
+      previous: previousPeriod,
+    };
   }, [bookings, priceFor]);
 
-  const avgOrder = current.bookings > 0 ? current.value / current.bookings : 0;
-  const prevAvg = previous.bookings > 0 ? previous.value / previous.bookings : 0;
+  const averageOrder = current.bookings > 0 ? current.value / current.bookings : 0;
+  const previousAverage = previous.bookings > 0 ? previous.value / previous.bookings : 0;
+  const valueChange = current.value - previous.value;
 
   return (
-    <Card className="border-primary/25 bg-card shadow-sm">
-      <CardContent className="p-4 sm:p-5 space-y-4">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
-                <TrendingUp className="h-3 w-3 mr-1" /> Översikt
-              </Badge>
-              <span className="text-xs text-muted-foreground">Senaste 30 dagarna</span>
+    <Card className="egg-shop-story border-primary/20 overflow-hidden">
+      <CardContent className="p-5 sm:p-7 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+          <div className="max-w-2xl">
+            <p className="data-label">Så går det i Äggboden</p>
+            <h1 className="font-serif text-2xl sm:text-3xl text-foreground mt-1">Din lilla äggförsäljning, på ett ställe</h1>
+            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2">
+              De senaste 30 dagarna har du haft <strong className="text-foreground">{current.bookings} bokningar</strong> och sålt <strong className="text-foreground">{current.packs} kartor</strong> till ett värde av <strong className="text-foreground">{formatKr(current.value)}</strong>.
+            </p>
+          </div>
+          <div className={`egg-shop-change ${valueChange > 0 ? 'is-up' : valueChange < 0 ? 'is-down' : ''}`}>
+            {valueChange > 0 ? <ArrowUpRight className="h-4 w-4" /> : valueChange < 0 ? <ArrowDownRight className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+            <span>{valueChange === 0 ? 'Stabilt' : `${valueChange > 0 ? '+' : ''}${formatKr(valueChange)}`}</span>
+            <small>mot perioden innan</small>
+          </div>
+        </div>
+
+        <div className="egg-shop-readable-grid grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <ReadableStat
+            icon={ShoppingBasket}
+            value={current.bookings}
+            label="bokningar"
+            sentence={comparisonSentence(current.bookings, previous.bookings, 'bokningar')}
+          />
+          <ReadableStat
+            icon={Package}
+            value={current.packs}
+            label="kartor sålda"
+            sentence={comparisonSentence(current.packs, previous.packs, 'kartor')}
+          />
+          <ReadableStat
+            icon={Wallet}
+            value={formatKr(averageOrder)}
+            label="per bokning i snitt"
+            sentence={previousAverage > 0 ? `Tidigare låg snittet på ${formatKr(previousAverage)}.` : 'Snittordern växer fram när fler bokningar kommer in.'}
+          />
+        </div>
+
+        <div className="egg-shop-chart-shell">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowChart((value) => !value)}
+            className="w-full justify-between h-11 px-1 sm:px-2 hover:bg-transparent"
+          >
+            <span className="inline-flex items-center gap-2 text-sm font-medium text-foreground">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              Försäljningen dag för dag
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+              {showChart ? 'Dölj kurvan' : 'Visa kurvan'}
+              {showChart ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
+          </Button>
+
+          {showChart && (
+            <div className="pt-3 border-t border-border/40 animate-fade-in">
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={series} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="shopValueFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.28} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={false}
+                      axisLine={false}
+                      interval="preserveStartEnd"
+                      minTickGap={24}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={44}
+                      tickFormatter={(value) => (value >= 1000 ? `${Math.round(value / 1000)}k` : `${value}`)}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: 14,
+                        fontSize: 12,
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                      formatter={(value: number) => [formatKr(value), 'Värde']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#shopValueFill)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <h2 className="text-xl sm:text-2xl font-serif text-foreground">Försäljningstrender</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">Följ utvecklingen jämfört med föregående period.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard icon={ShoppingBasket} label="Bokningar" value={current.bookings} prev={previous.bookings} />
-          <KpiCard icon={Package} label="Kartor sålda" value={current.packs} prev={previous.packs} />
-          <KpiCard icon={Wallet} label="Värde" value={current.value} prev={previous.value} format={formatKr} />
-          <KpiCard icon={TrendingUp} label="Snittorder" value={avgOrder} prev={prevAvg} format={formatKr} />
-        </div>
-
-        <div className="rounded-2xl border bg-background/60 p-3 pt-4">
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={series} margin={{ top: 8, right: 12, left: -12, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="valueFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="bookingsFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  tickLine={false}
-                  axisLine={false}
-                  interval="preserveStartEnd"
-                  minTickGap={24}
-                />
-                <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={48}
-                  tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-                  tickLine={false}
-                  axisLine={false}
-                  width={28}
-                  allowDecimals={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
-                  formatter={(value: number, name: string) => {
-                    if (name === 'value') return [formatKr(value), 'Värde'];
-                    if (name === 'bookings') return [`${value} st`, 'Bokningar'];
-                    return [value, name];
-                  }}
-                />
-                <Area
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="value"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#valueFill)"
-                />
-                <Area
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="bookings"
-                  stroke="hsl(var(--accent-foreground))"
-                  strokeWidth={1.5}
-                  fill="url(#bookingsFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex items-center gap-4 mt-2 px-1 text-xs text-muted-foreground">
-            <LegendDot color="hsl(var(--primary))" label="Värde (kr)" />
-            <LegendDot color="hsl(var(--accent-foreground))" label="Bokningar (st)" />
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function KpiCard({
+function ReadableStat({
   icon: Icon,
-  label,
   value,
-  prev,
-  format,
+  label,
+  sentence,
 }: {
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
+  value: string | number;
   label: string;
-  value: number;
-  prev: number;
-  format?: (n: number) => string;
+  sentence: string;
 }) {
-  const display = format ? format(value) : Math.round(value).toLocaleString('sv-SE');
-  const diff = value - prev;
-  const pct = prev > 0 ? (diff / prev) * 100 : value > 0 ? 100 : 0;
-  const trend: 'up' | 'down' | 'flat' = Math.abs(pct) < 1 ? 'flat' : diff > 0 ? 'up' : 'down';
-
-  const TrendIcon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : Minus;
-  const trendColor =
-    trend === 'up'
-      ? 'text-primary bg-primary/10 border-primary/20'
-      : trend === 'down'
-      ? 'text-destructive bg-destructive/10 border-destructive/20'
-      : 'text-muted-foreground bg-muted border-border';
-
   return (
-    <div className="rounded-2xl border bg-card/80 p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-2">
-        <Icon className="h-4 w-4 text-primary" />
-        <span className={`inline-flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${trendColor}`}>
-          <TrendIcon className="h-3 w-3" />
-          {trend === 'flat' ? '0%' : `${pct > 0 ? '+' : ''}${pct.toFixed(0)}%`}
-        </span>
+    <div className="egg-shop-readable-stat">
+      <div className="egg-shop-readable-stat__icon"><Icon className="h-4 w-4" /></div>
+      <div>
+        <strong>{value}</strong>
+        <span>{label}</span>
+        <p>{sentence}</p>
       </div>
-      <p className="text-2xl font-bold text-foreground tabular-nums leading-tight">{display}</p>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">{label}</p>
-      <p className="text-xs text-muted-foreground mt-1">
-        Föreg: {format ? format(prev) : Math.round(prev).toLocaleString('sv-SE')}
-      </p>
     </div>
-  );
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
-      {label}
-    </span>
   );
 }
