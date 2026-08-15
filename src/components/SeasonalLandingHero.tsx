@@ -2,8 +2,9 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Check, Play, Sparkles } from 'lucide-react';
 
 function trackHeroCta(action: 'register' | 'explore') {
+  if (action !== 'register') return;
   void import('@/lib/analytics').then(({ trackEvent }) =>
-    trackEvent('Landing Hero CTA Clicked', { source: 'farm_hero_v2', action }),
+    trackEvent('CTA Register Clicked', { source: 'landing_hero' }),
   );
 }
 
