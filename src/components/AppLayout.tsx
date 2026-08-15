@@ -8,29 +8,29 @@ import { QuickEggFAB } from './QuickEggFAB';
 import CommandPalette from './CommandPalette';
 import AppComingSoonDialog from './AppComingSoonDialog';
 import { SuspenseFallback } from './SuspenseFallback';
-import { Menu, Feather, Search } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
 import { useAchievementRewards } from '@/hooks/useAchievementRewards';
 import AchievementUnlockOverlay from '@/components/AchievementUnlockOverlay';
 import OfflineBanner from './OfflineBanner';
 
-function getAppContext(pathname: string): { section: string; label: string } {
-  if (pathname === '/app') return { section: 'today', label: 'Idag' };
-  if (pathname.startsWith('/app/eggs')) return { section: 'eggs', label: 'Ägg' };
-  if (pathname.startsWith('/app/hens/')) return { section: 'hen-profile', label: 'Hönsprofil' };
-  if (pathname.startsWith('/app/hens')) return { section: 'flock', label: 'Flocken' };
-  if (pathname.startsWith('/app/tasks')) return { section: 'yard', label: 'Gården' };
-  if (pathname.startsWith('/app/feed')) return { section: 'feed', label: 'Foder' };
-  if (pathname.startsWith('/app/halsa')) return { section: 'health', label: 'Hälsa' };
-  if (pathname.startsWith('/app/avel')) return { section: 'breeding', label: 'Avel' };
-  if (pathname.startsWith('/app/egg-sales')) return { section: 'sales', label: 'Äggboden' };
+function getAppContext(pathname: string): { section: string; label: string; emoji: string } {
+  if (pathname === '/app') return { section: 'today', label: 'Idag', emoji: '🏡' };
+  if (pathname.startsWith('/app/eggs')) return { section: 'eggs', label: 'Ägg', emoji: '🥚' };
+  if (pathname.startsWith('/app/hens/')) return { section: 'hen-profile', label: 'Hönsprofil', emoji: '🐔' };
+  if (pathname.startsWith('/app/hens')) return { section: 'flock', label: 'Flocken', emoji: '🐔' };
+  if (pathname.startsWith('/app/tasks')) return { section: 'yard', label: 'Gården', emoji: '🌿' };
+  if (pathname.startsWith('/app/feed')) return { section: 'feed', label: 'Foder', emoji: '🌾' };
+  if (pathname.startsWith('/app/halsa')) return { section: 'health', label: 'Hälsa', emoji: '💚' };
+  if (pathname.startsWith('/app/avel')) return { section: 'breeding', label: 'Avel', emoji: '🐣' };
+  if (pathname.startsWith('/app/egg-sales')) return { section: 'sales', label: 'Äggboden', emoji: '🧺' };
   if (pathname.startsWith('/app/statistics') || pathname.startsWith('/app/overview') || pathname.startsWith('/app/rapporter')) {
-    return { section: 'insights', label: 'Insikter' };
+    return { section: 'insights', label: 'Insikter', emoji: '✨' };
   }
-  if (pathname.startsWith('/app/agda')) return { section: 'agda', label: 'Agda AI' };
-  if (pathname.startsWith('/app/settings') || pathname.startsWith('/app/profile')) return { section: 'settings', label: 'Inställningar' };
-  return { section: 'more', label: 'Hönsgården' };
+  if (pathname.startsWith('/app/agda')) return { section: 'agda', label: 'Agda', emoji: '🐔' };
+  if (pathname.startsWith('/app/settings') || pathname.startsWith('/app/profile')) return { section: 'settings', label: 'Inställningar', emoji: '⚙️' };
+  return { section: 'more', label: 'Hönsgården', emoji: '🌱' };
 }
 
 export default function AppLayout() {
@@ -63,9 +63,12 @@ export default function AppLayout() {
               <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
               </SidebarTrigger>
-              <div className="app-desktop-context leading-none">
-                <span className="block text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">Hönsgården</span>
-                <strong className="block mt-1 text-sm font-medium text-foreground">{appContext.label}</strong>
+              <div className="app-desktop-context flex items-center gap-2.5 leading-none">
+                <span className="app-context-emoji" aria-hidden="true">{appContext.emoji}</span>
+                <div>
+                  <span className="block text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">Hönsgården</span>
+                  <strong className="block mt-1 text-sm font-medium text-foreground">{appContext.label}</strong>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -84,8 +87,8 @@ export default function AppLayout() {
           {/* Mobile header */}
           <header className="flex md:hidden items-center justify-between border-b border-border/60 px-4 bg-background/70 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-14 py-2">
             <div className="app-mobile-context flex items-center gap-2.5 min-w-0">
-              <span className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center shrink-0">
-                <Feather className="h-4 w-4 text-primary" />
+              <span className="app-context-emoji w-9 h-9 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center shrink-0 text-base" aria-hidden="true">
+                {appContext.emoji}
               </span>
               <div className="min-w-0 leading-none">
                 <span className="block text-[9px] uppercase tracking-[0.15em] text-muted-foreground/70">Hönsgården</span>
