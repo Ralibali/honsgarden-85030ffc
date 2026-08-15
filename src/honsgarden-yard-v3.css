@@ -1,0 +1,151 @@
+/* Gården — make recurring chores feel like a daily farm routine rather than a task manager. */
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl {
+  max-width: 900px;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header__title {
+  font-size: 0 !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header__title::after {
+  content: 'Gården idag';
+  font-size: clamp(1.65rem, 4vw, 2rem);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header__subtitle {
+  font-size: 0 !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header__subtitle::after {
+  content: 'Det som behöver göras för flocken – enkelt, lugnt och i rätt tid.';
+  font-size: .875rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content .bg-card {
+  background: var(--hg-paper) !important;
+}
+
+/* Progress card: one satisfying daily status rather than a KPI widget. */
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header + div > [class*='shadow-sm'] {
+  overflow: hidden;
+  border-radius: 24px !important;
+  border-color: rgba(49,93,61,.13) !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(214,181,101,.17), transparent 40%),
+    linear-gradient(145deg, rgba(49,93,61,.09), rgba(255,252,245,.9)) !important;
+  box-shadow: 0 16px 40px rgba(50,62,43,.07) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .app-page-header + div > [class*='shadow-sm'] {
+  background:
+    radial-gradient(circle at 100% 0, rgba(208,179,111,.08), transparent 40%),
+    linear-gradient(145deg, rgba(117,157,107,.1), rgba(22,38,28,.96)) !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header + div [class*='rounded-full'][class*='h-2'] {
+  height: 7px !important;
+  background: rgba(49,93,61,.1) !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .app-page-header + div [class*='rounded-full'][class*='h-2'] > div {
+  height: 7px !important;
+  background: linear-gradient(90deg, #315d3d, #6f8b58) !important;
+}
+
+/* Add-task composer behaves like a notebook line. */
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] {
+  border-radius: 24px !important;
+  border-color: var(--hg-line) !important;
+  box-shadow: var(--hg-shadow) !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] input[placeholder*='Lägg till'] {
+  background: rgba(255,255,255,.4) !important;
+  border-color: rgba(92,77,51,.14) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] input[placeholder*='Lägg till'] {
+  background: rgba(255,255,255,.025) !important;
+}
+
+/* Suggestions look like routine chips, not feature cards. */
+.honsgarden-app-shell[data-app-section='yard'] button.text-left.p-3.rounded-xl.border {
+  border-radius: 16px !important;
+  background: rgba(248,242,229,.64) !important;
+  border-color: rgba(116,96,62,.12) !important;
+  box-shadow: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] button.text-left.p-3.rounded-xl.border:not(:disabled):hover {
+  background: rgba(232,239,229,.85) !important;
+  border-color: rgba(49,93,61,.22) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] button.text-left.p-3.rounded-xl.border {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+/* Actual chore list is the visual center. */
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] {
+  border-radius: 26px !important;
+  border-color: var(--hg-line) !important;
+  box-shadow: 0 18px 46px rgba(48,59,43,.075) !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] .divide-y > div {
+  border-color: rgba(103,88,61,.1) !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] .divide-y > div:hover {
+  background: rgba(232,239,229,.35);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] .divide-y > div:hover {
+  background: rgba(143,187,131,.045);
+}
+
+/* Make the completion control feel tactile and important. */
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] button[class*='rounded-full'] {
+  width: 38px !important;
+  height: 38px !important;
+  border-width: 1.5px !important;
+  transition: transform .14s ease, background-color .16s ease, border-color .16s ease;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] button[class*='rounded-full']:active {
+  transform: scale(.9);
+}
+
+@media (max-width: 639px) {
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl {
+    gap: 14px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .app-page-header {
+    margin-bottom: 12px;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .app-page-header + div > [class*='shadow-sm'],
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'],
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='overflow-hidden'] {
+    border-radius: 20px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] > div {
+    padding: 14px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] .flex.items-center.gap-2:first-child {
+    align-items: stretch;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] input[placeholder*='Lägg till'] {
+    min-height: 44px;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] main#main-content > .max-w-5xl > [class*='bg-card'][class*='border'] input[placeholder*='Lägg till'] + button {
+    min-height: 44px;
+  }
+}
