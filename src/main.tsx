@@ -10,6 +10,7 @@ import "./honsgarden-core-v3.css";
 import "./honsgarden-yard-v3.css";
 import "./honsgarden-egg-v3.css";
 import "./honsgarden-delight-v4.css";
+import "./honsgarden-sales-v4.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
