@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import PullToRefresh from '@/components/PullToRefresh';
 import { AppSidebar } from './AppSidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
@@ -15,10 +15,30 @@ import { useAchievementRewards } from '@/hooks/useAchievementRewards';
 import AchievementUnlockOverlay from '@/components/AchievementUnlockOverlay';
 import OfflineBanner from './OfflineBanner';
 
+function getAppContext(pathname: string): { section: string; label: string } {
+  if (pathname === '/app') return { section: 'today', label: 'Idag' };
+  if (pathname.startsWith('/app/eggs')) return { section: 'eggs', label: 'Ägg' };
+  if (pathname.startsWith('/app/hens/')) return { section: 'hen-profile', label: 'Hönsprofil' };
+  if (pathname.startsWith('/app/hens')) return { section: 'flock', label: 'Flocken' };
+  if (pathname.startsWith('/app/tasks')) return { section: 'yard', label: 'Gården' };
+  if (pathname.startsWith('/app/feed')) return { section: 'feed', label: 'Foder' };
+  if (pathname.startsWith('/app/halsa')) return { section: 'health', label: 'Hälsa' };
+  if (pathname.startsWith('/app/avel')) return { section: 'breeding', label: 'Avel' };
+  if (pathname.startsWith('/app/egg-sales')) return { section: 'sales', label: 'Äggboden' };
+  if (pathname.startsWith('/app/statistics') || pathname.startsWith('/app/overview') || pathname.startsWith('/app/rapporter')) {
+    return { section: 'insights', label: 'Insikter' };
+  }
+  if (pathname.startsWith('/app/agda')) return { section: 'agda', label: 'Agda AI' };
+  if (pathname.startsWith('/app/settings') || pathname.startsWith('/app/profile')) return { section: 'settings', label: 'Inställningar' };
+  return { section: 'more', label: 'Hönsgården' };
+}
 
 export default function AppLayout() {
   usePwaInstallTracking();
   useAchievementRewards();
+  const location = useLocation();
+  const appContext = getAppContext(location.pathname);
+
   // Ensure app routes are not indexed by search engines.
   // Inget cleanup – nästa publika sida uppdaterar robots via useSeo.
   useEffect(() => {
@@ -33,15 +53,21 @@ export default function AppLayout() {
 
   return (
     <SidebarProvider>
-      <div className="honsgarden-app-shell min-h-dvh flex w-full noise-bg">
+      <div className="honsgarden-app-shell min-h-dvh flex w-full noise-bg" data-app-section={appContext.section}>
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-h-dvh overflow-x-hidden">
           {/* Desktop header */}
           <header className="hidden md:flex items-center justify-between border-b border-border/60 px-5 bg-background/60 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-12">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
+                <Menu className="h-5 w-5" />
+              </SidebarTrigger>
+              <div className="app-desktop-context leading-none">
+                <span className="block text-[10px] uppercase tracking-[0.16em] text-muted-foreground/70">Hönsgården</span>
+                <strong className="block mt-1 text-sm font-medium text-foreground">{appContext.label}</strong>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
@@ -57,10 +83,14 @@ export default function AppLayout() {
 
           {/* Mobile header */}
           <header className="flex md:hidden items-center justify-between border-b border-border/60 px-4 bg-background/70 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-14 py-2">
-            <div className="w-8" />
-            <div className="flex items-center gap-2">
-              <Feather className="h-4 w-4 text-primary" />
-              <span className="font-serif text-lg text-foreground">Hönsgården</span>
+            <div className="app-mobile-context flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center shrink-0">
+                <Feather className="h-4 w-4 text-primary" />
+              </span>
+              <div className="min-w-0 leading-none">
+                <span className="block text-[9px] uppercase tracking-[0.15em] text-muted-foreground/70">Hönsgården</span>
+                <strong className="block mt-1.5 font-serif text-base text-foreground truncate">{appContext.label}</strong>
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -92,6 +122,7 @@ export default function AppLayout() {
         <QuickEggFAB />
         <CommandPalette />
         <AppComingSoonDialog />
+        <AchievementUnlockOverlay />
       </div>
     </SidebarProvider>
   );
