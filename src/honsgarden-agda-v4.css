@@ -1,0 +1,186 @@
+/* Agda 4.0 — a warm flock companion */
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-invite-card {
+  border-radius: 32px !important;
+  border: 1px solid rgba(107,88,57,.13) !important;
+  background:
+    radial-gradient(circle at 86% 6%, rgba(216,181,101,.18), transparent 30%),
+    linear-gradient(145deg, rgba(255,252,245,.98), rgba(247,239,222,.95)) !important;
+  box-shadow: 0 24px 62px rgba(52,60,43,.08) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-invite-card {
+  background: linear-gradient(145deg, rgba(29,49,35,.98), rgba(20,36,27,.97)) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-preview-note {
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(109,90,58,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-preview-note {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.07);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-preview-note > p {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-preview-note > div:last-child span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(49,93,61,.08);
+  color: hsl(var(--foreground) / .8);
+  font-size: 11px;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-avatar,
+.honsgarden-app-shell[data-app-section='agda'] .agda-empty-avatar {
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255,255,255,.92), transparent 34%),
+    linear-gradient(145deg, #ecdfbd, #d8c48c);
+  border: 1px solid rgba(119,94,50,.13);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 10px 24px rgba(85,69,43,.09);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-avatar,
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-empty-avatar {
+  background: linear-gradient(145deg, rgba(126,150,102,.22), rgba(79,103,77,.11));
+  border-color: rgba(255,255,255,.08);
+  box-shadow: none;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-conversation {
+  border-radius: 30px !important;
+  border: 1px solid rgba(107,89,58,.13) !important;
+  background:
+    linear-gradient(rgba(255,252,244,.95), rgba(255,252,244,.95)),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(108,88,56,.033) 31px 32px) !important;
+  box-shadow: 0 22px 60px rgba(47,57,42,.09) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-conversation {
+  background: rgba(19,34,25,.97) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-suggestion {
+  border-radius: 17px;
+  border: 1px solid rgba(109,91,61,.12);
+  background: rgba(255,255,255,.52);
+  color: var(--hg-ink);
+  text-align: left;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-suggestion:hover {
+  transform: translateY(-1px);
+  border-color: rgba(49,93,61,.25);
+  background: rgba(236,242,232,.78);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-suggestion {
+  background: rgba(255,255,255,.03);
+  border-color: rgba(255,255,255,.06);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-message {
+  max-width: min(86%, 620px);
+  border-radius: 20px;
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.62;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-message--assistant {
+  border-bottom-left-radius: 7px;
+  background: rgba(246,239,222,.78);
+  border: 1px solid rgba(116,94,57,.11);
+  color: hsl(var(--foreground));
+  box-shadow: 0 7px 20px rgba(65,60,44,.04);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-message--assistant {
+  background: rgba(74,97,72,.16);
+  border-color: rgba(255,255,255,.06);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-message--user {
+  border-bottom-right-radius: 7px;
+  background: #315d3d;
+  color: #fffdf5;
+  box-shadow: 0 9px 22px rgba(38,74,49,.14);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-message-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #68775f;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-message-name {
+  color: #9eb196;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-message--user p {
+  margin: 0;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-composer {
+  background: rgba(250,246,236,.88);
+  backdrop-filter: blur(14px);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-composer {
+  background: rgba(16,30,22,.9);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-composer input {
+  background: rgba(255,255,255,.7) !important;
+  border-color: rgba(105,86,56,.14) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] .agda-composer input {
+  background: rgba(255,255,255,.035) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] .agda-composer button {
+  background: #315d3d !important;
+  box-shadow: 0 8px 22px rgba(38,74,49,.17) !important;
+}
+
+@media (max-width: 639px) {
+  .honsgarden-app-shell[data-app-section='agda'] .agda-chat-page {
+    height: calc(100dvh - 7.2rem) !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] .agda-chat-header p:last-child {
+    max-width: 235px;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] .agda-conversation {
+    border-radius: 24px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] .agda-message {
+    max-width: 91%;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] .agda-invite-card {
+    border-radius: 24px !important;
+  }
+}
