@@ -18,6 +18,7 @@ import "./honsgarden-routines-v5.css";
 import "./honsgarden-settings-v5.css";
 import "./honsgarden-mobile-v5.css";
 import "./honsgarden-atmosphere-v6.css";
+import "./honsgarden-today-v7.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
