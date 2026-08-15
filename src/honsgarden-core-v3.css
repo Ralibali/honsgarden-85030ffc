@@ -1,0 +1,430 @@
+/* Hönsgården 3.0 — daily-use polish.
+   The goal is a warm farm journal, not a generic SaaS dashboard. */
+
+.honsgarden-app-shell {
+  --hg-ink: #173728;
+  --hg-moss: #315d3d;
+  --hg-moss-soft: #e8efe5;
+  --hg-cream: #fbf7ed;
+  --hg-paper: rgba(255, 252, 245, .94);
+  --hg-straw: #d6b565;
+  --hg-earth: #8b6d49;
+  --hg-line: rgba(96, 79, 51, .15);
+  --hg-shadow: 0 14px 38px rgba(53, 61, 44, .07);
+}
+
+.dark .honsgarden-app-shell {
+  --hg-ink: #f2ead9;
+  --hg-moss: #8fbb83;
+  --hg-moss-soft: rgba(117, 157, 107, .13);
+  --hg-cream: #112019;
+  --hg-paper: rgba(22, 38, 28, .95);
+  --hg-straw: #d0b36f;
+  --hg-earth: #b8a17d;
+  --hg-line: rgba(255,255,255,.08);
+  --hg-shadow: 0 16px 44px rgba(0,0,0,.16);
+}
+
+/* Route-aware chrome ----------------------------------------------------- */
+.honsgarden-app-shell > div.flex-1 > header {
+  min-height: 58px;
+}
+
+.honsgarden-app-shell .app-desktop-context strong,
+.honsgarden-app-shell .app-mobile-context strong {
+  color: var(--hg-ink);
+}
+
+.honsgarden-app-shell .app-mobile-context > span {
+  background: rgba(49, 93, 61, .08) !important;
+  border-color: rgba(49, 93, 61, .1) !important;
+}
+
+.dark .honsgarden-app-shell .app-mobile-context > span {
+  background: rgba(143, 187, 131, .1) !important;
+  border-color: rgba(143, 187, 131, .12) !important;
+}
+
+/* Shared page header ----------------------------------------------------- */
+.honsgarden-app-shell .app-page-header {
+  padding: 4px 2px 2px;
+}
+
+.honsgarden-app-shell .app-page-header__emoji {
+  background:
+    radial-gradient(circle at 32% 25%, rgba(255,255,255,.95), rgba(255,255,255,.25) 46%, transparent 47%),
+    linear-gradient(145deg, #f4ead2, #e8dcc0);
+  border: 1px solid rgba(125, 100, 58, .15);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 8px 22px rgba(85,71,45,.08);
+}
+
+.dark .honsgarden-app-shell .app-page-header__emoji {
+  background: linear-gradient(145deg, rgba(126,150,102,.18), rgba(79,103,77,.09));
+  border-color: rgba(255,255,255,.08);
+  box-shadow: none;
+}
+
+.honsgarden-app-shell .app-page-header__title {
+  color: var(--hg-ink) !important;
+  letter-spacing: -.035em;
+}
+
+.honsgarden-app-shell .app-page-header__subtitle {
+  color: hsl(var(--muted-foreground));
+  max-width: 42rem;
+}
+
+.honsgarden-app-shell .app-page-header__actions button {
+  border-radius: 14px !important;
+}
+
+/* Cards across primary journeys are more tactile, less admin-like. */
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content .bg-card,
+.honsgarden-app-shell[data-app-section='flock'] main#main-content .bg-card,
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content .bg-card,
+.honsgarden-app-shell[data-app-section='today'] main#main-content .bg-card {
+  background: var(--hg-paper) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content [class*='shadow-sm'],
+.honsgarden-app-shell[data-app-section='flock'] main#main-content [class*='shadow-sm'],
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content [class*='shadow-sm'] {
+  box-shadow: var(--hg-shadow) !important;
+}
+
+/* TODAY ------------------------------------------------------------------ */
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+  padding-top: 188px;
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before,
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+  height: 168px;
+  border-radius: 30px;
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before {
+  background-position: 52% 50%;
+  box-shadow: 0 22px 54px rgba(36,54,37,.18);
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+  background:
+    linear-gradient(90deg, rgba(9,31,18,.58), rgba(13,34,21,.12) 60%, rgba(8,25,16,.08)),
+    linear-gradient(180deg, rgba(9,25,16,.05), rgba(9,25,16,.28));
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > .pt-1 {
+  position: absolute;
+  top: 76px;
+  left: 26px;
+  right: 24px;
+  z-index: 2;
+  padding: 0 !important;
+  pointer-events: none;
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > .pt-1 .data-label {
+  color: rgba(255,255,255,.75) !important;
+  text-shadow: 0 1px 12px rgba(0,0,0,.2);
+}
+
+.honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > .pt-1 h1 {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: none !important;
+  text-shadow: 0 2px 20px rgba(0,0,0,.28);
+  font-size: clamp(1.75rem, 5vw, 2.35rem) !important;
+}
+
+.honsgarden-app-shell[data-app-section='today'] #quick-egg-log > * {
+  border: 1px solid rgba(49,93,61,.16) !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(214,181,101,.18), transparent 38%),
+    var(--hg-paper) !important;
+  box-shadow: 0 18px 44px rgba(46,65,47,.09) !important;
+}
+
+.honsgarden-app-shell[data-app-section='today'] #quick-egg-log button[class*='bg-primary'] {
+  min-height: 42px;
+}
+
+/* EGGS ------------------------------------------------------------------- */
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl {
+  max-width: 880px;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .app-page-header {
+  margin-bottom: 18px;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 {
+  gap: 10px !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > * {
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--hg-line) !important;
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  background: rgba(255,252,245,.72) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > *:first-child {
+  background:
+    radial-gradient(circle at 85% 15%, rgba(255,255,255,.16), transparent 28%),
+    linear-gradient(145deg, #315d3d, #244b32) !important;
+  border-color: transparent !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > *:first-child p {
+  color: #fff !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > *:first-child .data-label {
+  color: rgba(255,255,255,.72) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > * {
+  background: rgba(24,41,30,.82) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 > *:first-child {
+  background: linear-gradient(145deg, #315d3d, #23432f) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .bg-card:last-of-type {
+  border-radius: 26px !important;
+  border-color: var(--hg-line) !important;
+  overflow: hidden;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .bg-card:last-of-type [class*='CardHeader'],
+.honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .bg-card:last-of-type > div:first-child {
+  border-bottom-color: var(--hg-line);
+}
+
+/* FLOCK ------------------------------------------------------------------ */
+.honsgarden-app-shell[data-app-section='flock'] main#main-content > .max-w-5xl {
+  max-width: 1040px;
+}
+
+.honsgarden-app-shell[data-app-section='flock'] .stagger-children > [class*='border'] {
+  border-radius: 22px !important;
+  border-color: var(--hg-line) !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(222,201,153,.12), transparent 34%),
+    var(--hg-paper) !important;
+}
+
+.honsgarden-app-shell[data-app-section='flock'] .stagger-children > [class*='border']:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 18px 42px rgba(54,63,46,.1) !important;
+}
+
+.honsgarden-app-shell[data-app-section='flock'] .stagger-children > [class*='border'] [class*='w-10'][class*='h-10'] {
+  background: var(--hg-moss-soft) !important;
+  border-radius: 15px !important;
+}
+
+.honsgarden-app-shell[data-app-section='flock'] [role='tablist'] {
+  background: rgba(222,213,193,.48) !important;
+  padding: 4px !important;
+  border: 1px solid rgba(111,92,59,.1);
+}
+
+.dark .honsgarden-app-shell[data-app-section='flock'] [role='tablist'] {
+  background: rgba(255,255,255,.04) !important;
+  border-color: rgba(255,255,255,.06);
+}
+
+.honsgarden-app-shell[data-app-section='flock'] [role='tab'][data-state='active'] {
+  background: var(--hg-paper) !important;
+  color: var(--hg-ink) !important;
+  box-shadow: 0 4px 14px rgba(66,60,46,.08);
+}
+
+/* HEN PROFILE ------------------------------------------------------------ */
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl {
+  max-width: 720px;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > .flex.items-center.gap-2:first-child {
+  margin-bottom: -2px;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > .flex.items-center.gap-2:first-child > span {
+  font-size: 12px;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > [class*='overflow-hidden']:nth-of-type(2) {
+  border-radius: 30px !important;
+  border-color: var(--hg-line) !important;
+  background:
+    radial-gradient(circle at 85% 8%, rgba(214,181,101,.16), transparent 28%),
+    linear-gradient(180deg, rgba(255,253,247,.98), rgba(249,244,233,.95)) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > [class*='overflow-hidden']:nth-of-type(2) {
+  background: linear-gradient(180deg, rgba(28,47,34,.98), rgba(20,36,27,.98)) !important;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > [class*='overflow-hidden']:nth-of-type(2) > div:first-child {
+  height: 4px !important;
+  background: linear-gradient(90deg, #315d3d, #d6b565, #8e6b46) !important;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] [role='tablist'] {
+  height: 48px;
+  padding: 4px !important;
+  border: 1px solid var(--hg-line);
+  background: rgba(226,216,195,.44) !important;
+  border-radius: 17px !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='hen-profile'] [role='tablist'] {
+  background: rgba(255,255,255,.04) !important;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] [role='tab'][data-state='active'] {
+  border-radius: 13px !important;
+  background: var(--hg-paper) !important;
+  color: var(--hg-ink) !important;
+  box-shadow: 0 5px 16px rgba(60,58,45,.08);
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] [role='tabpanel'] > .grid.grid-cols-2 > * {
+  border-radius: 20px !important;
+  box-shadow: none !important;
+  border-color: var(--hg-line) !important;
+}
+
+.honsgarden-app-shell[data-app-section='hen-profile'] [role='tabpanel'] > .grid.grid-cols-2 > *:first-child {
+  background: linear-gradient(145deg, rgba(49,93,61,.1), rgba(49,93,61,.03)) !important;
+}
+
+/* Inputs/dialogs: softer physical controls -------------------------------- */
+.honsgarden-app-shell input,
+.honsgarden-app-shell textarea,
+.honsgarden-app-shell button[role='combobox'] {
+  border-color: rgba(113,95,65,.18) !important;
+}
+
+.honsgarden-app-shell input:focus,
+.honsgarden-app-shell textarea:focus,
+.honsgarden-app-shell button[role='combobox']:focus {
+  border-color: rgba(49,93,61,.36) !important;
+}
+
+/* Mobile: actions should match thumb ergonomics and not crowd the title. */
+@media (max-width: 639px) {
+  .honsgarden-app-shell .app-page-header {
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .honsgarden-app-shell .app-page-header__identity {
+    align-items: flex-start;
+  }
+
+  .honsgarden-app-shell .app-page-header__emoji {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+  }
+
+  .honsgarden-app-shell .app-page-header__title {
+    font-size: 1.65rem !important;
+    white-space: normal;
+  }
+
+  .honsgarden-app-shell .app-page-header__subtitle {
+    font-size: 12px !important;
+    line-height: 1.45;
+  }
+
+  .honsgarden-app-shell .app-page-header__actions {
+    width: 100%;
+  }
+
+  .honsgarden-app-shell .app-page-header__actions > button:last-child,
+  .honsgarden-app-shell .app-page-header__actions > a:last-child {
+    flex: 1 1 auto;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .app-page-header__actions button:has(.lucide-download) {
+    display: none;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .app-page-header__actions > button:last-child {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 {
+    gap: 7px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 [class*='p-3'] {
+    padding: 12px 7px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 .stat-number {
+    font-size: 1.25rem !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] main#main-content > .max-w-4xl > .grid.grid-cols-3 .data-label {
+    font-size: 8px !important;
+    letter-spacing: .08em !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='flock'] [role='tablist'] {
+    width: 100%;
+    overflow-x: auto;
+    justify-content: flex-start;
+    scrollbar-width: none;
+  }
+
+  .honsgarden-app-shell[data-app-section='flock'] [role='tablist']::-webkit-scrollbar { display: none; }
+  .honsgarden-app-shell[data-app-section='flock'] [role='tab'] { flex: 0 0 auto; }
+
+  .honsgarden-app-shell[data-app-section='flock'] .stagger-children {
+    gap: 10px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='flock'] .stagger-children > [class*='border'] {
+    border-radius: 20px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+    padding-top: 174px;
+  }
+
+  .honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before,
+  .honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+    height: 154px;
+    border-radius: 24px;
+  }
+
+  .honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before {
+    background-position: 58% 50%;
+  }
+
+  .honsgarden-app-shell[data-app-section='today'] main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 > .pt-1 {
+    top: 68px;
+    left: 20px;
+  }
+
+  .honsgarden-app-shell[data-app-section='hen-profile'] main#main-content > .max-w-2xl > [class*='overflow-hidden']:nth-of-type(2) {
+    border-radius: 24px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell * {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
