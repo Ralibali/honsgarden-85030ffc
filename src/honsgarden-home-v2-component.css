@@ -1,0 +1,107 @@
+/* Semantic hero component overrides. The old IndexUpdated hero is kept as fallback in source but removed visually. */
+
+#main-content > .farm-hero-v2 + section {
+  display: none !important;
+}
+
+#main-content > .farm-hero-v2 .hero-eyebrow,
+#main-content > .farm-hero-v2 .hero-trust {
+  display: flex !important;
+}
+
+#main-content > .farm-hero-v2 h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3rem, 5.2vw, 5.25rem) !important;
+  line-height: .98 !important;
+  letter-spacing: -.045em !important;
+  color: #173226 !important;
+}
+
+#main-content > .farm-hero-v2 h1::before,
+#main-content > .farm-hero-v2 p::before {
+  content: none !important;
+  display: none !important;
+}
+
+#main-content > .farm-hero-v2 h1 span {
+  display: inline !important;
+  color: #61723d !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+#main-content > .farm-hero-v2 p {
+  font-size: clamp(1.05rem, 1.5vw, 1.22rem) !important;
+  line-height: 1.58 !important;
+  color: rgba(24,48,36,.82) !important;
+}
+
+#main-content > .farm-hero-v2 a[href='#funktioner'] {
+  min-height: 52px !important;
+  padding-inline: 25px !important;
+  border-radius: 999px !important;
+  color: #183b29 !important;
+  background: rgba(252,249,242,.72) !important;
+  border: 1px solid rgba(31,62,43,.2) !important;
+  box-shadow: 0 8px 24px rgba(30,47,35,.08) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+#main-content > .farm-hero-v2 .hero-trust {
+  color: rgba(24,48,36,.72) !important;
+}
+
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 .hero-eyebrow,
+html[data-hero-time='night'] #main-content > .farm-hero-v2 .hero-eyebrow {
+  color: rgba(255,250,240,.9) !important;
+  background: rgba(13,25,20,.28) !important;
+  border-color: rgba(255,255,255,.18) !important;
+}
+
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 h1,
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 h1 span,
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 p,
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 .hero-trust,
+html[data-hero-time='night'] #main-content > .farm-hero-v2 h1,
+html[data-hero-time='night'] #main-content > .farm-hero-v2 h1 span,
+html[data-hero-time='night'] #main-content > .farm-hero-v2 p,
+html[data-hero-time='night'] #main-content > .farm-hero-v2 .hero-trust {
+  color: #fffaf0 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+html[data-hero-time='dusk'] #main-content > .farm-hero-v2 a[href='#funktioner'],
+html[data-hero-time='night'] #main-content > .farm-hero-v2 a[href='#funktioner'] {
+  color: #fffaf0 !important;
+  background: rgba(10,24,18,.34) !important;
+  border-color: rgba(255,255,255,.2) !important;
+}
+
+@media (max-width: 767px) {
+  #main-content > .farm-hero-v2 h1 {
+    font-size: clamp(2.45rem, 11.2vw, 3.55rem) !important;
+    line-height: 1.01 !important;
+  }
+
+  #main-content > .farm-hero-v2 p {
+    font-size: 1rem !important;
+    line-height: 1.48 !important;
+  }
+
+  #main-content > .farm-hero-v2 .hero-eyebrow {
+    font-size: .72rem !important;
+    padding: 7px 10px !important;
+  }
+
+  #main-content > .farm-hero-v2 .hero-trust {
+    margin-top: 17px !important;
+    gap: 7px 14px !important;
+    font-size: .72rem !important;
+  }
+
+  #main-content > .farm-hero-v2 a[href='#funktioner'] {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding-inline: 12px !important;
+    font-size: .88rem !important;
+  }
+}
