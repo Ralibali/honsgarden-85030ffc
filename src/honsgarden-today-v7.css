@@ -75,7 +75,7 @@ html[data-local-daypart='night'] .honsgarden-app-shell .hg-today-hero {
 }
 
 .honsgarden-app-shell .hg-dashboard-today > .hg-today-hero + * {
-  margin-top: 0 !important;
+  margin-top: 18px !important;
 }
 
 /* The daily action should float above, never into, the bottom navigation. */
@@ -124,7 +124,7 @@ html[data-local-daypart='night'] .honsgarden-app-shell .hg-today-hero {
      into the image when third-party/mobile browser text sizing changes. */
   .honsgarden-app-shell .hg-today-hero + * {
     position: relative !important;
-    margin-top: 0 !important;
+    margin-top: 17px !important;
     transform: none !important;
   }
 }
