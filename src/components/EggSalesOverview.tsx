@@ -57,7 +57,7 @@ export default function EggSalesOverview() {
     queryKey: ['egg-sales-overview-listings'],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('public_egg_sale_listings')
         .select('id, price_per_pack')
         .eq('user_id', userId);
@@ -73,7 +73,7 @@ export default function EggSalesOverview() {
       const userId = await getCurrentUserId();
       const since = new Date();
       since.setDate(since.getDate() - RANGE_DAYS * 2);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('public_egg_sale_bookings')
         .select('id, listing_id, packs, status, created_at')
         .eq('seller_user_id', userId)
