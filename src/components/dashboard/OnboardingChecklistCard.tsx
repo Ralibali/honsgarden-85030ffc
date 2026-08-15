@@ -5,13 +5,20 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
-  Check, ArrowRight, X, Users, Bird, Egg, Wheat, BarChart3, Sparkles,
+  Check,
+  ArrowRight,
+  X,
+  Users,
+  Bird,
+  Egg,
+  Wheat,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 
-// Nyckeln scopes per användare så att flera användare på samma enhet
-// får var sin checklista (och att en ny användare inte ärver "dold"-status).
 const DISMISS_KEY = 'honsgarden-onboarding-checklist-dismissed';
 const getDismissKey = (userId: string) => `${DISMISS_KEY}-${userId}`;
 
@@ -35,21 +42,25 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState(false);
+  const [showJourney, setShowJourney] = useState(false);
 
-  // Läs dismiss-status när användaren har laddats in (auth är asynkront).
   useEffect(() => {
     if (user?.id) {
       setDismissed(localStorage.getItem(getDismissKey(user.id)) === '1');
     }
   }, [user?.id]);
 
-  const { data: flocks = [] } = useQuery({ queryKey: ['flocks'], queryFn: () => api.getFlocks(), staleTime: 60_000 });
+  const { data: flocks = [] } = useQuery({
+    queryKey: ['flocks'],
+    queryFn: () => api.getFlocks(),
+    staleTime: 60_000,
+  });
 
   const steps: Step[] = useMemo(() => [
     {
       key: 'flock',
-      label: 'Skapa din första flock',
-      description: 'Samla hönorna i en flock – t.ex. "Hönshuset".',
+      label: 'Ge hönsgården en plats',
+      description: 'Skapa en flock, till exempel “Hönshuset”. Då får allt som händer en tydlig hemvist.',
       cta: 'Skapa flock',
       icon: Users,
       done: flocks.length > 0,
@@ -57,9 +68,9 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
     },
     {
       key: 'hens',
-      label: 'Lägg till hönor',
-      description: 'Namn och ras – då kan du följa varje höna.',
-      cta: 'Lägg till',
+      label: 'Presentera dina hönor',
+      description: 'Ett namn räcker. Bilder, ras och mer kan du fylla i när du känner för det.',
+      cta: 'Lägg till höna',
       icon: Bird,
       done: hensCount > 0,
       href: '/app/hens',
@@ -67,7 +78,7 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
     {
       key: 'egg',
       label: 'Logga första ägget',
-      description: 'Ett tryck – sen börjar statistiken växa fram.',
+      description: 'Här börjar Hönsgården lära känna rytmen i din flock. Det tar bara några sekunder.',
       cta: 'Logga ägg',
       icon: Egg,
       done: eggsCount > 0,
@@ -75,37 +86,36 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
     },
     {
       key: 'feed',
-      label: 'Ange foderkostnad',
-      description: 'Då räknar vi ut vad varje ägg kostar dig.',
-      cta: 'Lägg till',
+      label: 'Låt ekonomin bli begriplig',
+      description: 'Lägg in ett foderinköp så kan Hönsgården börja räkna på ungefärlig kostnad per ägg.',
+      cta: 'Lägg in foder',
       icon: Wheat,
       done: feedRecordsCount > 0,
       href: '/app/feed',
     },
     {
-      key: 'stats',
-      label: 'Utforska din statistik',
-      description: 'Kurvor, trender och smarta insikter om flocken.',
-      cta: 'Visa',
-      icon: BarChart3,
+      key: 'insights',
+      label: 'Låt mönstren växa fram',
+      description: 'Efter några loggningar kan du börja se hur värpningen förändras från vecka till vecka.',
+      cta: 'Se insikter',
+      icon: Sparkles,
       done: eggsCount >= 7,
       href: '/app/statistics',
     },
   ], [flocks.length, hensCount, eggsCount, feedRecordsCount]);
 
-  const doneCount = steps.filter((s) => s.done).length;
+  const doneCount = steps.filter((step) => step.done).length;
   const allDone = doneCount === steps.length;
-  const nextStep = steps.find((s) => !s.done);
+  const nextStep = steps.find((step) => !step.done);
   const progress = Math.round((doneCount / steps.length) * 100);
 
-  // Fira kort när allt blivit klart, spara sedan "dold" per användare.
   useEffect(() => {
     if (allDone && !dismissed && user?.id) {
-      const t = setTimeout(() => {
+      const timer = setTimeout(() => {
         localStorage.setItem(getDismissKey(user.id), '1');
         setDismissed(true);
-      }, 6000);
-      return () => clearTimeout(t);
+      }, 7000);
+      return () => clearTimeout(timer);
     }
   }, [allDone, dismissed, user?.id]);
 
@@ -119,81 +129,123 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.25 }}
+        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+        className="first-week-journey"
       >
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/[0.06] via-card to-card shadow-sm overflow-hidden">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-1 flex items-center gap-1">
-                  <Sparkles className="h-3 w-3" />
-                  Kom igång · {doneCount}/{steps.length} klart
-                </p>
-                <h2 className="font-serif text-lg text-foreground leading-tight">
-                  {allDone ? '🎉 Allt klart – snyggt jobbat!' : 'Kom igång på fem minuter'}
-                </h2>
-                {allDone && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Du har lagt grunden – fortsätt logga äggen så fylls insikterna på.
+        <Card className="first-week-journey__card overflow-hidden">
+          <CardContent className="p-0">
+            <div className="first-week-journey__top p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="first-week-journey__eyebrow">
+                    <span aria-hidden="true">🌱</span>
+                    Din första tid i Hönsgården
                   </p>
-                )}
+                  <h2 className="font-serif text-xl sm:text-2xl text-foreground leading-tight mt-1.5">
+                    {allDone ? 'Nu känner Hönsgården din flock' : 'En liten sak i taget räcker'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-1.5 max-w-xl">
+                    {allDone
+                      ? 'Grunden är på plats. Nu blir Hönsgården bättre ju mer vardag du låter den följa.'
+                      : 'Du behöver inte ställa in allt på en gång. Gör nästa lilla steg när det passar – resten kan vänta.'}
+                  </p>
+                </div>
+                <button
+                  aria-label="Dölj introduktionen"
+                  className="first-week-journey__dismiss"
+                  onClick={handleDismiss}
+                >
+                  <X className="h-4 w-4" />
+                </button>
               </div>
-              <button
-                aria-label="Dölj checklista"
-                className="shrink-0 h-6 w-6 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition flex items-center justify-center"
-                onClick={handleDismiss}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+
+              <div className="flex items-center gap-3 mt-4">
+                <Progress value={progress} className="h-1.5 flex-1" />
+                <span className="text-[11px] font-medium text-muted-foreground tabular-nums shrink-0">
+                  {doneCount} av {steps.length}
+                </span>
+              </div>
             </div>
 
-            <Progress value={progress} className="h-2" />
-
-            <ul className="mt-3 space-y-1">
-              {steps.map((step) => {
-                const Icon = step.icon;
-                const isNext = nextStep?.key === step.key;
-                return (
-                  <li key={step.key}>
+            {nextStep && (
+              <div className="first-week-journey__next mx-3 mb-3 sm:mx-4 sm:mb-4 p-4 sm:p-5">
+                <div className="flex items-start gap-3.5">
+                  <span className="first-week-journey__next-icon">
+                    <nextStep.icon className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-[0.15em] font-semibold text-primary/80">Nästa naturliga steg</p>
+                    <h3 className="font-serif text-lg text-foreground mt-1">{nextStep.label}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed mt-1">{nextStep.description}</p>
                     <button
                       type="button"
-                      onClick={() => !step.done && navigate(step.href)}
-                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                        step.done
-                          ? 'opacity-60 cursor-default'
-                          : isNext
-                            ? 'bg-primary/10 hover:bg-primary/15'
-                            : 'hover:bg-muted/60'
-                      }`}
+                      onClick={() => navigate(nextStep.href)}
+                      className="first-week-journey__cta mt-3"
                     >
-                      <span
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                          step.done ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {step.done ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
-                      </span>
-                      <span className="flex-1 min-w-0">
-                        <span className={`block text-sm font-medium ${step.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                          {step.label}
-                        </span>
-                        {isNext && (
-                          <span className="block text-xs text-muted-foreground truncate">{step.description}</span>
-                        )}
-                      </span>
-                      {!step.done && (
-                        <span className="flex items-center gap-1 text-xs font-medium text-primary shrink-0">
-                          {step.cta} <ArrowRight className="h-3 w-3" />
-                        </span>
-                      )}
+                      {nextStep.cta}
+                      <ArrowRight className="h-3.5 w-3.5" />
                     </button>
-                  </li>
-                );
-              })}
-            </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="px-4 pb-4">
+              <button
+                type="button"
+                onClick={() => setShowJourney((value) => !value)}
+                className="first-week-journey__toggle"
+                aria-expanded={showJourney}
+              >
+                <span>{showJourney ? 'Dölj resan' : 'Se hela resan'}</span>
+                {showJourney ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+
+              <AnimatePresence initial={false}>
+                {showJourney && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <ul className="first-week-journey__steps pt-3">
+                      {steps.map((step) => {
+                        const Icon = step.icon;
+                        return (
+                          <li key={step.key}>
+                            <button
+                              type="button"
+                              onClick={() => !step.done && navigate(step.href)}
+                              disabled={step.done}
+                              className="first-week-journey__step"
+                            >
+                              <span className={`first-week-journey__step-icon ${step.done ? 'is-done' : ''}`}>
+                                {step.done ? <Check className="h-3.5 w-3.5" /> : <Icon className="h-3.5 w-3.5" />}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className={`block text-sm ${step.done ? 'text-muted-foreground' : 'text-foreground font-medium'}`}>
+                                  {step.label}
+                                </span>
+                              </span>
+                              {step.done ? (
+                                <span className="text-[11px] text-primary/70">klart</span>
+                              ) : (
+                                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
