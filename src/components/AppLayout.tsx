@@ -29,6 +29,7 @@ function getAppContext(pathname: string): { section: string; label: string; emoj
     return { section: 'insights', label: 'Insikter', emoji: '✨' };
   }
   if (pathname.startsWith('/app/agda')) return { section: 'agda', label: 'Agda', emoji: '🐔' };
+  if (pathname.startsWith('/app/premium')) return { section: 'premium', label: 'Plus', emoji: '✨' };
   if (pathname.startsWith('/app/settings') || pathname.startsWith('/app/profile')) return { section: 'settings', label: 'Inställningar', emoji: '⚙️' };
   return { section: 'more', label: 'Hönsgården', emoji: '🌱' };
 }
