@@ -29,6 +29,11 @@ function markDashboardAndCorrectGreeting(daypart: FarmDaypart) {
     if (!dashboard) continue;
 
     dashboard.classList.add('hg-dashboard-today');
+
+    // DashboardV3 owns its semantic hero and its minute-aware greeting in React.
+    // The mutation below only exists to keep the legacy V2 screen safe at night.
+    if (dashboard.classList.contains('today-v3')) continue;
+
     heading.parentElement?.classList.add('hg-today-hero');
 
     const next = `${getGreeting(daypart)}${match[2]}`;
