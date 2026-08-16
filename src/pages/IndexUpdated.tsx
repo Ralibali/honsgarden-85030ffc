@@ -1,16 +1,12 @@
 import React, { lazy, Suspense } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
-import ProductDashboardPreview from '@/components/ProductDashboardPreview';
+import LandingHeroV3 from '@/components/landing/LandingHeroV3';
 import { useSeo } from '@/hooks/useSeo';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
-  BellRing,
   Bird,
   Bot,
   CalendarDays,
@@ -33,7 +29,6 @@ import {
 
 const StickyMobileCTA = lazy(() => import('@/components/StickyMobileCTA'));
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
-const ActivityPulse = lazy(() => import('@/components/ActivityPulse'));
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 14 } as const,
@@ -42,21 +37,32 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.42, delay, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
 });
 
-const staggerContainer = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+const staggerContainer = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
 const staggerItem = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
 
-const productModules = [
-  { icon: Egg, title: 'Ägglogg', desc: 'Logga dagens ägg snabbt, följ trender och se hur flocken värper över tid.', href: '/agglogg' },
-  { icon: Bird, title: 'Flock & hönsprofiler', desc: 'Samla hönor, ras, bilder, hälsa, anteckningar och historik på ett ställe.', href: '/app-for-honsagare' },
-  { icon: BarChart3, title: 'Statistik & insikter', desc: 'Se veckor, månader, snitt, avvikelser, topplistor och utveckling i tydliga vyer.', href: '/login?mode=register' },
-  { icon: ReceiptText, title: 'Agdas äggbod', desc: 'Skapa säljsidor med bild, pris, Swish, bokningsförfrågningar, kundlista och export.', href: '/salja-agg', badge: 'Sälj ägg' },
-  { icon: Wheat, title: 'Foder & ekonomi', desc: 'Följ foderinköp, kostnad per ägg, intäkter, utgifter och försäljningsvärde.', href: '/foderkostnad-hons' },
-  { icon: CalendarDays, title: 'Kalender & rutiner', desc: 'Planera rengöring, vatten, foder, kvalsterkontroll, ruggning och säsongssysslor.', href: '/honskalender' },
-  { icon: Egg, title: 'Kläckningskalender', desc: 'Följ dag 1–21, lysning, lockdown, milstolpar och resultat för varje kläckning.', href: '/klackningskalender' },
-  { icon: CloudSun, title: 'Väder & påverkan', desc: 'Se hur väder, värme, kyla och säsong kan påverka ägg, rutiner och flock.', href: '/login?mode=register' },
-  { icon: Bot, title: 'Agda AI', desc: 'Få råd, säljtexter, veckorapporter och nästa steg baserat på din egen hönsgård.', href: '/login?mode=register', badge: 'Plus' },
-  { icon: MessageCircle, title: 'Community', desc: 'Skriv inlägg, dela frågor, tips och erfarenheter med andra hönsägare.', href: '/login?mode=register' },
-  { icon: ClipboardCheck, title: 'Rapporter & export', desc: 'Kopiera rapporter, exportera CSV och samla underlag för uppföljning.', href: '/login?mode=register' },
+type Tile = {
+  icon: typeof Egg;
+  title: string;
+  desc: string;
+  href: string;
+  badge?: string;
+  span?: string;
+  tone?: 'deep' | 'sage';
+  chart?: boolean;
+};
+
+const productModules: Tile[] = [
+  { icon: Egg, title: 'Ägglogg', desc: 'Logga dagens ägg på några sekunder, följ trender och se hur flocken värper över tid.', href: '/agglogg', span: 'col-span-2 lg:col-span-2 lg:row-span-2', tone: 'deep', chart: true },
+  { icon: Bird, title: 'Flock & hönsprofiler', desc: 'Hönor, ras, bilder, hälsa och historik på ett ställe.', href: '/app-for-honsagare' },
+  { icon: BarChart3, title: 'Statistik & insikter', desc: 'Veckor, månader, snitt, avvikelser och topplistor.', href: '/login?mode=register' },
+  { icon: ReceiptText, title: 'Agdas äggbod', desc: 'Egen säljsida med bild, pris, Swish, bokningar, kundlista och export.', href: '/salja-agg', badge: 'Sälj ägg', span: 'col-span-2', tone: 'sage' },
+  { icon: Wheat, title: 'Foder & ekonomi', desc: 'Foderinköp, kostnad per ägg, intäkter och utgifter.', href: '/foderkostnad-hons' },
+  { icon: CalendarDays, title: 'Kalender & rutiner', desc: 'Rengöring, vatten, foder, kvalster, ruggning och säsong.', href: '/honskalender' },
+  { icon: Bot, title: 'Agda AI', desc: 'Råd, säljtexter, veckorapporter och nästa steg – utifrån din egen hönsgård.', href: '/login?mode=register', badge: 'Plus', span: 'col-span-2', tone: 'sage' },
+  { icon: Egg, title: 'Kläckningskalender', desc: 'Dag 1–21, lysning, lockdown och resultat.', href: '/klackningskalender' },
+  { icon: CloudSun, title: 'Väder & påverkan', desc: 'Se hur värme, kyla och säsong påverkar äggen.', href: '/login?mode=register' },
+  { icon: MessageCircle, title: 'Community', desc: 'Inlägg, frågor och tips mellan hönsägare.', href: '/login?mode=register' },
+  { icon: ClipboardCheck, title: 'Rapporter & export', desc: 'Kopiera rapporter och exportera CSV.', href: '/login?mode=register' },
 ];
 
 const agdaFeatures = [
@@ -101,6 +107,17 @@ function trackRegisterCta(source: 'landing_hero' | 'landing_navbar' | 'landing_f
   );
 }
 
+function SectionHeading({ eyebrow, title, desc }: { eyebrow?: string; title: string; desc?: string }) {
+  return (
+    <motion.div {...fadeUp()} className="max-w-2xl mb-10 sm:mb-12">
+      {eyebrow && <p className="hg-eyebrow mb-3">{eyebrow}</p>}
+      <h2 className="text-2xl sm:text-4xl mb-3">{title}</h2>
+      {desc && <p className="text-sm sm:text-base leading-relaxed" style={{ color: 'var(--hg-ink-soft)' }}>{desc}</p>}
+      <div className="hg-rule mt-6 max-w-[160px]" aria-hidden />
+    </motion.div>
+  );
+}
+
 export default function IndexUpdated() {
   useSeo({
     title: 'Hönsgården – ägglogg, flock, Agdas äggbod och AI',
@@ -114,138 +131,200 @@ export default function IndexUpdated() {
   });
 
   return (
-    <main id="main-content" className="min-h-dvh bg-background overflow-x-hidden">
-      <Suspense fallback={null}><StickyMobileCTA /></Suspense>
-      <LandingNavbar />
+    <main id="main-content" className="min-h-dvh overflow-x-hidden">
+      <div className="hg-home-v3">
+        <Suspense fallback={null}><StickyMobileCTA /></Suspense>
+        <LandingNavbar />
 
-      <section className="relative flex flex-col justify-center pt-24 pb-12 sm:min-h-dvh sm:pt-16 sm:pb-10 overflow-hidden" style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 50%, #f5f0e8 100%)' }}>
-        {/* Levande bakgrund: glödmoln + svävande ägg */}
-        <motion.div
-          className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-primary/15 blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-warning/15 blur-3xl"
-          animate={{ scale: [1.15, 1, 1.15], opacity: [0.6, 0.4, 0.6] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        {[
-          { top: '18%', left: '6%', size: 44, delay: 0 },
-          { top: '62%', left: '2%', size: 32, delay: 1.2 },
-          { top: '24%', right: '4%', size: 38, delay: 0.6 },
-        ].map((egg, i) => (
-          <motion.div
-            key={i}
-            className="pointer-events-none absolute hidden lg:block rounded-[50%_50%_50%_50%/60%_60%_40%_40%] bg-gradient-to-b from-amber-100 to-amber-200/70 shadow-sm border border-amber-200/50"
-            style={{ top: egg.top, left: egg.left, right: egg.right, width: egg.size, height: egg.size * 1.25 }}
-            animate={{ y: [0, -14, 0], rotate: [0, 4, 0, -4, 0] }}
-            transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: egg.delay }}
-          />
-        ))}
-        <div className="container max-w-6xl mx-auto px-5 sm:px-6 relative z-10">
-          <div className="grid lg:grid-cols-[1.04fr_0.96fr] gap-10 lg:gap-14 items-center">
-            <div className="text-center lg:text-left">
-              <motion.div {...fadeUp(0)} className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-4">
-                <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs px-3 py-1">Svensk app för hönsägare</Badge>
-                <Badge variant="secondary" className="bg-warning/15 text-warning-foreground border-warning/30 text-xs px-3 py-1">Agdas äggbod</Badge>
-                <Badge variant="secondary" className="bg-background/70 text-foreground border-border text-xs px-3 py-1">Gratis att börja</Badge>
-              </motion.div>
-              <motion.h1 {...fadeUp(0.05)} className="font-serif text-[2rem] sm:text-5xl md:text-6xl text-foreground leading-[1.08] mb-4 sm:mb-5">
-                Mer koll på din hönsgård – <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">från ägg till försäljning</span>
-              </motion.h1>
-              <motion.p {...fadeUp(0.08)} className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto lg:mx-0 leading-relaxed mb-5 sm:mb-6">
-                Hönsgården samlar ägglogg, flock, hönsprofiler, statistik, foderkostnad, kalender, väder, community, rapporter och Agdas äggbod på samma plats. Logga vardagen, förstå mönstren och sälj ägg utan Excel-kaos.
-              </motion.p>
-              <motion.div {...fadeUp(0.12)} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-5">
-                <Button asChild size="lg" className="h-12 sm:h-13 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]" onClick={() => trackRegisterCta('landing_hero')}><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-4 w-4" /></a></Button>
-                <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base"><a href="/demo">Prova utan konto</a></Button>
-                <Button asChild variant="outline" size="lg" className="h-12 sm:h-13 px-8 text-base border-primary/30 text-primary hover:bg-primary/5"><a href="/salja-agg">Se Agdas äggbod</a></Button>
-              </motion.div>
-              <motion.div {...fadeUp(0.15)} className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-2xl mx-auto lg:mx-0">
-                {['Logga ägg och hönor', 'Sälj ägg med egen länk', 'AI, statistik och community'].map((item) => <div key={item} className="flex items-center justify-center lg:justify-start gap-2 rounded-xl bg-background/70 border border-border/50 px-3 py-2 text-sm text-foreground"><Check className="h-4 w-4 text-primary shrink-0" />{item}</div>)}
-              </motion.div>
-              <motion.div {...fadeUp(0.18)} className="mt-4 flex justify-center lg:justify-start"><Suspense fallback={null}><ActivityPulse /></Suspense></motion.div>
-            </div>
-            <motion.div {...fadeUp(0.12)} className="flex justify-center lg:justify-end">
-              <ProductDashboardPreview />
+        <LandingHeroV3 />
+
+        {/* Funktioner som bento-rutnät */}
+        <section id="funktioner" className="py-16 sm:py-24" style={{ background: 'var(--hg-cream)' }}>
+          <div className="container max-w-6xl mx-auto px-5 sm:px-6">
+            <SectionHeading
+              eyebrow="Funktioner"
+              title="Allt hönsägaren behöver – i ett lugnt arbetsbord"
+              desc="Hönsgården är inte bara en ägglogg. Det är platsen där flocken, vardagen, ekonomin och försäljningen hänger ihop."
+            />
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: '-60px' }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[minmax(150px,auto)]"
+            >
+              {productModules.map((f) => (
+                <motion.a
+                  key={f.title}
+                  href={f.href}
+                  variants={staggerItem}
+                  className={`hg-tile ${f.tone === 'deep' ? 'hg-tile--deep' : ''} ${f.tone === 'sage' ? 'hg-tile--sage' : ''} ${f.span ?? ''} group flex flex-col p-5 sm:p-6`}
+                >
+                  {f.badge && (
+                    <span className="hg-chip absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-wider">
+                      {f.badge}
+                    </span>
+                  )}
+                  <span className="hg-icon mb-4">
+                    <f.icon className="h-5 w-5" />
+                  </span>
+                  <h3 className={`${f.chart ? 'text-2xl sm:text-3xl' : 'text-lg'} mb-2`}>{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: f.tone === 'deep' ? 'rgba(244,241,230,.76)' : 'var(--hg-ink-soft)' }}>
+                    {f.desc}
+                  </p>
+                  {f.chart && (
+                    <div className="mt-auto pt-8 flex items-end gap-1.5 h-24" aria-hidden>
+                      {[38, 52, 44, 61, 55, 70, 78, 66, 84].map((h, i) => (
+                        <span
+                          key={i}
+                          className="flex-1 rounded-t-md"
+                          style={{ height: `${h}%`, background: 'linear-gradient(180deg, rgba(168,192,160,.9), rgba(168,192,160,.35))' }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium opacity-70 group-hover:opacity-100 transition-opacity">
+                    Läs mer <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
+                </motion.a>
+              ))}
             </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="py-16 sm:py-24 bg-background">
-        <div className="container max-w-6xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-10">
-            <Badge className="mb-3 bg-primary/10 text-primary border-primary/20">Funktioner</Badge>
-            <h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Det här erbjuder Hönsgården idag</h2>
-            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Hönsgården är inte bara en ägglogg längre. Det är ett komplett arbetsbord för dig som vill förstå flocken, sköta vardagen, sälja ägg och bygga bättre rutiner över tid.</p>
-          </motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {productModules.map((f) => <motion.a key={f.title} href={f.href} variants={staggerItem} className="group relative p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200">{f.badge && <Badge className="absolute top-4 right-4 bg-primary/10 text-primary border-primary/20 text-[10px] font-bold">{f.badge}</Badge>}<div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><f.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.a>)}
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-16 sm:py-24 bg-secondary/20">
-        <div className="container max-w-6xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><Badge className="mb-3 bg-primary/10 text-primary border-primary/20">För dig som säljer ägg</Badge><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Agdas äggbod gör lokal äggförsäljning enklare</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Skapa en säljsida, visa bild och pris, ta emot bokningar och följ upp kunder, betalning, hämtning och värde direkt i Hönsgården.</p></motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {agdaFeatures.map((f) => <motion.div key={f.title} variants={staggerItem} className="group p-6 rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"><div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><f.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-1.5">{f.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p></motion.div>)}
-          </motion.div>
-          <motion.div {...fadeUp(0.1)} className="mt-10 rounded-3xl bg-background border border-primary/15 p-6 sm:p-8 text-center shadow-sm"><p className="text-sm text-muted-foreground mb-2">Exempel på säljlänk</p><p className="font-mono text-sm sm:text-base text-foreground break-all bg-muted/40 rounded-xl px-4 py-3 mb-5">https://honsgarden.se/s/bergs-agg</p><Button asChild size="lg" className="gap-2"><a href="/login?mode=register">Skapa din första säljsida <ArrowRight className="h-4 w-4" /></a></Button></motion.div>
-        </div>
-      </section>
-
-      <section className="py-16 sm:py-24 bg-background">
-        <div className="container max-w-6xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Så fungerar Agdas äggbod i praktiken</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Från första säljlistan till uppföljning av betalning, hämtning och återkommande kunder.</p></motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Tidslinje som binder samman stegen (desktop) */}
-            <div className="hidden md:block absolute top-10 left-[12.5%] right-[12.5%] border-t-2 border-dashed border-primary/20" aria-hidden />
-            {agdaSteps.map((s) => <motion.div key={s.step} variants={staggerItem}><Card className="h-full border-primary/15 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"><CardContent className="p-5 text-center"><span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-bold mb-3 shadow-sm">{s.step}</span><h3 className="font-serif text-base text-foreground mb-2">{s.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{s.desc}</p></CardContent></Card></motion.div>)}
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-16 sm:py-24 bg-secondary/20">
-        <div className="container max-w-6xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center max-w-3xl mx-auto mb-12"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">För vem passar Hönsgården?</h2><p className="text-sm sm:text-base text-muted-foreground leading-relaxed">Oavsett om du har några få hönor, kläcker kycklingar eller säljer ägg lokalt får du bättre ordning.</p></motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {audience.map((a) => <motion.div key={a.title} variants={staggerItem}><Card className="group h-full shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200"><CardContent className="p-6"><div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 transition-colors duration-200 group-hover:bg-primary"><a.icon className="h-5 w-5 text-primary transition-colors duration-200 group-hover:text-primary-foreground" /></div><h3 className="font-serif text-lg text-foreground mb-2">{a.title}</h3><p className="text-sm text-muted-foreground leading-relaxed">{a.desc}</p></CardContent></Card></motion.div>)}
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-16 sm:py-24 bg-background">
-        <div className="container max-w-5xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Tryggt och enkelt att komma igång</h2></motion.div>
-          <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {trustItems.map((item) => <motion.div key={item} variants={staggerItem} className="rounded-2xl bg-card border border-border hover:border-primary/30 hover:shadow-sm px-4 py-3 flex items-center gap-2 text-sm text-foreground transition-all duration-200"><ShieldCheck className="h-4 w-4 text-primary shrink-0" />{item}</motion.div>)}
-          </motion.div>
-        </div>
-      </section>
-
-      <section id="priser" className="relative z-10 py-20 sm:py-28 bg-secondary/20">
-        <div className="container max-w-5xl mx-auto px-5 sm:px-6">
-          <motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Börja gratis – uppgradera när du vill ha mer hjälp</h2><p className="text-muted-foreground text-sm sm:text-base">Gratis ger dig grunden. Plus ger mer AI, insikter, rapporter och obegränsad användning.</p></motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
-            <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova Plus" />
-            <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Välj årsplan" />
+        {/* Agdas äggbod */}
+        <section className="py-16 sm:py-24" style={{ background: 'var(--hg-cream-2)' }}>
+          <div className="container max-w-6xl mx-auto px-5 sm:px-6">
+            <SectionHeading
+              eyebrow="För dig som säljer ägg"
+              title="Agdas äggbod gör lokal äggförsäljning enklare"
+              desc="Skapa en säljsida, visa bild och pris, ta emot bokningar och följ upp kunder, betalning och hämtning direkt i Hönsgården."
+            />
+            <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {agdaFeatures.map((f) => (
+                <motion.div key={f.title} variants={staggerItem} className="hg-tile hg-tile--hover p-6">
+                  <span className="hg-icon mb-4"><f.icon className="h-5 w-5" /></span>
+                  <h3 className="text-lg mb-2">{f.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--hg-ink-soft)' }}>{f.desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+            <motion.div {...fadeUp(0.1)} className="hg-tile mt-4 p-6 sm:p-8 text-center">
+              <p className="hg-eyebrow mb-3">Exempel på säljlänk</p>
+              <p className="font-mono text-sm sm:text-base break-all rounded-xl px-4 py-3 mb-5" style={{ background: 'rgba(125,155,118,.12)' }}>
+                https://honsgarden.se/s/bergs-agg
+              </p>
+              <a href="/login?mode=register" className="hg-cta-primary inline-flex items-center gap-2 h-12 min-h-[48px] px-7 text-base font-medium">
+                Skapa din första säljsida <ArrowRight className="h-4 w-4" />
+              </a>
+            </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="relative z-10 py-20 sm:py-28" style={{ background: 'linear-gradient(180deg, hsl(var(--background)) 0%, #f5f0e8 50%, hsl(var(--background)) 100%)' }}>
-        <div className="container max-w-2xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="text-center mb-10"><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-2">Vanliga frågor</h2></motion.div><motion.div {...fadeUp(0.1)}><Accordion type="single" collapsible className="space-y-2">{faqs.map((f, i) => <AccordionItem key={i} value={`faq-${i}`} className="border border-border bg-card hover:border-primary/30 transition-colors rounded-xl overflow-hidden px-1"><AccordionTrigger className="text-sm sm:text-base font-medium text-foreground hover:no-underline px-4 text-left">{f.q}</AccordionTrigger><AccordionContent className="text-sm text-muted-foreground px-4 pb-4 leading-relaxed">{f.a}</AccordionContent></AccordionItem>)}</Accordion></motion.div></div>
-      </section>
+        {/* Så fungerar det */}
+        <section className="py-16 sm:py-24" style={{ background: 'var(--hg-cream)' }}>
+          <div className="container max-w-6xl mx-auto px-5 sm:px-6">
+            <SectionHeading title="Så fungerar Agdas äggbod i praktiken" desc="Från första säljsidan till uppföljning av betalning, hämtning och återkommande kunder." />
+            <motion.ol variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+              {agdaSteps.map((s) => (
+                <motion.li key={s.step} variants={staggerItem} className="hg-tile hg-tile--hover p-6">
+                  <span className="text-3xl block mb-3" style={{ color: 'var(--hg-sage-deep)', fontFamily: "'DM Serif Display', Georgia, serif" }}>{s.step}</span>
+                  <h3 className="text-base mb-2">{s.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--hg-ink-soft)' }}>{s.desc}</p>
+                </motion.li>
+              ))}
+            </motion.ol>
+          </div>
+        </section>
 
-      <section className="relative z-10 pb-10 sm:pb-16">
-        <div className="container max-w-3xl mx-auto px-5 sm:px-6"><motion.div {...fadeUp()} className="rounded-3xl bg-gradient-to-br from-primary/10 via-accent/5 to-warning/5 border border-primary/15 p-8 sm:p-12 text-center"><motion.div className="text-5xl mb-4 inline-block" animate={{ y: [0, -8, 0], rotate: [0, -6, 0, 6, 0] }} transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}>🐔</motion.div><h2 className="font-serif text-2xl sm:text-4xl text-foreground mb-3">Flocken berättar mer än man tror</h2><p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto mb-6 leading-relaxed">När du loggar ägg, foder, hälsa, försäljning, väder och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.</p><Button asChild size="lg" className="h-14 px-10 text-lg gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.4)] hover:scale-[1.02] transition-transform" onClick={() => trackRegisterCta('landing_final_cta')}><a href="/login?mode=register">Skapa konto gratis <ArrowRight className="h-5 w-5" /></a></Button><p className="text-xs text-muted-foreground mt-4">Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p></motion.div></div>
-      </section>
+        {/* Målgrupper */}
+        <section className="py-16 sm:py-24" style={{ background: 'var(--hg-cream-2)' }}>
+          <div className="container max-w-6xl mx-auto px-5 sm:px-6">
+            <SectionHeading title="För vem passar Hönsgården?" desc="Några få hönor, kläckningar eller lokal äggförsäljning – du får bättre ordning oavsett." />
+            <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              {audience.map((a) => (
+                <motion.div key={a.title} variants={staggerItem} className="hg-tile hg-tile--hover p-6">
+                  <span className="hg-icon mb-4"><a.icon className="h-5 w-5" /></span>
+                  <h3 className="text-lg mb-2">{a.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--hg-ink-soft)' }}>{a.desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
 
-      <Suspense fallback={null}><LandingFooter /></Suspense>
+        {/* Trygghet */}
+        <section className="py-16 sm:py-20" style={{ background: 'var(--hg-cream)' }}>
+          <div className="container max-w-5xl mx-auto px-5 sm:px-6">
+            <SectionHeading title="Tryggt och enkelt att komma igång" />
+            <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {trustItems.map((item) => (
+                <motion.div key={item} variants={staggerItem} className="hg-tile px-4 py-3 flex items-center gap-2 text-sm">
+                  <ShieldCheck className="h-4 w-4 shrink-0" style={{ color: 'var(--hg-sage-deep)' }} />
+                  {item}
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Priser */}
+        <section id="priser" className="py-16 sm:py-24" style={{ background: 'var(--hg-cream-2)' }}>
+          <div className="container max-w-5xl mx-auto px-5 sm:px-6">
+            <SectionHeading
+              eyebrow="Priser"
+              title="Börja gratis – uppgradera när du vill ha mer hjälp"
+              desc="Gratis ger dig grunden. Plus ger mer AI, insikter, rapporter och obegränsad användning."
+            />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+              <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
+              <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova Plus" />
+              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Välj årsplan" />
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-16 sm:py-24" style={{ background: 'var(--hg-cream)' }}>
+          <div className="container max-w-2xl mx-auto px-5 sm:px-6">
+            <SectionHeading title="Vanliga frågor" />
+            <motion.div {...fadeUp(0.1)}>
+              <Accordion type="single" collapsible className="space-y-2.5">
+                {faqs.map((f, i) => (
+                  <AccordionItem key={i} value={`faq-${i}`} className="hg-tile border-0 overflow-hidden px-1">
+                    <AccordionTrigger className="text-sm sm:text-base font-medium hover:no-underline px-4 text-left">{f.q}</AccordionTrigger>
+                    <AccordionContent className="text-sm px-4 pb-4 leading-relaxed" style={{ color: 'var(--hg-ink-soft)' }}>{f.a}</AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Slutlig CTA */}
+        <section className="pb-16 sm:pb-24" style={{ background: 'var(--hg-cream)' }}>
+          <div className="container max-w-3xl mx-auto px-5 sm:px-6">
+            <motion.div {...fadeUp()} className="hg-tile hg-tile--deep p-8 sm:p-14 text-center">
+              <p className="hg-eyebrow mb-4" style={{ color: 'rgba(219,231,212,.85)' }}>Hönsgården</p>
+              <h2 className="text-2xl sm:text-4xl mb-4">Flocken berättar mer än man tror</h2>
+              <p className="text-sm sm:text-base max-w-md mx-auto mb-8 leading-relaxed" style={{ color: 'rgba(244,241,230,.78)' }}>
+                När du loggar ägg, foder, hälsa, försäljning och rutiner får du något bättre än magkänsla: sparad erfarenhet som hjälper dig fatta bättre beslut.
+              </p>
+              <a
+                href="/login?mode=register"
+                onClick={() => trackRegisterCta('landing_final_cta')}
+                className="inline-flex items-center gap-2 h-14 min-h-[56px] px-10 text-lg font-medium rounded-full"
+                style={{ background: '#f4f1e6', color: '#22392b' }}
+              >
+                Skapa konto gratis <ArrowRight className="h-5 w-5" />
+              </a>
+              <p className="text-xs mt-5" style={{ color: 'rgba(244,241,230,.6)' }}>Börja gratis · Mobilvänligt · Byggt för svenska hönsägare</p>
+            </motion.div>
+          </div>
+        </section>
+
+        <Suspense fallback={null}><LandingFooter /></Suspense>
+      </div>
     </main>
   );
 }
@@ -253,27 +332,32 @@ export default function IndexUpdated() {
 function PricingCard({ title, price, desc, features, cta, highlighted = false }: { title: string; price: string; desc: string; features: string[]; cta: string; highlighted?: boolean }) {
   return (
     <motion.div
-      {...fadeUp(highlighted ? 0.2 : 0.1)}
-      whileHover={{ y: -5 }}
-      className={`relative overflow-hidden p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-xl transition-shadow ${
-        highlighted
-          ? 'border-2 border-primary bg-primary/5 shadow-[0_12px_40px_-12px_hsl(var(--primary)/0.4)]'
-          : 'bg-card border border-border'
-      }`}
+      {...fadeUp(highlighted ? 0.16 : 0.08)}
+      className={`hg-tile hg-tile--hover p-6 sm:p-8 flex flex-col ${highlighted ? 'hg-tile--deep' : ''}`}
     >
       {highlighted && (
-        <motion.div
-          className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-          animate={{ x: ['-120%', '260%'] }}
-          transition={{ duration: 2.6, repeat: Infinity, repeatDelay: 5, ease: 'easeInOut' }}
-        />
+        <span className="hg-chip absolute -top-3 left-6 text-[11px] font-semibold" style={{ background: '#f4f1e6', color: '#22392b' }}>
+          Spara 169 kr
+        </span>
       )}
-      {highlighted && <div className="absolute -top-3 left-1/2 -translate-x-1/2"><Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground text-xs px-3 py-1 shadow-sm">Spara 169 kr</Badge></div>}
-      <h3 className="font-serif text-xl text-foreground mb-1">{title}</h3>
-      <p className="text-muted-foreground text-sm mb-6">{desc}</p>
-      <p className="text-4xl font-bold text-foreground mb-6">{price}</p>
-      <ul className="space-y-3 mb-8">{features.map((f) => <li key={f} className="flex items-center gap-2.5 text-sm text-foreground"><span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10"><Check className="h-3 w-3 text-primary" /></span>{f}</li>)}</ul>
-      <Button asChild variant={highlighted ? 'default' : 'outline'} className={`w-full h-11 ${highlighted ? 'shadow-[0_6px_20px_hsl(var(--primary)/0.35)]' : ''}`}><a href="/login?mode=register">{cta}</a></Button>
+      <h3 className="text-xl mb-1">{title}</h3>
+      <p className="text-sm mb-6" style={{ color: highlighted ? 'rgba(244,241,230,.7)' : 'var(--hg-ink-soft)' }}>{desc}</p>
+      <p className="text-4xl mb-6" style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>{price}</p>
+      <ul className="space-y-2.5 mb-8">
+        {features.map((f) => (
+          <li key={f} className="flex items-center gap-2.5 text-sm">
+            <Check className="h-4 w-4 shrink-0" style={{ color: highlighted ? '#b9d0b0' : 'var(--hg-sage-deep)' }} />
+            {f}
+          </li>
+        ))}
+      </ul>
+      <a
+        href="/login?mode=register"
+        className={`mt-auto inline-flex items-center justify-center h-12 min-h-[48px] px-6 text-base font-medium rounded-full ${highlighted ? '' : 'hg-cta-ghost'}`}
+        style={highlighted ? { background: '#f4f1e6', color: '#22392b' } : undefined}
+      >
+        {cta}
+      </a>
     </motion.div>
   );
 }
