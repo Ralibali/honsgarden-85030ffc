@@ -1,10 +1,8 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import "./honsgarden-home-v3.css";
 import "./mobile.css";
-import "./landing-hero.css";
-import "./honsgarden-home-v2.css";
-import "./honsgarden-home-v2-component.css";
 import "./honsgarden-app-v2.css";
 import "./honsgarden-core-v3.css";
 import "./honsgarden-yard-v3.css";
