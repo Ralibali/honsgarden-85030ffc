@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { todayLocal } from '@/lib/datetime';
+import { localCalendarDate, todayLocal } from '@/lib/datetime';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Download, Egg as EggIcon, LayoutGrid, List, Plus, Sparkles } from 'lucide-react';
 import { downloadCSV, downloadPDF } from '@/lib/exportUtils';
@@ -29,7 +29,7 @@ import { trackFirstEggIfNew } from '@/lib/analytics';
 function localDateOffset(days: number) {
   const date = new Date();
   date.setDate(date.getDate() + days);
-  return todayLocal(date);
+  return localCalendarDate(date, Intl.DateTimeFormat().resolvedOptions().timeZone);
 }
 
 function formatMonthLabel(date = new Date()) {
