@@ -40,8 +40,6 @@ export default function AppLayout() {
   const location = useLocation();
   const appContext = getAppContext(location.pathname);
 
-  // Ensure app routes are not indexed by search engines.
-  // Inget cleanup – nästa publika sida uppdaterar robots via useSeo.
   useEffect(() => {
     let meta = document.querySelector('meta[name="robots"]') as HTMLMetaElement;
     if (!meta) {
@@ -58,7 +56,6 @@ export default function AppLayout() {
         <AppSidebar />
 
         <div className="flex-1 flex flex-col min-h-dvh overflow-x-hidden">
-          {/* Desktop header */}
           <header className="hidden md:flex items-center justify-between border-b border-border/60 px-5 bg-background/60 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-12">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors">
@@ -85,21 +82,15 @@ export default function AppLayout() {
             </div>
           </header>
 
-          {/* Mobile header */}
-          <header className="flex md:hidden items-center justify-between border-b border-border/60 px-4 bg-background/70 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-14 py-2">
-            <div className="app-mobile-context flex items-center gap-2.5 min-w-0">
-              <span className="app-context-emoji w-9 h-9 rounded-xl bg-primary/10 border border-primary/10 flex items-center justify-center shrink-0 text-base" aria-hidden="true">
-                {appContext.emoji}
-              </span>
-              <div className="min-w-0 leading-none">
-                <span className="block text-[9px] uppercase tracking-[0.15em] text-muted-foreground/70">Hönsgården</span>
-                <strong className="block mt-1.5 font-serif text-base text-foreground truncate">{appContext.label}</strong>
-              </div>
+          <header className="flex md:hidden items-center justify-between border-b border-border/30 px-4 bg-background/55 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-12 py-1.5">
+            <div className="flex items-center gap-2 min-w-0" aria-label="Hönsgården">
+              <span className="text-lg leading-none" aria-hidden="true">🐔</span>
+              <strong className="font-serif text-[17px] font-medium tracking-[-0.02em] text-foreground truncate">Hönsgården</strong>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/40"
                 aria-label="Sök"
               >
                 <Search className="h-4.5 w-4.5" />
