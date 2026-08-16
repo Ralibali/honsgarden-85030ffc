@@ -1,0 +1,210 @@
+/* Hönsgården v8 — tactile daily egg counter. */
+
+.egg-counter-v3 {
+  position: relative;
+  overflow: hidden;
+  border: 0 !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 84% 10%, rgba(255,255,255,.74), transparent 28%),
+    linear-gradient(135deg, #fffdf7 0%, #f4edde 100%) !important;
+  box-shadow: 0 16px 44px rgba(59, 59, 43, .08) !important;
+}
+
+.egg-counter-v3::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  right: -58px;
+  bottom: -70px;
+  border-radius: 50%;
+  background: rgba(188, 164, 102, .10);
+  pointer-events: none;
+}
+
+.egg-counter-v3__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 0;
+}
+
+.egg-counter-v3__eyebrow {
+  margin: 0;
+  color: #315d3f;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -.025em;
+}
+
+.egg-counter-v3__hint {
+  margin: 2px 0 0;
+  color: #847b6d;
+  font-size: .7rem;
+  line-height: 1.35;
+}
+
+.egg-counter-v3__details {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 5px 0 5px 8px;
+  color: #687867;
+  font-size: .69rem;
+  font-weight: 700;
+  background: transparent;
+  border: 0;
+}
+
+.egg-counter-v3__controls {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 18px 19px;
+}
+
+.egg-counter-v3 .egg-counter-v3__button {
+  width: 100% !important;
+  height: 62px !important;
+  min-width: 0 !important;
+  border-radius: 20px !important;
+  transition: transform .14s ease, box-shadow .14s ease, background-color .14s ease !important;
+}
+
+.egg-counter-v3 .egg-counter-v3__button:active:not(:disabled) {
+  transform: scale(.94);
+}
+
+.egg-counter-v3 .egg-counter-v3__button--minus {
+  color: #526356 !important;
+  border: 1px solid rgba(71, 82, 67, .14) !important;
+  background: rgba(255,255,255,.42) !important;
+  box-shadow: none !important;
+}
+
+.egg-counter-v3 .egg-counter-v3__button--plus {
+  color: #fffaf0 !important;
+  border: 0 !important;
+  background: #315d3f !important;
+  box-shadow: 0 12px 24px rgba(48, 92, 62, .19) !important;
+}
+
+.egg-counter-v3__count {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  justify-content: center;
+  gap: 7px;
+  color: #253d2e;
+  font-variant-numeric: tabular-nums;
+}
+
+.egg-counter-v3__count strong {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(3.15rem, 11vw, 4.6rem);
+  font-weight: 500;
+  line-height: .78;
+  letter-spacing: -.065em;
+}
+
+.egg-counter-v3__count > span:last-child {
+  color: #777064;
+  font-size: .78rem;
+  font-weight: 600;
+}
+
+.egg-counter-v3__eggmark {
+  position: absolute;
+  left: calc(50% - 58px);
+  top: -5px;
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  color: #987d43;
+  opacity: .42;
+  transform: rotate(-11deg);
+}
+
+.egg-counter-v3.is-celebrating .egg-counter-v3__count strong {
+  animation: egg-counter-pop .62s cubic-bezier(.18,.8,.22,1);
+}
+
+.egg-counter-v3.is-celebrating .egg-counter-v3__eggmark {
+  animation: egg-counter-egg .68s cubic-bezier(.18,.8,.22,1);
+}
+
+.dark .egg-counter-v3 {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(255,255,255,.035), transparent 28%),
+    linear-gradient(135deg, #202d24 0%, #1b261e 100%) !important;
+  box-shadow: 0 16px 44px rgba(0,0,0,.16) !important;
+}
+
+.dark .egg-counter-v3__eyebrow,
+.dark .egg-counter-v3__count {
+  color: #eee7d8;
+}
+
+.dark .egg-counter-v3__hint,
+.dark .egg-counter-v3__count > span:last-child,
+.dark .egg-counter-v3__details {
+  color: #aaa18f;
+}
+
+.dark .egg-counter-v3 .egg-counter-v3__button--minus {
+  color: #c7c0b1 !important;
+  border-color: rgba(255,255,255,.09) !important;
+  background: rgba(255,255,255,.035) !important;
+}
+
+@media (max-width: 420px) {
+  .egg-counter-v3 {
+    border-radius: 24px !important;
+  }
+
+  .egg-counter-v3__top {
+    padding: 16px 16px 0;
+  }
+
+  .egg-counter-v3__controls {
+    grid-template-columns: 58px minmax(0, 1fr) 68px;
+    gap: 10px;
+    padding: 13px 15px 17px;
+  }
+
+  .egg-counter-v3 .egg-counter-v3__button {
+    height: 58px !important;
+    border-radius: 18px !important;
+  }
+
+  .egg-counter-v3__count strong {
+    font-size: clamp(3rem, 14vw, 4rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .egg-counter-v3 *,
+  .egg-counter-v3::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes egg-counter-pop {
+  0% { transform: scale(1); }
+  36% { transform: scale(1.13); }
+  70% { transform: scale(.98); }
+  100% { transform: scale(1); }
+}
+
+@keyframes egg-counter-egg {
+  0% { opacity: .42; transform: translateY(0) rotate(-11deg) scale(1); }
+  35% { opacity: .9; transform: translateY(-9px) rotate(9deg) scale(1.18); }
+  100% { opacity: .42; transform: translateY(0) rotate(-11deg) scale(1); }
+}
