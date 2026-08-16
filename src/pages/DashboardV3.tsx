@@ -166,7 +166,7 @@ export default function DashboardV3() {
   }, []);
 
   const firstName = useMemo(() => {
-    const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+    const name = user?.name || user?.email?.split('@')[0] || '';
     return String(name).trim().split(/\s+/)[0] || '';
   }, [user]);
 
