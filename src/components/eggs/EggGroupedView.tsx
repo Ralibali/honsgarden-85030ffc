@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Trash2, Users, Egg as EggIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { localCalendarDate, todayLocal } from '@/lib/datetime';
 
 interface EggGroupedViewProps {
   eggs: any[];
@@ -27,10 +28,11 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T12:00:00');
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const todayStr = todayLocal();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = localCalendarDate(yesterday, timezone);
 
     if (dateStr === todayStr) return 'Idag';
     if (dateStr === yesterdayStr) return 'Igår';
@@ -43,7 +45,6 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
         const totalForDay = entries.reduce((s: number, e: any) => s + (e.count || 0), 0);
         return (
           <div key={date}>
-            {/* Date header */}
             <div className="flex items-center justify-between px-4 sm:px-6 py-2.5 bg-muted/30">
               <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
                 {formatDate(date)}
@@ -53,7 +54,6 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
                 {totalForDay} 🥚
               </span>
             </div>
-            {/* Entries for that date */}
             <div className="divide-y divide-border/50">
               {entries.map((entry: any) => {
                 const entryId = entry._id || entry.id;
