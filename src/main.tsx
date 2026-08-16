@@ -21,6 +21,7 @@ import "./honsgarden-atmosphere-v6.css";
 import "./honsgarden-today-v7.css";
 import "./honsgarden-today-v8.css";
 import "./honsgarden-egg-v8.css";
+import "./honsgarden-flock-v9.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
