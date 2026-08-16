@@ -2,7 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Minus, Egg, Loader2, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { hapticTap, hapticSuccess } from '@/lib/haptics';
@@ -18,7 +17,6 @@ interface Props {
 
 export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
 
@@ -74,13 +72,9 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
             <p className="egg-counter-v3__eyebrow">Dagens ägg</p>
             <p className="egg-counter-v3__hint">Tryck när du hämtar ett ägg</p>
           </div>
-          <button
-            type="button"
-            className="egg-counter-v3__details"
-            onClick={() => navigate('/app/eggs')}
-          >
+          <a href="/app/eggs" className="egg-counter-v3__details">
             Historik <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+          </a>
         </div>
 
         <div className="egg-counter-v3__controls">
