@@ -1,7 +1,6 @@
 import React from 'react';
-import { Calendar, Egg as EggIcon, Trash2, CloudOff } from 'lucide-react';
+import { CloudOff, Egg as EggIcon, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 
 interface EggListViewProps {
   eggs: any[];
@@ -11,56 +10,60 @@ interface EggListViewProps {
   onDelete: (id: string) => void;
 }
 
+function friendlyDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
+  return new Intl.DateTimeFormat('sv-SE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(date);
+}
+
 export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, onDelete }: EggListViewProps) {
   if (eggs.length === 0) {
     return <div className="p-8 text-center text-muted-foreground text-sm">Inga ägg registrerade ännu</div>;
   }
 
   return (
-    <div className="divide-y divide-border">
+    <div className="eggbook-list divide-y divide-border">
       {eggs.slice(0, 30).map((entry: any) => {
         const entryId = entry._id || entry.id;
         const henName = entry.hen_id ? henNameMap[entry.hen_id] : null;
         const flockName = entry.flock_id
           ? flockNameMap[entry.flock_id]
           : (entry.hen_id && henFlockMap[entry.hen_id] ? flockNameMap[henFlockMap[entry.hen_id]] : null);
-        return (
-          <div key={entryId} className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 hover:bg-secondary/50 transition-colors">
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                <EggIcon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                  <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <p className="text-xs sm:text-sm text-muted-foreground">{entry.date}</p>
-                  {entry.pending && (
-                    <span className="inline-flex items-center gap-1 text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded-md font-medium">
-                      <CloudOff className="h-2.5 w-2.5" /> Väntar på synk
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                  {flockName && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-md font-medium">👥 {flockName}</span>
-                  )}
-                  {henName && (
-                    <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-md font-medium">🐔 {henName}</span>
-                  )}
-                  {!flockName && !henName && (
-                    <span className="text-xs text-muted-foreground">Utan grupp</span>
-                  )}
-                </div>
-                {entry.notes && <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">{entry.notes}</p>}
-              </div>
+        const source = [henName, flockName].filter(Boolean).join(' · ');
 
+        return (
+          <div key={entryId} className="eggbook-list__row">
+            <div className="eggbook-list__mark" aria-hidden="true">
+              <EggIcon className="h-4 w-4" />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="stat-number text-lg sm:text-xl text-foreground">{entry.count}</span>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => onDelete(entryId)}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
+            <div className="eggbook-list__copy">
+              <div className="eggbook-list__date-row">
+                <p>{friendlyDate(entry.date)}</p>
+                {entry.pending && (
+                  <span className="eggbook-list__pending">
+                    <CloudOff className="h-3 w-3" /> Väntar på synk
+                  </span>
+                )}
+              </div>
+              <p className="eggbook-list__source">{source || 'Gårdens gemensamma logg'}</p>
+              {entry.notes && <p className="eggbook-list__note">“{entry.notes}”</p>}
             </div>
+            <div className="eggbook-list__count">
+              <strong>{entry.count}</strong>
+              <span>ägg</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="eggbook-list__delete h-8 w-8 p-0"
+              onClick={() => onDelete(entryId)}
+              aria-label={`Ta bort registreringen från ${friendlyDate(entry.date)}`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           </div>
         );
       })}
