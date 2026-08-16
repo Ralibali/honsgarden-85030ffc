@@ -119,63 +119,63 @@ function agdaSentence({
   }
   if (todayEggs === 0) {
     return pendingChores > 0
-      ? `Inga ägg loggade ännu idag. Du har också ${pendingChores} gårdssyssla${pendingChores === 1 ? '' : 'r'} kvar – ta det i din takt.`
-      : 'Inga ägg loggade ännu idag. Ingen stress – varje dag i hönsgården har sin egen rytm.';
+      ? `Inga ägg är loggade ännu idag. Du har också ${pendingChores} syssla${pendingChores === 1 ? '' : 'r'} kvar på gården.`
+      : 'Inga ägg är loggade ännu idag. Det kan vara en helt vanlig lugn morgon i redena.';
   }
   if (previousWeekEggs > 0 && weekEggs > previousWeekEggs) {
-    const diff = weekEggs - previousWeekEggs;
-    return `Flocken har lagt ${diff} fler ägg än under förra sjudagarsperioden. Det ser ut som en fin vecka.`;
+    return `Flocken ligger över förra veckans takt just nu. Fortsätt logga som vanligt så ser vi om trenden håller i sig.`;
   }
   if (previousWeekEggs > 0 && weekEggs < previousWeekEggs) {
-    const diff = previousWeekEggs - weekEggs;
-    return `Det är ${diff} ägg lugnare än förra perioden. Sådant svänger – håll ett öga på foder, ruggning och hur flocken verkar må.`;
+    return `Värpningen ligger lite lugnare än förra veckan. Det behöver inte betyda något – årstid, väder och ruggning spelar ofta in.`;
   }
-  return `${todayEggs} ägg är loggade idag. Fortsätt som vanligt så blir mönstren tydligare med tiden.`;
+  return `${todayEggs} ägg idag. Jag håller koll på mönstret medan du tar hand om hönsen.`;
 }
 
 export default function DashboardV3() {
   usePageTitle('Idag');
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = window.setInterval(() => setNow(new Date()), 60_000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   const { data: eggs = [] } = useQuery({
     queryKey: ['eggs'],
     queryFn: () => api.getEggs(),
-    staleTime: 60_000,
   });
   const { data: hens = [] } = useQuery({
     queryKey: ['hens'],
     queryFn: () => api.getHens(),
-    staleTime: 60_000,
-  });
-  const { data: feedRecords = [] } = useQuery({
-    queryKey: ['feed-records'],
-    queryFn: () => api.getFeedRecords(),
-    staleTime: 60_000,
   });
   const { data: chores = [] } = useQuery({
     queryKey: ['daily-chores'],
     queryFn: () => api.getDailyChores(),
-    staleTime: 60_000,
+  });
+  const { data: feedRecords = [] } = useQuery({
+    queryKey: ['feed-records'],
+    queryFn: () => api.getFeedRecords(),
   });
   const { data: weather, isLoading: weatherLoading } = useQuery({
-    queryKey: ['today-local-weather-v3'],
+    queryKey: ['dashboard-local-weather'],
     queryFn: fetchLocalWeather,
-    staleTime: 30 * 60 * 1000,
-    retry: 0,
+    staleTime: 20 * 60 * 1000,
+    retry: false,
   });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const firstName = useMemo(() => {
+    const name = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+    return String(name).trim().split(/\s+/)[0] || '';
+  }, [user]);
 
   const todayKey = localCalendarDate(now);
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayKey = localCalendarDate(yesterday);
 
+  const todayRows = eggs.filter((egg) => egg.date === todayKey).map((egg) => egg.id);
   const todayEggs = eggs
     .filter((egg) => egg.date === todayKey)
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
@@ -185,34 +185,29 @@ export default function DashboardV3() {
 
   const weekStart = new Date(now);
   weekStart.setDate(weekStart.getDate() - 6);
-  weekStart.setHours(0, 0, 0, 0);
-  const previousWeekStart = new Date(weekStart);
-  previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+  const previousWeekStart = new Date(now);
+  previousWeekStart.setDate(previousWeekStart.getDate() - 13);
+  const previousWeekEnd = new Date(now);
+  previousWeekEnd.setDate(previousWeekEnd.getDate() - 7);
+
+  const weekStartKey = localCalendarDate(weekStart);
+  const previousWeekStartKey = localCalendarDate(previousWeekStart);
+  const previousWeekEndKey = localCalendarDate(previousWeekEnd);
 
   const weekEggs = eggs
-    .filter((egg) => new Date(`${egg.date}T12:00:00`) >= weekStart)
+    .filter((egg) => egg.date >= weekStartKey && egg.date <= todayKey)
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
   const previousWeekEggs = eggs
-    .filter((egg) => {
-      const date = new Date(`${egg.date}T12:00:00`);
-      return date >= previousWeekStart && date < weekStart;
-    })
+    .filter((egg) => egg.date >= previousWeekStartKey && egg.date <= previousWeekEndKey)
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
+  const weekDelta = weekEggs - previousWeekEggs;
 
   const activeHens = hens.filter((hen) => hen.is_active && hen.hen_type !== 'rooster').length;
-  const pendingChores = chores.filter((chore) => !chore.completed).length;
-  const streak = useMemo(() => calculateStreak(eggs, now), [eggs, now]);
-  const showOnboarding = hens.length === 0 || eggs.length < 3;
-  const showStreakRescue = streak >= 2 && todayEggs === 0 && now.getHours() >= 16;
-
-  const todayRows = eggs
-    .filter((egg) => egg.date === todayKey)
-    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
-    .map((egg) => egg.id);
-
-  const weekDelta = weekEggs - previousWeekEggs;
+  const pendingChores = chores.filter((chore: any) => !chore.completed).length;
+  const streak = calculateStreak(eggs, now);
+  const showOnboarding = hens.length === 0 || eggs.length === 0;
+  const showStreakRescue = !showOnboarding && streak > 0 && todayEggs === 0;
   const weatherText = weatherSentence(weather);
-  const firstName = user?.name?.split(' ')[0];
   const agdaText = agdaSentence({
     activeHens,
     todayEggs,
@@ -222,7 +217,7 @@ export default function DashboardV3() {
   });
 
   return (
-    <main className="today-v3 max-w-2xl mx-auto pb-8" aria-labelledby="today-heading">
+    <div className="today-v3 max-w-2xl mx-auto pb-8" aria-labelledby="today-heading">
       <TrialExpiryBanner />
 
       <section className="today-v3__hero hg-today-hero" aria-label="Min hönsgård idag">
@@ -255,11 +250,7 @@ export default function DashboardV3() {
 
       {showOnboarding && (
         <section className="today-v3__adaptive" aria-label="Kom igång">
-          <OnboardingChecklistCard
-            hensCount={hens.length}
-            eggsCount={eggs.length}
-            feedRecordsCount={feedRecords.length}
-          />
+          <OnboardingChecklistCard hensCount={hens.length} eggsCount={eggs.length} feedRecordsCount={feedRecords.length} />
         </section>
       )}
 
@@ -271,50 +262,29 @@ export default function DashboardV3() {
 
       <section className="today-v3__journal" aria-labelledby="farm-today-heading">
         <div className="today-v3__section-heading">
-          <div>
-            <p className="today-v3__eyebrow">Precis nu</p>
-            <h2 id="farm-today-heading">Dagens gård</h2>
-          </div>
-          <button type="button" onClick={() => navigate('/app/tasks')}>
-            Gården <ChevronRight className="h-4 w-4" />
-          </button>
+          <div><p className="today-v3__eyebrow">Precis nu</p><h2 id="farm-today-heading">Dagens gård</h2></div>
+          <button type="button" onClick={() => navigate('/app/tasks')}>Gården <ChevronRight className="h-4 w-4" /></button>
         </div>
-
         <div className="today-v3__journal-lines">
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/eggs')}>
             <span className="today-v3__line-icon"><Egg className="h-5 w-5" /></span>
-            <span className="today-v3__line-copy">
-              <strong>{todayEggs} ägg idag</strong>
-              <small>{yesterdayEggs === todayEggs ? 'Samma som igår hittills' : `${yesterdayEggs} loggades igår`}</small>
-            </span>
+            <span className="today-v3__line-copy"><strong>{todayEggs} ägg idag</strong><small>{yesterdayEggs === todayEggs ? 'Samma som igår hittills' : `${yesterdayEggs} loggades igår`}</small></span>
             <ChevronRight className="h-4 w-4" />
           </button>
-
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/hens')}>
             <span className="today-v3__line-icon"><Bird className="h-5 w-5" /></span>
-            <span className="today-v3__line-copy">
-              <strong>{activeHens} aktiva hönor</strong>
-              <small>{activeHens > 0 ? 'Flocken finns samlad på ett ställe' : 'Lägg till din första höna'}</small>
-            </span>
+            <span className="today-v3__line-copy"><strong>{activeHens} aktiva hönor</strong><small>{activeHens > 0 ? 'Flocken finns samlad på ett ställe' : 'Lägg till din första höna'}</small></span>
             <ChevronRight className="h-4 w-4" />
           </button>
-
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/tasks')}>
             <span className="today-v3__line-icon"><CalendarCheck className="h-5 w-5" /></span>
-            <span className="today-v3__line-copy">
-              <strong>{pendingChores === 0 ? 'Inga måsten just nu' : `${pendingChores} syssla${pendingChores === 1 ? '' : 'r'} kvar`}</strong>
-              <small>{pendingChores === 0 ? 'Gården ser lugn ut' : 'Bocka av när du är färdig'}</small>
-            </span>
+            <span className="today-v3__line-copy"><strong>{pendingChores === 0 ? 'Inga måsten just nu' : `${pendingChores} syssla${pendingChores === 1 ? '' : 'r'} kvar`}</strong><small>{pendingChores === 0 ? 'Gården ser lugn ut' : 'Bocka av när du är färdig'}</small></span>
             <ChevronRight className="h-4 w-4" />
           </button>
-
           {(weatherText || weatherLoading) && (
             <div className="today-v3__journal-line is-static">
               <span className="today-v3__line-icon"><ThermometerSun className="h-5 w-5" /></span>
-              <span className="today-v3__line-copy">
-                <strong>{weather ? `${weatherIcon(weather.code)} ${Math.round(weather.temperature)}° ute` : 'Kollar vädret…'}</strong>
-                <small>{weatherText ?? 'En liten stund bara'}</small>
-              </span>
+              <span className="today-v3__line-copy"><strong>{weather ? `${weatherIcon(weather.code)} ${Math.round(weather.temperature)}° ute` : 'Kollar vädret…'}</strong><small>{weatherText ?? 'En liten stund bara'}</small></span>
             </div>
           )}
         </div>
@@ -322,56 +292,28 @@ export default function DashboardV3() {
 
       <section className="today-v3__agda" aria-labelledby="agda-heading">
         <div className="today-v3__agda-mark" aria-hidden="true">A</div>
-        <div className="today-v3__agda-copy">
-          <p className="today-v3__eyebrow">Agda har kikat på gården</p>
-          <h2 id="agda-heading">“{agdaText}”</h2>
-          <button type="button" onClick={() => navigate('/app/agda')}>
-            Fråga Agda <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+        <div className="today-v3__agda-copy"><p className="today-v3__eyebrow">Agda har kikat på gården</p><h2 id="agda-heading">“{agdaText}”</h2><button type="button" onClick={() => navigate('/app/agda')}>Fråga Agda <ChevronRight className="h-4 w-4" /></button></div>
         <Sparkles className="today-v3__agda-sparkle" aria-hidden="true" />
       </section>
 
       {eggs.length > 0 && (
         <section className="today-v3__week" aria-labelledby="week-heading">
           <div className="today-v3__section-heading">
-            <div>
-              <p className="today-v3__eyebrow">Senaste sju dagarna</p>
-              <h2 id="week-heading">Flockens vecka</h2>
-            </div>
-            <button type="button" onClick={() => navigate('/app/statistics')}>
-              Insikter <ChevronRight className="h-4 w-4" />
-            </button>
+            <div><p className="today-v3__eyebrow">Senaste sju dagarna</p><h2 id="week-heading">Flockens vecka</h2></div>
+            <button type="button" onClick={() => navigate('/app/statistics')}>Insikter <ChevronRight className="h-4 w-4" /></button>
           </div>
-
           <div className="today-v3__week-story">
-            <div>
-              <strong>{weekEggs}</strong>
-              <span>ägg på sju dagar</span>
-            </div>
+            <div><strong>{weekEggs}</strong><span>ägg på sju dagar</span></div>
             <p className={weekDelta > 0 ? 'is-up' : weekDelta < 0 ? 'is-down' : ''}>
-              {previousWeekEggs === 0 ? (
-                <>Fortsätt logga så börjar vi snart kunna jämföra veckorna.</>
-              ) : weekDelta > 0 ? (
-                <><TrendingUp className="h-4 w-4" /> {weekDelta} fler än perioden innan</>
-              ) : weekDelta < 0 ? (
-                <><TrendingDown className="h-4 w-4" /> {Math.abs(weekDelta)} färre än perioden innan</>
-              ) : (
-                <>Precis samma nivå som perioden innan.</>
-              )}
+              {previousWeekEggs === 0 ? <>Fortsätt logga så börjar vi snart kunna jämföra veckorna.</> : weekDelta > 0 ? <><TrendingUp className="h-4 w-4" /> {weekDelta} fler än perioden innan</> : weekDelta < 0 ? <><TrendingDown className="h-4 w-4" /> {Math.abs(weekDelta)} färre än perioden innan</> : <>Precis samma nivå som perioden innan.</>}
             </p>
           </div>
         </section>
       )}
 
-      <section className="today-v3__race" aria-label="Veckans värptävling">
-        <HenRaceCard eggs={eggs} hens={hens} />
-      </section>
+      <section className="today-v3__race" aria-label="Veckans värptävling"><HenRaceCard eggs={eggs} hens={hens} /></section>
 
-      <footer className="today-v3__footer-note">
-        <span aria-hidden="true">🌿</span>
-        <p>Du behöver inte hålla koll på allt. Logga det som hjälper dig – Hönsgården tar hand om resten.</p>
-      </footer>
-    </main>
+      <footer className="today-v3__footer-note"><span aria-hidden="true">🌿</span><p>Du behöver inte hålla koll på allt. Logga det som hjälper dig – Hönsgården tar hand om resten.</p></footer>
+    </div>
   );
 }
