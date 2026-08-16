@@ -1,17 +1,16 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { todayLocal } from '@/lib/datetime';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Egg as EggIcon, Loader2, Trash2, Download, List, LayoutGrid } from 'lucide-react';
+import { BookOpen, Download, Egg as EggIcon, LayoutGrid, List, Plus, Sparkles } from 'lucide-react';
 import { downloadCSV, downloadPDF } from '@/lib/exportUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, type EggLog } from '@/lib/api';
-import PageHeader from '@/components/PageHeader';
 
 type EggFormInput = { date: string; count: number; hen_id?: string; flock_id?: string };
 type OfflineEggResult = { __offline: true; client_id: string } & EggFormInput;
 type CreateEggResult = EggLog | OfflineEggResult;
 type PendingEggLog = EggLog & { pending?: boolean; client_id?: string };
+
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EggForm } from '@/components/eggs/EggForm';
@@ -27,6 +26,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { enqueueEggLog } from '@/lib/offlineQueue';
 import { trackFirstEggIfNew } from '@/lib/analytics';
 
+function localDateOffset(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return todayLocal(date);
+}
+
+function formatMonthLabel(date = new Date()) {
+  const label = new Intl.DateTimeFormat('sv-SE', { month: 'long' }).format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 export default function Eggs() {
   const queryClient = useQueryClient();
@@ -69,15 +78,12 @@ export default function Eggs() {
   const handleAnimationDone = useCallback(() => {
     setShowAnimation(false);
     toast({ title: `Snyggt, ${animCount} ägg är loggade! 🥚` });
-    if (unusedFeatures.length > 0) {
-      setShowSuggestion(true);
-    }
+    if (unusedFeatures.length > 0) setShowSuggestion(true);
   }, [animCount, unusedFeatures.length]);
 
   const createMutation = useMutation({
     mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
       const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-      // Offline path: enqueue locally and bail out (still optimistic)
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         const queued = await enqueueEggLog({ ...data, client_id });
         return { __offline: true, client_id: queued.client_id, ...data };
@@ -98,7 +104,6 @@ export default function Eggs() {
     onSuccess: (result, variables) => {
       const isOffline = '__offline' in result;
       if (isOffline) {
-        // Optimistic insert with pending flag
         queryClient.setQueryData<PendingEggLog[]>(['eggs'], (old) => {
           const next = [...(old ?? [])];
           next.unshift({
@@ -117,13 +122,12 @@ export default function Eggs() {
         queryClient.invalidateQueries({ queryKey: ['eggs'] });
         queryClient.invalidateQueries({ queryKey: ['streak'] });
       }
+
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
       if (!isOffline) trackFirstEggIfNew('eggs_page');
 
-
-      // Personal record check (delight bump)
       const updatedEggs = [...eggs, { date: variables.date, count: variables.count }];
       const records = checkPersonalRecords(user?.id, updatedEggs, variables.date);
       if (records.length > 0) {
@@ -140,9 +144,12 @@ export default function Eggs() {
         }, 600);
       }
     },
-    onError: (err) => toast({ title: 'Något gick fel', description: err instanceof Error ? err.message : 'Vi kunde inte spara äggen just nu.', variant: 'destructive' }),
+    onError: (err) => toast({
+      title: 'Något gick fel',
+      description: err instanceof Error ? err.message : 'Vi kunde inte spara äggen just nu.',
+      variant: 'destructive',
+    }),
   });
-
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteEggRecord(id),
@@ -171,128 +178,180 @@ export default function Eggs() {
     return map;
   }, [flocks]);
 
-  const resolveFlockName = (e: Pick<EggLog, 'flock_id' | 'hen_id'>) => {
-    if (e.flock_id) return flockNameMap[e.flock_id] || '';
-    if (e.hen_id && henFlockMap[e.hen_id]) return flockNameMap[henFlockMap[e.hen_id]] || '';
+  const resolveFlockName = (egg: Pick<EggLog, 'flock_id' | 'hen_id'>) => {
+    if (egg.flock_id) return flockNameMap[egg.flock_id] || '';
+    if (egg.hen_id && henFlockMap[egg.hen_id]) return flockNameMap[henFlockMap[egg.hen_id]] || '';
     return '';
   };
 
   const todayStr = todayLocal();
-  const todayEggs = eggs.filter((e) => e.date === todayStr).reduce((s, e) => s + (e.count || 0), 0);
-  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
-  const weekEggs = eggs.filter((e) => new Date(e.date) >= weekAgo).reduce((s, e) => s + (e.count || 0), 0);
-  const monthEggs = eggs.filter((e) => new Date(e.date).getMonth() === new Date().getMonth()).reduce((s, e) => s + (e.count || 0), 0);
+  const yesterdayStr = localDateOffset(-1);
+  const sevenDaysAgo = localDateOffset(-6);
+  const fourteenDaysAgo = localDateOffset(-13);
+  const currentMonth = todayStr.slice(0, 7);
+
+  const todayEggs = eggs.filter((egg) => egg.date === todayStr).reduce((sum, egg) => sum + (egg.count || 0), 0);
+  const yesterdayEggs = eggs.filter((egg) => egg.date === yesterdayStr).reduce((sum, egg) => sum + (egg.count || 0), 0);
+  const weekEggs = eggs
+    .filter((egg) => egg.date >= sevenDaysAgo && egg.date <= todayStr)
+    .reduce((sum, egg) => sum + (egg.count || 0), 0);
+  const previousWeekEggs = eggs
+    .filter((egg) => egg.date >= fourteenDaysAgo && egg.date < sevenDaysAgo)
+    .reduce((sum, egg) => sum + (egg.count || 0), 0);
+  const monthEggs = eggs
+    .filter((egg) => egg.date.startsWith(currentMonth))
+    .reduce((sum, egg) => sum + (egg.count || 0), 0);
+
+  const weekDelta = weekEggs - previousWeekEggs;
+  const dailyAverage = activeHens.length > 0 ? weekEggs / 7 : 0;
+  const todayComparison = todayEggs === yesterdayEggs
+    ? 'Samma antal som igår hittills.'
+    : todayEggs > yesterdayEggs
+      ? `${todayEggs - yesterdayEggs} fler än igår hittills.`
+      : `${yesterdayEggs - todayEggs} färre än igår hittills.`;
+
+  const weekStory = previousWeekEggs === 0
+    ? `Du har loggat ${weekEggs} ägg de senaste sju dagarna.`
+    : weekDelta === 0
+      ? `Flocken ligger precis i samma takt som förra sjudagarsperioden: ${weekEggs} ägg.`
+      : weekDelta > 0
+        ? `Flocken har lagt ${weekDelta} fler ägg än under förra sjudagarsperioden.`
+        : `Det har blivit ${Math.abs(weekDelta)} färre ägg än under förra sjudagarsperioden.`;
+
+  const exportRows = () => eggs.map((egg) => ({
+    Datum: egg.date,
+    Antal: egg.count,
+    Flock: resolveFlockName(egg),
+    Höna: egg.hen_id ? henNameMap[egg.hen_id] || '' : '',
+    Anteckningar: egg.notes || '',
+  }));
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-4 animate-fade-in">
-        <Skeleton className="h-10 w-48" />
-        <div className="grid grid-cols-3 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20" />)}</div>
-        <Skeleton className="h-60" />
+      <div className="eggbook-v10 max-w-4xl mx-auto space-y-4 animate-fade-in">
+        <Skeleton className="h-28 rounded-[28px]" />
+        <Skeleton className="h-40 rounded-[28px]" />
+        <Skeleton className="h-72 rounded-[28px]" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-fade-in">
-      <PageHeader
-        title="Äggloggning"
-        emoji="🥚"
-        subtitle="Registrera dagens ägg snabbt och följ utvecklingen över tid"
-        actions={(
-          <div className="flex gap-2">
-            {eggs.length > 0 && (
-              <>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-                  const rows = eggs.map((e) => ({
-                    Datum: e.date,
-                    Antal: e.count,
-                    Flock: resolveFlockName(e),
-                    Höna: e.hen_id ? henNameMap[e.hen_id] || '' : '',
-                    Anteckningar: e.notes || '',
-                  }));
-                  downloadCSV(rows, `agglogg-${todayStr}`);
-                }}>
-                  <Download className="h-3.5 w-3.5" /> CSV
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => {
-                  downloadPDF(
-                    'Ägglogg',
-                    ['Datum', 'Antal', 'Flock', 'Höna', 'Anteckningar'],
-                    eggs.map((e) => [e.date, String(e.count), resolveFlockName(e), e.hen_id ? henNameMap[e.hen_id] || '' : '', e.notes || '']),
-                    'agglogg'
-                  );
-                }}>
-                  <Download className="h-3.5 w-3.5" /> PDF
-                </Button>
-              </>
-            )}
-            <Button onClick={() => setShowForm(!showForm)} className="gap-2 active:scale-95 transition-transform">
-              <Plus className="h-4 w-4" />
-              Logga ägg
-            </Button>
+    <div className="eggbook-v10 max-w-4xl mx-auto animate-fade-in">
+      <header className="eggbook-v10__header">
+        <div className="eggbook-v10__heading">
+          <span className="eggbook-v10__mark" aria-hidden="true">🥚</span>
+          <div>
+            <p className="eggbook-v10__eyebrow">Gårdens äggbok</p>
+            <h1>Ägg</h1>
+            <p>En enkel dagbok över skörden från redena.</p>
           </div>
-        )}
-      />
+        </div>
+        <Button onClick={() => setShowForm(!showForm)} className="eggbook-v10__log-button gap-2 active:scale-95 transition-transform">
+          <Plus className="h-4 w-4" />
+          {showForm ? 'Stäng' : 'Logga ägg'}
+        </Button>
+      </header>
 
       {showForm && (
-        <EggForm
-          activeHens={activeHens}
-          flocks={flocks}
-          isPending={createMutation.isPending}
-          onSubmit={(data) => createMutation.mutate(data)}
-          onCancel={() => setShowForm(false)}
-        />
+        <div className="eggbook-v10__composer">
+          <EggForm
+            activeHens={activeHens}
+            flocks={flocks}
+            isPending={createMutation.isPending}
+            onSubmit={(data) => createMutation.mutate(data)}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
       )}
 
       {eggs.length === 0 && !showForm ? (
-        <EmptyState
-          icon={EggIcon}
-          title="Inga ägg loggade ännu"
-          description="Börja med dagens ägg så kan Hönsgården visa veckosammanfattning, trender och statistik över tid. Det tar bara några sekunder."
-          actionLabel="Logga dagens ägg"
-          onAction={() => setShowForm(true)}
-          secondaryLabel="Lägg till höna först"
-          onSecondaryAction={() => window.location.assign('/app/hens')}
-        />
-      ) : (
+        <div className="eggbook-v10__empty">
+          <EmptyState
+            icon={EggIcon}
+            title="Första sidan är tom ännu"
+            description="Logga dagens skörd så börjar äggboken fyllas. Efter några dagar kan Hönsgården hjälpa dig se flockens egen rytm."
+            actionLabel="Logga dagens ägg"
+            onAction={() => setShowForm(true)}
+            secondaryLabel="Lägg till höna först"
+            onSecondaryAction={() => window.location.assign('/app/hens')}
+          />
+        </div>
+      ) : eggs.length > 0 ? (
         <>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            {[
-              { label: 'Idag', value: todayEggs },
-              { label: 'Denna vecka', value: weekEggs },
-              { label: 'Denna månad', value: monthEggs },
-            ].map((s, i) => (
-              <Card key={s.label} className="bg-card border-border shadow-sm animate-fade-in hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: `${i * 70}ms`, animationFillMode: 'backwards' }}>
-                <CardContent className="p-3 sm:p-4 text-center">
-                  <p className="stat-number text-xl sm:text-2xl text-foreground">{s.value}</p>
-                  <p className="data-label mt-1 text-[10px] sm:text-xs">{s.label}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <section className="eggbook-v10__today" aria-labelledby="eggbook-today-heading">
+            <div className="eggbook-v10__today-copy">
+              <p className="eggbook-v10__eyebrow">Dagens skörd</p>
+              <div className="eggbook-v10__today-number">
+                <strong>{todayEggs}</strong>
+                <span>ägg</span>
+              </div>
+              <p id="eggbook-today-heading">{todayComparison}</p>
+            </div>
+            <button type="button" className="eggbook-v10__today-action" onClick={() => setShowForm(true)}>
+              <Plus className="h-5 w-5" />
+              Lägg till
+            </button>
+          </section>
 
-          <Card className="bg-card border-border shadow-sm">
-            <CardHeader className="px-4 sm:px-6 flex flex-row items-center justify-between">
-              <CardTitle className="text-base sm:text-lg font-serif">Senaste registreringar</CardTitle>
-              <div className="flex gap-1">
+          <section className="eggbook-v10__rhythm" aria-labelledby="eggbook-rhythm-heading">
+            <div className="eggbook-v10__rhythm-intro">
+              <span className="eggbook-v10__spark" aria-hidden="true"><Sparkles className="h-4 w-4" /></span>
+              <div>
+                <p className="eggbook-v10__eyebrow">Veckans rytm</p>
+                <h2 id="eggbook-rhythm-heading">{weekStory}</h2>
+                {activeHens.length > 0 && (
+                  <p>Det motsvarar ungefär {dailyAverage.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} ägg per dag från {activeHens.length} aktiva hönor.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="eggbook-v10__numbers" aria-label="Sammanfattning">
+              <div>
+                <strong>{todayEggs}</strong>
+                <span>idag</span>
+              </div>
+              <div>
+                <strong>{weekEggs}</strong>
+                <span>7 dagar</span>
+              </div>
+              <div>
+                <strong>{monthEggs}</strong>
+                <span>{formatMonthLabel()}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="eggbook-v10__history" aria-labelledby="eggbook-history-heading">
+            <div className="eggbook-v10__history-header">
+              <div className="eggbook-v10__history-title">
+                <BookOpen className="h-5 w-5" aria-hidden="true" />
+                <div>
+                  <p className="eggbook-v10__eyebrow">Äggboken</p>
+                  <h2 id="eggbook-history-heading">Senaste sidorna</h2>
+                </div>
+              </div>
+              <div className="eggbook-v10__view-switch" aria-label="Välj visning">
                 <button
                   onClick={() => setViewMode('grouped')}
-                  className={`p-1.5 rounded-md transition-colors ${viewMode === 'grouped' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={viewMode === 'grouped' ? 'is-active' : ''}
                   aria-label="Grupperad vy"
+                  aria-pressed={viewMode === 'grouped'}
                 >
                   <LayoutGrid className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                  className={viewMode === 'list' ? 'is-active' : ''}
                   aria-label="Listvy"
+                  aria-pressed={viewMode === 'list'}
                 >
                   <List className="h-4 w-4" />
                 </button>
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
+            </div>
+
+            <div className="eggbook-v10__entries">
               {viewMode === 'grouped' ? (
                 <EggGroupedView
                   eggs={eggs}
@@ -310,14 +369,32 @@ export default function Eggs() {
                   onDelete={(id) => deleteMutation.mutate(id)}
                 />
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </section>
+
+          <details className="eggbook-v10__export">
+            <summary><Download className="h-4 w-4" /> Spara eller exportera äggboken</summary>
+            <div>
+              <Button variant="outline" size="sm" onClick={() => downloadCSV(exportRows(), `agglogg-${todayStr}`)}>
+                CSV
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                downloadPDF(
+                  'Ägglogg',
+                  ['Datum', 'Antal', 'Flock', 'Höna', 'Anteckningar'],
+                  eggs.map((egg) => [egg.date, String(egg.count), resolveFlockName(egg), egg.hen_id ? henNameMap[egg.hen_id] || '' : '', egg.notes || '']),
+                  'agglogg',
+                );
+              }}>
+                PDF
+              </Button>
+            </div>
+          </details>
         </>
-      )}
+      ) : null}
 
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
       <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
-
       <FeatureSuggestionToast
         show={showSuggestion}
         unusedFeatures={unusedFeatures}
