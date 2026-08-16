@@ -1,7 +1,6 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import "./honsgarden-home-v3.css";
 import "./mobile.css";
 import "./honsgarden-app-v2.css";
 import "./honsgarden-core-v3.css";
@@ -21,6 +20,7 @@ import "./honsgarden-today-v8.css";
 import "./honsgarden-egg-v8.css";
 import "./honsgarden-flock-v9.css";
 import "./honsgarden-eggbook-v10.css";
+import "./honsgarden-home-v3.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";

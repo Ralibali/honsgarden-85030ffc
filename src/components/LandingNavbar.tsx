@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Bird, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLandingAtmosphere } from '@/hooks/useLandingAtmosphere';
-import SeasonalLandingHero from './SeasonalLandingHero';
 
 const navLinks = [
   { label: 'Funktioner', href: '#funktioner' },
@@ -114,8 +113,6 @@ export default function LandingNavbar() {
           )}
         </AnimatePresence>
       </motion.nav>
-
-      <SeasonalLandingHero />
     </>
   );
 }
