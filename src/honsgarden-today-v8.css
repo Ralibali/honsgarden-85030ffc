@@ -1,0 +1,600 @@
+/* Hönsgården v8 — Today is a place, not a dashboard. */
+
+.today-v3 {
+  --today-ink: #173728;
+  --today-muted: #786f5f;
+  --today-paper: #fcf8ef;
+  --today-paper-deep: #f3ecdd;
+  --today-moss: #315d3f;
+  --today-straw: #d7c486;
+  --today-line: rgba(72, 75, 61, .13);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  color: var(--today-ink);
+}
+
+.today-v3 > * {
+  min-width: 0;
+}
+
+.today-v3 > [class*='trial'],
+.today-v3 > [class*='Trial'] {
+  margin-bottom: -6px;
+}
+
+/* --------------------------------------------------------------------------
+   OPENING SCENE
+   -------------------------------------------------------------------------- */
+.today-v3 .today-v3__hero.hg-today-hero {
+  position: relative !important;
+  min-height: clamp(270px, 42vw, 330px) !important;
+  margin: 0 !important;
+  padding: 28px !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  border: 0 !important;
+  border-radius: 30px !important;
+  background:
+    linear-gradient(180deg, rgba(5, 16, 11, .03) 0%, rgba(5, 16, 11, .08) 42%, rgba(4, 15, 10, .76) 100%),
+    url('/hero-farm-v2.webp') 58% 54% / cover no-repeat !important;
+  box-shadow: 0 20px 54px rgba(30, 43, 32, .12) !important;
+  transform: translateZ(0);
+}
+
+.today-v3__hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 245, 220, .04), transparent 54%);
+}
+
+.today-v3__hero-copy {
+  position: relative;
+  z-index: 5;
+  max-width: 560px;
+}
+
+.today-v3 .today-v3__date {
+  margin: 0 0 7px !important;
+  color: rgba(255, 250, 238, .86) !important;
+  -webkit-text-fill-color: rgba(255, 250, 238, .86) !important;
+  font-size: .7rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .105em !important;
+  text-transform: uppercase;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .42) !important;
+}
+
+.today-v3 .today-v3__hero h1 {
+  margin: 0 !important;
+  color: #fffaf0 !important;
+  -webkit-text-fill-color: #fffaf0 !important;
+  background: none !important;
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-size: clamp(2.2rem, 7vw, 3.15rem) !important;
+  line-height: .99 !important;
+  letter-spacing: -.042em !important;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, .48) !important;
+}
+
+.today-v3__hero-status {
+  margin: 11px 0 0;
+  color: rgba(255, 250, 240, .82);
+  font-size: .83rem;
+  font-weight: 520;
+  letter-spacing: -.01em;
+  text-shadow: 0 2px 12px rgba(0,0,0,.42);
+}
+
+.today-v3__weather {
+  position: absolute;
+  z-index: 7;
+  top: 18px;
+  right: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 7px 11px;
+  color: #fffaf0;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  background: rgba(7, 21, 15, .26);
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.today-v3__weather strong {
+  font-size: .82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Night: dense, living sky inspired by a real dark-sky campsite, not confetti. */
+.today-v3__hero-stars,
+.today-v3__hero-meteor {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+}
+
+html[data-local-daypart='night'] .today-v3 .today-v3__hero.hg-today-hero {
+  background:
+    radial-gradient(ellipse at 48% 17%, rgba(22, 143, 153, .24), transparent 42%),
+    linear-gradient(180deg, rgba(1, 6, 14, .50) 0%, rgba(2, 13, 17, .38) 48%, rgba(2, 9, 8, .86) 100%),
+    url('/hero-farm-v2.webp') 58% 54% / cover no-repeat !important;
+  background-blend-mode: screen, multiply, normal !important;
+}
+
+html[data-local-daypart='night'] .today-v3__hero::before {
+  background:
+    radial-gradient(ellipse at 52% 23%, rgba(12, 130, 143, .19), transparent 41%),
+    linear-gradient(180deg, rgba(0, 4, 12, .30), transparent 56%);
+}
+
+html[data-local-daypart='evening'] .today-v3 .today-v3__hero.hg-today-hero {
+  background:
+    linear-gradient(180deg, rgba(70, 42, 21, .10), rgba(24, 23, 15, .14) 45%, rgba(4, 14, 9, .79)),
+    url('/hero-farm-v2.webp') 58% 54% / cover no-repeat !important;
+}
+
+html[data-local-daypart='night'] .today-v3__hero-stars {
+  inset: -8%;
+  z-index: 2;
+  opacity: .94;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.98) 0 1px, transparent 1.35px),
+    radial-gradient(circle, rgba(207,233,255,.88) 0 .8px, transparent 1.2px),
+    radial-gradient(circle, rgba(255,240,202,.78) 0 .65px, transparent 1.1px),
+    radial-gradient(circle, rgba(255,255,255,.56) 0 .48px, transparent .9px),
+    radial-gradient(ellipse at 48% 29%, rgba(50, 176, 181, .12), transparent 36%);
+  background-size: 47px 53px, 79px 73px, 109px 97px, 31px 37px, 100% 100%;
+  background-position: 5px 9px, 27px 3px, 61px 39px, 13px 21px, 0 0;
+  filter: drop-shadow(0 0 2px rgba(204, 234, 255, .48));
+  animation: today-stars-live 7s ease-in-out infinite alternate;
+}
+
+html[data-local-daypart='night'] .today-v3__hero-meteor {
+  z-index: 4;
+  top: 21%;
+  right: 12%;
+  width: 104px;
+  height: 1px;
+  border-radius: 999px;
+  opacity: 0;
+  transform-origin: right center;
+  transform: rotate(-30deg);
+  background: linear-gradient(90deg, transparent, rgba(190,228,255,.32), #fff);
+  box-shadow: 20px 0 12px rgba(176, 224, 255, .20);
+  animation: today-meteor 14.5s cubic-bezier(.22,.62,.31,1) infinite 3.8s;
+}
+
+/* --------------------------------------------------------------------------
+   THE DAILY ACTION — egg logging is the heart of the home screen
+   -------------------------------------------------------------------------- */
+.today-v3__egg {
+  position: relative;
+  z-index: 2;
+}
+
+.today-v3__egg > * {
+  border: 0 !important;
+  border-radius: 26px !important;
+  background: linear-gradient(135deg, #fffdf7 0%, #f4edde 100%) !important;
+  box-shadow: 0 14px 40px rgba(57, 59, 45, .075) !important;
+}
+
+.today-v3__egg [class*='border'] {
+  border-color: rgba(74, 77, 62, .14) !important;
+}
+
+/* --------------------------------------------------------------------------
+   JOURNAL SURFACE — one coherent sheet, no KPI tile grid
+   -------------------------------------------------------------------------- */
+.today-v3__journal,
+.today-v3__week {
+  padding: 2px 2px 0;
+}
+
+.today-v3__section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.today-v3__eyebrow {
+  margin: 0 0 3px;
+  color: #897a5f;
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.today-v3__section-heading h2,
+.today-v3__agda h2 {
+  margin: 0;
+  color: var(--today-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: -.025em;
+}
+
+.today-v3__section-heading h2 {
+  font-size: 1.55rem;
+}
+
+.today-v3__section-heading > button,
+.today-v3__agda-copy > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 2px 7px 10px;
+  color: #58705e;
+  font-size: .77rem;
+  font-weight: 700;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+}
+
+.today-v3__section-heading > button:active,
+.today-v3__agda-copy > button:active {
+  transform: scale(.97);
+}
+
+.today-v3__journal-lines {
+  overflow: hidden;
+  border-top: 1px solid var(--today-line);
+  border-bottom: 1px solid var(--today-line);
+}
+
+.today-v3__journal-line {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 3px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--today-line);
+  transition: background-color .16s ease, transform .16s ease;
+}
+
+.today-v3__journal-line:last-child {
+  border-bottom: 0;
+}
+
+.today-v3__journal-line:not(.is-static):active {
+  transform: scale(.992);
+  background: rgba(78, 99, 70, .035);
+}
+
+.today-v3__line-icon {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: #42694d;
+  border-radius: 50%;
+  background: rgba(71, 105, 77, .085);
+}
+
+.today-v3__line-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.today-v3__line-copy strong {
+  color: #263e30;
+  font-size: .94rem;
+  font-weight: 720;
+  letter-spacing: -.015em;
+}
+
+.today-v3__line-copy small {
+  overflow: hidden;
+  color: #837b6d;
+  font-size: .75rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-v3__journal-line > svg {
+  flex: 0 0 auto;
+  color: rgba(74, 87, 70, .42);
+}
+
+/* --------------------------------------------------------------------------
+   AGDA — a note from the farm companion, not an AI feature card
+   -------------------------------------------------------------------------- */
+.today-v3__agda {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  overflow: hidden;
+  padding: 22px 20px 20px;
+  border: 1px solid rgba(142, 118, 58, .12);
+  border-radius: 28px 12px 28px 28px;
+  background:
+    radial-gradient(circle at 92% 10%, rgba(255,255,255,.45), transparent 30%),
+    linear-gradient(135deg, #f2ead4 0%, #eee3c7 100%);
+  box-shadow: 0 13px 36px rgba(72, 64, 43, .065);
+}
+
+.today-v3__agda-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #f8f0da;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border-radius: 50% 47% 52% 48%;
+  background: #315d3f;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+.today-v3__agda-copy {
+  min-width: 0;
+}
+
+.today-v3__agda h2 {
+  max-width: 520px;
+  font-size: clamp(1.15rem, 4vw, 1.38rem);
+  line-height: 1.34;
+  font-weight: 500;
+}
+
+.today-v3__agda-copy > button {
+  margin-top: 9px;
+  padding-left: 0;
+  color: #315d3f;
+}
+
+.today-v3__agda-sparkle {
+  position: absolute;
+  top: 17px;
+  right: 17px;
+  width: 18px;
+  height: 18px;
+  color: rgba(126, 101, 45, .35);
+}
+
+/* --------------------------------------------------------------------------
+   WEEK STORY — interpretation first
+   -------------------------------------------------------------------------- */
+.today-v3__week-story {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 17px 0 18px;
+  border-top: 1px solid var(--today-line);
+  border-bottom: 1px solid var(--today-line);
+}
+
+.today-v3__week-story > div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.today-v3__week-story strong {
+  color: #264332;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.7rem, 9vw, 4rem);
+  line-height: .8;
+  letter-spacing: -.055em;
+}
+
+.today-v3__week-story span {
+  max-width: 85px;
+  color: #7c7466;
+  font-size: .73rem;
+  line-height: 1.25;
+}
+
+.today-v3__week-story p {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  max-width: 250px;
+  margin: 0;
+  color: #746d61;
+  font-size: .76rem;
+  line-height: 1.4;
+  text-align: right;
+}
+
+.today-v3__week-story p.is-up { color: #3c6a48; }
+.today-v3__week-story p.is-down { color: #8a6549; }
+
+/* Värptävlingen is a delightful extra, not the first screen. */
+.today-v3__race > section {
+  border-color: rgba(77, 83, 67, .11) !important;
+  border-radius: 24px !important;
+  background: rgba(252, 249, 241, .72) !important;
+  box-shadow: none !important;
+}
+
+.today-v3__adaptive > * {
+  border-radius: 24px !important;
+}
+
+.today-v3__footer-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 3px 7px 26px;
+  color: #847b6d;
+}
+
+.today-v3__footer-note p {
+  max-width: 430px;
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: .82rem;
+  line-height: 1.55;
+}
+
+.dark .today-v3 {
+  --today-ink: #eee7d8;
+  --today-muted: #aba28f;
+  --today-line: rgba(235, 226, 208, .10);
+}
+
+.dark .today-v3__section-heading h2,
+.dark .today-v3__agda h2,
+.dark .today-v3__line-copy strong,
+.dark .today-v3__week-story strong {
+  color: #eee7d8;
+}
+
+.dark .today-v3__line-copy small,
+.dark .today-v3__week-story span,
+.dark .today-v3__week-story p,
+.dark .today-v3__footer-note {
+  color: #aaa18f;
+}
+
+.dark .today-v3__line-icon {
+  color: #9db78d;
+  background: rgba(151, 181, 134, .10);
+}
+
+.dark .today-v3__agda {
+  border-color: rgba(214, 194, 139, .09);
+  background: linear-gradient(135deg, #293026 0%, #25291f 100%);
+}
+
+/* --------------------------------------------------------------------------
+   PHONE — one-thumb rhythm, generous but not giant
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .today-v3 {
+    gap: 19px;
+    padding-bottom: calc(6.6rem + env(safe-area-inset-bottom));
+  }
+
+  .today-v3 .today-v3__hero.hg-today-hero {
+    min-height: clamp(238px, 31svh, 278px) !important;
+    padding: 21px 19px 20px !important;
+    border-radius: 24px !important;
+    background-position: 60% 54% !important;
+  }
+
+  html[data-local-daypart='night'] .today-v3 .today-v3__hero.hg-today-hero,
+  html[data-local-daypart='evening'] .today-v3 .today-v3__hero.hg-today-hero {
+    background-position: 60% 54% !important;
+  }
+
+  .today-v3 .today-v3__hero h1 {
+    max-width: 94%;
+    font-size: clamp(2rem, 9vw, 2.55rem) !important;
+  }
+
+  .today-v3__hero-status {
+    max-width: 82%;
+    margin-top: 9px;
+    font-size: .76rem;
+  }
+
+  .today-v3__weather {
+    top: 13px;
+    right: 13px;
+    min-height: 34px;
+    padding: 5px 9px;
+  }
+
+  html[data-local-daypart='night'] .today-v3__hero-stars {
+    background-size: 39px 45px, 67px 61px, 91px 83px, 27px 31px, 100% 100%;
+  }
+
+  .today-v3__section-heading {
+    margin-bottom: 8px;
+  }
+
+  .today-v3__section-heading h2 {
+    font-size: 1.38rem;
+  }
+
+  .today-v3__journal-line {
+    min-height: 68px;
+    padding: 11px 2px;
+  }
+
+  .today-v3__agda {
+    padding: 19px 17px 17px;
+    border-radius: 24px 10px 24px 24px;
+  }
+
+  .today-v3__agda-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .today-v3__week-story {
+    align-items: center;
+  }
+
+  .today-v3__week-story p {
+    max-width: 47%;
+    font-size: .71rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .today-v3 .today-v3__hero.hg-today-hero {
+    min-height: 226px !important;
+    background-position: 63% 54% !important;
+  }
+
+  .today-v3 .today-v3__hero h1 {
+    font-size: clamp(1.9rem, 9.5vw, 2.32rem) !important;
+  }
+
+  .today-v3__week-story strong {
+    font-size: 2.55rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .today-v3__hero-stars,
+  .today-v3__hero-meteor,
+  .today-v3__journal-line {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes today-stars-live {
+  0% { opacity: .68; transform: translate3d(0, 0, 0) scale(1); filter: brightness(.92); }
+  42% { opacity: .96; }
+  100% { opacity: .80; transform: translate3d(-.25%, .12%, 0) scale(1.006); filter: brightness(1.15); }
+}
+
+@keyframes today-meteor {
+  0%, 78% { opacity: 0; transform: rotate(-30deg) translate3d(0, 0, 0) scaleX(.35); }
+  80% { opacity: .96; }
+  84% { opacity: 0; transform: rotate(-30deg) translate3d(-150px, 102px, 0) scaleX(1); }
+  100% { opacity: 0; }
+}
