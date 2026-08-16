@@ -26,7 +26,7 @@ import Index from "./pages/IndexUpdated";
 import Login from "./pages/Login";
 
 const AppLayout = lazyWithRetry(() => import("./components/AppLayout"));
-const Dashboard = lazyWithRetry(() => import("./pages/DashboardV2"));
+const Dashboard = lazyWithRetry(() => import("./pages/DashboardV3"));
 const Eggs = lazyWithRetry(() => import("./pages/Eggs"));
 const Hens = lazyWithRetry(() => import("./pages/Hens"));
 const Finance = lazyWithRetry(() => import("./pages/Finance"));
@@ -293,4 +293,3 @@ const App = () => (
 );
 
 export default App;
-
