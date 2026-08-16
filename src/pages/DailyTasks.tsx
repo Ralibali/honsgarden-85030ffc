@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { todayLocal } from '@/lib/datetime';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,8 +11,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PremiumGate } from '@/components/PremiumGate';
-import { Badge } from '@/components/ui/badge';
-import PageHeader from '@/components/PageHeader';
 
 const SUGGESTED_CHORES = [
   { title: 'Samla ägg', description: 'Kolla boet och plocka dagens ägg', emoji: '🥚' },
@@ -33,19 +30,28 @@ const RECURRENCE_LABELS: Record<string, string> = {
   monthly: 'Månadsvis',
 };
 
+function datePart(dateStr: string) {
+  return dateStr.split('T')[0];
+}
+
 function isDueToday(dateStr: string) {
-  const today = todayLocal();
-  return dateStr.split('T')[0] === today;
+  return datePart(dateStr) === todayLocal();
 }
 
 function isPastDue(dateStr: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return new Date(dateStr) < today;
+  return datePart(dateStr) < todayLocal();
 }
 
 function formatDueDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' });
+  const d = new Date(`${datePart(dateStr)}T12:00:00`);
+  return d.toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function sortByDue(a: any, b: any) {
+  if (!a.next_due_at && !b.next_due_at) return 0;
+  if (!a.next_due_at) return 1;
+  if (!b.next_due_at) return -1;
+  return datePart(a.next_due_at).localeCompare(datePart(b.next_due_at));
 }
 
 export default function DailyTasks() {
@@ -53,6 +59,7 @@ export default function DailyTasks() {
   const [newTitle, setNewTitle] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
   const [newRecurrence, setNewRecurrence] = useState('none');
   const [newDueDate, setNewDueDate] = useState('');
   const [newReminder, setNewReminder] = useState(false);
@@ -79,7 +86,7 @@ export default function DailyTasks() {
       api.createChore(title, description, options),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
-      toast({ title: '✅ Uppgift tillagd!' });
+      toast({ title: 'Sysslan är tillagd 🌿' });
       setNewTitle('');
       setNewRecurrence('none');
       setNewDueDate('');
@@ -90,11 +97,10 @@ export default function DailyTasks() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ choreId, updates }: { choreId: string; updates: any }) =>
-      api.updateChore(choreId, updates),
+    mutationFn: ({ choreId, updates }: { choreId: string; updates: any }) => api.updateChore(choreId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
-      toast({ title: '✅ Uppgift uppdaterad' });
+      toast({ title: 'Sysslan är uppdaterad' });
       setEditingChore(null);
     },
   });
@@ -103,25 +109,22 @@ export default function DailyTasks() {
     mutationFn: (choreId: string) => api.deleteChore(choreId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
-      toast({ title: '🗑️ Uppgift borttagen' });
+      toast({ title: 'Sysslan är borttagen' });
     },
   });
 
   const toggleChore = (chore: any) => {
-    if (chore.completed) {
-      uncompleteMutation.mutate(chore.id);
-    } else {
-      completeMutation.mutate(chore.id);
-    }
+    if (chore.completed) uncompleteMutation.mutate(chore.id);
+    else completeMutation.mutate(chore.id);
   };
 
-  const addSuggested = (s: typeof SUGGESTED_CHORES[0]) => {
-    const alreadyExists = chores.some((c: any) => c.title.toLowerCase() === s.title.toLowerCase());
+  const addSuggested = (suggestion: (typeof SUGGESTED_CHORES)[number]) => {
+    const alreadyExists = chores.some((c: any) => c.title.toLowerCase() === suggestion.title.toLowerCase());
     if (alreadyExists) {
-      toast({ title: 'Uppgiften finns redan' });
+      toast({ title: 'Den sysslan finns redan' });
       return;
     }
-    createMutation.mutate({ title: s.title, description: s.description });
+    createMutation.mutate({ title: suggestion.title, description: suggestion.description });
   };
 
   const handleCreate = () => {
@@ -130,307 +133,230 @@ export default function DailyTasks() {
       title: newTitle.trim(),
       options: {
         recurrence: newRecurrence,
-        next_due_at: newDueDate ? new Date(newDueDate).toISOString() : undefined,
+        next_due_at: newDueDate ? new Date(`${newDueDate}T12:00:00`).toISOString() : undefined,
         reminder_enabled: newReminder,
         reminder_hours_before: Number(newReminderHours),
       },
     });
   };
 
-  const completedCount = chores.filter((c: any) => c.completed).length;
+  const { nowChores, upcomingChores, completedChores, overdueCount } = useMemo(() => {
+    const open = chores.filter((c: any) => !c.completed);
+    const now = open
+      .filter((c: any) => !c.next_due_at || isDueToday(c.next_due_at) || isPastDue(c.next_due_at))
+      .sort(sortByDue);
+    const upcoming = open
+      .filter((c: any) => c.next_due_at && !isDueToday(c.next_due_at) && !isPastDue(c.next_due_at))
+      .sort(sortByDue);
+    const done = chores.filter((c: any) => c.completed);
+    const overdue = open.filter((c: any) => c.next_due_at && isPastDue(c.next_due_at)).length;
+    return { nowChores: now, upcomingChores: upcoming, completedChores: done, overdueCount: overdue };
+  }, [chores]);
+
+  const completedCount = completedChores.length;
   const progress = chores.length > 0 ? Math.round((completedCount / chores.length) * 100) : 0;
+  const remainingCount = chores.length - completedCount;
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto space-y-4">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-40" />
+      <div className="yard-v4 max-w-3xl mx-auto">
+        <Skeleton className="h-24 rounded-3xl" />
+        <Skeleton className="h-16 rounded-2xl mt-4" />
+        <Skeleton className="h-52 rounded-3xl mt-4" />
       </div>
     );
   }
 
   return (
     <motion.div
-      className="max-w-5xl mx-auto space-y-4 sm:space-y-6"
-      initial={{ opacity: 0, y: 12 }}
+      className="yard-v4 max-w-3xl mx-auto"
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
     >
-      <PageHeader title="Dagliga uppgifter" emoji="✅" subtitle="Din dagliga checklista – återställs varje morgon" />
+      <header className="yard-v4__header">
+        <div>
+          <p className="yard-v4__eyebrow">Gården</p>
+          <h1>Det som behöver göras</h1>
+          <p>Små rutiner som håller flocken trygg, mätt och ompysslad.</p>
+        </div>
+        <span className="yard-v4__header-mark" aria-hidden="true">🌿</span>
+      </header>
 
-      {/* Progress */}
-      <motion.div layout>
-        <Card className={`shadow-sm transition-colors ${progress === 100 ? 'bg-success/5 border-success/30' : 'bg-card border-border'}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-foreground">
-                {progress === 100 ? '🎉 Alla uppgifter klara!' : `${completedCount} av ${chores.length} klara`}
-              </span>
-              <span className="stat-number text-sm text-primary">{progress}%</span>
-            </div>
-            <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
-              <motion.div
-                className={`h-2.5 rounded-full ${progress === 100 ? 'bg-success' : 'bg-primary'}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Add custom task */}
-      <Card className="bg-card border-border shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Lägg till ny uppgift..."
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && newTitle.trim()) handleCreate();
-              }}
-              className="flex-1 h-10 rounded-xl border-border/60"
-            />
-            <Button
-              size="sm"
-              className="h-10 px-4 rounded-xl gap-1.5"
-              disabled={!newTitle.trim() || createMutation.isPending}
-              onClick={handleCreate}
-            >
-              <Plus className="h-4 w-4" />
-              Lägg till
-            </Button>
+      <section className={`yard-v4__status ${remainingCount === 0 && chores.length > 0 ? 'is-done' : ''}`} aria-label="Dagens status">
+        <div className="yard-v4__status-copy">
+          <p className="yard-v4__eyebrow">Idag</p>
+          <h2>
+            {chores.length === 0
+              ? 'Lugnt på gården just nu'
+              : remainingCount === 0
+                ? 'Allt är klart för idag'
+                : `${remainingCount} ${remainingCount === 1 ? 'sak' : 'saker'} kvar`}
+          </h2>
+          <p>
+            {overdueCount > 0
+              ? `${overdueCount} ${overdueCount === 1 ? 'syssla behöver' : 'sysslor behöver'} lite extra uppmärksamhet.`
+              : remainingCount === 0 && chores.length > 0
+                ? 'Flocken är omhändertagen. Bra jobbat.'
+                : 'Bocka av det du gör – resten kan vänta.'}
+          </p>
+        </div>
+        {chores.length > 0 && (
+          <div className="yard-v4__progress" aria-label={`${progress} procent klart`}>
+            <strong>{progress}%</strong>
+            <span>{completedCount}/{chores.length} klart</span>
           </div>
+        )}
+        <div className="yard-v4__progress-track" aria-hidden="true">
+          <motion.span initial={{ width: 0 }} animate={{ width: `${progress}%` }} transition={{ duration: 0.45 }} />
+        </div>
+      </section>
 
-          {/* Advanced options toggle */}
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground font-medium hover:text-foreground transition-colors"
-          >
-            <CalendarDays className="h-3.5 w-3.5" />
-            Schemaläggning
-            <ChevronRight className={`h-3 w-3 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
+      <section className="yard-v4__composer" aria-label="Lägg till syssla">
+        <div className="yard-v4__composer-line">
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          <Input
+            placeholder="Vad behöver göras?"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newTitle.trim()) handleCreate();
+            }}
+            aria-label="Ny syssla"
+          />
+          <Button disabled={!newTitle.trim() || createMutation.isPending} onClick={handleCreate}>
+            Lägg till
+          </Button>
+        </div>
+
+        <div className="yard-v4__composer-tools">
+          <button type="button" onClick={() => setShowSuggestions((v) => !v)}>
+            <Sparkles className="h-3.5 w-3.5" />
+            Vanliga gårdssysslor
+            <ChevronRight className={`h-3 w-3 ${showSuggestions ? 'rotate-90' : ''}`} />
           </button>
+          <button type="button" onClick={() => setShowAdvanced((v) => !v)}>
+            <CalendarDays className="h-3.5 w-3.5" />
+            Tid & påminnelse
+            <ChevronRight className={`h-3 w-3 ${showAdvanced ? 'rotate-90' : ''}`} />
+          </button>
+        </div>
 
-          <AnimatePresence>
-            {showAdvanced && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 p-3 bg-muted/20 rounded-xl border border-border/30">
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Återkommande</label>
-                    <Select value={newRecurrence} onValueChange={setNewRecurrence}>
-                      <SelectTrigger className="h-9 text-xs rounded-lg">
-                        <SelectValue />
-                      </SelectTrigger>
+        <AnimatePresence initial={false}>
+          {showSuggestions && (
+            <motion.div className="yard-v4__suggestions" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+              {SUGGESTED_CHORES.map((suggestion) => {
+                const exists = chores.some((c: any) => c.title.toLowerCase() === suggestion.title.toLowerCase());
+                return (
+                  <button
+                    type="button"
+                    key={suggestion.title}
+                    disabled={exists || createMutation.isPending}
+                    className={exists ? 'is-added' : ''}
+                    onClick={() => !exists && addSuggested(suggestion)}
+                  >
+                    <span aria-hidden="true">{suggestion.emoji}</span>
+                    <span>
+                      <strong>{suggestion.title}</strong>
+                      <small>{exists ? 'Redan på gården' : suggestion.description}</small>
+                    </span>
+                    {exists && <Check className="h-3.5 w-3.5" />}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {showAdvanced && (
+            <motion.div className="yard-v4__advanced" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}>
+              <label>
+                <span>Upprepas</span>
+                <Select value={newRecurrence} onValueChange={setNewRecurrence}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">En gång</SelectItem>
+                    <SelectItem value="daily">Varje dag</SelectItem>
+                    <SelectItem value="weekly">Varje vecka</SelectItem>
+                    <SelectItem value="monthly">Varje månad</SelectItem>
+                  </SelectContent>
+                </Select>
+              </label>
+              <label>
+                <span>När?</span>
+                <Input type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} />
+              </label>
+              <label className="yard-v4__reminder-control">
+                <span>Påminn mig</span>
+                <div>
+                  <Switch checked={newReminder} onCheckedChange={setNewReminder} />
+                  {newReminder && (
+                    <Select value={newReminderHours} onValueChange={setNewReminderHours}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Engångssyssla</SelectItem>
-                        <SelectItem value="daily">Dagligen</SelectItem>
-                        <SelectItem value="weekly">Veckovis</SelectItem>
-                        <SelectItem value="monthly">Månadsvis</SelectItem>
+                        <SelectItem value="1">1 timme innan</SelectItem>
+                        <SelectItem value="6">6 timmar innan</SelectItem>
+                        <SelectItem value="24">1 dag innan</SelectItem>
+                        <SelectItem value="48">2 dagar innan</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Förfallodatum</label>
-                    <Input type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="h-9 text-xs rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Påminnelse</label>
-                    <div className="flex items-center gap-2">
-                      <Switch checked={newReminder} onCheckedChange={setNewReminder} />
-                      {newReminder && (
-                        <Select value={newReminderHours} onValueChange={setNewReminderHours}>
-                          <SelectTrigger className="h-9 text-xs rounded-lg flex-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 tim</SelectItem>
-                            <SelectItem value="6">6 tim</SelectItem>
-                            <SelectItem value="24">1 dag</SelectItem>
-                            <SelectItem value="48">2 dagar</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </label>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
 
-          {/* Suggestions toggle */}
-          <button
-            onClick={() => setShowSuggestions(!showSuggestions)}
-            className="flex items-center gap-1.5 mt-3 text-xs text-primary font-medium hover:underline"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {showSuggestions ? 'Dölj förslag' : 'Visa förslag på uppgifter'}
-            <ChevronRight className={`h-3 w-3 transition-transform ${showSuggestions ? 'rotate-90' : ''}`} />
-          </button>
+      <ChoreSection
+        eyebrow="Nu"
+        title={nowChores.length > 0 ? 'På gården idag' : 'Inget som pockar på'}
+        description={nowChores.length > 0 ? 'Det här är det som är närmast till hands.' : 'Det finns inget akut eller oschemalagt kvar.'}
+        chores={nowChores}
+        editingChore={editingChore}
+        setEditingChore={setEditingChore}
+        toggleChore={toggleChore}
+        deleteChore={(id) => deleteMutation.mutate(id)}
+        saveChore={(id, updates) => updateMutation.mutate({ choreId: id, updates })}
+      />
 
-          <AnimatePresence>
-            {showSuggestions && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-                  {SUGGESTED_CHORES.map((s) => {
-                    const exists = chores.some((c: any) => c.title.toLowerCase() === s.title.toLowerCase());
-                    return (
-                      <button
-                        key={s.title}
-                        onClick={() => !exists && addSuggested(s)}
-                        disabled={exists || createMutation.isPending}
-                        className={`text-left p-3 rounded-xl border transition-all ${
-                          exists
-                            ? 'bg-muted/40 border-border/30 opacity-50 cursor-not-allowed'
-                            : 'bg-muted/20 border-border/40 hover:border-primary/30 hover:bg-primary/5 cursor-pointer'
-                        }`}
-                      >
-                        <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
-                          <span className="text-sm">{s.emoji}</span>
-                          {exists && <Check className="h-3 w-3 text-success" />}
-                          {s.title}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{s.description}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </CardContent>
-      </Card>
-
-      {/* Task list */}
-      {chores.length > 0 && (
-        <Card className="bg-card border-border shadow-sm overflow-hidden">
-          <CardContent className="p-0">
-            <div className="divide-y divide-border">
-              <AnimatePresence>
-                {chores.map((chore: any) => {
-                  const isDone = chore.completed;
-                  const hasDue = !!chore.next_due_at;
-                  const pastDue = hasDue && isPastDue(chore.next_due_at);
-                  const dueToday = hasDue && isDueToday(chore.next_due_at);
-                  const isEditing = editingChore === chore.id;
-
-                  return (
-                    <motion.div
-                      key={chore.id}
-                      layout
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <div className="flex items-center gap-3 px-4 sm:px-6 py-3.5 hover:bg-secondary/50 transition-colors">
-                        <button
-                          onClick={() => toggleChore(chore)}
-                          className="flex items-center gap-3 flex-1 text-left"
-                        >
-                          <motion.div
-                            className={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? 'bg-success/20 border-success' : 'border-border hover:border-primary'}`}
-                            whileTap={{ scale: 0.85 }}
-                          >
-                            <AnimatePresence>
-                              {isDone && (
-                                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                                  <Check className="h-3 w-3 text-success" />
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </motion.div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-xs sm:text-sm transition-all ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
-                                {chore.title}
-                              </span>
-                              {chore.recurrence && chore.recurrence !== 'none' && (
-                                <Badge variant="secondary" className="text-[9px] py-0 px-1.5">
-                                  {RECURRENCE_LABELS[chore.recurrence]}
-                                </Badge>
-                              )}
-                              {hasDue && (
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                                  pastDue ? 'bg-destructive/10 text-destructive' :
-                                  dueToday ? 'bg-warning/10 text-warning' :
-                                  'bg-muted text-muted-foreground'
-                                }`}>
-                                  {pastDue ? '⚠️ Försenad' : dueToday ? '📌 Idag' : formatDueDate(chore.next_due_at)}
-                                </span>
-                              )}
-                            </div>
-                            {chore.description && (
-                              <p className="text-[10px] text-muted-foreground mt-0.5">{chore.description}</p>
-                            )}
-                          </div>
-                        </button>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {!chore.is_default && (
-                            <>
-                              <button
-                                onClick={() => setEditingChore(isEditing ? null : chore.id)}
-                                className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-primary hover:bg-primary/10 transition-colors"
-                              >
-                                <CalendarDays className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => deleteMutation.mutate(chore.id)}
-                                className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Inline edit panel */}
-                      <AnimatePresence>
-                        {isEditing && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden border-t border-border/30"
-                          >
-                            <ChoreEditPanel chore={chore} onSave={(updates) => updateMutation.mutate({ choreId: chore.id, updates })} />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          </CardContent>
-        </Card>
+      {upcomingChores.length > 0 && (
+        <ChoreSection
+          eyebrow="Snart"
+          title="Längre fram"
+          description="Redan planerat, men inget du behöver bära i huvudet idag."
+          chores={upcomingChores}
+          editingChore={editingChore}
+          setEditingChore={setEditingChore}
+          toggleChore={toggleChore}
+          deleteChore={(id) => deleteMutation.mutate(id)}
+          saveChore={(id, updates) => updateMutation.mutate({ choreId: id, updates })}
+        />
       )}
 
-      {chores.length === 0 && !showSuggestions && (
-        <Card className="bg-card border-border shadow-sm">
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground text-sm mb-3">Inga uppgifter ännu.</p>
-            <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={() => setShowSuggestions(true)}>
-              <Sparkles className="h-3.5 w-3.5" />
-              Visa förslag
-            </Button>
-          </CardContent>
-        </Card>
+      {completedChores.length > 0 && (
+        <section className="yard-v4__done">
+          <button type="button" className="yard-v4__done-toggle" onClick={() => setShowCompleted((v) => !v)}>
+            <span><Check className="h-4 w-4" /> Klart idag <small>{completedChores.length}</small></span>
+            <ChevronDown className={`h-4 w-4 ${showCompleted ? 'rotate-180' : ''}`} />
+          </button>
+          <AnimatePresence initial={false}>
+            {showCompleted && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="yard-v4__done-list">
+                {completedChores.map((chore: any) => (
+                  <ChoreRow
+                    key={chore.id}
+                    chore={chore}
+                    isEditing={editingChore === chore.id}
+                    onToggle={() => toggleChore(chore)}
+                    onEdit={() => setEditingChore(editingChore === chore.id ? null : chore.id)}
+                    onDelete={() => deleteMutation.mutate(chore.id)}
+                    onSave={(updates) => updateMutation.mutate({ choreId: chore.id, updates })}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
       )}
 
       <PremiumGate soft feature="automatiska påminnelser & obegränsade uppgifter" featureKey="reminders">
@@ -440,51 +366,153 @@ export default function DailyTasks() {
   );
 }
 
+function ChoreSection({
+  eyebrow,
+  title,
+  description,
+  chores,
+  editingChore,
+  setEditingChore,
+  toggleChore,
+  deleteChore,
+  saveChore,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  chores: any[];
+  editingChore: string | null;
+  setEditingChore: (id: string | null) => void;
+  toggleChore: (chore: any) => void;
+  deleteChore: (id: string) => void;
+  saveChore: (id: string, updates: any) => void;
+}) {
+  return (
+    <section className="yard-v4__section">
+      <div className="yard-v4__section-heading">
+        <div>
+          <p className="yard-v4__eyebrow">{eyebrow}</p>
+          <h2>{title}</h2>
+          <p>{description}</p>
+        </div>
+        {chores.length > 0 && <strong>{chores.length}</strong>}
+      </div>
+      {chores.length > 0 && (
+        <div className="yard-v4__list">
+          <AnimatePresence initial={false}>
+            {chores.map((chore: any) => (
+              <ChoreRow
+                key={chore.id}
+                chore={chore}
+                isEditing={editingChore === chore.id}
+                onToggle={() => toggleChore(chore)}
+                onEdit={() => setEditingChore(editingChore === chore.id ? null : chore.id)}
+                onDelete={() => deleteChore(chore.id)}
+                onSave={(updates) => saveChore(chore.id, updates)}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ChoreRow({ chore, isEditing, onToggle, onEdit, onDelete, onSave }: {
+  chore: any;
+  isEditing: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onSave: (updates: any) => void;
+}) {
+  const hasDue = !!chore.next_due_at;
+  const pastDue = hasDue && isPastDue(chore.next_due_at);
+  const dueToday = hasDue && isDueToday(chore.next_due_at);
+
+  return (
+    <motion.article layout className={`yard-v4__chore ${chore.completed ? 'is-done' : ''} ${pastDue && !chore.completed ? 'is-overdue' : ''}`}>
+      <div className="yard-v4__chore-main">
+        <button type="button" className="yard-v4__check" onClick={onToggle} aria-label={chore.completed ? `Markera ${chore.title} som inte klar` : `Markera ${chore.title} som klar`}>
+          {chore.completed && <Check className="h-4 w-4" />}
+        </button>
+        <button type="button" className="yard-v4__chore-copy" onClick={onToggle}>
+          <span className="yard-v4__chore-title">{chore.title}</span>
+          {chore.description && <span className="yard-v4__chore-description">{chore.description}</span>}
+          <span className="yard-v4__meta">
+            {pastDue && !chore.completed && <em className="is-overdue"><AlertTriangle className="h-3 w-3" /> Försenad</em>}
+            {dueToday && !pastDue && <em><Clock className="h-3 w-3" /> Idag</em>}
+            {hasDue && !pastDue && !dueToday && <em><CalendarDays className="h-3 w-3" /> {formatDueDate(chore.next_due_at)}</em>}
+            {chore.recurrence && chore.recurrence !== 'none' && <em>{RECURRENCE_LABELS[chore.recurrence]}</em>}
+          </span>
+        </button>
+        {!chore.is_default && (
+          <div className="yard-v4__chore-actions">
+            <button type="button" onClick={onEdit} aria-label={`Ändra tid för ${chore.title}`}><CalendarDays className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={onDelete} aria-label={`Ta bort ${chore.title}`}><Trash2 className="h-3.5 w-3.5" /></button>
+          </div>
+        )}
+      </div>
+      <AnimatePresence initial={false}>
+        {isEditing && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="yard-v4__edit-wrap">
+            <ChoreEditPanel chore={chore} onSave={onSave} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.article>
+  );
+}
+
 function ChoreEditPanel({ chore, onSave }: { chore: any; onSave: (updates: any) => void }) {
   const [recurrence, setRecurrence] = useState(chore.recurrence || 'none');
-  const [dueDate, setDueDate] = useState(chore.next_due_at ? chore.next_due_at.split('T')[0] : '');
+  const [dueDate, setDueDate] = useState(chore.next_due_at ? datePart(chore.next_due_at) : '');
   const [reminder, setReminder] = useState(chore.reminder_enabled || false);
   const [reminderHours, setReminderHours] = useState(String(chore.reminder_hours_before || 24));
 
   return (
-    <div className="px-4 sm:px-6 py-3 bg-muted/20">
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+    <div className="yard-v4__edit">
+      <label>
+        <span>Upprepas</span>
+        <Select value={recurrence} onValueChange={setRecurrence}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">En gång</SelectItem>
+            <SelectItem value="daily">Varje dag</SelectItem>
+            <SelectItem value="weekly">Varje vecka</SelectItem>
+            <SelectItem value="monthly">Varje månad</SelectItem>
+          </SelectContent>
+        </Select>
+      </label>
+      <label>
+        <span>När?</span>
+        <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+      </label>
+      <label className="yard-v4__reminder-control">
+        <span>Påminnelse</span>
         <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Återkommande</label>
-          <Select value={recurrence} onValueChange={setRecurrence}>
-            <SelectTrigger className="h-8 text-xs rounded-lg"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Engång</SelectItem>
-              <SelectItem value="daily">Dagligen</SelectItem>
-              <SelectItem value="weekly">Veckovis</SelectItem>
-              <SelectItem value="monthly">Månadsvis</SelectItem>
-            </SelectContent>
-          </Select>
+          <Switch checked={reminder} onCheckedChange={setReminder} />
+          {reminder && (
+            <Select value={reminderHours} onValueChange={setReminderHours}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 timme innan</SelectItem>
+                <SelectItem value="6">6 timmar innan</SelectItem>
+                <SelectItem value="24">1 dag innan</SelectItem>
+                <SelectItem value="48">2 dagar innan</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
-        <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Förfallodatum</label>
-          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} className="h-8 text-xs rounded-lg" />
-        </div>
-        <div>
-          <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-1 block">Påminnelse</label>
-          <div className="flex items-center gap-2">
-            <Switch checked={reminder} onCheckedChange={setReminder} />
-            <span className="text-[10px] text-muted-foreground">{reminder ? `${reminderHours}h` : 'Av'}</span>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          className="h-8 text-xs rounded-lg"
-          onClick={() => onSave({
-            recurrence,
-            next_due_at: dueDate ? new Date(dueDate).toISOString() : null,
-            reminder_enabled: reminder,
-            reminder_hours_before: Number(reminderHours),
-          })}
-        >
-          Spara
-        </Button>
-      </div>
+      </label>
+      <Button onClick={() => onSave({
+        recurrence,
+        next_due_at: dueDate ? new Date(`${dueDate}T12:00:00`).toISOString() : null,
+        reminder_enabled: reminder,
+        reminder_hours_before: Number(reminderHours),
+      })}>
+        Spara
+      </Button>
     </div>
   );
 }
