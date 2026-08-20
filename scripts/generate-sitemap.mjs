@@ -6,8 +6,9 @@
 // Faller tillbaka på att lämna befintlig public/sitemap.xml orörd
 // om edge-funktionen inte kan nås under build.
 
-import { writeFileSync, existsSync } from "node:fs";
+import { writeFileSync, existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { filterSitemapXml, parseStarDisallows } from "../src/lib/sitemapPolicy.mjs";
 
 const PROJECT_REF = "sikbymtrbhrofysgkqsj";
 const SITEMAP_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/sitemap`;
@@ -18,7 +19,13 @@ try {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const xml = await res.text();
   if (!xml.includes("<urlset")) throw new Error("invalid XML payload");
-  writeFileSync(OUT, xml);
+  if (!xml.includes("/blogg/bast-honsras-sverige")) {
+    throw new Error("edge sitemap saknar /blogg/bast-honsras-sverige");
+  }
+  const disallows = existsSync("public/robots.txt")
+    ? parseStarDisallows(readFileSync("public/robots.txt", "utf8"))
+    : ["/app", "/login", "/reset-password", "/inbjudan", "/karta/bekrafta", "/karta/hantera"];
+  writeFileSync(OUT, filterSitemapXml(xml, disallows));
   const count = (xml.match(/<url>/g) || []).length;
   console.log(`sitemap.xml written from edge function (${count} entries)`);
 } catch (err) {
