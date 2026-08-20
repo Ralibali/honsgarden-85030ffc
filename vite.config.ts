@@ -122,7 +122,10 @@ export default defineConfig(({ mode }) => {
             ui: ["@radix-ui/react-accordion", "@radix-ui/react-dialog", "@radix-ui/react-tooltip"],
             "vendor-data": ["@supabase/supabase-js"],
             "vendor-query": ["@tanstack/react-query"],
-            "vendor-icons": ["lucide-react"],
+            // Do not isolate lucide-react. Each icon file is `export { Icon as default }`
+            // and the barrel re-exports `export { default as Icon }`. Putting only the
+            // package entry in vendor-icons makes the ui chunk read `undefined.default`
+            // at runtime (QA crash on /app after signup).
             "vendor-date": ["date-fns"],
             "vendor-forms": ["react-hook-form", "zod"],
             "vendor-motion": ["framer-motion"],
