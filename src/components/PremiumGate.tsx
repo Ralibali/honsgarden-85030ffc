@@ -104,7 +104,7 @@ function PremiumUpsellCard({ feature, featureKey }: { feature?: string; featureK
         <div>
           <h3 className="font-serif text-lg text-foreground mb-1">{title}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-          <p className="text-xs text-muted-foreground mt-2">Prova sju dagar gratis – sedan 19 kr/mån</p>
+          <p className="text-xs text-muted-foreground mt-2">Prova sju dagar gratis – sedan 39 kr/mån eller 299 kr/år</p>
         </div>
         <Button
           className="w-full h-11 gap-2 text-sm font-semibold rounded-xl shadow-[0_4px_14px_0_hsl(var(--primary)/0.25)]"
@@ -139,7 +139,7 @@ function PremiumBannerInline({ feature, featureKey }: { feature?: string; featur
       </div>
       <div className="flex-1 text-left">
         <p className="text-xs font-semibold text-foreground">{label}</p>
-        <p className="text-[10px] text-muted-foreground">Sju dagar gratis – sedan 19 kr/mån</p>
+        <p className="text-[10px] text-muted-foreground">Sju dagar gratis – sedan 39 kr/mån eller 299 kr/år</p>
       </div>
       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
     </button>
@@ -183,7 +183,7 @@ export function PremiumNudge() {
               <span className="text-xs font-semibold text-primary group-hover:text-primary/80 transition-colors">
                 Prova gratis →
               </span>
-              <span className="text-[10px] text-muted-foreground">19 kr/mån</span>
+              <span className="text-[10px] text-muted-foreground">39 kr/mån eller 299 kr/år</span>
             </div>
           </div>
         </div>
