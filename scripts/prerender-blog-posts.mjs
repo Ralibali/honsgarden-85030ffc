@@ -134,7 +134,11 @@ function buildArticleHead(post) {
 }
 
 async function fetchPosts() {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  // Använd samma publika fallback som sitemap/vite så att bygget aldrig
+  // tappar prerenderade artiklar när hostingen saknar VITE_-variabler.
+  const url = SUPABASE_URL || SITEMAP_SUPABASE_URL;
+  const key = SUPABASE_KEY || SITEMAP_SUPABASE_KEY;
+  if (!url || !key) {
     throw new Error('Saknar Supabase env vars (SUPABASE_URL/VITE_SUPABASE_URL + SUPABASE_PUBLISHABLE_KEY/VITE_SUPABASE_PUBLISHABLE_KEY)');
   }
 
@@ -144,7 +148,8 @@ async function fetchPosts() {
     order: 'published_at.desc',
     limit: '1000',
   });
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?${params}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
+  const response = await fetch(`${url}/rest/v1/blog_posts?${params}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+
   if (!response.ok) throw new Error(`Kunde inte hämta bloggartiklar (${response.status})`);
   return response.json();
 }
