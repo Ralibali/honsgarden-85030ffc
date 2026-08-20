@@ -54,7 +54,7 @@ describe('sitemapPolicy', () => {
 
   it('slår ihop bloggposter från fetch och befintlig sitemap', () => {
     const merged = mergeBlogPosts(
-      [{ slug: 'ny-artikel', title: 'Ny' }],
+      [{ slug: 'ny-artikel' }],
       extractBlogArticlePosts(committedSitemap),
     );
     expect(merged.some((post) => post.slug === 'bast-honsras-sverige')).toBe(true);
