@@ -60,7 +60,7 @@ function collectFromFiles(relFiles: string[]): { file: string; icon: string }[] 
 
 describe('lucide-react icons used by /app and ui', () => {
   const uiFiles = walkTsx(path.join(ROOT, 'components/ui')).map((abs) =>
-    path.relative(ROOT, abs).replaceAll('\\', '/'),
+    path.relative(ROOT, abs).replace(/\\/g, '/'),
   );
 
   const usages = [
