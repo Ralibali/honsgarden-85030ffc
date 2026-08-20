@@ -5,6 +5,7 @@ import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
 import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
+import { extractBlogArticlePosts, isRobotsDisallowed, mergeBlogPosts, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -13,6 +14,10 @@ const SUPABASE_KEY =
   process.env.SUPABASE_ANON_KEY ||
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY;
+// Samma publika client-fallback som vite.config.ts – används bara till sitemap
+// så att blogg-URL:er inte försvinner när build-env saknar VITE_*-variabler.
+const SITEMAP_SUPABASE_URL = SUPABASE_URL || 'https://sikbymtrbhrofysgkqsj.supabase.co';
+const SITEMAP_SUPABASE_KEY = SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpa2J5bXRyYmhyb2Z5c2drcXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjQ0MjAsImV4cCI6MjA4ODI0MDQyMH0.SlgJoYwkD5GWeZ2mK-GihDvEWpt8noKWE8xulzSOqaU';
 
 const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const NOINDEX_ROBOTS = 'noindex, nofollow';
@@ -141,6 +146,20 @@ async function fetchPosts() {
   });
   const response = await fetch(`${SUPABASE_URL}/rest/v1/blog_posts?${params}`, { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } });
   if (!response.ok) throw new Error(`Kunde inte hämta bloggartiklar (${response.status})`);
+  return response.json();
+}
+
+async function fetchPublishedPostsForSitemap() {
+  const params = new URLSearchParams({
+    select: 'slug,updated_at,published_at',
+    is_published: 'eq.true',
+    order: 'published_at.desc',
+    limit: '1000',
+  });
+  const response = await fetch(`${SITEMAP_SUPABASE_URL}/rest/v1/blog_posts?${params}`, {
+    headers: { apikey: SITEMAP_SUPABASE_KEY, Authorization: `Bearer ${SITEMAP_SUPABASE_KEY}` },
+  });
+  if (!response.ok) throw new Error(`Kunde inte hämta bloggsluggar till sitemap (${response.status})`);
   return response.json();
 }
 
@@ -374,10 +393,13 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
-function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = []) {
+function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = [], disallows = []) {
   const now = new Date().toISOString().split('T')[0];
   const urls = [];
-  const push = (loc, opts = {}) => urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
+  const push = (loc, opts = {}) => {
+    if (isRobotsDisallowed(loc, disallows)) return;
+    urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
+  };
 
   STATIC_PAGES.forEach((page) => push(`${BASE_URL}${page.path}`, { changefreq: page.changefreq, priority: page.priority }));
   Object.keys(CATEGORY_META).forEach((slug) => push(`${BASE_URL}/blogg/kategori/${slug}`, { changefreq: 'weekly', priority: '0.7' }));
@@ -478,7 +500,33 @@ async function main() {
   });
 
   await runStep('sitemap', async () => {
-    await writeFile(join('dist', 'sitemap.xml'), buildSitemap(posts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES), 'utf8');
+    const disallows = parseStarDisallows(await readFile('public/robots.txt', 'utf8'));
+    let fallbackPosts = [];
+    for (const candidate of [join('dist', 'sitemap.xml'), join('public', 'sitemap.xml')]) {
+      try {
+        fallbackPosts = extractBlogArticlePosts(await readFile(candidate, 'utf8'));
+        if (fallbackPosts.length) break;
+      } catch {
+        /* nästa kandidat */
+      }
+    }
+    let livePosts = posts;
+    if (!livePosts.length) {
+      try {
+        livePosts = await fetchPublishedPostsForSitemap();
+      } catch (error) {
+        console.warn(`[sitemap] kunde inte hämta bloggposter live: ${error?.message || error}`);
+      }
+    }
+    const sitemapPosts = mergeBlogPosts(livePosts, fallbackPosts);
+    if (!sitemapPosts.some((post) => post.slug === 'bast-honsras-sverige')) {
+      throw new Error('sitemap saknar /blogg/bast-honsras-sverige');
+    }
+    await writeFile(
+      join('dist', 'sitemap.xml'),
+      buildSitemap(sitemapPosts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES, disallows),
+      'utf8',
+    );
   });
 
   console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);

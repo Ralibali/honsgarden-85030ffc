@@ -35,6 +35,22 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
+// Speglar public/robots.txt User-agent: * Disallow.
+// /app matchar /app och /app/..., inte /app-for-honsagare.
+const ROBOTS_DISALLOW = [
+  "/app",
+  "/login",
+  "/reset-password",
+  "/inbjudan",
+  "/karta/bekrafta",
+  "/karta/hantera",
+];
+
+function isRobotsDisallowed(path: string): boolean {
+  const normalized = path.replace(/\/+$/, "") || "/";
+  return ROBOTS_DISALLOW.some((rule) => normalized === rule || normalized.startsWith(`${rule}/`));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -127,7 +143,7 @@ Deno.serve(async (req) => {
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
     { loc: "/marknad", priority: "0.85", changefreq: "daily" },
     ...(shopPublicEnabled ? [{ loc: "/butik", priority: "0.85", changefreq: "weekly" }] : []),
-  ];
+  ].filter((page) => !isRobotsDisallowed(page.loc));
 
 
   const now = new Date().toISOString().split("T")[0];
