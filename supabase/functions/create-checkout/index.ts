@@ -60,6 +60,8 @@ function getSafeOrigin(req: Request) {
       "https://honsgarden.app",
       "https://www.honsgarden.app",
       "https://honsgarden.lovable.app",
+      "https://honsgarden-git-cursor-vercel-npm-regi-a21812-ralibalis-projects.vercel.app",
+      "https://honsgarden-3n03ylapy-ralibalis-projects.vercel.app",
     ];
     const allowed = new Set([...defaults, ...configured]);
     const isLocalDev = url.protocol === "http:" && ["localhost", "127.0.0.1"].includes(url.hostname);
