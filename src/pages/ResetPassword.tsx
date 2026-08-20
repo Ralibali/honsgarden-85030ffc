@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Loader2, CheckCircle } from 'lucide-react';
+import { Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
+import { getRecoveryLinkStatus } from '@/lib/resetPasswordLink';
 import logoHonsgarden from '@/assets/logo-honsgarden.png';
+
+const VERIFY_TIMEOUT_MS = 10_000;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -17,6 +20,7 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState('');
+  const [linkIssue, setLinkIssue] = useState<'missing' | 'invalid' | null>(null);
 
   useSeo({
     title: 'Återställ lösenord | Hönsgården',
@@ -26,22 +30,36 @@ export default function ResetPassword() {
   });
 
   useEffect(() => {
-    // The recovery link contains tokens in the URL hash fragment.
-    // Supabase client picks them up automatically via onAuthStateChange.
+    const status = getRecoveryLinkStatus();
+    if (status === 'missing') {
+      setLinkIssue('missing');
+      return;
+    }
+    if (status === 'error') {
+      setLinkIssue('invalid');
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setSessionReady(true);
       }
     });
 
-    // Also check if we already have a session (e.g. if onAuthStateChange already fired)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         setSessionReady(true);
       }
     });
 
-    return () => subscription.unsubscribe();
+    const timeoutId = window.setTimeout(() => {
+      setLinkIssue('invalid');
+    }, VERIFY_TIMEOUT_MS);
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +89,9 @@ export default function ResetPassword() {
     }
   };
 
+  const showForm = success || sessionReady;
+  const showLinkError = !showForm && linkIssue !== null;
+
   return (
     <div className="min-h-dvh bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -84,6 +105,20 @@ export default function ResetPassword() {
             <CheckCircle className="h-12 w-12 text-primary mx-auto" />
             <p className="text-foreground font-medium">Lösenordet har uppdaterats!</p>
             <p className="text-muted-foreground text-sm">Du skickas vidare till inloggningen…</p>
+          </div>
+        ) : showLinkError ? (
+          <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
+            <p className="text-foreground font-medium">Länken saknas eller är ogiltig</p>
+            <p className="text-muted-foreground text-sm">
+              Öppna länken från e-postmeddelandet, eller begär en ny återställning via inloggningssidan.
+            </p>
+            <Button asChild className="w-full">
+              <Link to="/login?mode=login">Tillbaka till inloggning</Link>
+            </Button>
+            <p className="text-muted-foreground text-xs">
+              Behöver du en ny länk? Välj «Glömt lösenord?» på inloggningssidan.
+            </p>
           </div>
         ) : !sessionReady ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-4">
