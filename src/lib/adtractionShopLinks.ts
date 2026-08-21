@@ -1,9 +1,9 @@
 /**
- * Wraps naked P-Lindberg / Vetapotek shop hrefs with the Adtraction tracking
- * prefix already used on /blogg/honshus-2026-kompletta-kopguiden.
+ * Wraps naked shop hrefs with the Adtraction tracking prefix already used
+ * on /blogg/honshus-2026-kompletta-kopguiden (and owner text-link IDs).
  *
  * Only rewrites existing hrefs on an explicit slug allowlist. Does not add
- * links, CTAs, or new merchants (Granngården, FirstVet, Wexthuset, Outl1).
+ * links, CTAs, or new merchants. Granngården is left naked (no program `a=`).
  *
  * Keep in sync with `src/lib/adtractionShopLinks.mjs` (prerender).
  */
@@ -15,6 +15,15 @@ export const PLINDBERG_AD_ID = '1954027467';
 
 /** Channel `a=` provided by the program owner for Vetapotek text links. */
 export const VETAPOTEK_AD_ID = '1701463575';
+
+/** Channel `a=` provided by the program owner for Wexthuset text links. */
+export const WEXTHUSET_AD_ID = '1577762835';
+
+/** Channel `a=` provided by the program owner for FirstVet text links. */
+export const FIRSTVET_AD_ID = '1615741779';
+
+/** Channel `a=` provided by the program owner for Outl1 text links. */
+export const OUTL1_AD_ID = '1728546059';
 
 export const PLINDBERG_REWRITE_SLUGS = [
   'bygga-honshus',
@@ -35,6 +44,25 @@ export const VETAPOTEK_REWRITE_SLUGS = [
   'kalkben-hos-hons',
   'kvalster-hons',
 ] as const;
+
+export const WEXTHUSET_REWRITE_SLUGS = [
+  'vattenautomat-hons',
+  'varmelampa-hons',
+  'sittpinnar-hons',
+  'kvalster-hons',
+  'kalkben-hos-hons',
+  'vad-ater-hons',
+] as const;
+
+export const FIRSTVET_REWRITE_SLUGS = [
+  'varmelampa-hons',
+  'kvalster-hons',
+  'kalkben-hos-hons',
+  'vad-ater-hons',
+  'aggledarinflammation-hons',
+] as const;
+
+export const OUTL1_REWRITE_SLUGS = ['honshus-2026-kompletta-kopguiden'] as const;
 
 type ShopProgram = {
   slugs: readonly string[];
@@ -60,6 +88,30 @@ const PROGRAMS: ShopProgram[] = [
     // Existing köpguide / product-feed Vetapotek links pass `url=` unencoded.
     encodeDestination: false,
     isNakedHost: (hostname) => hostname === 'www.vetapotek.se' || hostname === 'vetapotek.se',
+  },
+  {
+    slugs: WEXTHUSET_REWRITE_SLUGS,
+    trackingHost: 'go.wexthuset.com',
+    adId: WEXTHUSET_AD_ID,
+    // Same encoded `url=` style as köpguide P-Lindberg text links.
+    encodeDestination: true,
+    isNakedHost: (hostname) => hostname === 'www.wexthuset.com' || hostname === 'wexthuset.com',
+  },
+  {
+    slugs: FIRSTVET_REWRITE_SLUGS,
+    trackingHost: 'do.shop.firstvet.com',
+    adId: FIRSTVET_AD_ID,
+    // Same encoded `url=` style as köpguide P-Lindberg text links.
+    encodeDestination: true,
+    isNakedHost: (hostname) => hostname === 'www.firstvet.com' || hostname === 'firstvet.com',
+  },
+  {
+    slugs: OUTL1_REWRITE_SLUGS,
+    trackingHost: 'do.outl1.se',
+    adId: OUTL1_AD_ID,
+    // Existing Outl1 product-feed / owner links pass `url=` unencoded (`?var=`).
+    encodeDestination: false,
+    isNakedHost: (hostname) => hostname === 'www.outl1.se' || hostname === 'outl1.se',
   },
 ];
 
@@ -104,8 +156,9 @@ function rewriteIfNakedShopUrl(href: string, slug: string | undefined, htmlAttri
 }
 
 /**
- * Rewrite naked P-Lindberg / Vetapotek shop hrefs on allowlisted slugs.
- * Already-tracked `do.p-lindberg.se` / `id.vetapotek.se` links are left alone.
+ * Rewrite naked shop hrefs on allowlisted slugs.
+ * Already-tracked `do.p-lindberg.se` / `id.vetapotek.se` / `go.wexthuset.com` /
+ * `do.shop.firstvet.com` / `do.outl1.se` links are left alone.
  */
 export function rewriteNakedShopAffiliateHrefs(content: string, slug?: string): string {
   if (!slug || !content) return content;
@@ -149,4 +202,25 @@ export function isNakedVetapotekShopHref(href: string): boolean {
   if (!parsed) return false;
   const host = parsed.hostname.toLowerCase();
   return host === 'www.vetapotek.se' || host === 'vetapotek.se';
+}
+
+export function isNakedWexthusetShopHref(href: string): boolean {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.wexthuset.com' || host === 'wexthuset.com';
+}
+
+export function isNakedFirstVetShopHref(href: string): boolean {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.firstvet.com' || host === 'firstvet.com';
+}
+
+export function isNakedOutl1ShopHref(href: string): boolean {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.outl1.se' || host === 'outl1.se';
 }

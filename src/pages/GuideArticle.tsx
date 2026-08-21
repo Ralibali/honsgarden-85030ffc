@@ -171,7 +171,7 @@ function renderContent(
   // Rasbilder efter matchande h3-rubriker (t.ex. "### 1. Hedemora" → bild på Hedemora)
   raw = injectBreedFigures(raw);
 
-  // Wrap already-present naked P-Lindberg / Vetapotek shop hrefs on allowlisted slugs.
+  // Wrap already-present naked shop hrefs on allowlisted slugs.
   raw = rewriteNakedShopAffiliateHrefs(raw, slug);
 
   return DOMPurify.sanitize(raw, {

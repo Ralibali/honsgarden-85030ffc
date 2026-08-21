@@ -1,6 +1,6 @@
 /**
- * Wraps naked P-Lindberg / Vetapotek shop hrefs with the Adtraction tracking
- * prefix already used on /blogg/honshus-2026-kompletta-kopguiden.
+ * Wraps naked shop hrefs with the Adtraction tracking prefix already used
+ * on /blogg/honshus-2026-kompletta-kopguiden (and owner text-link IDs).
  *
  * Keep in sync with `src/lib/adtractionShopLinks.ts` (React app + tests).
  */
@@ -8,6 +8,9 @@
 export const ADTRACTION_SOURCE_ID = '2056181186';
 export const PLINDBERG_AD_ID = '1954027467';
 export const VETAPOTEK_AD_ID = '1701463575';
+export const WEXTHUSET_AD_ID = '1577762835';
+export const FIRSTVET_AD_ID = '1615741779';
+export const OUTL1_AD_ID = '1728546059';
 
 export const PLINDBERG_REWRITE_SLUGS = [
   'bygga-honshus',
@@ -29,6 +32,25 @@ export const VETAPOTEK_REWRITE_SLUGS = [
   'kvalster-hons',
 ];
 
+export const WEXTHUSET_REWRITE_SLUGS = [
+  'vattenautomat-hons',
+  'varmelampa-hons',
+  'sittpinnar-hons',
+  'kvalster-hons',
+  'kalkben-hos-hons',
+  'vad-ater-hons',
+];
+
+export const FIRSTVET_REWRITE_SLUGS = [
+  'varmelampa-hons',
+  'kvalster-hons',
+  'kalkben-hos-hons',
+  'vad-ater-hons',
+  'aggledarinflammation-hons',
+];
+
+export const OUTL1_REWRITE_SLUGS = ['honshus-2026-kompletta-kopguiden'];
+
 const PROGRAMS = [
   {
     slugs: PLINDBERG_REWRITE_SLUGS,
@@ -43,6 +65,27 @@ const PROGRAMS = [
     adId: VETAPOTEK_AD_ID,
     encodeDestination: false,
     isNakedHost: (hostname) => hostname === 'www.vetapotek.se' || hostname === 'vetapotek.se',
+  },
+  {
+    slugs: WEXTHUSET_REWRITE_SLUGS,
+    trackingHost: 'go.wexthuset.com',
+    adId: WEXTHUSET_AD_ID,
+    encodeDestination: true,
+    isNakedHost: (hostname) => hostname === 'www.wexthuset.com' || hostname === 'wexthuset.com',
+  },
+  {
+    slugs: FIRSTVET_REWRITE_SLUGS,
+    trackingHost: 'do.shop.firstvet.com',
+    adId: FIRSTVET_AD_ID,
+    encodeDestination: true,
+    isNakedHost: (hostname) => hostname === 'www.firstvet.com' || hostname === 'firstvet.com',
+  },
+  {
+    slugs: OUTL1_REWRITE_SLUGS,
+    trackingHost: 'do.outl1.se',
+    adId: OUTL1_AD_ID,
+    encodeDestination: false,
+    isNakedHost: (hostname) => hostname === 'www.outl1.se' || hostname === 'outl1.se',
   },
 ];
 
@@ -127,4 +170,25 @@ export function isNakedVetapotekShopHref(href) {
   if (!parsed) return false;
   const host = parsed.hostname.toLowerCase();
   return host === 'www.vetapotek.se' || host === 'vetapotek.se';
+}
+
+export function isNakedWexthusetShopHref(href) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.wexthuset.com' || host === 'wexthuset.com';
+}
+
+export function isNakedFirstVetShopHref(href) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.firstvet.com' || host === 'firstvet.com';
+}
+
+export function isNakedOutl1ShopHref(href) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.outl1.se' || host === 'outl1.se';
 }
