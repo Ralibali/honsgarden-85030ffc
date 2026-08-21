@@ -18,6 +18,7 @@ import { AffiliateProductBox } from '@/components/AffiliateProductBox';
 import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
+import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -92,7 +93,8 @@ function renderContent(
   content: string,
   postTitle: string,
   otherPosts?: { title: string; slug: string }[],
-  glossary?: { keyword: string; url: string; rel: string }[]
+  glossary?: { keyword: string; url: string; rel: string }[],
+  slug?: string,
 ): string {
   let raw = isHtmlContent(content) ? content : renderBlogMarkdown(content);
   // Ta bort inledande rubrik som bara upprepar artikelns titel
@@ -168,6 +170,9 @@ function renderContent(
 
   // Rasbilder efter matchande h3-rubriker (t.ex. "### 1. Hedemora" → bild på Hedemora)
   raw = injectBreedFigures(raw);
+
+  // Wrap already-present naked P-Lindberg / Vetapotek shop hrefs on allowlisted slugs.
+  raw = rewriteNakedShopAffiliateHrefs(raw, slug);
 
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],
@@ -262,7 +267,8 @@ export default function GuideArticle() {
       post.content,
       post.title,
       allPosts.filter(p => p.slug !== slug).map(p => ({ title: p.title, slug: p.slug })),
-      glossary
+      glossary,
+      slug,
     );
   }, [post, allPosts, glossary, slug]);
 

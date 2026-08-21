@@ -5,6 +5,7 @@ import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
 import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
+import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { extractBlogArticlePosts, isRobotsDisallowed, mergeBlogPosts, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
@@ -102,7 +103,11 @@ function renderArticle(post) {
   const imageUrl = image.startsWith('http') ? image : `${BASE_URL}${image}`;
   const date = post.published_at ? new Date(post.published_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
   const rendered = isHtmlContent(post.content) ? post.content : renderBlogMarkdown(post.content);
-  const content = sanitizeHtml(injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)));
+  const rewritten = rewriteNakedShopAffiliateHrefs(
+    injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)),
+    post.slug,
+  );
+  const content = sanitizeHtml(rewritten);
 
   return `<div class="min-h-screen bg-background">
 <header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/blogg" class="text-sm text-muted-foreground hover:text-foreground">← Blogg</a><a href="/login?mode=register&amp;source=blog_header" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
