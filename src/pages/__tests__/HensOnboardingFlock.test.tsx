@@ -73,6 +73,6 @@ describe('Hens – onboarding-vald flock följer med första hönan', () => {
 
   it('öppnar flock-dialogen från onboarding-CTA', async () => {
     renderHens('/app/hens?create=flock');
-    expect(await screen.findByText('Skapa flock')).toBeInTheDocument();
+    expect(await screen.findByPlaceholderText(/Stora hönsgården/i)).toBeInTheDocument();
   });
 });
