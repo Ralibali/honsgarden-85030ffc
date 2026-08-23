@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { hasActiveLocalPremium, shouldClearLocalPremium } from "../_shared/localPremium.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,9 +57,6 @@ serve(async (req) => {
   );
 
   try {
-    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("No authorization header");
 
@@ -69,8 +67,6 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
-
     const { data: profile } = await supabaseClient
       .from("profiles")
       .select("subscription_status, premium_expires_at, is_lifetime_premium, stripe_customer_id")
@@ -79,10 +75,39 @@ serve(async (req) => {
 
     const now = new Date();
     const hasLifetimePremium = profile?.is_lifetime_premium === true;
-    const localExpiry = profile?.premium_expires_at ? new Date(profile.premium_expires_at) : null;
-    const hasActiveLocalPremium = !!localExpiry && localExpiry > now;
+    const localTrialActive = hasActiveLocalPremium(profile?.premium_expires_at, now);
 
-    const customers = await stripe.customers.list({ email: user.email, limit: 100 });
+    const localTrialResponse = () => new Response(JSON.stringify({
+      subscribed: true,
+      premium_type: "trial",
+      subscription_end: profile?.premium_expires_at ?? null,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    if (hasLifetimePremium) {
+      return new Response(JSON.stringify({
+        subscribed: true,
+        premium_type: "lifetime",
+        subscription_end: null,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      if (localTrialActive) return localTrialResponse();
+      throw new Error("STRIPE_SECRET_KEY is not set");
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+
+    let customers: Stripe.ApiList<Stripe.Customer>;
+    try {
+      customers = await stripe.customers.list({ email: user.email, limit: 100 });
+    } catch (stripeError) {
+      const message = stripeError instanceof Error ? stripeError.message : String(stripeError);
+      console.error("[check-subscription] Stripe customer lookup failed", message);
+      if (localTrialActive) return localTrialResponse();
+      throw stripeError;
+    }
     const customerIds = [
       ...new Set([
         ...(profile?.stripe_customer_id ? [profile.stripe_customer_id] : []),
@@ -93,26 +118,33 @@ serve(async (req) => {
     let stripeSubscription: Stripe.Subscription | null = null;
 
     if (customerIds.length > 0) {
-      const subscriptionResponses = await Promise.all(
-        customerIds.map((customerId) => stripe.subscriptions.list({
-          customer: customerId,
-          status: "all",
-          limit: 100,
-        })),
-      );
+      try {
+        const subscriptionResponses = await Promise.all(
+          customerIds.map((customerId) => stripe.subscriptions.list({
+            customer: customerId,
+            status: "all",
+            limit: 100,
+          })),
+        );
 
-      const eligibleSubscriptions = subscriptionResponses
-        .flatMap((response) => response.data)
-        .filter((subscription) => isEligibleStripeSubscription(subscription, now))
-        .sort((a, b) => {
-          const statusDiff = (STATUS_PRIORITY[b.status] ?? 0) - (STATUS_PRIORITY[a.status] ?? 0);
-          if (statusDiff !== 0) return statusDiff;
-          const endA = new Date(getStripeEnd(a) ?? 0).getTime();
-          const endB = new Date(getStripeEnd(b) ?? 0).getTime();
-          return endB - endA;
-        });
+        const eligibleSubscriptions = subscriptionResponses
+          .flatMap((response) => response.data)
+          .filter((subscription) => isEligibleStripeSubscription(subscription, now))
+          .sort((a, b) => {
+            const statusDiff = (STATUS_PRIORITY[b.status] ?? 0) - (STATUS_PRIORITY[a.status] ?? 0);
+            if (statusDiff !== 0) return statusDiff;
+            const endA = new Date(getStripeEnd(a) ?? 0).getTime();
+            const endB = new Date(getStripeEnd(b) ?? 0).getTime();
+            return endB - endA;
+          });
 
-      stripeSubscription = eligibleSubscriptions[0] ?? null;
+        stripeSubscription = eligibleSubscriptions[0] ?? null;
+      } catch (stripeError) {
+        const message = stripeError instanceof Error ? stripeError.message : String(stripeError);
+        console.error("[check-subscription] Stripe subscription lookup failed", message);
+        if (localTrialActive) return localTrialResponse();
+        throw stripeError;
+      }
     }
 
     if (stripeSubscription) {
@@ -149,15 +181,7 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (hasLifetimePremium) {
-      return new Response(JSON.stringify({
-        subscribed: true,
-        premium_type: "lifetime",
-        subscription_end: null,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    if (hasActiveLocalPremium) {
+    if (localTrialActive) {
       if (profile?.subscription_status !== "premium") {
         await supabaseClient
           .from("profiles")
@@ -165,14 +189,10 @@ serve(async (req) => {
           .eq("user_id", user.id);
       }
 
-      return new Response(JSON.stringify({
-        subscribed: true,
-        premium_type: "trial",
-        subscription_end: profile?.premium_expires_at ?? null,
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return localTrialResponse();
     }
 
-    if (profile?.subscription_status === "premium" || profile?.premium_expires_at) {
+    if (shouldClearLocalPremium(profile?.subscription_status, profile?.premium_expires_at, now)) {
       await supabaseClient
         .from("profiles")
         .update({ subscription_status: "free", premium_expires_at: null })

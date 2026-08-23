@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DEMO_USER_PROFILE } from '@/lib/demoData';
+import { resolvePremiumType, type PremiumType } from '@/lib/premiumStatus';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
-
-type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
 
 interface UserProfile {
   id: string;
@@ -30,8 +29,25 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const SYNC_INTERVAL_MS = 60_000;
+const CHECK_SUBSCRIPTION_TIMEOUT_MS = 8_000;
 const PRIVATE_CACHE_NAMES = ['supabase-rest', 'supabase-storage'];
 const GLOBAL_QUERY_CACHE_KEY = 'honsgarden_rq_cache_v1';
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('check-subscription timeout')), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 async function clearPrivateClientCaches(): Promise<void> {
   try {
@@ -69,7 +85,7 @@ function toBasicProfile(supaUser: SupabaseUser): UserProfile {
 
 async function syncSubscriptionStatus(): Promise<{ subscribed: boolean; subscriptionEnd: string | null; premiumType: PremiumType | null; priceId: string | null; synced: boolean; userMissing?: boolean }> {
   try {
-    const { data, error } = await supabase.functions.invoke('check-subscription');
+    const { data, error } = await withTimeout(supabase.functions.invoke('check-subscription'), CHECK_SUBSCRIPTION_TIMEOUT_MS);
     if (error) {
       const msg = (error.message || '') + ' ' + JSON.stringify((error as any).context ?? {});
       if (/User from sub claim in JWT does not exist/i.test(msg)) {
@@ -123,25 +139,15 @@ async function buildProfile(
     .eq('user_id', supaUser.id)
     .maybeSingle();
 
-  const now = new Date();
-  const profileExpiryDate = profile?.premium_expires_at ? new Date(profile.premium_expires_at) : null;
-  const syncedExpiryDate = subscriptionEnd ? new Date(subscriptionEnd) : null;
-  const hasValidProfileExpiry = !!profileExpiryDate && profileExpiryDate > now;
-  const hasValidSyncedExpiry = !!syncedExpiryDate && syncedExpiryDate > now;
   const hasLifetimePremium = profile?.is_lifetime_premium === true;
-
-  let premiumType: PremiumType = 'free';
-  if (hasLifetimePremium || syncedPremiumType === 'lifetime') {
-    premiumType = 'lifetime';
-  } else if (synced && subscribed && syncedPremiumType === 'paid' && hasValidSyncedExpiry) {
-    premiumType = 'paid';
-  } else if (synced && subscribed && syncedPremiumType === 'trial' && (hasValidSyncedExpiry || hasValidProfileExpiry)) {
-    premiumType = 'trial';
-  } else if (synced && subscribed && hasValidSyncedExpiry) {
-    premiumType = 'paid';
-  } else if (hasValidProfileExpiry) {
-    premiumType = 'trial';
-  }
+  const premiumType = resolvePremiumType({
+    isLifetime: hasLifetimePremium,
+    profileExpiry: profile?.premium_expires_at ?? null,
+    synced,
+    subscribed,
+    syncedPremiumType,
+    subscriptionEnd,
+  });
 
   const isPremium = premiumType !== 'free';
   const resolvedSubscriptionEnd = premiumType === 'lifetime'
@@ -158,6 +164,20 @@ async function buildProfile(
     premium_type: premiumType,
     stripe_price_id: syncedPriceId,
   };
+}
+
+/** Local profile first so a 7-day signup trial is visible even if Stripe hangs. */
+async function hydratePremiumProfile(
+  supaUser: SupabaseUser,
+  apply: (profile: UserProfile | null) => void,
+  options: { sync?: boolean } = {},
+): Promise<UserProfile | null> {
+  const local = await buildProfile(supaUser, { sync: false });
+  apply(local);
+  if (options.sync === false) return local;
+  const synced = await buildProfile(supaUser, { sync: true });
+  apply(synced);
+  return synced;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -194,8 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSubscription = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      const profile = await buildProfile(session.user);
-      setUser(profile);
+      await hydratePremiumProfile(session.user, setUser);
     }
   }, []);
 
@@ -227,20 +246,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })();
 
       profileReadyRef.current = false;
-      void buildProfile(supaUser)
-        .then((profile) => {
-          if (isMounted) {
-            setUser(profile);
-            profileReadyRef.current = true;
-            startPeriodicSync(supaUser);
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            profileReadyRef.current = true;
-            startPeriodicSync(supaUser);
-          }
-        });
+      void hydratePremiumProfile(supaUser, (profile) => {
+        if (!isMounted) return;
+        setUser(profile);
+        if (!profileReadyRef.current) {
+          profileReadyRef.current = true;
+          startPeriodicSync(supaUser);
+        }
+      }).catch(() => {
+        if (isMounted) {
+          profileReadyRef.current = true;
+          startPeriodicSync(supaUser);
+        }
+      });
     };
 
     supabase.auth
@@ -298,10 +316,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (data.user) {
       setUser(toBasicProfile(data.user));
       profileReadyRef.current = false;
-      void buildProfile(data.user).then((profile) => {
+      void hydratePremiumProfile(data.user, (profile) => {
         setUser(profile);
-        profileReadyRef.current = true;
-        startPeriodicSync(data.user);
+        if (!profileReadyRef.current) {
+          profileReadyRef.current = true;
+          startPeriodicSync(data.user);
+        }
       }).catch(() => {
         profileReadyRef.current = true;
       });
