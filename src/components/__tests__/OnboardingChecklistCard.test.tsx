@@ -4,6 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import OnboardingChecklistCard from '../dashboard/OnboardingChecklistCard';
 
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'test-user-1' } }),
 }));
@@ -29,6 +35,7 @@ function renderCard(props: { hensCount: number; eggsCount: number; feedRecordsCo
 describe('OnboardingChecklistCard', () => {
   beforeEach(() => {
     localStorage.clear();
+    mockNavigate.mockReset();
     mockGetFlocks.mockReset();
     mockGetFlocks.mockResolvedValue([]);
   });
@@ -55,6 +62,19 @@ describe('OnboardingChecklistCard', () => {
     // Flock (mockad) + hönor + ägg = 3 klara steg; foder och insikter återstår.
     expect(await screen.findByText('3 av 5')).toBeInTheDocument();
     expect(screen.getByText('Låt ekonomin bli begriplig')).toBeInTheDocument();
+  });
+
+  it('skickar flock-steget till hen-sidan med create=flock', async () => {
+    renderCard({ hensCount: 0, eggsCount: 0, feedRecordsCount: 0 });
+    fireEvent.click(await screen.findByRole('button', { name: 'Skapa flock' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/app/hens?create=flock');
+  });
+
+  it('skickar höna-steget till hen-sidan med create=hen', async () => {
+    mockGetFlocks.mockResolvedValue([{ id: 'f1', name: 'Hönshuset' }]);
+    renderCard({ hensCount: 0, eggsCount: 0, feedRecordsCount: 0 });
+    fireEvent.click(await screen.findByRole('button', { name: 'Lägg till höna' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/app/hens?create=hen');
   });
 
   it('är dold om användaren stängt den tidigare', () => {
