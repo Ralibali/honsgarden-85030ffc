@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Smartphone, Share, MoreVertical, Sparkles, Check, AlertCircle } from 'lucide-react';
@@ -6,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { trackClick } from '@/hooks/useTracking';
 import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
+import { isOnboardingChecklistDismissed, shouldAutoShowPwaInstallPrompt } from '@/lib/pwaOnboardingGate';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 
 const STORAGE_KEY = 'app-coming-soon-dismissed';
@@ -76,6 +79,26 @@ export default function AppComingSoonDialog() {
   const [platform, setPlatform] = useState<Platform>('other');
   const [showSteps, setShowSteps] = useState(false);
 
+  const { data: hens, isFetched: hensReady } = useQuery({
+    queryKey: ['hens'],
+    queryFn: () => api.getHens(),
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+  const { data: eggs } = useQuery({
+    queryKey: ['eggs'],
+    queryFn: () => api.getEggs(),
+    enabled: !!userId,
+    staleTime: 60_000,
+  });
+
+  const canAutoShowInstall = shouldAutoShowPwaInstallPrompt({
+    hensReady: !!userId && hensReady,
+    hensCount: hens?.length ?? 0,
+    eggsCount: eggs?.length ?? 0,
+    checklistDismissed: isOnboardingChecklistDismissed(userId),
+  });
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -88,7 +111,7 @@ export default function AppComingSoonDialog() {
 
     let timer: ReturnType<typeof setTimeout> | undefined;
     const onSettings = window.location.pathname.startsWith('/app/settings');
-    if (!standalone && !onSettings && !readScoped(userId, STORAGE_KEY)) {
+    if (!standalone && !onSettings && !readScoped(userId, STORAGE_KEY) && canAutoShowInstall) {
       timer = setTimeout(() => {
         setOpen(true);
         trackClick('app_coming_soon_shown', {
@@ -117,7 +140,7 @@ export default function AppComingSoonDialog() {
       if (timer) clearTimeout(timer);
       window.removeEventListener(SHOW_APP_INSTALL_POPUP_EVENT, handleManualOpen);
     };
-  }, [userId]);
+  }, [userId, canAutoShowInstall]);
 
   const steps = useMemo(() => INSTRUCTIONS[platform] ?? [], [platform]);
   const hasSteps = steps.length > 0;

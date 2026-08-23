@@ -64,7 +64,7 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
       cta: 'Skapa flock',
       icon: Users,
       done: flocks.length > 0,
-      href: '/app/hens',
+      href: '/app/hens?create=flock',
     },
     {
       key: 'hens',
@@ -73,7 +73,7 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
       cta: 'Lägg till höna',
       icon: Bird,
       done: hensCount > 0,
-      href: '/app/hens',
+      href: '/app/hens?create=hen',
     },
     {
       key: 'egg',

@@ -3,7 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, X, Smartphone, Share, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { trackClick } from '@/hooks/useTracking';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
+import { isOnboardingChecklistDismissed, shouldAutoShowPwaInstallPrompt } from '@/lib/pwaOnboardingGate';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -14,12 +18,33 @@ const VISIT_COUNT_KEY = 'dashboard-visit-count';
 const MIN_VISITS_BEFORE_PROMPT = 3;
 
 export default function InstallAppCard() {
+  const { user } = useAuth();
   const [dismissed, setDismissed] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showSteps, setShowSteps] = useState(false);
   const [visitCount, setVisitCount] = useState(0);
+
+  const { data: hens, isFetched: hensReady } = useQuery({
+    queryKey: ['hens'],
+    queryFn: () => api.getHens(),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+  const { data: eggs } = useQuery({
+    queryKey: ['eggs'],
+    queryFn: () => api.getEggs(),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+
+  const canAutoShowInstall = shouldAutoShowPwaInstallPrompt({
+    hensReady: !!user?.id && hensReady,
+    hensCount: hens?.length ?? 0,
+    eggsCount: eggs?.length ?? 0,
+    checklistDismissed: isOnboardingChecklistDismissed(user?.id),
+  });
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches
@@ -51,7 +76,7 @@ export default function InstallAppCard() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  if (isStandalone || dismissed) return null;
+  if (isStandalone || dismissed || !canAutoShowInstall) return null;
   if (visitCount < MIN_VISITS_BEFORE_PROMPT) return null;
   // Android/Chrome: visa bara när browsern faktiskt kan installera.
   // iOS: visa hjälpsteg (inget beforeinstallprompt finns där).

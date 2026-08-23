@@ -12,6 +12,8 @@ import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { hapticSuccess } from '@/lib/haptics';
 import { todayLocal } from '@/lib/datetime';
+import { api } from '@/lib/api';
+import { readActiveFlockId, resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 
 const ONBOARDING_KEY = 'honsgarden-onboarding-done';
 const getOnboardingKey = (userId: string) => `${ONBOARDING_KEY}-${userId}`;
@@ -140,12 +142,18 @@ export default function OnboardingGuide() {
     if (!henName.trim() || !user?.id) return;
     setSaving(true);
     try {
+      const flocks = await api.getFlocks();
+      const flockId = resolveFlockIdForHenCreate({
+        preferredFlockId: readActiveFlockId(user.id),
+        flocks,
+      });
       const { data: inserted, error } = await supabase.from('hens').insert({
         name: henName.trim(),
         breed: henBreed.trim() || null,
         user_id: user.id,
         hen_type: 'hen',
         is_active: true,
+        flock_id: flockId,
       }).select('id').single();
       if (error) throw error;
       setCreatedHenName(henName.trim());

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Share, Smartphone, Bell, Zap, WifiOff } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { trackClick } from '@/hooks/useTracking';
+import { api } from '@/lib/api';
+import { isOnboardingChecklistDismissed, shouldAutoShowPwaInstallPrompt } from '@/lib/pwaOnboardingGate';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -23,6 +26,26 @@ export default function PwaInstallOnboarding() {
   const [isIOS, setIsIOS] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
+  const { data: hens, isFetched: hensReady } = useQuery({
+    queryKey: ['hens'],
+    queryFn: () => api.getHens(),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+  const { data: eggs } = useQuery({
+    queryKey: ['eggs'],
+    queryFn: () => api.getEggs(),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+
+  const canAutoShowInstall = shouldAutoShowPwaInstallPrompt({
+    hensReady: !!user?.id && hensReady,
+    hensCount: hens?.length ?? 0,
+    eggsCount: eggs?.length ?? 0,
+    checklistDismissed: isOnboardingChecklistDismissed(user?.id),
+  });
+
   useEffect(() => {
     if (loading || !user?.id) return;
 
@@ -33,10 +56,11 @@ export default function PwaInstallOnboarding() {
 
     const seenKey = `${STORAGE_PREFIX}${user.id}`;
     if (localStorage.getItem(seenKey)) return;
+    if (!canAutoShowInstall) return;
 
     setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
 
-    // Vänta lite så det inte krockar med onboarding-wizarden
+    // Vänta tills onboarding är klar – visa sedan PWA-installationen
     const timer = setTimeout(() => {
       setOpen(true);
       trackClick('pwa_onboarding_shown', { elementText: 'auto_open' });
@@ -52,7 +76,7 @@ export default function PwaInstallOnboarding() {
       clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
-  }, [user?.id, loading]);
+  }, [user?.id, loading, canAutoShowInstall]);
 
   const markSeen = () => {
     if (user?.id) {

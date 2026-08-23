@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,10 +18,14 @@ import { Textarea } from '@/components/ui/textarea';
 import HenAvatar from '@/components/HenAvatar';
 import { HEN_TYPES, isPullet, isRooster, isLayingHen, henTypeLabel, henTypeEmoji, isPulletReadyToLay } from '@/lib/henHelpers';
 import PageHeader from '@/components/PageHeader';
+import { useAuth } from '@/hooks/useAuth';
+import { readActiveFlockId, resolveFlockIdForHenCreate, writeActiveFlockId } from '@/lib/flockSelection';
 
 export default function Hens() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [showInactive, setShowInactive] = useState(false);
   const [tab, setTab] = useState('alla');
   const [selectedFlock, setSelectedFlock] = useState<string | null>(null);
@@ -53,11 +57,33 @@ export default function Hens() {
 
   const isLoading = hensLoading || flocksLoading;
 
+  const preferredFlockId = resolveFlockIdForHenCreate({
+    preferredFlockId: selectedFlock || readActiveFlockId(user?.id),
+    flocks,
+  });
+  const preferredFlockName = flocks.find((flock) => flock.id === preferredFlockId)?.name;
+
+  useEffect(() => {
+    const create = searchParams.get('create');
+    if (create !== 'flock' && create !== 'hen') return;
+    if (create === 'flock') setFlockDialogOpen(true);
+    if (create === 'hen') setHenDialogOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('create');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!henDialogOpen || !preferredFlockId) return;
+    setHenForm((prev) => (prev.flock_id ? prev : { ...prev, flock_id: preferredFlockId }));
+  }, [henDialogOpen, preferredFlockId]);
+
   const createHenMutation = useMutation({
     mutationFn: async (data: Parameters<typeof api.createHen>[0]) => {
-      // Auto-assign to default flock if no flock selected
       if (!data.flock_id) {
-        const defaultFlock = await api.getOrCreateDefaultFlock();
+        const defaultFlock = await api.getOrCreateDefaultFlock(
+          selectedFlock || readActiveFlockId(user?.id),
+        );
         data.flock_id = defaultFlock.id;
       }
       return api.createHen(data);
@@ -77,7 +103,15 @@ export default function Hens() {
       const labelMap: Record<string, string> = { hen: 'Höna tillagd! 🐔', rooster: 'Tupp tillagd! 🐓', pullet: 'Unghöna tillagd! 🐣' };
       toast({ title: labelMap[henForm.hen_type] ?? 'Tillagd!' });
       setHenDialogOpen(false);
-      setHenForm({ name: '', breed: '', color: '', birth_date: '', notes: '', hen_type: 'hen', flock_id: '' });
+      setHenForm({
+        name: '',
+        breed: '',
+        color: '',
+        birth_date: '',
+        notes: '',
+        hen_type: 'hen',
+        flock_id: preferredFlockId || '',
+      });
     },
     onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
@@ -108,8 +142,11 @@ export default function Hens() {
 
   const createFlockMutation = useMutation({
     mutationFn: (data: Parameters<typeof api.createFlock>[0]) => api.createFlock(data),
-    onSuccess: () => {
+    onSuccess: (flock) => {
       queryClient.invalidateQueries({ queryKey: ['flocks'] });
+      writeActiveFlockId(user?.id, flock.id);
+      setSelectedFlock(flock.id);
+      setHenForm((prev) => ({ ...prev, flock_id: flock.id }));
       toast({ title: 'Flock skapad! 🐔' });
       setFlockDialogOpen(false);
       setFlockForm({ name: '', description: '' });
@@ -302,10 +339,10 @@ export default function Hens() {
                   <Label>Flock</Label>
                   <Select value={henForm.flock_id} onValueChange={(v) => setHenForm({ ...henForm, flock_id: v === 'auto' ? '' : v })}>
                     <SelectTrigger className="mt-1.5 rounded-xl">
-                      <SelectValue placeholder="Automatisk (Min flock)" />
+                      <SelectValue placeholder={preferredFlockName ? `Automatisk (${preferredFlockName})` : 'Automatisk (Min flock)'} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="auto">🏠 Automatisk (Min flock)</SelectItem>
+                      <SelectItem value="auto">🏠 Automatisk ({preferredFlockName || 'Min flock'})</SelectItem>
                       {(flocks).map((f) => (
                         <SelectItem key={f.id} value={f.id}>🐔 {f.name}</SelectItem>
                       ))}
@@ -388,7 +425,10 @@ export default function Hens() {
                 <Card
                   key={flock.id}
                   className="border-border/50 shadow-sm card-hover cursor-pointer group"
-                  onClick={() => setSelectedFlock(flock.id)}
+                  onClick={() => {
+                    setSelectedFlock(flock.id);
+                    writeActiveFlockId(user?.id, flock.id);
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

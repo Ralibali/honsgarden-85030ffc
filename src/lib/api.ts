@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 
 // ==================== TYPES ====================
 
@@ -492,15 +493,13 @@ export async function getFlocks(): Promise<Flock[]> {
   return data ?? [];
 }
 
-export async function getOrCreateDefaultFlock(): Promise<Flock> {
+export async function getOrCreateDefaultFlock(preferredFlockId?: string | null): Promise<Flock> {
   const userId = await getUserId();
-  const { data: existing } = await supabase
-    .from('flocks')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('name', 'Min flock')
-    .maybeSingle();
+  const flocks = await getFlocks();
+  const resolvedId = resolveFlockIdForHenCreate({ preferredFlockId, flocks });
+  const existing = resolvedId ? flocks.find((flock) => flock.id === resolvedId) : undefined;
   if (existing) return existing;
+
   const { data, error } = await supabase
     .from('flocks')
     .insert({ name: 'Min flock', description: 'Standardflock', user_id: userId })
