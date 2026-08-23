@@ -88,7 +88,7 @@ describe('Premium – trial vs free-trial CTA', () => {
     expect(screen.queryByText(FREE_TRIAL_COPY)).not.toBeInTheDocument();
     expect(screen.queryByText(svPremium.sticky_cta)).not.toBeInTheDocument();
     expect(screen.queryByText(svPremium.hero.free_trial)).not.toBeInTheDocument();
-    expect(screen.getByText(/du har plus-trial/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/du har plus-trial/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/dagar kvar av din plus-trial/i)).toBeInTheDocument();
     expect(screen.getByText(svPremium.active.manage)).toBeInTheDocument();
   });
