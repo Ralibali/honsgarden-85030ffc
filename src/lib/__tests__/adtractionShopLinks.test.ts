@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADTRACTION_SOURCE_ID,
+  BONDEN_AD_ID,
+  BONDEN_REWRITE_SLUGS,
   FIRSTVET_AD_ID,
   FIRSTVET_REWRITE_SLUGS,
   OUTL1_AD_ID,
@@ -12,6 +14,7 @@ import {
   WEXTHUSET_AD_ID,
   WEXTHUSET_REWRITE_SLUGS,
   extractHrefValues,
+  isNakedBondenShopHref,
   isNakedFirstVetShopHref,
   isNakedOutl1ShopHref,
   isNakedPLindbergShopHref,
@@ -23,13 +26,13 @@ import {
 /** Representative HTML taken from the live blog_posts content (hrefs + link text). */
 const PAGE_FIXTURES: Record<string, string> = {
   'bygga-honshus':
-    'stor vardagsvinst. <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">Jämför hönsluckor hos P-Lindberg</a> och <a href="https://www.granngarden.se/">Granngården</a>',
+    'stor vardagsvinst. <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">Jämför hönsluckor hos P-Lindberg</a> och <a href="https://www.granngarden.se/">Granngården</a> <a href="https://www.bonden.se/">Bonden</a>',
   'klacka-agg':
     'Jämför gärna hos <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">P-Lindberg</a> och <a href="https://www.granngarden.se/">Granngården</a>',
   'vad-ater-hons':
     '<a href="https://www.bonden.se/" target="_blank">Bonden.se</a>, <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a></li><li><strong>Vitamintillskott</strong> – <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a>, <a href="https://www.vetzoo.se/">Vetzoo</a> <a href="https://www.wexthuset.com/">Wexthuset</a> <a href="https://firstvet.com/sv/butik">FirstVet</a>',
   'kopa-hons':
-    '<a href="https://www.granngarden.se/">Granngården</a> <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">Se foderautomater hos P-Lindberg</a>',
+    '<a href="https://www.granngarden.se/">Granngården</a> <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">Se foderautomater hos P-Lindberg</a> <a href="https://www.bonden.se/">Bonden</a>',
   'vattenautomat-hons':
     '<a href="https://www.bonden.se/" target="_blank">Bonden.se</a>, <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a></li><li><strong>Äppelvinäger</strong> – <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a> <a href="https://www.wexthuset.com/">Wexthuset</a>',
   'varmelampa-hons':
@@ -37,13 +40,27 @@ const PAGE_FIXTURES: Record<string, string> = {
   'varprede-hons':
     'kan du börja här: <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">jämför reden hos P-Lindberg</a> och <a href="https://www.bonden.se/">Bonden</a>',
   'sittpinnar-hons':
-    '<a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a></li><li><strong>Hönshusinredning</strong> – <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/">Wexthuset</a>',
+    '<a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a></li><li><strong>Hönshusinredning</strong> – <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/">Wexthuset</a> <a href="https://www.bonden.se/">Bonden</a>',
   'kalkben-hos-hons':
-    '<a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a></li><li><strong>Insektsmedel</strong> – <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/" target="_blank">Wexthuset.com</a> <a href="https://firstvet.com/sv/butik">FirstVet</a>',
+    '<a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a></li><li><strong>Insektsmedel</strong> – <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/" target="_blank">Wexthuset.com</a> <a href="https://firstvet.com/sv/butik">FirstVet</a> <a href="https://www.bonden.se/">Bonden</a>',
   'kvalster-hons':
-    '<strong>Röd hönskvalstermedel</strong> – <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a> <a href="https://firstvet.com/sv/butik">FirstVet</a> <a href="https://www.wexthuset.com/">Wexthuset</a>',
+    '<strong>Röd hönskvalstermedel</strong> – <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a> <a href="https://firstvet.com/sv/butik">FirstVet</a> <a href="https://www.wexthuset.com/">Wexthuset</a> <a href="https://www.bonden.se/">Bonden</a>',
   'aggledarinflammation-hons':
     '<strong>Digital veterinärrådgivning</strong> – <a href="https://firstvet.com/sv/butik" target="_blank">FirstVet.com</a></li><li><strong>Djurhälsoprodukter</strong> – <a href="https://www.vetzoo.se/">VetZoo.se</a>, <a href="https://vetapotek.se/">Vetapotek.se</a>',
+  'hur-manga-agg-lagger-en-hona':
+    '<a href="https://www.bonden.se/" target="_blank">Bonden.se</a> <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a> <a href="https://www.wexthuset.com/" target="_blank">Wexthuset.com</a>',
+  'brahma-hons':
+    '<a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">Se värpreden hos P-Lindberg</a> <a href="https://www.granngarden.se/" target="_blank" rel="nofollow sponsored">Jämför vattenautomater hos Granngården</a> <a href="https://www.bonden.se/" target="_blank" rel="nofollow sponsored">Se foderutrustning hos Bonden</a>',
+  'hons-pa-vintern':
+    '<a href="https://www.bonden.se/" target="_blank">Bonden.se</a> <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/" target="_blank">Wexthuset.com</a> <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a>',
+  'skaffa-hons-nyborjare':
+    '<a href="https://www.bonden.se/" target="_blank">Bonden.se</a> <a href="https://www.p-lindberg.se/" target="_blank">P-Lindberg.se</a> <a href="https://www.wexthuset.com/" target="_blank">Wexthuset.com</a> <a href="https://vetapotek.se/" target="_blank">Vetapotek.se</a> <a href="https://firstvet.com/sv/butik" target="_blank">FirstVet.com</a>',
+  'fjaderplockning-hons':
+    '<a href="https://www.granngarden.se/" target="_blank" rel="nofollow sponsored">Granngården</a> <a href="https://www.p-lindberg.se/" target="_blank" rel="nofollow sponsored">P-Lindberg</a>',
+  'ruggning-hons':
+    '<a href="https://www.granngarden.se/" target="_blank" rel="nofollow sponsored">foder och tillskott hos Granngården</a> <a href="https://www.bonden.se/" target="_blank" rel="nofollow sponsored">fler produkter hos Bonden</a>',
+  'paduan-hons':
+    '<a href="https://www.bonden.se/" target="_blank" rel="nofollow sponsored">Bonden</a> <a href="https://www.granngarden.se/" target="_blank" rel="nofollow sponsored">Granngården</a>',
 };
 
 const KOPGUIDE_FIXTURE = [
@@ -68,6 +85,7 @@ function expectNoNakedShopHrefs(
     wexthuset = false,
     firstvet = false,
     outl1 = false,
+    bonden = false,
   } = {},
 ) {
   const hrefs = extractHrefValues(html);
@@ -85,6 +103,9 @@ function expectNoNakedShopHrefs(
   }
   if (outl1) {
     expect(hrefs.filter(isNakedOutl1ShopHref), html).toEqual([]);
+  }
+  if (bonden) {
+    expect(hrefs.filter(isNakedBondenShopHref), html).toEqual([]);
   }
 }
 
@@ -151,6 +172,16 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     );
   });
 
+  it('matches existing Bonden product-feed style (url= destination, not encoded)', () => {
+    const html = rewriteNakedShopAffiliateHrefs(
+      '<a href="https://www.bonden.se/">Bonden.se</a>',
+      'vad-ater-hons',
+    );
+    expect(html).toContain(
+      `https://pin.bonden.se/t/t?a=${BONDEN_AD_ID}&amp;as=${ADTRACTION_SOURCE_ID}&amp;t=2&amp;tk=1&amp;url=https://www.bonden.se/`,
+    );
+  });
+
   it.each(PLINDBERG_REWRITE_SLUGS)(
     'rewrites every naked P-Lindberg shop href on %s and keeps link text',
     (slug) => {
@@ -168,7 +199,7 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     },
   );
 
-  it.each(VETAPOTEK_REWRITE_SLUGS)(
+  it.each(VETAPOTEK_REWRITE_SLUGS.filter((slug) => slug !== 'honshus-2026-kompletta-kopguiden'))(
     'rewrites every naked Vetapotek shop href on %s and keeps link text',
     (slug) => {
       const source = PAGE_FIXTURES[slug];
@@ -219,6 +250,23 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     },
   );
 
+  it.each(BONDEN_REWRITE_SLUGS)(
+    'rewrites every naked Bonden shop href on %s and keeps link text',
+    (slug) => {
+      const source = PAGE_FIXTURES[slug];
+      expect(source, `missing fixture for ${slug}`).toBeTruthy();
+      const rewritten = rewriteNakedShopAffiliateHrefs(source, slug);
+      const hrefs = extractHrefValues(rewritten);
+
+      expectNoNakedShopHrefs(rewritten, { bonden: true });
+      expectTracked(hrefs, 'pin.bonden.se', BONDEN_AD_ID);
+
+      const originalText = source.replace(/<[^>]+>/g, '');
+      const rewrittenText = rewritten.replace(/<[^>]+>/g, '');
+      expect(rewrittenText).toBe(originalText);
+    },
+  );
+
   it.each(OUTL1_REWRITE_SLUGS)(
     'rewrites every naked Outl1 shop href on %s and keeps link text',
     (slug) => {
@@ -242,24 +290,32 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     },
   );
 
-  it('does not wrap Granngården, Bonden or Vetzoo', () => {
+  it('does not wrap Granngården or Vetzoo (no program a=)', () => {
     const rewritten = rewriteNakedShopAffiliateHrefs(PAGE_FIXTURES['vad-ater-hons'], 'vad-ater-hons');
-    expect(rewritten).toContain('href="https://www.bonden.se/"');
     expect(rewritten).toContain('href="https://www.vetzoo.se/"');
+    expect(rewritten).not.toContain('href="https://www.bonden.se/"');
+    expect(rewritten).toContain('pin.bonden.se');
     expect(rewritten).not.toContain('outl1');
     expect(rewritten).not.toContain('granngarden');
   });
 
-  it('leaves Granngården naked on pages that also have P-Lindberg', () => {
+  it('leaves Granngården naked on pages that also have P-Lindberg and Bonden', () => {
     const rewritten = rewriteNakedShopAffiliateHrefs(PAGE_FIXTURES['bygga-honshus'], 'bygga-honshus');
     expect(rewritten).toContain('href="https://www.granngarden.se/"');
+    expect(rewritten).toContain('pin.bonden.se');
+    expect(rewritten).toContain('do.p-lindberg.se');
   });
 
-  it('does not wrap P-Lindberg or Vetapotek on the köpguide slug', () => {
+  it('does not wrap P-Lindberg on the köpguide slug; wraps remaining naked Vetapotek', () => {
     const source = `${KOPGUIDE_FIXTURE} <a href="https://www.p-lindberg.se/">P-Lindberg</a>`;
     const rewritten = rewriteNakedShopAffiliateHrefs(source, 'honshus-2026-kompletta-kopguiden');
     expect(rewritten).toContain('href="https://www.p-lindberg.se/"');
-    expect(rewritten).toContain('href="https://vetapotek.se/produkt/kosttillskott-eclipse-biofarmab-kiselgur-forte-500-g-7330824007989/"');
+    expect(rewritten).not.toContain(
+      'href="https://vetapotek.se/produkt/kosttillskott-eclipse-biofarmab-kiselgur-forte-500-g-7330824007989/"',
+    );
+    expect(rewritten).toContain(
+      `https://id.vetapotek.se/t/t?a=${VETAPOTEK_AD_ID}&amp;as=${ADTRACTION_SOURCE_ID}&amp;t=2&amp;tk=1&amp;url=https://vetapotek.se/produkt/kosttillskott-eclipse-biofarmab-kiselgur-forte-500-g-7330824007989/`,
+    );
     expect(rewritten).toContain('do.p-lindberg.se/t/t?a=1954027467');
     expect(rewritten).toContain('id.vetapotek.se/t/t?a=1701463577');
   });
@@ -268,6 +324,12 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     const source = '<a href="https://outl1.se/honshus-med-utegard?var=12423">Lyfco</a>';
     const rewritten = rewriteNakedShopAffiliateHrefs(source, 'bygga-honshus');
     expect(rewritten).toBe(source);
+  });
+
+  it('does not wrap Bonden on slugs that have no existing Bonden href allowlist entry', () => {
+    const source = '<a href="https://www.bonden.se/">Bonden</a>';
+    expect(rewriteNakedShopAffiliateHrefs(source, 'klacka-agg')).toBe(source);
+    expect(rewriteNakedShopAffiliateHrefs(source, 'fjaderplockning-hons')).toBe(source);
   });
 
   it('does not double-wrap already tracked köpguide / Outl1 links', () => {
@@ -299,7 +361,9 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     );
     expect(aggledar).not.toContain('wexthuset');
     expect(aggledar).toContain('do.shop.firstvet.com');
-    expect(aggledar).toContain('href="https://vetapotek.se/"');
+    expect(aggledar).not.toContain('href="https://vetapotek.se/"');
+    expect(aggledar).toContain('id.vetapotek.se');
+    expect(aggledar).toContain('href="https://www.vetzoo.se/"');
   });
 
   it.each(Object.keys(NO_STORE_FIXTURES))('does not add store links to %s', (slug) => {
@@ -315,11 +379,13 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
   });
 
   it('rewrites markdown shop links the same way', () => {
-    const md = 'Se [P-Lindberg](https://www.p-lindberg.se/) och [Vetapotek](https://vetapotek.se/)';
+    const md = 'Se [P-Lindberg](https://www.p-lindberg.se/), [Vetapotek](https://vetapotek.se/) och [Bonden](https://www.bonden.se/)';
     const rewritten = rewriteNakedShopAffiliateHrefs(md, 'sittpinnar-hons');
     expect(rewritten).toContain(`https://do.p-lindberg.se/t/t?a=${PLINDBERG_AD_ID}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=https%3A%2F%2Fwww.p-lindberg.se%2F`);
     expect(rewritten).toContain(`https://id.vetapotek.se/t/t?a=${VETAPOTEK_AD_ID}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=https://vetapotek.se/`);
+    expect(rewritten).toContain(`https://pin.bonden.se/t/t?a=${BONDEN_AD_ID}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=https://www.bonden.se/`);
     expect(rewritten).toContain('[P-Lindberg]');
     expect(rewritten).toContain('[Vetapotek]');
+    expect(rewritten).toContain('[Bonden]');
   });
 });

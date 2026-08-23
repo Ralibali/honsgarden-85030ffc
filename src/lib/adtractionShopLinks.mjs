@@ -1,7 +1,8 @@
 /**
  * Wraps naked shop hrefs with the Adtraction tracking prefix already used
- * on /blogg/honshus-2026-kompletta-kopguiden (and owner text-link IDs).
+ * on /blogg/honshus-2026-kompletta-kopguiden (and owner / in-repo program IDs).
  *
+ * Granngården and Vetzoo stay naked (no real program `a=`).
  * Keep in sync with `src/lib/adtractionShopLinks.ts` (React app + tests).
  */
 
@@ -11,6 +12,7 @@ export const VETAPOTEK_AD_ID = '1701463575';
 export const WEXTHUSET_AD_ID = '1577762835';
 export const FIRSTVET_AD_ID = '1615741779';
 export const OUTL1_AD_ID = '1728546059';
+export const BONDEN_AD_ID = '1960530621';
 
 export const PLINDBERG_REWRITE_SLUGS = [
   'bygga-honshus',
@@ -22,6 +24,11 @@ export const PLINDBERG_REWRITE_SLUGS = [
   'varprede-hons',
   'sittpinnar-hons',
   'kalkben-hos-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'brahma-hons',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
+  'fjaderplockning-hons',
 ];
 
 export const VETAPOTEK_REWRITE_SLUGS = [
@@ -30,6 +37,11 @@ export const VETAPOTEK_REWRITE_SLUGS = [
   'sittpinnar-hons',
   'kalkben-hos-hons',
   'kvalster-hons',
+  'honshus-2026-kompletta-kopguiden',
+  'aggledarinflammation-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
 ];
 
 export const WEXTHUSET_REWRITE_SLUGS = [
@@ -39,6 +51,9 @@ export const WEXTHUSET_REWRITE_SLUGS = [
   'kvalster-hons',
   'kalkben-hos-hons',
   'vad-ater-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
 ];
 
 export const FIRSTVET_REWRITE_SLUGS = [
@@ -47,6 +62,25 @@ export const FIRSTVET_REWRITE_SLUGS = [
   'kalkben-hos-hons',
   'vad-ater-hons',
   'aggledarinflammation-hons',
+  'skaffa-hons-nyborjare',
+];
+
+export const BONDEN_REWRITE_SLUGS = [
+  'bygga-honshus',
+  'vad-ater-hons',
+  'kopa-hons',
+  'vattenautomat-hons',
+  'varmelampa-hons',
+  'varprede-hons',
+  'sittpinnar-hons',
+  'kalkben-hos-hons',
+  'kvalster-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'brahma-hons',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
+  'ruggning-hons',
+  'paduan-hons',
 ];
 
 export const OUTL1_REWRITE_SLUGS = ['honshus-2026-kompletta-kopguiden'];
@@ -86,6 +120,13 @@ const PROGRAMS = [
     adId: OUTL1_AD_ID,
     encodeDestination: false,
     isNakedHost: (hostname) => hostname === 'www.outl1.se' || hostname === 'outl1.se',
+  },
+  {
+    slugs: BONDEN_REWRITE_SLUGS,
+    trackingHost: 'pin.bonden.se',
+    adId: BONDEN_AD_ID,
+    encodeDestination: false,
+    isNakedHost: (hostname) => hostname === 'www.bonden.se' || hostname === 'bonden.se',
   },
 ];
 
@@ -191,4 +232,11 @@ export function isNakedOutl1ShopHref(href) {
   if (!parsed) return false;
   const host = parsed.hostname.toLowerCase();
   return host === 'www.outl1.se' || host === 'outl1.se';
+}
+
+export function isNakedBondenShopHref(href) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.bonden.se' || host === 'bonden.se';
 }

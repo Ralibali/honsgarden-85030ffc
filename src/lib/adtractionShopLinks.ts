@@ -1,9 +1,12 @@
 /**
  * Wraps naked shop hrefs with the Adtraction tracking prefix already used
- * on /blogg/honshus-2026-kompletta-kopguiden (and owner text-link IDs).
+ * on /blogg/honshus-2026-kompletta-kopguiden (and owner / in-repo program IDs).
  *
  * Only rewrites existing hrefs on an explicit slug allowlist. Does not add
- * links, CTAs, or new merchants. Granngården is left naked (no program `a=`).
+ * links, CTAs, or new merchants.
+ *
+ * Left naked on purpose (no real program `a=` in-repo or on the köpguide):
+ * Granngården (`id.granngarden.se` is Microsoft login, not Adtraction) and Vetzoo.
  *
  * Keep in sync with `src/lib/adtractionShopLinks.mjs` (prerender).
  */
@@ -25,6 +28,12 @@ export const FIRSTVET_AD_ID = '1615741779';
 /** Channel `a=` provided by the program owner for Outl1 text links. */
 export const OUTL1_AD_ID = '1728546059';
 
+/**
+ * Bonden deeplink / product-feed `a=` already used in-repo with `url=`
+ * (`affiliateProducts.ts`). Banner-only IDs (1960530789 / 0731 / 0630) have no `url=`.
+ */
+export const BONDEN_AD_ID = '1960530621';
+
 export const PLINDBERG_REWRITE_SLUGS = [
   'bygga-honshus',
   'klacka-agg',
@@ -35,6 +44,11 @@ export const PLINDBERG_REWRITE_SLUGS = [
   'varprede-hons',
   'sittpinnar-hons',
   'kalkben-hos-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'brahma-hons',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
+  'fjaderplockning-hons',
 ] as const;
 
 export const VETAPOTEK_REWRITE_SLUGS = [
@@ -43,6 +57,11 @@ export const VETAPOTEK_REWRITE_SLUGS = [
   'sittpinnar-hons',
   'kalkben-hos-hons',
   'kvalster-hons',
+  'honshus-2026-kompletta-kopguiden',
+  'aggledarinflammation-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
 ] as const;
 
 export const WEXTHUSET_REWRITE_SLUGS = [
@@ -52,6 +71,9 @@ export const WEXTHUSET_REWRITE_SLUGS = [
   'kvalster-hons',
   'kalkben-hos-hons',
   'vad-ater-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
 ] as const;
 
 export const FIRSTVET_REWRITE_SLUGS = [
@@ -60,6 +82,25 @@ export const FIRSTVET_REWRITE_SLUGS = [
   'kalkben-hos-hons',
   'vad-ater-hons',
   'aggledarinflammation-hons',
+  'skaffa-hons-nyborjare',
+] as const;
+
+export const BONDEN_REWRITE_SLUGS = [
+  'bygga-honshus',
+  'vad-ater-hons',
+  'kopa-hons',
+  'vattenautomat-hons',
+  'varmelampa-hons',
+  'varprede-hons',
+  'sittpinnar-hons',
+  'kalkben-hos-hons',
+  'kvalster-hons',
+  'hur-manga-agg-lagger-en-hona',
+  'brahma-hons',
+  'hons-pa-vintern',
+  'skaffa-hons-nyborjare',
+  'ruggning-hons',
+  'paduan-hons',
 ] as const;
 
 export const OUTL1_REWRITE_SLUGS = ['honshus-2026-kompletta-kopguiden'] as const;
@@ -113,6 +154,14 @@ const PROGRAMS: ShopProgram[] = [
     encodeDestination: false,
     isNakedHost: (hostname) => hostname === 'www.outl1.se' || hostname === 'outl1.se',
   },
+  {
+    slugs: BONDEN_REWRITE_SLUGS,
+    trackingHost: 'pin.bonden.se',
+    adId: BONDEN_AD_ID,
+    // Existing Bonden product-feed links pass `url=` unencoded.
+    encodeDestination: false,
+    isNakedHost: (hostname) => hostname === 'www.bonden.se' || hostname === 'bonden.se',
+  },
 ];
 
 const HTML_HREF_RE = /href=(["'])([^"']+)\1/gi;
@@ -158,7 +207,7 @@ function rewriteIfNakedShopUrl(href: string, slug: string | undefined, htmlAttri
 /**
  * Rewrite naked shop hrefs on allowlisted slugs.
  * Already-tracked `do.p-lindberg.se` / `id.vetapotek.se` / `go.wexthuset.com` /
- * `do.shop.firstvet.com` / `do.outl1.se` links are left alone.
+ * `do.shop.firstvet.com` / `do.outl1.se` / `pin.bonden.se` links are left alone.
  */
 export function rewriteNakedShopAffiliateHrefs(content: string, slug?: string): string {
   if (!slug || !content) return content;
@@ -223,4 +272,11 @@ export function isNakedOutl1ShopHref(href: string): boolean {
   if (!parsed) return false;
   const host = parsed.hostname.toLowerCase();
   return host === 'www.outl1.se' || host === 'outl1.se';
+}
+
+export function isNakedBondenShopHref(href: string): boolean {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const host = parsed.hostname.toLowerCase();
+  return host === 'www.bonden.se' || host === 'bonden.se';
 }
