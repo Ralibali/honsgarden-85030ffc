@@ -8,7 +8,14 @@
     "badge": "Premium with AI, insights and finance",
     "title": "Turn Honsgarden into your smart flock assistant",
     "free_trial": "🎁 Seven days of free premium for new users",
+    "trial_status": "You have a Plus trial",
+    "trial_status_days": "You have a Plus trial · {{count}} days left",
     "sync_status": "Sync premium status"
+  },
+  "trial": {
+    "title": "You have a Plus trial",
+    "subtitle": "Agda, insights and the smarter tools are already unlocked.",
+    "subtitle_days": "{{count}} days left on your Plus trial. Cancel or keep Plus whenever you want."
   },
   "active": {
     "title": "Premium is active",

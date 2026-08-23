@@ -8,7 +8,14 @@
     "badge": "Lite mer hjälp i vardagen",
     "title": "Mer hjälp när din hönsgård börjar leva i appen",
     "free_trial": "🌿 Prova Plus i lugn och ro i 7 dagar",
+    "trial_status": "Du har Plus-trial",
+    "trial_status_days": "Du har Plus-trial · {{count}} dagar kvar",
     "sync_status": "Kontrollera Plus-status"
+  },
+  "trial": {
+    "title": "Du har Plus-trial",
+    "subtitle": "Agda, insikter och de smartare verktygen är redan upplåsta.",
+    "subtitle_days": "{{count}} dagar kvar av din Plus-trial. Avsluta eller behåll Plus när du vill."
   },
   "active": {
     "title": "Plus är igång",

@@ -13,6 +13,7 @@ import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent } from '@/lib/analytics';
+import { getPremiumEntryState } from '@/lib/premiumEntry';
 import PremiumValueStats from '@/components/premium/PremiumValueStats';
 
 type BillingPlan = 'monthly' | 'yearly';
@@ -28,8 +29,18 @@ export default function Premium() {
   const [syncing, setSyncing] = useState(false);
   const [searchParams] = useSearchParams();
   const premiumType = user?.premium_type;
-  const isPaidPremium = premiumType === 'paid' || premiumType === 'lifetime';
-  const isPremium = isPaidPremium;
+  const {
+    isPaidPremium,
+    isTrialing,
+    showFreeTrialCta,
+    showTrialStatus,
+    showManageSubscription,
+    allowPaidCheckout,
+    trialDaysLeft,
+  } = getPremiumEntryState({
+    premiumType,
+    subscriptionEnd: user?.subscription_end,
+  });
   const intl = isInternationalDomain();
   const lang = (i18n.language || 'sv').startsWith('en') ? 'en' : 'sv';
   const brand = brandName();
@@ -291,9 +302,16 @@ export default function Premium() {
           </h1>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            {!isPremium && (
+            {showFreeTrialCta && (
               <div className="inline-flex items-center gap-2 bg-success/15 text-success-foreground border border-success/25 px-4 py-2 rounded-full text-sm font-medium">
                 {t('hero.free_trial')}
+              </div>
+            )}
+            {showTrialStatus && (
+              <div className="inline-flex items-center gap-2 bg-primary/15 text-primary border border-primary/25 px-4 py-2 rounded-full text-sm font-medium">
+                {trialDaysLeft === null
+                  ? t('hero.trial_status')
+                  : t('hero.trial_status_days', { count: trialDaysLeft })}
               </div>
             )}
             <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={handleSyncPremium} disabled={syncing}>
@@ -304,12 +322,20 @@ export default function Premium() {
         </div>
       </section>
 
-      {isPremium && (
+      {showManageSubscription && (
         <Card className="border-primary/25 bg-primary/[0.04]">
           <CardContent className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="font-serif text-xl text-foreground">{t('active.title')}</h2>
-              <p className="text-sm text-muted-foreground">{t('active.subtitle')}</p>
+              <h2 className="font-serif text-xl text-foreground">
+                {isTrialing ? t('trial.title') : t('active.title')}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {isTrialing
+                  ? trialDaysLeft === null
+                    ? t('trial.subtitle')
+                    : t('trial.subtitle_days', { count: trialDaysLeft })
+                  : t('active.subtitle')}
+              </p>
             </div>
             <Button onClick={handleManageSubscription} disabled={loadingPortal} className="rounded-xl">
               {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -320,9 +346,9 @@ export default function Premium() {
       )}
 
       {/* Personligt värdebevis: användarens egen uppbyggda data */}
-      {!isPremium && user && <PremiumValueStats />}
+      {showFreeTrialCta && user && <PremiumValueStats />}
 
-      {!isPremium && !intl && (
+      {showFreeTrialCta && !intl && (
         <p className="text-center text-xs text-muted-foreground -mb-2">
           {t('social_proof')}
         </p>
@@ -380,10 +406,10 @@ export default function Premium() {
                 className="w-full rounded-xl"
                 variant={plan.highlighted ? 'default' : 'outline'}
                 onClick={() => handleCheckout(plan.id)}
-                disabled={loadingPlan !== null || isPremium}
+                disabled={loadingPlan !== null || !allowPaidCheckout}
               >
                 {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isPremium ? t('plans.active_label') : (plan.id === 'monthly' ? t('plans.monthly.cta') : t('plans.yearly.cta'))}
+                {!allowPaidCheckout ? t('plans.active_label') : (plan.id === 'monthly' ? t('plans.monthly.cta') : t('plans.yearly.cta'))}
               </Button>
             </CardContent>
           </Card>
@@ -392,7 +418,7 @@ export default function Premium() {
       </section>
 
       {/* Förtroenderad – tar bort sista riskkänslan före köp */}
-      {!isPremium && (
+      {showFreeTrialCta && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -450,7 +476,7 @@ export default function Premium() {
         </CardContent>
       </Card>
 
-      {!isPremium && (
+      {showFreeTrialCta && (
         <StickyMobileUpgradeCTA
           label={t('sticky_cta')}
           onClick={() => handleCheckout('yearly')}
