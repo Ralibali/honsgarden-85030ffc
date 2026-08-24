@@ -1,0 +1,1 @@
+UPDATE public.profiles SET premium_expires_at = to_timestamp(1809208079) WHERE user_id = 'ee725304-d17b-4341-bd03-7d09f14d9136';

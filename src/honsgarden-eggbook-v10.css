@@ -1,0 +1,547 @@
+/* Hönsgården v10 — Ägg ska kännas som gårdens äggbok, inte en loggtabell. */
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 {
+  --eggbook-ink: #183628;
+  --eggbook-muted: #746b5e;
+  --eggbook-paper: #fffaf0;
+  --eggbook-paper-deep: #f4ead7;
+  --eggbook-moss: #315d3f;
+  --eggbook-straw: #d8bd72;
+  --eggbook-yolk: #d3a53d;
+  --eggbook-line: rgba(85, 75, 55, .13);
+  display: grid;
+  gap: 1rem;
+  max-width: 52rem;
+  padding-bottom: 2rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .35rem .15rem .65rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: .85rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__mark {
+  display: grid;
+  width: 3.6rem;
+  height: 3.6rem;
+  flex: 0 0 3.6rem;
+  place-items: center;
+  border: 1px solid var(--eggbook-line);
+  border-radius: 1.35rem 1.35rem 1.55rem 1.55rem;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255,255,255,.92), transparent 25%),
+    linear-gradient(145deg, #fff8e7, #edddba);
+  box-shadow: 0 10px 26px rgba(76, 64, 39, .07);
+  font-size: 1.75rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__eyebrow {
+  margin: 0;
+  color: var(--eggbook-moss);
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading h1 {
+  margin: .15rem 0 0;
+  color: var(--eggbook-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 7vw, 2.8rem);
+  font-weight: 500;
+  letter-spacing: -.045em;
+  line-height: .95;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading > div > p:last-child {
+  margin: .4rem 0 0;
+  color: var(--eggbook-muted);
+  font-size: .82rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__log-button {
+  min-height: 2.75rem;
+  flex: 0 0 auto;
+  border-radius: 999px !important;
+  padding-inline: 1rem !important;
+  background: var(--eggbook-moss) !important;
+  box-shadow: 0 10px 22px rgba(49, 93, 63, .16) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__composer {
+  margin-bottom: .2rem;
+}
+
+/* Today's harvest — one strong moment instead of KPI tiles. */
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today {
+  position: relative;
+  display: flex;
+  min-height: 10.5rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  overflow: hidden;
+  padding: 1.35rem 1.4rem;
+  border: 1px solid rgba(83, 76, 55, .1);
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, .82), transparent 24%),
+    radial-gradient(circle at 94% 76%, rgba(211, 165, 61, .17), transparent 28%),
+    linear-gradient(145deg, #fffaf0, #f0e4cc);
+  box-shadow: 0 18px 44px rgba(66, 59, 42, .07);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today::before,
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today::before {
+  top: 1rem;
+  right: 1.2rem;
+  width: 4.2rem;
+  height: 5.1rem;
+  border: 1px solid rgba(167, 132, 64, .12);
+  border-radius: 52% 48% 46% 54% / 60% 60% 40% 40%;
+  transform: rotate(11deg);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today::after {
+  right: 4.35rem;
+  bottom: -2.4rem;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background: rgba(216, 189, 114, .1);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-copy,
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-action {
+  position: relative;
+  z-index: 1;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-number {
+  display: flex;
+  align-items: baseline;
+  gap: .55rem;
+  margin: .35rem 0 .25rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-number strong {
+  color: var(--eggbook-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(4rem, 15vw, 6rem);
+  font-weight: 500;
+  letter-spacing: -.07em;
+  line-height: .8;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-number span {
+  color: var(--eggbook-muted);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-copy > p:last-child {
+  margin: .55rem 0 0;
+  color: var(--eggbook-muted);
+  font-size: .82rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-action {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: .45rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 1rem;
+  color: #fffaf0;
+  background: var(--eggbook-moss);
+  box-shadow: 0 11px 24px rgba(49, 93, 63, .17);
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-action:active {
+  transform: scale(.96);
+}
+
+/* The interpretation comes before raw logs. */
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm {
+  overflow: hidden;
+  border: 1px solid var(--eggbook-line);
+  border-radius: 1.65rem;
+  background: rgba(255, 250, 240, .72);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm-intro {
+  display: flex;
+  gap: .9rem;
+  padding: 1.15rem 1.2rem 1.05rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__spark {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  place-items: center;
+  border-radius: .85rem;
+  color: #9a7429;
+  background: rgba(216, 189, 114, .17);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm h2 {
+  max-width: 36rem;
+  margin: .25rem 0 0;
+  color: var(--eggbook-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.05rem, 3.4vw, 1.35rem);
+  font-weight: 500;
+  line-height: 1.32;
+  letter-spacing: -.018em;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm-intro > div > p:last-child {
+  margin: .45rem 0 0;
+  color: var(--eggbook-muted);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--eggbook-line);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers > div {
+  display: grid;
+  gap: .15rem;
+  padding: .85rem .6rem;
+  text-align: center;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers > div + div {
+  border-left: 1px solid var(--eggbook-line);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers strong {
+  color: var(--eggbook-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers span {
+  color: var(--eggbook-muted);
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* History becomes the actual book. */
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history {
+  overflow: hidden;
+  border: 1px solid var(--eggbook-line);
+  border-radius: 1.75rem;
+  background: rgba(255, 252, 245, .78);
+  box-shadow: 0 12px 30px rgba(65, 58, 42, .045);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history-header {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .9rem 1.1rem;
+  border-bottom: 1px solid var(--eggbook-line);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history-title {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  color: var(--eggbook-moss);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history-title h2 {
+  margin: .1rem 0 0;
+  color: var(--eggbook-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: -.02em;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__view-switch {
+  display: flex;
+  gap: .2rem;
+  padding: .2rem;
+  border: 1px solid var(--eggbook-line);
+  border-radius: .8rem;
+  background: rgba(239, 231, 213, .62);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__view-switch button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  border-radius: .62rem;
+  color: var(--eggbook-muted);
+  background: transparent;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__view-switch button.is-active {
+  color: var(--eggbook-moss);
+  background: rgba(255, 252, 245, .96);
+  box-shadow: 0 3px 9px rgba(62, 55, 40, .07);
+}
+
+/* Existing grouped/list components are softened inside the book only. */
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries > .divide-y {
+  border-color: transparent !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries > .divide-y > div + div {
+  border-color: rgba(85, 75, 55, .1) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries .bg-muted\/30 {
+  background: rgba(242, 234, 216, .52) !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries .uppercase.tracking-wide {
+  color: var(--eggbook-ink) !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: .78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em !important;
+  text-transform: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries .uppercase.tracking-wide .text-muted-foreground {
+  margin-left: .45rem !important;
+  color: var(--eggbook-muted) !important;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: .6rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries .stat-number {
+  color: var(--eggbook-ink) !important;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries button[class*='hover:text-destructive'] {
+  opacity: .45;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries button[class*='hover:text-destructive']:hover,
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries button[class*='hover:text-destructive']:focus-visible {
+  opacity: 1;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export {
+  margin: .1rem .2rem 0;
+  color: var(--eggbook-muted);
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export summary {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: .73rem;
+  font-weight: 700;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export summary::-webkit-details-marker {
+  display: none;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export > div {
+  display: flex;
+  gap: .45rem;
+  padding-top: .65rem;
+}
+
+.honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export button {
+  min-width: 4.25rem;
+  border-color: var(--eggbook-line) !important;
+  border-radius: 999px !important;
+  background: rgba(255, 252, 245, .62) !important;
+}
+
+/* Dark mode keeps paper warmth instead of turning into generic blue-black SaaS. */
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 {
+  --eggbook-ink: #f1e8d6;
+  --eggbook-muted: #b0a795;
+  --eggbook-paper: #1b2a20;
+  --eggbook-paper-deep: #202d23;
+  --eggbook-moss: #9fbe91;
+  --eggbook-straw: #c8ad69;
+  --eggbook-yolk: #caa34e;
+  --eggbook-line: rgba(255, 255, 255, .075);
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__mark {
+  border-color: var(--eggbook-line);
+  background: linear-gradient(145deg, #2a382c, #213026);
+  box-shadow: none;
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today {
+  border-color: var(--eggbook-line);
+  background:
+    radial-gradient(circle at 90% 20%, rgba(202, 163, 78, .07), transparent 28%),
+    linear-gradient(145deg, #213027, #19271e);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, .14);
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm,
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history {
+  background: rgba(27, 42, 32, .78);
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__view-switch {
+  background: rgba(255, 255, 255, .035);
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__view-switch button.is-active,
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__export button {
+  background: rgba(255, 255, 255, .055) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries .bg-muted\/30 {
+  background: rgba(255, 255, 255, .03) !important;
+}
+
+/* Mobile: one hand, no dashboard noise. */
+@media (max-width: 639px) {
+  .honsgarden-app-shell[data-app-section='eggs'] main#main-content {
+    padding-left: .75rem;
+    padding-right: .75rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 {
+    gap: .8rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__header {
+    align-items: flex-end;
+    padding: .1rem .15rem .45rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__mark {
+    width: 3rem;
+    height: 3rem;
+    flex-basis: 3rem;
+    border-radius: 1.05rem 1.05rem 1.25rem 1.25rem;
+    font-size: 1.45rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading h1 {
+    font-size: 2rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading > div > p:last-child {
+    display: none;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__log-button {
+    min-height: 2.5rem;
+    padding-inline: .8rem !important;
+    font-size: .75rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today {
+    min-height: 9.6rem;
+    border-radius: 1.55rem;
+    padding: 1.15rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-number strong {
+    font-size: clamp(4.25rem, 21vw, 5.4rem);
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today-action {
+    min-height: 2.75rem;
+    padding-inline: .8rem;
+    font-size: .74rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm,
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history {
+    border-radius: 1.35rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__rhythm-intro {
+    padding: 1rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__history-header {
+    min-height: 4.15rem;
+    padding: .8rem .9rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries > .divide-y > div > div:first-child,
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__entries > .divide-y > div > div:last-child > div {
+    padding-left: .9rem !important;
+    padding-right: .9rem !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__header {
+    gap: .5rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__heading {
+    gap: .6rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__mark {
+    display: none;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__today {
+    min-height: 9rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10__numbers strong {
+    font-size: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 *,
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 *::before,
+  .honsgarden-app-shell[data-app-section='eggs'] .eggbook-v10 *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}

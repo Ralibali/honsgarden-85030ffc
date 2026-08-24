@@ -1,0 +1,568 @@
+/* Hönsgården v6 — living farm atmosphere, mobile-first and deliberately non-SaaS. */
+
+:root {
+  --hg-eggshell: #f7f2e7;
+  --hg-paper: #fcf9f2;
+  --hg-forest: #183b2a;
+  --hg-moss: #667746;
+  --hg-straw: #b39a55;
+  --hg-night: #06131a;
+}
+
+/* --------------------------------------------------------------------------
+   PUBLIC HERO — scene first, copy second on mobile
+   -------------------------------------------------------------------------- */
+#main-content > .farm-hero-v6 {
+  position: relative !important;
+  display: grid !important;
+  min-height: min(920px, 100svh) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  isolation: isolate;
+  background: var(--hg-eggshell) !important;
+}
+
+#main-content > .farm-hero-v6::before,
+#main-content > .farm-hero-v6::after {
+  content: none !important;
+  display: none !important;
+}
+
+.farm-hero-v6__scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background-color: #203529;
+  background-image: url('/hero-farm-v2.webp');
+  background-repeat: no-repeat;
+  background-position: 55% 55%;
+  background-size: cover;
+  transform: scale(1.008);
+  animation: hg-farm-breathe 26s ease-in-out infinite alternate;
+}
+
+.farm-hero-v6__scene::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(248,244,234,.93) 0%, rgba(248,244,234,.74) 28%, rgba(248,244,234,.16) 53%, rgba(8,24,17,.02) 72%),
+    linear-gradient(180deg, rgba(255,250,239,.08), transparent 48%, rgba(7,18,12,.25));
+  transition: background 700ms ease, opacity 700ms ease;
+}
+
+.farm-hero-v6__sky,
+.farm-hero-v6__stars,
+.farm-hero-v6__meteor {
+  position: absolute;
+  pointer-events: none;
+}
+
+.farm-hero-v6__sky {
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 58% 25%, rgba(44,154,163,.22) 0%, rgba(21,104,125,.12) 19%, transparent 47%),
+    radial-gradient(ellipse at 74% 10%, rgba(64,108,163,.18), transparent 38%),
+    linear-gradient(180deg, rgba(1,7,17,.62) 0%, rgba(2,15,22,.24) 48%, rgba(3,15,13,.35) 100%);
+  mix-blend-mode: screen;
+  transition: opacity 900ms ease;
+}
+
+.farm-hero-v6__stars {
+  inset: -5%;
+  z-index: 3;
+  opacity: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.96) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(207,231,255,.82) 0 .8px, transparent 1.25px),
+    radial-gradient(circle, rgba(255,246,218,.78) 0 .7px, transparent 1.2px),
+    radial-gradient(circle, rgba(255,255,255,.58) 0 .55px, transparent 1px);
+  background-size: 73px 79px, 113px 101px, 157px 139px, 41px 47px;
+  background-position: 9px 17px, 31px 5px, 67px 43px, 3px 29px;
+  filter: drop-shadow(0 0 2px rgba(218,239,255,.44));
+  transform-origin: 66% 18%;
+}
+
+.farm-hero-v6__stars--near {
+  z-index: 4;
+  inset: -8%;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.98) 0 1.2px, transparent 1.7px),
+    radial-gradient(circle, rgba(183,226,255,.92) 0 .9px, transparent 1.5px);
+  background-size: 191px 173px, 263px 229px;
+  background-position: 23px 37px, 103px 13px;
+}
+
+.farm-hero-v6__meteor {
+  z-index: 5;
+  top: 12%;
+  right: 11%;
+  width: 120px;
+  height: 1px;
+  opacity: 0;
+  border-radius: 999px;
+  transform: rotate(-31deg) translate3d(0,0,0);
+  transform-origin: right center;
+  background: linear-gradient(90deg, transparent, rgba(198,233,255,.22), rgba(255,255,255,.98));
+  box-shadow: 24px 0 14px rgba(163,220,255,.22);
+}
+
+.farm-hero-v6__meteor--two {
+  top: 28%;
+  right: 30%;
+  width: 82px;
+  animation-delay: 7.3s !important;
+}
+
+html[data-hero-time='night'] .farm-hero-v6__scene,
+html[data-local-daypart='night'] .farm-hero-v6__scene {
+  filter: brightness(.55) saturate(.88) contrast(1.08) hue-rotate(4deg);
+}
+
+html[data-hero-time='night'] .farm-hero-v6__scene::before,
+html[data-local-daypart='night'] .farm-hero-v6__scene::before {
+  background:
+    linear-gradient(90deg, rgba(3,12,15,.78) 0%, rgba(3,15,18,.45) 34%, rgba(2,10,14,.13) 63%, rgba(1,8,14,.15)),
+    linear-gradient(180deg, rgba(1,6,13,.24), transparent 53%, rgba(1,8,8,.42));
+}
+
+html[data-hero-time='night'] .farm-hero-v6__sky,
+html[data-local-daypart='night'] .farm-hero-v6__sky {
+  opacity: 1;
+}
+
+html[data-hero-time='night'] .farm-hero-v6__stars,
+html[data-local-daypart='night'] .farm-hero-v6__stars {
+  opacity: .88;
+  animation: hg-stars-breathe 5.8s ease-in-out infinite alternate;
+}
+
+html[data-hero-time='night'] .farm-hero-v6__stars--near,
+html[data-local-daypart='night'] .farm-hero-v6__stars--near {
+  opacity: .62;
+  animation-duration: 8.5s;
+  animation-direction: alternate-reverse;
+}
+
+html[data-hero-time='night'] .farm-hero-v6__meteor,
+html[data-local-daypart='night'] .farm-hero-v6__meteor {
+  animation: hg-meteor 13.5s cubic-bezier(.24,.6,.32,1) infinite;
+}
+
+html[data-hero-time='dusk'] .farm-hero-v6__scene::before,
+html[data-local-daypart='evening'] .farm-hero-v6__scene::before {
+  background:
+    linear-gradient(90deg, rgba(35,29,19,.66), rgba(55,43,25,.42) 34%, rgba(21,24,20,.06) 64%),
+    linear-gradient(180deg, rgba(98,55,33,.08), transparent 48%, rgba(7,17,12,.34));
+}
+
+.farm-hero-v6__content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: min(920px, 100svh);
+  padding-top: clamp(90px, 9vw, 128px);
+  padding-bottom: clamp(64px, 8vw, 100px);
+}
+
+.farm-hero-v6__copy {
+  width: min(650px, 58vw);
+}
+
+#main-content > .farm-hero-v6 .farm-hero-v6__copy h1 {
+  margin: 22px 0 20px !important;
+  max-width: 650px !important;
+  font-family: Georgia, 'Times New Roman', serif !important;
+  font-size: clamp(3.1rem, 5.3vw, 5.35rem) !important;
+  line-height: .98 !important;
+  letter-spacing: -.047em !important;
+  color: var(--hg-forest) !important;
+  text-shadow: none !important;
+  text-wrap: balance;
+}
+
+#main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span {
+  display: inline !important;
+  color: var(--hg-moss) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+#main-content > .farm-hero-v6 .farm-hero-v6__copy p {
+  margin: 0 0 28px !important;
+  max-width: 530px !important;
+  font-size: clamp(1.05rem, 1.5vw, 1.2rem) !important;
+  line-height: 1.58 !important;
+  color: rgba(24,48,36,.82) !important;
+  text-shadow: none !important;
+}
+
+html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1,
+html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span,
+html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy p,
+html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1,
+html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span,
+html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy p {
+  color: #fff9ed !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: 0 2px 26px rgba(0,0,0,.32) !important;
+}
+
+/* --------------------------------------------------------------------------
+   LOGGED-IN TODAY — the farm itself is the opening, not another dashboard card
+   -------------------------------------------------------------------------- */
+.hg-dashboard-today {
+  max-width: 760px !important;
+}
+
+.hg-today-hero {
+  position: relative;
+  min-height: 225px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  isolation: isolate;
+  margin: 2px 0 4px;
+  padding: 26px 27px !important;
+  border: 1px solid rgba(26,52,38,.1);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(8,25,17,.03) 12%, rgba(8,23,16,.14) 48%, rgba(5,18,12,.66) 100%),
+    url('/hero-farm-v2.webp') 56% 57% / cover no-repeat;
+  box-shadow: 0 18px 55px rgba(32,48,37,.1);
+}
+
+.hg-today-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.96) 0 1px, transparent 1.4px) 7px 17px / 61px 67px,
+    radial-gradient(circle, rgba(193,225,255,.78) 0 .75px, transparent 1.25px) 27px 3px / 97px 89px,
+    radial-gradient(ellipse at 62% 20%, rgba(38,157,167,.24), transparent 44%),
+    linear-gradient(180deg, rgba(1,7,16,.72), rgba(3,15,17,.22) 55%, rgba(2,11,9,.24));
+}
+
+.hg-today-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 18%;
+  right: 9%;
+  width: 88px;
+  height: 1px;
+  opacity: 0;
+  transform: rotate(-30deg);
+  background: linear-gradient(90deg, transparent, rgba(222,242,255,.32), #fff);
+  box-shadow: 16px 0 10px rgba(184,225,255,.18);
+}
+
+html[data-local-daypart='night'] .hg-today-hero {
+  background:
+    linear-gradient(180deg, rgba(1,7,15,.26), rgba(2,12,13,.24) 48%, rgba(2,10,8,.78) 100%),
+    url('/hero-farm-v2.webp') 56% 57% / cover no-repeat;
+  background-blend-mode: multiply, normal;
+}
+
+html[data-local-daypart='night'] .hg-today-hero::before {
+  opacity: .94;
+  animation: hg-dashboard-stars 6.8s ease-in-out infinite alternate;
+}
+
+html[data-local-daypart='night'] .hg-today-hero::after {
+  animation: hg-dashboard-meteor 15s ease-out infinite 4.6s;
+}
+
+html[data-local-daypart='evening'] .hg-today-hero {
+  background:
+    linear-gradient(180deg, rgba(62,42,27,.14), rgba(28,26,18,.16) 45%, rgba(5,16,10,.7)),
+    url('/hero-farm-v2.webp') 56% 57% / cover no-repeat;
+}
+
+.hg-today-hero .data-label,
+.hg-today-hero h1 {
+  position: relative;
+  z-index: 2;
+  color: #fffaf0 !important;
+  -webkit-text-fill-color: #fffaf0 !important;
+  text-shadow: 0 2px 20px rgba(0,0,0,.48) !important;
+}
+
+.hg-today-hero .data-label {
+  opacity: .88;
+  letter-spacing: .08em !important;
+}
+
+.hg-today-hero h1 {
+  max-width: 570px;
+  font-size: clamp(2rem, 7vw, 3rem) !important;
+}
+
+/* Make direct daily surfaces feel like paper and routines, not enterprise widgets. */
+.hg-dashboard-today > div.border,
+.hg-dashboard-today > [class*='border-border'] {
+  border-color: rgba(67,78,60,.11) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 12px 38px rgba(46,56,43,.055) !important;
+}
+
+.hg-dashboard-today #quick-egg-log > * {
+  border-radius: 26px !important;
+}
+
+.hg-dashboard-today button,
+.hg-dashboard-today a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   COOKIE CONSENT — polite, compact and out of the way on a phone
+   -------------------------------------------------------------------------- */
+.hg-cookie-sheet {
+  width: min(520px, calc(100vw - 24px)) !important;
+  max-width: 520px !important;
+  margin-inline: auto !important;
+  padding: 16px !important;
+  border-radius: 22px !important;
+  border-color: rgba(62,71,58,.14) !important;
+  background: rgba(252,249,242,.97) !important;
+  box-shadow: 0 16px 60px rgba(25,34,27,.18) !important;
+  backdrop-filter: blur(18px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(1.05) !important;
+}
+
+.hg-cookie-sheet h1,
+.hg-cookie-sheet h2,
+.hg-cookie-sheet h3,
+.hg-cookie-sheet strong {
+  font-size: 1rem !important;
+  line-height: 1.25 !important;
+}
+
+.hg-cookie-sheet p {
+  margin-top: 4px !important;
+  font-size: .84rem !important;
+  line-height: 1.38 !important;
+}
+
+.hg-cookie-sheet button {
+  min-height: 44px !important;
+  border-radius: 14px !important;
+  font-size: .88rem !important;
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE — image gets its own cinematic stage; copy never covers the farmhouse
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  #main-content > .farm-hero-v6 {
+    display: block !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: var(--hg-eggshell) !important;
+  }
+
+  .farm-hero-v6__scene {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: clamp(340px, 53svh, 500px);
+    transform: none;
+    background-position: 64% 54%;
+    background-size: cover;
+    animation: hg-farm-mobile-breathe 28s ease-in-out infinite alternate;
+  }
+
+  .farm-hero-v6__scene::before {
+    background:
+      linear-gradient(180deg, rgba(3,14,13,.12) 0%, transparent 42%, rgba(5,16,11,.2) 100%);
+  }
+
+  html[data-hero-time='night'] .farm-hero-v6__scene::before,
+  html[data-local-daypart='night'] .farm-hero-v6__scene::before {
+    background:
+      linear-gradient(180deg, rgba(1,7,15,.34) 0%, rgba(2,12,16,.12) 48%, rgba(2,10,9,.46) 100%);
+  }
+
+  .farm-hero-v6__sky {
+    background:
+      radial-gradient(ellipse at 51% 30%, rgba(25,152,166,.30), transparent 48%),
+      radial-gradient(ellipse at 73% 13%, rgba(51,87,147,.2), transparent 42%),
+      linear-gradient(180deg, rgba(1,7,16,.58), rgba(2,15,20,.12) 62%, transparent);
+  }
+
+  .farm-hero-v6__stars {
+    inset: -4%;
+    background-size: 51px 57px, 83px 79px, 127px 113px, 33px 39px;
+  }
+
+  .farm-hero-v6__stars--near {
+    background-size: 151px 139px, 211px 197px;
+  }
+
+  .farm-hero-v6__content {
+    display: block;
+    min-height: 0;
+    margin-top: -18px;
+    padding: 0 18px max(36px, env(safe-area-inset-bottom));
+  }
+
+  .farm-hero-v6__copy {
+    position: relative;
+    z-index: 12;
+    width: 100%;
+    max-width: none;
+    padding: 24px 4px 4px;
+    border-radius: 28px 28px 0 0;
+    background: var(--hg-eggshell);
+  }
+
+  #main-content > .farm-hero-v6 .hero-eyebrow {
+    color: rgba(24,59,42,.78) !important;
+    background: rgba(255,255,255,.54) !important;
+    border-color: rgba(24,59,42,.1) !important;
+  }
+
+  #main-content > .farm-hero-v6 .farm-hero-v6__copy h1,
+  html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1,
+  html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span,
+  html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1,
+  html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span {
+    margin: 18px 0 13px !important;
+    font-size: clamp(2.35rem, 10.5vw, 3.25rem) !important;
+    line-height: 1 !important;
+    color: var(--hg-forest) !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+  }
+
+  #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span,
+  html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span,
+  html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy h1 span {
+    color: var(--hg-moss) !important;
+  }
+
+  #main-content > .farm-hero-v6 .farm-hero-v6__copy p,
+  html[data-hero-time='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy p,
+  html[data-local-daypart='night'] #main-content > .farm-hero-v6 .farm-hero-v6__copy p {
+    margin-bottom: 19px !important;
+    font-size: .98rem !important;
+    line-height: 1.5 !important;
+    color: rgba(24,48,36,.78) !important;
+    text-shadow: none !important;
+  }
+
+  #main-content > .farm-hero-v6 .farm-hero-v6__actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px !important;
+  }
+
+  #main-content > .farm-hero-v6 .farm-hero-v6__actions > a {
+    min-height: 49px !important;
+    width: 100% !important;
+    padding-inline: 12px !important;
+    border-radius: 16px !important;
+    font-size: .86rem !important;
+  }
+
+  #main-content > .farm-hero-v6 .hero-trust {
+    margin-top: 16px !important;
+    color: rgba(24,48,36,.64) !important;
+    font-size: .69rem !important;
+    gap: 6px 11px !important;
+  }
+
+  .hg-today-hero {
+    min-height: 205px;
+    margin-inline: -2px;
+    padding: 21px 20px !important;
+    border-radius: 25px;
+    background-position: 64% 56%;
+  }
+
+  .hg-today-hero h1 {
+    font-size: clamp(1.9rem, 8.5vw, 2.6rem) !important;
+  }
+
+  .hg-cookie-sheet {
+    width: calc(100vw - 20px) !important;
+    max-height: min(48svh, 360px) !important;
+    overflow: auto !important;
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  .hg-cookie-sheet p {
+    font-size: .8rem !important;
+    line-height: 1.34 !important;
+  }
+
+  .hg-cookie-sheet button {
+    min-height: 42px !important;
+    padding-inline: 12px !important;
+    font-size: .82rem !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .farm-hero-v6__scene { height: 47svh; min-height: 325px; background-position: 66% 55%; }
+  #main-content > .farm-hero-v6 .farm-hero-v6__actions { grid-template-columns: 1fr; }
+  .hg-cookie-sheet { width: calc(100vw - 16px) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .farm-hero-v6__scene,
+  .farm-hero-v6__stars,
+  .farm-hero-v6__meteor,
+  .hg-today-hero::before,
+  .hg-today-hero::after {
+    animation: none !important;
+  }
+}
+
+@keyframes hg-farm-breathe {
+  from { transform: scale(1.008) translate3d(0,0,0); }
+  to { transform: scale(1.035) translate3d(-.35%, -.18%, 0); }
+}
+
+@keyframes hg-farm-mobile-breathe {
+  from { background-position: 64% 54%; }
+  to { background-position: 66% 53.4%; }
+}
+
+@keyframes hg-stars-breathe {
+  0% { opacity: .66; transform: scale(1); filter: brightness(.92); }
+  45% { opacity: .92; }
+  100% { opacity: .76; transform: scale(1.004); filter: brightness(1.13); }
+}
+
+@keyframes hg-meteor {
+  0%, 78% { opacity: 0; transform: rotate(-31deg) translate3d(0,0,0) scaleX(.35); }
+  80% { opacity: .96; }
+  84% { opacity: 0; transform: rotate(-31deg) translate3d(-180px, 122px, 0) scaleX(1); }
+  100% { opacity: 0; }
+}
+
+@keyframes hg-dashboard-stars {
+  from { opacity: .72; filter: brightness(.9); }
+  to { opacity: .98; filter: brightness(1.12); }
+}
+
+@keyframes hg-dashboard-meteor {
+  0%, 82% { opacity: 0; transform: rotate(-30deg) translate3d(0,0,0) scaleX(.4); }
+  84% { opacity: .9; }
+  88% { opacity: 0; transform: rotate(-30deg) translate3d(-120px, 82px,0) scaleX(1); }
+  100% { opacity: 0; }
+}

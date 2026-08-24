@@ -1,0 +1,743 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { useSeo } from '@/hooks/useSeo';
+import { BellRing, CheckCircle2, Clock, Copy, Egg, ExternalLink, Loader2, MapPin, MessageCircle, Navigation, Package, Repeat, Share2, ShieldCheck, ShoppingBasket, Sparkles, Star, UserPlus, Wallet } from 'lucide-react';
+import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme';
+import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
+import SwishQR from '@/components/egg-sales/SwishQR';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { formatTierRange, getPricePerPack, normalizeTiers } from '@/lib/eggSalePricing';
+import EggAlertSignup from '@/components/marketing/EggAlertSignup';
+
+function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
+function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
+function asKr(v: unknown, fallback = '') { const n = Number(v); return Number.isFinite(n) && n > 0 ? `${Math.round(n)} kr` : fallback; }
+function formatRelativeSv(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '';
+  const diffMin = Math.max(0, Math.floor((Date.now() - then) / 60000));
+  if (diffMin < 1) return 'nyss';
+  if (diffMin < 60) return `${diffMin} min sedan`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} ${diffH === 1 ? 'timme' : 'timmar'} sedan`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD < 7) return `${diffD} ${diffD === 1 ? 'dag' : 'dagar'} sedan`;
+  const diffW = Math.floor(diffD / 7);
+  return `${diffW} ${diffW === 1 ? 'vecka' : 'veckor'} sedan`;
+}
+
+export default function PublicEggSaleV3() {
+  const [params] = useSearchParams();
+  const { slug } = useParams<{ slug?: string }>();
+  const qc = useQueryClient();
+  const shouldLoadSlug = Boolean(slug && slug !== 'agg');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [packs, setPacks] = useState('1');
+  const [pickupSlotId, setPickupSlotId] = useState<string>('');
+  const [pickupPersonName, setPickupPersonName] = useState('');
+  const [pickupPersonPhone, setPickupPersonPhone] = useState('');
+  const [otherPickup, setOtherPickup] = useState(false);
+  const [wlName, setWlName] = useState('');
+  const [wlEmail, setWlEmail] = useState('');
+  const [wlPhone, setWlPhone] = useState('');
+  const [wlPacks, setWlPacks] = useState('1');
+  const [swishConfirm, setSwishConfirm] = useState(false);
+  const [bookingConfirm, setBookingConfirm] = useState(false);
+  const [subFreq, setSubFreq] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
+  const isMobile = useIsMobile();
+  const [subPacks, setSubPacks] = useState('1');
+  const [subName, setSubName] = useState('');
+  const [subEmail, setSubEmail] = useState('');
+  const [subPhone, setSubPhone] = useState('');
+  const [showSub, setShowSub] = useState(false);
+
+  const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
+    queryKey: ['public-egg-sale-listing-v3', slug],
+    enabled: shouldLoadSlug,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from('public_egg_sale_listings').select('id,user_id,slug,title,description,image_url,packs_available,eggs_per_pack,price_per_pack,location,pickup_info,contact_info,swish_number,swish_name,swish_message,p6_price,p12_price,p30_price,is_active,reserved_packs,sold_out_manually,created_at,updated_at,stock_packs,latitude,longitude,listing_kind,verified_at,expires_at,theme,sections,price_tiers,reko_enabled,reko_group_name,reko_pickup_location,reko_next_pickup_at,reko_recurring_biweekly').eq('slug', slug).eq('is_active', true).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+  const isLoading = shouldLoadSlug && (queryLoading || isFetching);
+
+  const { data: bookedPacks = 0 } = useQuery({
+    queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc('get_public_egg_sale_reserved_packs', { p_listing_id: listing.id });
+      if (error) return 0;
+      return Number(data) || 0;
+    },
+    staleTime: 15_000,
+  });
+
+  const { data: socialProof } = useQuery<{ bookings_today: number; last_booked_at: string | null }>({
+    queryKey: ['public-egg-sale-social-proof-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc('get_public_egg_sale_social_proof', { p_listing_id: listing.id });
+      if (error) return { bookings_today: 0, last_booked_at: null };
+      const row = Array.isArray(data) ? data[0] : data;
+      return { bookings_today: Number(row?.bookings_today) || 0, last_booked_at: row?.last_booked_at || null };
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: publicReviews = [] } = useQuery({
+    queryKey: ['public-egg-sale-reviews-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('egg_sale_reviews')
+        .select('id, customer_name, rating, comment, created_at')
+        .eq('listing_id', listing.id)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      return data || [];
+    },
+    staleTime: 60_000,
+  });
+
+  const { data: slots = [] } = useQuery<any[]>({
+    queryKey: ['public-egg-sale-slots-v3', listing?.id],
+    enabled: Boolean(listing?.id),
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('egg_sale_pickup_slots')
+        .select('*')
+        .eq('listing_id', listing.id)
+        .eq('is_active', true)
+        .gte('starts_at', new Date().toISOString())
+        .order('starts_at', { ascending: true });
+      return data || [];
+    },
+    staleTime: 30_000,
+  });
+
+  const { data: isVerified = false } = useQuery({
+    queryKey: ['public-egg-sale-verified-v3', listing?.user_id],
+    enabled: Boolean(listing?.user_id),
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc('is_verified_egg_seller', { _seller_id: listing.user_id });
+      return Boolean(data);
+    },
+    staleTime: 5 * 60_000,
+  });
+
+  const theme = useMemo(() => normalizeTheme(listing?.theme), [listing?.theme]);
+  const sections = useMemo(() => normalizeSections(listing?.sections), [listing?.sections]);
+  const accent = theme.accent || '#3A6B35';
+  const bgClass = BG_CLASS[theme.bg || 'cream'] || BG_CLASS.cream;
+  const headerStyle = theme.headerStyle || 'classic';
+  const isDark = theme.bg === 'dark';
+
+  const sale = useMemo(() => {
+    if (listing) return {
+      id: listing.id, sellerUserId: listing.user_id,
+      title: theme.headline || listing.title || 'Färska ägg till salu',
+      description: theme.tagline || listing.description || 'Färska ägg från lokal hönsgård.',
+      imageUrl: theme.coverUrl || listing.image_url || '',
+      packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
+    };
+    const price = getParam(params, 'price', '60');
+    return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')) || 6, size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12', price), p30: getParam(params, 'p30', ''), soldOut: false };
+  }, [listing, params, theme]);
+
+  const remaining = Math.max(0, sale.packs - bookedPacks);
+  const isSoldOut = sale.soldOut || remaining <= 0;
+  const swishText = sale.swish ? `Swish: ${sale.swish}${sale.swishName ? ` (${sale.swishName})` : ''}\nMeddelande: ${sale.swishMsg}` : 'Kontakta säljaren för betalningsinformation.';
+  const reko = listing?.reko_enabled ? {
+    group: listing.reko_group_name || 'REKO',
+    location: listing.reko_pickup_location || '',
+    nextAt: listing.reko_next_pickup_at ? new Date(listing.reko_next_pickup_at) : null,
+  } : null;
+  const rekoDateLabel = reko?.nextAt ? reko.nextAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', weekday: 'short', day: 'numeric', month: 'short' }) : '';
+  const rekoTimeLabel = reko?.nextAt ? reko.nextAt.toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : '';
+  const shareText = reko
+    ? `🥚 Färska ägg – utlämning via ${reko.group}${reko.nextAt ? ` ${rekoDateLabel} kl ${rekoTimeLabel}` : ''}${reko.location ? ` (${reko.location})` : ''}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr · ${remaining} kartor kvar\n\nBoka och läs mer: ${typeof window !== 'undefined' ? window.location.href : ''}`
+    : `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
+  const tiers = useMemo(() => normalizeTiers(listing?.price_tiers), [listing?.price_tiers]);
+  const tierRows = useMemo(
+    () => tiers.map((t) => ({ label: formatTierRange(t), price: `${t.price_per_pack} kr / karta` })),
+    [tiers],
+  );
+  const sizeRows = [
+    sale.p6 ? { label: '6-pack', price: sale.p6 } : null,
+    { label: `${sale.size}-pack`, price: sale.p12 || `${sale.price} kr` },
+    sale.p30 ? { label: '30-pack', price: sale.p30 } : null,
+  ].filter(Boolean) as { label: string; price: string }[];
+  const priceRows = tierRows.length ? tierRows : sizeRows;
+
+  const parseKr = (v: unknown) => {
+    const n = Number(String(v ?? '').replace(/[^\d.,-]/g, '').replace(',', '.'));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const basePricePerPack = parseKr(sale.p12) || parseKr(sale.price);
+  const packCount = Math.max(1, Number(packs) || 1);
+  const pricePerPack = tiers.length ? getPricePerPack(packCount, tiers, basePricePerPack) : basePricePerPack;
+  const swishAmount = Math.round(packCount * pricePerPack);
+  const swishMsgFull = `${sale.swishMsg || 'Ägg'} ${packCount}x${sale.size}-pack`.slice(0, 50);
+  const swishPayee = (sale.swish || '').replace(/\D/g, '');
+  const swishDeepLink = sale.swish
+    ? `swish://payment?data=${encodeURIComponent(
+        JSON.stringify({
+          version: 1,
+          payee: { value: swishPayee, editable: false },
+          amount: { value: swishAmount, editable: true },
+          message: { value: swishMsgFull, editable: true },
+        }),
+      )}`
+    : '';
+  const openSwish = () => {
+    if (!swishDeepLink) return;
+    setSwishConfirm(true);
+    window.location.href = swishDeepLink;
+    setTimeout(() => {
+      // Fallback if Swish app isn't installed: copy details
+      if (document.hasFocus()) {
+        copy(`${swishText}\nBelopp: ${swishAmount} kr`);
+        toast({ title: 'Öppna Swish manuellt', description: `Beloppet ${swishAmount} kr och uppgifterna är kopierade.` });
+      }
+    }, 1200);
+  };
+
+  const bookingMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Den här säljlistan kan inte ta emot förfrågningar just nu.');
+      const packAmount = Math.max(1, Number(packs) || 1);
+      if (!name.trim()) throw new Error('Skriv ditt namn.');
+      if (!phone.trim()) throw new Error('Skriv ditt telefonnummer.');
+      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new Error('Skriv en giltig e-postadress.');
+      if (packAmount > remaining) throw new Error(`Det finns bara ${remaining} kartor kvar.`);
+      if (slots.length > 0 && !pickupSlotId) throw new Error('Välj en hämtningstid.');
+      const payload: any = {
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: name.trim(), customer_phone: phone.trim(), customer_email: email.trim(),
+        customer_message: message.trim() || null, packs: packAmount, status: 'reserved',
+      };
+      if (pickupSlotId) payload.pickup_slot_id = pickupSlotId;
+      if (otherPickup && pickupPersonName.trim()) {
+        payload.pickup_person_name = pickupPersonName.trim();
+        payload.pickup_person_phone = pickupPersonPhone.trim() || null;
+      }
+      const { data: inserted, error } = await (supabase as any)
+        .from('public_egg_sale_bookings')
+        .insert(payload)
+        .select('id')
+        .single();
+      if (error) throw error;
+      // Notify the seller by email — fire and forget, never block the booking.
+      // Only the booking_id is sent; the edge function reads all customer/pickup
+      // data straight from the stored booking row.
+      try {
+        if (inserted?.id) {
+          await supabase.functions.invoke('notify-seller-booking', {
+            body: { booking_id: inserted.id },
+          });
+        }
+      } catch (notifyErr) {
+        console.warn('notify-seller-booking failed (non-blocking)', notifyErr);
+      }
+    },
+    onSuccess: async () => {
+      setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
+      setPickupSlotId(''); setPickupPersonName(''); setPickupPersonPhone(''); setOtherPickup(false);
+      setBookingConfirm(true);
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] });
+      await qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing?.id] });
+      toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' });
+    },
+    onError: (e: any) => toast({ title: 'Kunde inte skicka förfrågan', description: e.message, variant: 'destructive' }),
+  });
+
+  const waitlistMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Kan inte anmäla intresse just nu.');
+      if (!wlName.trim()) throw new Error('Skriv ditt namn.');
+      if (!wlEmail.trim() && !wlPhone.trim()) throw new Error('Lämna e-post eller telefon så vi kan höra av oss.');
+      const { error } = await (supabase as any).from('egg_sale_waitlist').insert({
+        listing_id: listing.id,
+        seller_user_id: listing.user_id,
+        customer_name: wlName.trim(),
+        customer_email: wlEmail.trim() || null,
+        customer_phone: wlPhone.trim() || null,
+        packs_wanted: Math.max(1, Number(wlPacks) || 1),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { setWlName(''); setWlEmail(''); setWlPhone(''); setWlPacks('1'); toast({ title: 'Du är på väntelistan 🔔', description: 'Vi mejlar dig så fort det finns ägg i lager igen.' }); },
+    onError: (e: any) => toast({ title: 'Kunde inte anmäla intresse', description: e.message, variant: 'destructive' }),
+  });
+
+  const subscriptionMutation = useMutation({
+    mutationFn: async () => {
+      if (!listing?.id || !listing?.user_id) throw new Error('Abonnemang kan inte skapas just nu.');
+      if (!subName.trim()) throw new Error('Skriv ditt namn.');
+      if (!subEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(subEmail.trim())) throw new Error('Skriv en giltig e-postadress.');
+      const intervalDays = subFreq === 'weekly' ? 7 : subFreq === 'biweekly' ? 14 : 30;
+      const next = new Date(Date.now() + intervalDays * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await (supabase as any).from('egg_sale_subscriptions').insert({
+        listing_id: listing.id, seller_user_id: listing.user_id,
+        customer_name: subName.trim(), customer_email: subEmail.trim(), customer_phone: subPhone.trim() || null,
+        packs: Math.max(1, Number(subPacks) || 1), frequency: subFreq, next_run_at: next, status: 'active',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setSubName(''); setSubEmail(''); setSubPhone(''); setSubPacks('1'); setShowSub(false);
+      toast({ title: 'Abonnemang skapat 🔁', description: 'Din första leverans bokas vid nästa intervall. Säljaren hör av sig.' });
+    },
+    onError: (e: any) => toast({ title: 'Kunde inte starta abonnemang', description: e.message, variant: 'destructive' }),
+  });
+
+  // Realtime: uppdatera "kartor kvar" direkt när någon bokar/avbokar
+  useEffect(() => {
+    if (!listing?.id) return;
+    const ch = supabase
+      .channel(`egg-sale-${listing.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'public_egg_sale_bookings', filter: `listing_id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing.id] });
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing.id] });
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'public_egg_sale_listings', filter: `id=eq.${listing.id}` }, () => {
+        qc.invalidateQueries({ queryKey: ['public-egg-sale-listing-v3', slug] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [listing?.id, slug, qc]);
+
+  // Google Maps-vägbeskrivning
+  const mapsDirectionsUrl = useMemo(() => {
+    if (!listing) return '';
+    if (listing.latitude && listing.longitude) {
+      return `https://www.google.com/maps/dir/?api=1&destination=${listing.latitude},${listing.longitude}`;
+    }
+    const target = `${listing.location || ''} ${listing.pickup_info || ''}`.trim();
+    return target.length > 2 ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}` : '';
+  }, [listing]);
+
+  const share = async () => { if (navigator.share) await navigator.share({ title: sale.title, text: shareText, url: window.location.href }).catch(() => undefined); else copy(`${shareText}\n\n${window.location.href}`); };
+
+  // Per-page SEO + structured data for indexable listings
+  const seoPath = slug ? `/s/${slug}` : '/s/agg';
+  const seoTitleBase = slug ? `${sale.title} – Köp färska ägg i ${sale.location}` : 'Färska ägg till salu';
+  const seoTitle = `${seoTitleBase.length > 50 ? seoTitleBase.slice(0, 50) : seoTitleBase} | Hönsgården`.slice(0, 70);
+  const seoDescriptionRaw = sale.description?.replace(/\s+/g, ' ').trim() || 'Färska ägg från lokal hönsgård. Boka, hämta och betala enkelt via Hönsgården.';
+  const seoDescription = (seoDescriptionRaw.length < 60
+    ? `${seoDescriptionRaw} Hämtas i ${sale.location}. ${sale.size} ägg per karta för ${sale.price} kr.`
+    : seoDescriptionRaw
+  ).slice(0, 158);
+
+  // Ensure absolute URLs (Schema.org requires absolute URIs for image / url)
+  const toAbsolute = (u?: string | null) => {
+    if (!u) return undefined;
+    if (/^https?:\/\//i.test(u)) return u;
+    if (u.startsWith('//')) return `https:${u}`;
+    return `https://honsgarden.se${u.startsWith('/') ? '' : '/'}${u}`;
+  };
+  const seoOgImage = toAbsolute(sale.imageUrl) || 'https://honsgarden.se/og-image.jpg';
+  const seoUrl = `https://honsgarden.se${seoPath}`;
+  const sellerId = `${seoUrl}#seller`;
+  const productId = `${seoUrl}#product`;
+  const offerId = `${seoUrl}#offer`;
+
+  // priceValidUntil — recommended for Offer; default 60 days out
+  const priceValidUntil = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 60);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const priceNumber = Math.max(0, Math.round(Number(sale.price) || 0));
+  const safePrice = String(priceNumber);
+
+  const seoJsonLd = listing
+    ? [
+        {
+          '@type': 'Product',
+          '@id': productId,
+          name: sale.title,
+          description: seoDescriptionRaw,
+          image: [seoOgImage],
+          category: 'Mat & dryck > Ägg',
+          sku: slug || listing.id,
+          productID: slug || listing.id,
+          brand: { '@type': 'Brand', name: 'Hönsgården' },
+          offers: {
+            '@type': 'Offer',
+            '@id': offerId,
+            url: seoUrl,
+            priceCurrency: 'SEK',
+            price: safePrice,
+            priceValidUntil,
+            availability: isSoldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+            itemCondition: 'https://schema.org/NewCondition',
+            areaServed: { '@type': 'Place', name: sale.location },
+            seller: { '@id': sellerId },
+            eligibleQuantity: { '@type': 'QuantitativeValue', value: 1, unitText: 'karta' },
+          },
+        },
+        {
+          '@type': 'LocalBusiness',
+          '@id': sellerId,
+          name: sale.title,
+          description: `Lokal äggförsäljning i ${sale.location} via Hönsgården.`,
+          image: [seoOgImage],
+          url: seoUrl,
+          priceRange: `${safePrice} SEK`,
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: sale.location,
+            addressCountry: 'SE',
+          },
+          areaServed: { '@type': 'Place', name: sale.location },
+          makesOffer: { '@id': offerId },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Hönsgården', item: 'https://honsgarden.se/' },
+            { '@type': 'ListItem', position: 2, name: 'Äggförsäljning', item: 'https://honsgarden.se/salja-agg' },
+            { '@type': 'ListItem', position: 3, name: sale.title, item: seoUrl },
+          ],
+        },
+      ]
+    : undefined;
+
+  useSeo({
+    title: seoTitle,
+    description: seoDescription,
+    path: seoPath,
+    ogType: 'product',
+    ogImage: seoOgImage,
+    ogImageAlt: sale.title,
+    noindex: !listing, // hide query-string preview pages from indexing
+    jsonLd: seoJsonLd,
+  });
+
+  if (isLoading) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
+  if (shouldLoadSlug && !listing) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
+
+  const lowStock = !isSoldOut && remaining > 0 && remaining <= 3;
+  const reviewCount = (publicReviews as any[]).length;
+  const avgRating = reviewCount > 0 ? (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / reviewCount : 0;
+
+  return <main className={`min-h-dvh ${bgClass} px-4 py-8 sm:py-12`} style={{ ['--theme-accent' as any]: accent }}>
+    <div className="mx-auto max-w-2xl space-y-6 animate-fade-in">
+
+    {/* Hero */}
+    {headerStyle === 'hero' && sale.imageUrl ? (
+      <div className="relative mx-auto -mt-4 sm:-mt-6 overflow-hidden rounded-3xl border shadow-lg" style={{ borderColor: `${accent}33` }}>
+        <img src={sale.imageUrl} alt={sale.title} className="w-full h-72 sm:h-96 object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7 text-white space-y-2">
+          {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="h-10 w-10 rounded-xl bg-white/90 p-1 object-contain" />}
+          <Badge className="bg-white/95 text-foreground border-0 shadow-sm"><Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning</Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm ml-1"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
+          <h1 className="font-serif text-3xl sm:text-4xl leading-tight">{sale.title}</h1>
+          <p className="text-sm sm:text-base text-white/90 leading-relaxed max-w-xl">{sale.description}</p>
+          {reviewCount > 0 && (
+            <div className="inline-flex items-center gap-2 text-sm rounded-full bg-white/95 text-foreground px-3 py-1.5 shadow-sm">
+              <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
+              <span className="text-muted-foreground"><strong className="text-foreground">{avgRating.toFixed(1)}</strong> · {reviewCount} {reviewCount === 1 ? 'recension' : 'recensioner'}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    ) : (
+    <div className="text-center space-y-5">
+      {headerStyle !== 'minimal' && (
+      <div className="relative mx-auto max-w-xl">
+        <div aria-hidden="true" className="absolute -inset-6 blur-2xl rounded-[2rem]" style={{ background: `radial-gradient(circle, ${accent}26 0%, transparent 70%)` }} />
+        {sale.imageUrl
+          ? <img src={sale.imageUrl} alt={sale.title} className="relative mx-auto h-60 w-full rounded-3xl object-cover border shadow-lg" style={{ borderColor: `${accent}26` }} />
+          : <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-card border shadow-sm" style={{ borderColor: `${accent}33` }}><Egg className="h-9 w-9" style={{ color: accent }} /></div>}
+        <div className="relative -mt-4 flex flex-wrap items-center justify-center gap-2">
+          <Badge className="bg-card text-foreground border shadow-sm" style={{ borderColor: `${accent}40` }}>
+            <Sparkles className="h-3 w-3 mr-1" style={{ color: accent }} /> Lokal äggförsäljning
+          </Badge>
+          {isVerified && <Badge className="bg-green-600 text-white border-0 shadow-sm"><ShieldCheck className="h-3 w-3 mr-1" /> Verifierad säljare</Badge>}
+          {lowStock && <Badge className="bg-warning/15 text-warning border-warning/30 shadow-sm">Endast {remaining} kvar</Badge>}
+          {isSoldOut && <Badge className="bg-destructive/15 text-destructive border-destructive/30 shadow-sm">Slutsålt</Badge>}
+          {reko && (
+            <Badge className="bg-white text-foreground border shadow-sm" style={{ borderColor: `${accent}60` }}>
+              📦 REKO · {reko.group}{reko.nextAt ? ` · ${rekoDateLabel}` : ''}
+            </Badge>
+          )}
+        </div>
+      </div>
+      )}
+      {theme.logoUrl && <img src={theme.logoUrl} alt="Logo" className="mx-auto h-12 w-12 rounded-xl border bg-card p-1 object-contain" />}
+      <div className="space-y-2.5">
+        <h1 className={`font-serif text-3xl sm:text-4xl leading-tight ${isDark ? 'text-white' : 'text-foreground'}`}>{sale.title}</h1>
+        <p className={`leading-relaxed max-w-xl mx-auto ${isDark ? 'text-stone-200' : 'text-muted-foreground'}`}>{sale.description}</p>
+        {reviewCount > 0 && (
+          <div className="inline-flex items-center gap-2 text-sm rounded-full bg-card border border-border px-3 py-1.5 shadow-sm">
+            <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3.5 w-3.5 ${n <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/30'}`} />)}</div>
+            <span className="text-muted-foreground"><strong className="text-foreground">{avgRating.toFixed(1)}</strong> · {reviewCount} {reviewCount === 1 ? 'recension' : 'recensioner'}</span>
+          </div>
+        )}
+      </div>
+    </div>
+    )}
+
+    {/* Swish confirmation */}
+    {swishConfirm && (
+      <Card className="border-green-200 shadow-md bg-green-50/80 overflow-hidden">
+        <CardContent className="p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg text-green-800">Betalningsförfrågan skickad</h2>
+              <p className="text-sm text-green-700">Öppna Swish-appen och godkänn betalningen.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-white/70 p-4 space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Mottagare</span><strong>{sale.swishName || sale.swish}</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Belopp</span><strong className="text-green-700">{swishAmount} kr</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Meddelande</span><strong className="truncate max-w-[140px]">{swishMsgFull}</strong></div>
+          </div>
+          {!isMobile && swishDeepLink && (
+            <div className="flex flex-col items-center gap-1.5 rounded-xl border bg-white/70 p-3">
+              <SwishQR value={swishDeepLink} size={160} />
+              <p className="text-[11px] text-green-700">Skanna med Swish-appen på din telefon</p>
+            </div>
+          )}
+          <div className="flex items-start gap-2 text-xs text-green-700">
+            <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+            <p>Efter att du betalat via Swish, be säljaren bekräfta mottagningen. Har du inte Swish installerat? Uppgifterna finns kopierade.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-lg" onClick={() => copy(`Swish: ${sale.swish}\nBelopp: ${swishAmount} kr\nMeddelande: ${swishMsgFull}`)}><Copy className="h-3.5 w-3.5 mr-1.5" /> Kopiera uppgifter</Button>
+            <Button variant="ghost" size="sm" className="rounded-lg text-green-700 hover:text-green-800 hover:bg-green-100" onClick={() => setSwishConfirm(false)}>Stäng</Button>
+          </div>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Booking confirmation */}
+    {bookingConfirm && (
+      <Card className="border-primary/20 shadow-md bg-primary/5 overflow-hidden">
+        <CardContent className="p-5 sm:p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-serif text-lg text-foreground">Förhandsbokning mottagen</h2>
+              <p className="text-sm text-muted-foreground">Säljaren återkommer med bekräftelse.</p>
+            </div>
+          </div>
+          <div className="rounded-xl border bg-card/70 p-4 space-y-2">
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Säljare</span><strong>{sale.title}</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Beräknat pris</span><strong>{swishAmount} kr</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Hämtas</span><strong>{sale.location}</strong></div>
+          </div>
+          <div className="flex items-start gap-2 text-xs text-muted-foreground">
+            <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+            <p>Ingen betalning har ännu skett. Säljaren kontaktar dig för att bekräfta tillgång och hämtning. Du betalar först vid upphämtning.</p>
+          </div>
+          <Button variant="ghost" size="sm" className="rounded-lg" onClick={() => setBookingConfirm(false)}>Stäng</Button>
+        </CardContent>
+      </Card>
+    )}
+
+    {/* Stats + details */}
+    <Card className="border-primary/15 shadow-md bg-gradient-to-br from-primary/8 via-card to-accent/5 overflow-hidden">
+      <CardContent className="p-5 sm:p-6 space-y-5">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <InfoStat label="ägg/karta" value={sale.size} />
+          <InfoStat label="pris/karta" value={`${sale.price} kr`} accent />
+          <InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} />
+        </div>
+        {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
+        {(socialProof && (socialProof.bookings_today > 0 || socialProof.last_booked_at)) && (
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground -mt-1">
+            {socialProof.bookings_today > 0 && (
+              <span>🔥 {socialProof.bookings_today} {socialProof.bookings_today === 1 ? 'bokning' : 'bokningar'} idag</span>
+            )}
+            {socialProof.last_booked_at && (
+              <span>Senast bokad {formatRelativeSv(socialProof.last_booked_at)}</span>
+            )}
+          </div>
+        )}
+        <div className="rounded-2xl border bg-card/80 p-4 space-y-3"><Row icon={Package} title="Prislista">{priceRows.map((r) => <div key={r.label} className="flex justify-between text-sm"><span className="text-muted-foreground">{r.label}</span><strong>{r.price}</strong></div>)}</Row><Row icon={MapPin} title="Hämtning"><p className="text-sm text-muted-foreground">{sale.location}</p><p className="text-xs text-muted-foreground">{sale.pickup}</p>{listing?.latitude && listing?.longitude && (<div className="mt-2 rounded-xl border overflow-hidden aspect-video bg-muted"><iframe title="Karta till hämtning" src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(listing.longitude)-0.01}%2C${Number(listing.latitude)-0.01}%2C${Number(listing.longitude)+0.01}%2C${Number(listing.latitude)+0.01}&layer=mapnik&marker=${Number(listing.latitude)}%2C${Number(listing.longitude)}`} className="w-full h-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /></div>)}{mapsDirectionsUrl && (<a href={mapsDirectionsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline mt-1.5"><Navigation className="h-3.5 w-3.5" /> Vägbeskrivning i Google Maps</a>)}</Row><Row icon={MessageCircle} title="Kontakt"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{sale.contact}</p></Row><a href="/karta" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline pt-1"><MapPin className="h-4 w-4" /> Se alla säljare på kartan</a></div>
+        <Card className="border-primary/20 bg-primary/5 shadow-none"><CardContent className="p-4 space-y-3"><Row icon={Wallet} title="Betala med Swish"><p className="text-sm text-muted-foreground whitespace-pre-wrap">{swishText}</p>{sale.swish && pricePerPack > 0 && (<div className="mt-2 flex items-center justify-between rounded-xl border bg-background/70 px-3 py-2"><div className="text-xs text-muted-foreground">Att betala för {packCount} × {sale.size}-pack</div><div className="font-serif text-lg">{swishAmount} kr</div></div>)}</Row>{sale.swish && (<div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><Button className="w-full rounded-xl" onClick={openSwish} disabled={!swishAmount}><Wallet className="h-4 w-4 mr-2" /> Öppna Swish ({swishAmount} kr)</Button><Button variant="outline" className="w-full rounded-xl" onClick={() => copy(`${swishText}\nBelopp: ${swishAmount} kr`)}><Copy className="h-4 w-4 mr-2" /> Kopiera uppgifter</Button></div>)}{sale.swish && <p className="text-[11px] text-muted-foreground">Beloppet räknas ut från antal kartor du valt ovan. Du kan justera summan i Swish innan du godkänner.</p>}</CardContent></Card>
+        {listing?.id && (
+          <Card className="shadow-sm border-primary/15"><CardContent className="p-4 sm:p-5 space-y-3">
+            {isSoldOut ? (
+              <>
+                <h2 className="font-serif text-base flex items-center gap-2"><BellRing className="h-4 w-4 text-primary" aria-hidden="true" /> Anmäl dig till väntelistan</h2>
+                <p className="text-xs text-muted-foreground">Få ett mejl direkt när säljaren har ägg i lager igen.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Namn" value={wlName} onChange={(e) => setWlName(e.target.value)} placeholder="Namn *" />
+                  <Input aria-label="E-post för notis" type="email" value={wlEmail} onChange={(e) => setWlEmail(e.target.value)} placeholder="E-post (för notis)" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Telefon (valfritt)" value={wlPhone} onChange={(e) => setWlPhone(e.target.value)} placeholder="Telefon (valfritt)" />
+                  <Input aria-label="Önskat antal kartor" type="number" min="1" value={wlPacks} onChange={(e) => setWlPacks(e.target.value)} placeholder="Önskat antal kartor" />
+                </div>
+                <Button size="lg" onClick={() => waitlistMutation.mutate()} disabled={waitlistMutation.isPending} className="w-full rounded-xl shadow-sm">
+                  <BellRing className="h-4 w-4 mr-2" aria-hidden="true" /> {waitlistMutation.isPending ? 'Skickar...' : 'Anmäl mig'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <h2 className="font-serif text-base flex items-center gap-2"><ShoppingBasket className="h-4 w-4 text-primary" aria-hidden="true" /> Boka ägg</h2>
+                <p className="text-xs text-muted-foreground">Säljaren bekräftar din bokning och återkommer om hämtning.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input aria-label="Ditt namn" value={name} onChange={(e) => setName(e.target.value)} placeholder="Namn *" />
+                  <Input aria-label="Telefonnummer" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefon *" />
+                </div>
+                <Input aria-label="E-postadress för bekräftelse" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="E-post * (för bekräftelse)" />
+                <Input aria-label="Antal kartor" type="number" min="1" max={remaining} value={packs} onChange={(e) => setPacks(e.target.value)} placeholder="Antal kartor" />
+
+                {slots.length > 0 && (
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Välj hämtningstid *</label>
+                    <select
+                      className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                      value={pickupSlotId}
+                      onChange={(e) => setPickupSlotId(e.target.value)}
+                    >
+                      <option value="">– Välj tid –</option>
+                      {slots.map((s) => {
+                        const full = s.current_bookings >= s.max_bookings;
+                        const dateStr = new Date(s.starts_at).toLocaleString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        const endStr = new Date(s.ends_at).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+                        return <option key={s.id} value={s.id} disabled={full}>{dateStr}–{endStr}{s.label ? ` · ${s.label}` : ''}{full ? ' (Fullt)' : ` (${s.max_bookings - s.current_bookings} kvar)`}</option>;
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" checked={otherPickup} onChange={(e) => setOtherPickup(e.target.checked)} className="rounded" />
+                    <UserPlus className="h-3.5 w-3.5" /> Någon annan hämtar åt mig
+                  </label>
+                  {otherPickup && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <Input aria-label="Hämtarens namn" value={pickupPersonName} onChange={(e) => setPickupPersonName(e.target.value)} placeholder="Hämtarens namn" />
+                      <Input aria-label="Hämtarens telefon" value={pickupPersonPhone} onChange={(e) => setPickupPersonPhone(e.target.value)} placeholder="Hämtarens telefon" />
+                    </div>
+                  )}
+                </div>
+
+                <Textarea aria-label="Meddelande till säljaren" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Meddelande, t.ex. önskad hämtningstid" />
+                <Button size="lg" onClick={() => bookingMutation.mutate()} disabled={bookingMutation.isPending} className="w-full rounded-xl shadow-sm text-base">
+                  <CheckCircle2 className="h-5 w-5 mr-2" aria-hidden="true" /> {bookingMutation.isPending ? 'Skickar bokning...' : 'Skicka bokningsförfrågan'}
+                </Button>
+                <p className="text-[11px] text-muted-foreground text-center">Ingen betalning sker här – endast en förfrågan till säljaren.</p>
+              </>
+            )}
+          </CardContent></Card>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Button variant="secondary" onClick={() => copy(shareText)}><Copy className="h-4 w-4 mr-2" /> Kopiera info</Button><Button variant="outline" onClick={share}><Share2 className="h-4 w-4 mr-2" /> Dela sidan</Button></div>
+      </CardContent>
+    </Card>
+    {listing?.id && !isSoldOut && (
+      <Card className="border-primary/15 bg-gradient-to-br from-primary/5 to-accent/5 shadow-sm">
+        <CardContent className="p-4 sm:p-5 space-y-3">
+          {!showSub ? (
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0"><Repeat className="h-5 w-5 text-primary" /></div>
+                <div>
+                  <h2 className="font-serif text-base">Starta äggabonnemang</h2>
+                  <p className="text-xs text-muted-foreground">Få färska ägg automatiskt – varje vecka, varannan vecka eller månad.</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setShowSub(true)} className="rounded-xl shrink-0">Sätt upp</Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between"><h2 className="font-serif text-base flex items-center gap-2"><Repeat className="h-4 w-4 text-primary" /> Ditt äggabonnemang</h2><Button size="sm" variant="ghost" onClick={() => setShowSub(false)}>Avbryt</Button></div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium block mb-1">Frekvens</label>
+                  <select value={subFreq} onChange={(e) => setSubFreq(e.target.value as any)} className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm">
+                    <option value="weekly">Varje vecka</option>
+                    <option value="biweekly">Varannan vecka</option>
+                    <option value="monthly">Varje månad</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Antal kartor / leverans</label>
+                  <Input type="number" min="1" value={subPacks} onChange={(e) => setSubPacks(e.target.value)} />
+                </div>
+              </div>
+              <Input value={subName} onChange={(e) => setSubName(e.target.value)} placeholder="Namn *" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input type="email" value={subEmail} onChange={(e) => setSubEmail(e.target.value)} placeholder="E-post *" />
+                <Input type="tel" value={subPhone} onChange={(e) => setSubPhone(e.target.value)} placeholder="Telefon (valfritt)" />
+              </div>
+              <Button onClick={() => subscriptionMutation.mutate()} disabled={subscriptionMutation.isPending} className="w-full rounded-xl">
+                <Repeat className="h-4 w-4 mr-2" /> {subscriptionMutation.isPending ? 'Skapar...' : 'Starta abonnemang'}
+              </Button>
+              <p className="text-[11px] text-muted-foreground text-center">Säljaren bekräftar varje leverans. Du kan avsluta när som helst via mejl.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )}
+    <CustomSectionsRenderer sections={sections} accent={accent} />
+    {(publicReviews as any[]).length > 0 && (() => {
+      const avg = (publicReviews as any[]).reduce((s, r) => s + Number(r.rating || 0), 0) / (publicReviews as any[]).length;
+      return (
+        <Card><CardContent className="p-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <p className="stat-number text-2xl text-amber-700">{avg.toFixed(1)}</p>
+            <div>
+              <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-4 w-4 ${n <= Math.round(avg) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/40'}`} />)}</div>
+              <p className="text-xs text-muted-foreground">{(publicReviews as any[]).length} recension(er) från kunder</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {(publicReviews as any[]).slice(0, 5).map((r: any) => (
+              <div key={r.id} className="rounded-2xl border p-3 space-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">{r.customer_name}</p>
+                  <div className="flex">{[1,2,3,4,5].map((n) => <Star key={n} className={`h-3 w-3 ${n <= Number(r.rating) ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/40'}`} />)}</div>
+                </div>
+                {r.comment && <p className="text-sm text-muted-foreground italic">"{r.comment}"</p>}
+              </div>
+            ))}
+          </div>
+        </CardContent></Card>
+      );
+    })()}
+    <Card><CardContent className="p-4 flex gap-3"><ShieldCheck className="h-5 w-5 text-primary shrink-0" /><div><p className="text-sm font-medium">Tips till köpare</p><p className="text-sm text-muted-foreground">Bokningen är en förfrågan. Kontakta säljaren för att bekräfta tillgång, hämtning och betalning innan du Swishar.</p></div></CardContent></Card>
+    <EggAlertSignup
+      source="public-egg-sale"
+      utmCampaign={sale.location ? `egg-alert-sale-${(sale.location || '').toLowerCase().replace(/\s+/g,'-')}` : 'egg-alert-sale'}
+      ortName={sale.location || null}
+    />
+    <details className="rounded-2xl border bg-card/60 p-4 text-center"><summary className="cursor-pointer list-none text-xs text-muted-foreground">Skapad med <strong>Hönsgården.se</strong></summary><div className="pt-4 space-y-3"><Sparkles className="h-5 w-5 mx-auto text-primary" /><p className="text-sm font-medium">Vill du också sälja ägg enklare?</p><p className="text-xs text-muted-foreground">Med Hönsgården kan du logga ägg, skapa säljannonser, dela försäljningssidor och hålla koll på betalningar.</p><Button variant="outline" size="sm" onClick={() => window.open('https://honsgarden.se', '_blank')}><ExternalLink className="h-3.5 w-3.5 mr-2" /> Besök Hönsgården.se</Button></div></details>
+  </div></main>;
+}
+function InfoStat({ label, value, warn, highlight, accent }: { label: string; value: string | number; warn?: boolean; highlight?: boolean; accent?: boolean }) {
+  const bg = warn ? 'bg-destructive/5 border-destructive/20' : highlight ? 'bg-warning/5 border-warning/30' : accent ? 'bg-primary/8 border-primary/25 shadow-sm' : 'bg-card/90 border-border';
+  const tone = warn ? 'text-destructive' : highlight ? 'text-warning' : accent ? 'text-primary' : 'text-foreground';
+  return <div className={`rounded-2xl border p-4 transition-colors ${bg}`}><p className={`text-2xl font-bold tabular-nums ${tone}`}>{value}</p><p className="data-label text-[10px] mt-1">{label}</p></div>;
+}
+function Row({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) { return <section className="flex gap-3 border-b border-border/40 last:border-0 pb-3 last:pb-0"><Icon className="h-5 w-5 text-primary shrink-0 mt-0.5" aria-hidden="true" /><div className="flex-1"><h2 className="text-sm font-medium font-serif">{title}</h2>{children}</div></section>; }

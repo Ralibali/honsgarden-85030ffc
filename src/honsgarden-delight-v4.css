@@ -1,0 +1,399 @@
+/* Hönsgården 4.0 — delight layer
+   Agda, Insikter and Äggboden should feel like a beloved farm companion,
+   not an analytics suite or generic SaaS admin. */
+
+.honsgarden-app-shell .app-context-emoji {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 7px 18px rgba(75,64,44,.07);
+}
+
+.dark .honsgarden-app-shell .app-context-emoji {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* ----------------------------------------------------------------------
+   AGDA — conversational, personal, calm
+   ---------------------------------------------------------------------- */
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(218,195,143,.13), transparent 26rem);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl {
+  max-width: 760px;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > .flex.items-center.justify-between.mb-4 {
+  padding: 4px 4px 2px;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > .flex.items-center.justify-between.mb-4 h1 {
+  letter-spacing: -.045em;
+  color: var(--hg-ink);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > .flex.items-center.justify-between.mb-4 p {
+  font-size: 13px;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > [class*='flex-1'][class*='overflow-hidden'] {
+  border-radius: 30px !important;
+  border: 1px solid rgba(107,89,58,.14) !important;
+  background:
+    linear-gradient(rgba(255,252,244,.94), rgba(255,252,244,.94)),
+    repeating-linear-gradient(0deg, transparent 0 29px, rgba(105,86,55,.035) 29px 30px) !important;
+  box-shadow: 0 22px 60px rgba(47,57,42,.09) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > [class*='flex-1'][class*='overflow-hidden'] {
+  background: rgba(19,34,25,.97) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > [class*='flex-1'][class*='overflow-hidden'] > div:first-child {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(84,103,74,.25) transparent;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content .prose {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content .prose p {
+  color: hsl(var(--foreground) / .88);
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content .justify-start > div:last-child {
+  background: rgba(246,239,222,.74) !important;
+  border-color: rgba(116,94,57,.12) !important;
+  box-shadow: 0 6px 18px rgba(65,60,44,.04);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] main#main-content .justify-start > div:last-child {
+  background: rgba(55,77,58,.18) !important;
+  border-color: rgba(255,255,255,.06) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content .justify-end > div[class*='bg-primary'] {
+  background: #315d3d !important;
+  box-shadow: 0 8px 22px rgba(38,74,49,.14) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content button[class*='text-left'][class*='border'] {
+  border-radius: 17px !important;
+  background: rgba(255,252,245,.68) !important;
+  border-color: rgba(109,91,61,.13) !important;
+  color: var(--hg-ink) !important;
+  box-shadow: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content button[class*='text-left'][class*='border']:hover {
+  border-color: rgba(49,93,61,.28) !important;
+  background: rgba(234,240,229,.8) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] main#main-content button[class*='text-left'][class*='border'] {
+  background: rgba(255,255,255,.035) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content form input {
+  background: rgba(255,253,248,.94) !important;
+  border-color: rgba(93,78,51,.16) !important;
+  min-height: 46px;
+  box-shadow: inset 0 1px 2px rgba(54,46,30,.025);
+}
+
+.dark .honsgarden-app-shell[data-app-section='agda'] main#main-content form input {
+  background: rgba(12,25,18,.86) !important;
+}
+
+.honsgarden-app-shell[data-app-section='agda'] main#main-content form button[type='submit'] {
+  background: #315d3d !important;
+  box-shadow: 0 8px 22px rgba(38,74,49,.18) !important;
+}
+
+/* Free Agda preview becomes an invitation rather than a locked feature box. */
+.honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl.space-y-6 > .border-primary\/20 {
+  border-radius: 30px !important;
+  border-color: rgba(104,84,52,.14) !important;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(214,181,101,.2), transparent 28%),
+    rgba(255,252,244,.94) !important;
+  box-shadow: 0 24px 62px rgba(50,60,44,.08) !important;
+}
+
+/* ----------------------------------------------------------------------
+   DASHBOARD AGDA NOTE — a note from someone, not another widget
+   ---------------------------------------------------------------------- */
+
+.honsgarden-app-shell[data-app-section='today'] section[aria-label='Dagens råd från Hönsgården'] > * {
+  border-radius: 24px !important;
+  border: 1px solid rgba(116,94,57,.14) !important;
+  background:
+    linear-gradient(90deg, rgba(49,93,61,.035), transparent 45%),
+    #fbf5e8 !important;
+  box-shadow: 0 14px 36px rgba(60,59,43,.055) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='today'] section[aria-label='Dagens råd från Hönsgården'] > * {
+  background: rgba(26,43,31,.92) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.honsgarden-app-shell[data-app-section='today'] section[aria-label='Dagens råd från Hönsgården'] li {
+  background: rgba(255,255,255,.46) !important;
+  border-color: rgba(106,87,57,.1) !important;
+  border-radius: 18px !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='today'] section[aria-label='Dagens råd från Hönsgården'] li {
+  background: rgba(255,255,255,.025) !important;
+}
+
+/* ----------------------------------------------------------------------
+   INSIGHTS — story first, numbers second
+   ---------------------------------------------------------------------- */
+
+.honsgarden-app-shell[data-app-section='insights'] main#main-content {
+  background:
+    radial-gradient(circle at 82% 4%, rgba(217,191,132,.11), transparent 25rem);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] main#main-content > .max-w-7xl,
+.honsgarden-app-shell[data-app-section='insights'] main#main-content > * > .max-w-7xl {
+  max-width: 1080px;
+}
+
+.honsgarden-app-shell[data-app-section='insights'] main#main-content .farm-period-switch {
+  border: 1px solid rgba(113,94,62,.09);
+  background: rgba(226,215,193,.42) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] main#main-content .farm-period-switch {
+  background: rgba(255,255,255,.035) !important;
+  border-color: rgba(255,255,255,.05);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-story-card {
+  border-radius: 30px !important;
+  background:
+    radial-gradient(circle at 90% 0, rgba(222,190,113,.19), transparent 34%),
+    linear-gradient(145deg, #fbf7ed, #f4eddd) !important;
+  box-shadow: 0 22px 56px rgba(53,61,43,.075) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-story-card {
+  background: linear-gradient(145deg, rgba(29,49,35,.97), rgba(20,36,27,.97)) !important;
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-story-icon {
+  background: rgba(255,255,255,.58);
+  border: 1px solid rgba(119,95,54,.12);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-story-icon {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.07);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-readable-metric {
+  min-height: 90px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255,252,245,.74);
+  border: 1px solid rgba(110,90,58,.12);
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-readable-metric {
+  background: rgba(255,255,255,.025);
+  border-color: rgba(255,255,255,.06);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-readable-metric > svg {
+  margin-top: 4px;
+  color: #587657;
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-readable-metric span {
+  display: block;
+  color: var(--hg-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-readable-metric p {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: hsl(var(--muted-foreground));
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 23px;
+  padding: 17px;
+  border: 1px solid rgba(109,90,58,.12);
+  background: rgba(255,252,245,.68);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card.is-good {
+  background: rgba(232,240,229,.68);
+  border-color: rgba(65,112,68,.14);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card.is-warn {
+  background: rgba(248,239,216,.72);
+  border-color: rgba(161,123,58,.15);
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card,
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card.is-good,
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card.is-warn {
+  background: rgba(255,255,255,.025);
+  border-color: rgba(255,255,255,.06);
+}
+
+.honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: rgba(49,93,61,.09);
+  color: #315d3d;
+}
+
+.dark .honsgarden-app-shell[data-app-section='insights'] .farm-meaning-card__icon {
+  color: #9abf90;
+  background: rgba(143,187,131,.09);
+}
+
+/* Existing deeper analytics recede visually so the interpretation comes first. */
+.honsgarden-app-shell[data-app-section='insights'] main#main-content .max-w-7xl > [class*='border'],
+.honsgarden-app-shell[data-app-section='insights'] main#main-content .max-w-7xl > div > [class*='border'] {
+  border-color: rgba(110,91,61,.12) !important;
+  box-shadow: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='insights'] main#main-content h2,
+.honsgarden-app-shell[data-app-section='insights'] main#main-content h3 {
+  letter-spacing: -.02em;
+}
+
+/* ----------------------------------------------------------------------
+   EGG SHOP — a small local business, not a CRM
+   ---------------------------------------------------------------------- */
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content {
+  background:
+    radial-gradient(circle at 86% 0%, rgba(220,185,109,.13), transparent 28rem),
+    linear-gradient(180deg, rgba(251,247,237,.45), transparent 32rem);
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content > .max-w-7xl {
+  max-width: 1120px;
+  gap: 18px;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content > .max-w-7xl > * {
+  border-radius: 28px !important;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content > .max-w-7xl > [class*='border-primary\/25'] {
+  border-color: rgba(111,89,53,.13) !important;
+  background:
+    radial-gradient(circle at 88% 2%, rgba(215,177,91,.16), transparent 31%),
+    rgba(255,252,245,.9) !important;
+  box-shadow: 0 20px 54px rgba(56,61,43,.07) !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='sales'] main#main-content > .max-w-7xl > [class*='border-primary\/25'] {
+  background: rgba(22,39,29,.94) !important;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content h2.font-serif,
+.honsgarden-app-shell[data-app-section='sales'] main#main-content h1.font-serif {
+  color: var(--hg-ink) !important;
+  letter-spacing: -.035em;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content [class*='grid-cols-2'][class*='lg:grid-cols-4'] > div {
+  border-radius: 20px !important;
+  border-color: rgba(108,89,58,.11) !important;
+  background: rgba(255,252,245,.72) !important;
+  box-shadow: none !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='sales'] main#main-content [class*='grid-cols-2'][class*='lg:grid-cols-4'] > div {
+  background: rgba(255,255,255,.025) !important;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content [class*='xl:grid-cols-3'] > * {
+  border-radius: 24px !important;
+  border-color: rgba(107,88,58,.12) !important;
+  background: rgba(255,252,245,.62) !important;
+  box-shadow: none !important;
+}
+
+.dark .honsgarden-app-shell[data-app-section='sales'] main#main-content [class*='xl:grid-cols-3'] > * {
+  background: rgba(255,255,255,.02) !important;
+}
+
+.honsgarden-app-shell[data-app-section='sales'] main#main-content button,
+.honsgarden-app-shell[data-app-section='sales'] main#main-content a[class*='inline-flex'] {
+  border-radius: 14px !important;
+}
+
+/* Charts should support the story, not dominate the mobile experience. */
+@media (max-width: 639px) {
+  .honsgarden-app-shell[data-app-section='sales'] main#main-content .h-\[240px\] {
+    height: 180px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='insights'] .farm-story-card {
+    border-radius: 24px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='insights'] .farm-story-card > div {
+    padding: 18px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='insights'] .farm-story-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] main#main-content {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] main#main-content > .max-w-2xl > [class*='flex-1'][class*='overflow-hidden'] {
+    border-radius: 24px !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='agda'] main#main-content .max-w-\[85\%\] {
+    max-width: 90% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell[data-app-section='agda'] *,
+  .honsgarden-app-shell[data-app-section='insights'] *,
+  .honsgarden-app-shell[data-app-section='sales'] * {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

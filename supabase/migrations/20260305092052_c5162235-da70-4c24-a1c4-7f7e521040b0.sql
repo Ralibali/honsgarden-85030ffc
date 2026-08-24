@@ -1,0 +1,1 @@
+ALTER TABLE public.hens ADD COLUMN IF NOT EXISTS hen_type text NOT NULL DEFAULT 'hen';

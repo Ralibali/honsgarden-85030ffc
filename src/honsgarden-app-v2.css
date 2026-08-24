@@ -1,0 +1,120 @@
+/* Hönsgården application foundation.
+   Keep this layer intentionally boring: theme tokens + shared chrome only.
+   Route-specific experiences live in their semantic route styles. */
+
+.honsgarden-app-shell {
+  --background: 43 45% 97%;
+  --foreground: 148 27% 16%;
+  --card: 42 38% 98%;
+  --card-foreground: 148 27% 16%;
+  --popover: 42 38% 98%;
+  --popover-foreground: 148 27% 16%;
+  --primary: 142 36% 25%;
+  --primary-foreground: 45 60% 97%;
+  --secondary: 38 37% 91%;
+  --secondary-foreground: 145 25% 20%;
+  --muted: 39 30% 92%;
+  --muted-foreground: 72 10% 42%;
+  --accent: 43 43% 88%;
+  --accent-foreground: 145 28% 20%;
+  --border: 38 26% 84%;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(243,229,190,.34), transparent 24rem),
+    linear-gradient(180deg, #fbf8f1 0%, #f7f2e8 100%);
+  color: hsl(var(--foreground));
+}
+
+.dark .honsgarden-app-shell {
+  --background: 145 24% 9%;
+  --foreground: 43 35% 92%;
+  --card: 145 20% 12%;
+  --card-foreground: 43 35% 92%;
+  --popover: 145 20% 12%;
+  --popover-foreground: 43 35% 92%;
+  --primary: 93 30% 60%;
+  --primary-foreground: 145 28% 10%;
+  --secondary: 145 16% 17%;
+  --secondary-foreground: 43 30% 91%;
+  --muted: 145 14% 16%;
+  --muted-foreground: 43 12% 66%;
+  --accent: 145 18% 19%;
+  --accent-foreground: 43 30% 92%;
+  --border: 145 13% 23%;
+  background: linear-gradient(180deg, #122019 0%, #0d1813 100%);
+}
+
+.honsgarden-app-shell.noise-bg::before {
+  opacity: .025;
+}
+
+.honsgarden-app-shell > div.flex-1 > header {
+  border-color: rgba(121,105,77,.13);
+  background: rgba(250,247,239,.84);
+  box-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+.dark .honsgarden-app-shell > div.flex-1 > header {
+  background: rgba(15,28,21,.88);
+  border-color: rgba(255,255,255,.07);
+}
+
+.honsgarden-app-shell main#main-content {
+  padding-top: 14px;
+}
+
+/* Shared surfaces. Do not create route layout here. */
+.honsgarden-app-shell main#main-content .bg-card {
+  background-color: rgba(253,250,243,.94);
+}
+
+.dark .honsgarden-app-shell main#main-content .bg-card {
+  background-color: rgba(23,38,29,.94);
+}
+
+.honsgarden-app-shell main#main-content h1,
+.honsgarden-app-shell main#main-content h2,
+.honsgarden-app-shell main#main-content h3 {
+  text-wrap: balance;
+}
+
+.honsgarden-app-shell main#main-content h1.font-serif {
+  color: #183c29;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  letter-spacing: -.03em;
+}
+
+.dark .honsgarden-app-shell main#main-content h1.font-serif {
+  color: #f5eddd;
+}
+
+.honsgarden-app-shell .data-label {
+  color: #887a5f;
+  letter-spacing: .12em;
+}
+
+/* Shared quick egg interaction only; positioning belongs to Today/Ägg. */
+.honsgarden-app-shell #quick-egg-log > * {
+  overflow: hidden;
+}
+
+.honsgarden-app-shell #quick-egg-log button {
+  transition: transform .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+
+.honsgarden-app-shell #quick-egg-log button:active {
+  transform: scale(.96);
+}
+
+@media (max-width: 767px) {
+  .honsgarden-app-shell main#main-content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell * {
+    scroll-behavior: auto !important;
+  }
+}

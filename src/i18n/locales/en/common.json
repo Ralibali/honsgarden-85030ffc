@@ -1,0 +1,17 @@
+{
+  "app_name": "Honsgarden",
+  "tagline": "The smart flock manager for backyard chicken keepers",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "loading": "Loading…",
+  "yes": "Yes",
+  "no": "No",
+  "close": "Close",
+  "back": "Back",
+  "continue": "Continue",
+  "search": "Search",
+  "optional": "optional",
+  "required": "required"
+}

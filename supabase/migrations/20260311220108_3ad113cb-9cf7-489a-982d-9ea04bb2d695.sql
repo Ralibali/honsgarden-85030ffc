@@ -1,0 +1,1 @@
+ALTER TABLE public.egg_logs ADD COLUMN flock_id uuid REFERENCES public.flocks(id) ON DELETE SET NULL;

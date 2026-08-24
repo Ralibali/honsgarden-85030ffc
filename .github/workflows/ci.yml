@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_rls:
+        description: "Kör RLS-tester mot TEST_DB_URL"
+        required: false
+        default: "false"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, typecheck, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --registry=https://registry.npmjs.org/ --replace-registry-host=always
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc -b --pretty false
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://sikbymtrbhrofysgkqsj.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpa2J5bXRyYmhyb2Z5c2drcXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjQ0MjAsImV4cCI6MjA4ODI0MDQyMH0.SlgJoYwkD5GWeZ2mK-GihDvEWpt8noKWE8xulzSOqaU
+          VITE_SUPABASE_PROJECT_ID: sikbymtrbhrofysgkqsj
+
+  rls:
+    name: RLS integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch' && inputs.run_rls == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Require isolated test database
+        env:
+          TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
+        run: |
+          if [ -z "$TEST_DB_URL" ]; then
+            echo "TEST_DB_URL secret saknas. RLS-testet får inte hoppas över."
+            exit 1
+          fi
+
+      - name: Run RLS assertions
+        env:
+          TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
+        run: psql "$TEST_DB_URL" -v ON_ERROR_STOP=1 -f tests/rls/manual-rls-test.sql

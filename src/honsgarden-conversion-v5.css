@@ -1,0 +1,413 @@
+/* Hönsgården 5.0 — humane conversion.
+   Conversion should feel earned: calm, useful and emotionally connected to the farm. */
+
+/* FIRST WEEK JOURNEY ----------------------------------------------------- */
+.first-week-journey__card {
+  border: 1px solid rgba(76, 96, 66, .14) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(214, 181, 101, .13), transparent 35%),
+    linear-gradient(180deg, rgba(255, 253, 247, .97), rgba(249, 245, 235, .95)) !important;
+  box-shadow: 0 18px 48px rgba(48, 66, 48, .07) !important;
+}
+
+.dark .first-week-journey__card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(202, 177, 112, .09), transparent 34%),
+    linear-gradient(180deg, rgba(24, 42, 30, .97), rgba(18, 34, 25, .97)) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+
+.first-week-journey__top {
+  position: relative;
+}
+
+.first-week-journey__top::after {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(91, 105, 72, .14), transparent);
+}
+
+.first-week-journey__eyebrow,
+.earned-plus-nudge__eyebrow,
+.honsgarden-empty-state__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: #6b7d58;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.dark .first-week-journey__eyebrow,
+.dark .earned-plus-nudge__eyebrow,
+.dark .honsgarden-empty-state__eyebrow {
+  color: #a9c59a;
+}
+
+.first-week-journey__dismiss,
+.earned-plus-nudge__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: hsl(var(--muted-foreground));
+  transition: background-color .18s ease, color .18s ease;
+}
+
+.first-week-journey__dismiss:hover,
+.earned-plus-nudge__dismiss:hover {
+  background: rgba(48, 73, 49, .07);
+  color: hsl(var(--foreground));
+}
+
+.first-week-journey__next {
+  border: 1px solid rgba(49, 93, 61, .13);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(255,255,255,.8), transparent 30%),
+    rgba(232, 239, 229, .7);
+}
+
+.dark .first-week-journey__next {
+  background: rgba(112, 153, 103, .09);
+  border-color: rgba(143, 187, 131, .12);
+}
+
+.first-week-journey__next-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 15px;
+  background: #315d3d;
+  color: #fffdf8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 8px 18px rgba(49,93,61,.12);
+}
+
+.first-week-journey__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #315d3d;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.dark .first-week-journey__cta {
+  color: #a9c99f;
+}
+
+.first-week-journey__cta:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.first-week-journey__toggle {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  font-weight: 550;
+  border-radius: 12px;
+}
+
+.first-week-journey__toggle:hover {
+  background: rgba(68, 85, 57, .05);
+  color: hsl(var(--foreground));
+}
+
+.first-week-journey__steps {
+  display: grid;
+  gap: 3px;
+}
+
+.first-week-journey__step {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.first-week-journey__step:not(:disabled):hover {
+  background: rgba(49,93,61,.05);
+}
+
+.first-week-journey__step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  background: rgba(102, 104, 82, .08);
+  color: hsl(var(--muted-foreground));
+}
+
+.first-week-journey__step-icon.is-done {
+  background: rgba(49, 93, 61, .1);
+  color: #315d3d;
+}
+
+.dark .first-week-journey__step-icon.is-done {
+  color: #a9c99f;
+}
+
+/* EARNED PLUS NUDGE ------------------------------------------------------ */
+.earned-plus-nudge__card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 25px;
+  border: 1px solid rgba(117, 94, 52, .14);
+  background:
+    radial-gradient(circle at 92% 18%, rgba(214,181,101,.18), transparent 26%),
+    linear-gradient(145deg, rgba(255,253,247,.98), rgba(246,241,228,.96));
+  box-shadow: 0 16px 42px rgba(76, 68, 48, .07);
+}
+
+.dark .earned-plus-nudge__card {
+  border-color: rgba(255,255,255,.07);
+  background:
+    radial-gradient(circle at 92% 18%, rgba(210,181,108,.1), transparent 28%),
+    linear-gradient(145deg, rgba(27,43,31,.98), rgba(20,34,26,.98));
+}
+
+.earned-plus-nudge__stamp {
+  position: absolute;
+  right: -4px;
+  bottom: -18px;
+  font-size: 88px;
+  line-height: 1;
+  opacity: .07;
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.earned-plus-nudge__dismiss {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+}
+
+.earned-plus-nudge__proof {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(49,93,61,.07);
+  color: #49624e;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.dark .earned-plus-nudge__proof {
+  background: rgba(143,187,131,.1);
+  color: #b6cfac;
+}
+
+/* EMPTY STATES ----------------------------------------------------------- */
+.honsgarden-empty-state {
+  position: relative;
+  overflow: hidden;
+  border-radius: 26px;
+  border: 1px solid rgba(103, 91, 65, .13);
+  background:
+    radial-gradient(circle at 50% -20%, rgba(214,181,101,.14), transparent 42%),
+    linear-gradient(180deg, rgba(255,253,247,.95), rgba(250,246,237,.91));
+  padding: 30px 24px;
+  text-align: center;
+}
+
+.honsgarden-empty-state::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -45px;
+  width: 180px;
+  height: 78px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: rgba(89, 112, 73, .035);
+  pointer-events: none;
+}
+
+.dark .honsgarden-empty-state {
+  border-color: rgba(255,255,255,.07);
+  background:
+    radial-gradient(circle at 50% -20%, rgba(214,181,101,.07), transparent 40%),
+    rgba(22, 38, 28, .9);
+}
+
+.honsgarden-empty-state__mark {
+  position: relative;
+  z-index: 1;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 19px;
+  background: rgba(49,93,61,.09);
+  color: #315d3d;
+  border: 1px solid rgba(49,93,61,.09);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+.dark .honsgarden-empty-state__mark {
+  color: #a9c99f;
+  background: rgba(143,187,131,.09);
+  border-color: rgba(143,187,131,.09);
+  box-shadow: none;
+}
+
+.honsgarden-empty-state__eyebrow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 5px;
+}
+
+/* PREMIUM PAGE — override old SaaS treatment ---------------------------- */
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl {
+  max-width: 980px;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child {
+  border-radius: 32px !important;
+  border-color: rgba(67, 92, 62, .16) !important;
+  background:
+    linear-gradient(90deg, rgba(16,42,26,.88), rgba(16,42,26,.44) 50%, rgba(16,42,26,.1)),
+    url('/hero-farm-v2.webp') center 53% / cover no-repeat !important;
+  box-shadow: 0 24px 58px rgba(27, 46, 30, .14) !important;
+  text-align: left !important;
+  min-height: 410px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child > .pointer-events-none,
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child .absolute.inset-0.rounded-3xl {
+  display: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child > .relative {
+  max-width: 620px;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child h1 {
+  color: #fffdf8 !important;
+  text-shadow: 0 3px 24px rgba(0,0,0,.25);
+  margin-bottom: 16px !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child .text-primary,
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child .text-success-foreground {
+  color: #fff8e9 !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child .bg-primary\/15,
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child .bg-success\/15 {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.16) !important;
+  backdrop-filter: blur(10px);
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child button {
+  background: rgba(255,255,255,.1) !important;
+  color: #fffdf8 !important;
+  border-color: rgba(255,255,255,.18) !important;
+  backdrop-filter: blur(10px);
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:nth-of-type(2) > div > * {
+  border-radius: 25px !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:nth-of-type(2) > div [class*='border-2'] {
+  border-width: 1px !important;
+  border-color: rgba(49,93,61,.28) !important;
+  background:
+    radial-gradient(circle at 100% 0, rgba(214,181,101,.15), transparent 32%),
+    var(--hg-paper, hsl(var(--card))) !important;
+  transform: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:nth-of-type(2) > div [class*='pointer-events-none'] {
+  display: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > .border-primary\/25,
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > .border-primary\/20 {
+  border-color: rgba(78, 91, 64, .14) !important;
+}
+
+/* Premium feature list reads like a calm reference, not a wall of cards. */
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > div:last-of-type,
+.honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > [class*='Card']:last-of-type {
+  border-radius: 28px;
+}
+
+/* MOBILE ---------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .first-week-journey__card,
+  .earned-plus-nudge__card,
+  .honsgarden-empty-state {
+    border-radius: 22px !important;
+  }
+
+  .first-week-journey__next {
+    border-radius: 18px;
+  }
+
+  .earned-plus-nudge__stamp {
+    font-size: 70px;
+  }
+
+  .honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child {
+    min-height: 470px;
+    padding: 24px !important;
+    border-radius: 25px !important;
+    background:
+      linear-gradient(180deg, rgba(9,28,16,.12), rgba(9,28,16,.72) 62%, rgba(9,28,16,.9)),
+      url('/hero-farm-v2.webp') 58% center / cover no-repeat !important;
+  }
+
+  .honsgarden-app-shell[data-app-section='premium'] main#main-content > .max-w-5xl > section:first-child h1 {
+    font-size: clamp(2rem, 10vw, 2.8rem) !important;
+    line-height: .98 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-week-journey *,
+  .earned-plus-nudge * {
+    scroll-behavior: auto !important;
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}

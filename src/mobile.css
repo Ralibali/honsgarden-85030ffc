@@ -1,0 +1,261 @@
+/* Global mobile hardening for Hönsgården
+   Målet är att hela appen ska kännas mobil först: ingen sidledsskroll,
+   bättre touchytor, mjukare kort, scrollbara tabeller och dialoger som ryms. */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  min-width: 320px;
+  overscroll-behavior-y: none;
+}
+
+* {
+  min-width: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+p,
+li,
+span,
+div,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+a {
+  overflow-wrap: anywhere;
+}
+
+/* App shell */
+main#main-content {
+  max-width: 100vw;
+}
+
+/* Shadcn/dialog/popover primitives. Radix använder inline transforms,
+   därför håller vi reglerna försiktiga men tillräckligt starka på mobil. */
+[role="dialog"] {
+  max-width: min(96vw, 42rem) !important;
+  max-height: min(88vh, 780px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-radix-popper-content-wrapper] {
+  max-width: calc(100vw - 1rem) !important;
+}
+
+/* Tables should never break the mobile viewport. */
+table {
+  max-width: 100%;
+}
+
+.table-wrapper,
+.prose-custom .table-wrapper,
+.prose-custom table,
+[class*="overflow-x-auto"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Forms */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+textarea {
+  line-height: 1.55;
+}
+
+/* Better mobile defaults */
+@media (max-width: 767px) {
+  body {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: clamp(1.7rem, 7vw, 2.35rem);
+    line-height: 1.08;
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 5.5vw, 1.9rem);
+    line-height: 1.12;
+  }
+
+  h3 {
+    font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+  }
+
+  main#main-content {
+    padding-left: max(1rem, env(safe-area-inset-left)) !important;
+    padding-right: max(1rem, env(safe-area-inset-right)) !important;
+    padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)) !important;
+  }
+
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+
+  button,
+  a[role="button"],
+  .button,
+  [class*="h-9"],
+  [class*="h-10"] {
+    min-height: 44px;
+  }
+
+  /* Dashboard och kort: mindre rapportvägg, mer lugn. */
+  .data-label {
+    font-size: 9px;
+    letter-spacing: 0.11em;
+  }
+
+  [class*="rounded-3xl"] {
+    border-radius: 1.35rem;
+  }
+
+  [class*="rounded-2xl"] {
+    border-radius: 1rem;
+  }
+
+  /* Grids som ofta blir för tajta på mobil. */
+  .grid {
+    min-width: 0;
+  }
+
+  /* Fyrkolumners dashboardstatistik får vara tajt men inte spricka. */
+  .grid.grid-cols-4 > * {
+    min-width: 0;
+  }
+
+  /* Modaler/sheets på mobil ska kännas som mobilvyer. */
+  [role="dialog"] {
+    width: calc(100vw - 1rem) !important;
+    border-radius: 1.25rem !important;
+  }
+
+  /* Popovers, notiser, command palette. */
+  [data-radix-popper-content-wrapper] > * {
+    max-width: calc(100vw - 1rem) !important;
+  }
+
+  /* Blogg och SEO-sidor. */
+  .prose-custom {
+    font-size: 16px;
+    line-height: 1.72;
+  }
+
+  .prose-custom h2 {
+    font-size: 22px;
+    margin-top: 38px;
+  }
+
+  .prose-custom h3 {
+    font-size: 18px;
+    margin-top: 28px;
+  }
+
+  .prose-custom .summary-box,
+  .prose-custom .problem-card,
+  .prose-custom .product-box,
+  .prose-custom .experience-box,
+  .prose-custom .tip-box,
+  .prose-custom .warning-box {
+    padding: 18px 16px;
+    margin: 18px 0;
+  }
+
+  .prose-custom .mistake-item {
+    gap: 10px;
+  }
+
+  .prose-custom table,
+  .prose-custom .product-comparison-table {
+    min-width: 620px;
+  }
+
+  .prose-custom .table-wrapper,
+  .prose-custom .product-comparison-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose-custom .product-highlight {
+    padding: 18px;
+    gap: 14px;
+  }
+
+  /* Public landing pages: undvik för bred hero/mockup. */
+  section {
+    max-width: 100vw;
+  }
+
+  /* Floating action button och bottom nav får inte täcka innehåll helt. */
+  .fixed.bottom-20.right-4 {
+    bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  main#main-content {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .grid.grid-cols-4 {
+    gap: 0.45rem !important;
+  }
+
+  .grid.grid-cols-4 > * {
+    padding-left: 0.45rem !important;
+    padding-right: 0.45rem !important;
+  }
+
+  [role="dialog"] {
+    width: calc(100vw - 0.75rem) !important;
+  }
+}
+
+/* Sticky bottom-CTA i sheets/dialogs ska inte täckas av home indicator */
+[role="dialog"] [data-sticky-bottom],
+[data-vaul-drawer] [data-sticky-bottom] {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+@supports not (overflow: clip) {
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
+  }
+}

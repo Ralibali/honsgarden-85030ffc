@@ -1,0 +1,36 @@
+{
+  "tagline": "An app for backyard chicken keepers — egg log, flock tracking, statistics, feed cost, calendar, weather, community, AI assistance and a local egg shop.",
+  "copyright": "© {{year}} {{brand}}",
+  "columns": {
+    "product": "Product",
+    "guides": "Guides & tools",
+    "in_app": "In the app",
+    "support": "Support"
+  },
+  "links": {
+    "all_features": "Everything Honsgarden offers",
+    "pricing": "Pricing",
+    "app_for_owners": "App for chicken keepers",
+    "digital_egg_log": "Digital egg log",
+    "chicken_calendar": "Chicken calendar",
+    "feed_cost": "Feed cost for chickens",
+    "hatching_calendar": "Hatching calendar",
+    "sell_eggs_agda": "Sell eggs with Agda",
+    "egg_calculator": "Egg calculator",
+    "starting_chickens": "Getting started with chickens",
+    "chicken_egg_guides": "Chicken & egg guides",
+    "how_many_eggs": "How many eggs does a hen lay?",
+    "beginner_guide": "Beginner's guide to chickens",
+    "dashboard": "Dashboard",
+    "agda_shop": "Agda's egg shop",
+    "community": "Community",
+    "weather": "Weather",
+    "feedback": "Feedback",
+    "premium": "Premium",
+    "help": "Help",
+    "contact": "Contact",
+    "about": "About Honsgarden",
+    "privacy": "Privacy policy",
+    "terms": "Terms"
+  }
+}

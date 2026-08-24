@@ -1,0 +1,21 @@
+{
+  "title": "Settings",
+  "region_and_language": "Region & language",
+  "country": "Country",
+  "language": "Language",
+  "timezone": "Time zone",
+  "currency": "Currency",
+  "temperature": "Temperature",
+  "measurement": "Units",
+  "postal_code": "Postal code",
+  "country_change_note": "Your country suggests regional defaults. You can change each setting separately.",
+  "country_change_confirm_title": "Overwrite regional settings?",
+  "country_change_confirm_body": "You've manually changed some regional settings. Do you want to overwrite them with the defaults for the new country?",
+  "use_defaults": "Use new defaults",
+  "keep_mine": "Keep mine",
+  "metric": "Metric (kg, m, °C)",
+  "imperial": "Imperial (lb, ft, °F)",
+  "celsius": "Celsius (°C)",
+  "fahrenheit": "Fahrenheit (°F)",
+  "saved": "Settings saved"
+}

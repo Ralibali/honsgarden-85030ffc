@@ -1,0 +1,172 @@
+<!-- build v2 -->
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#3a6b35" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Privacy-friendly analytics by Plausible.
+         Snippet is loaded once. Pageviews (inkl. SPA-navigering via History API)
+         auto-spåras av pa-*.js. Admin-vyer exkluderas via `exclude`. -->
+    <script async crossorigin="anonymous" src="https://plausible.io/js/pa-mezdSKh1mM6ynuVC5pttI.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      if(!window.__plausibleInited){window.__plausibleInited=true;plausible.init({exclude:["/app/admin","/app/admin/**"]})}
+    </script>
+
+    
+    <title>Hönsgården – Äggloggare & App för Hobbyuppfödare av Höns</title>
+    <meta name="description" content="Logga ägg, spåra hälsa och räkna ut din foderkostnad. Gratis app för Sveriges 21 000+ hobbyhönsägare. Fungerar offline. Kom igång på 2 minuter.">
+    <meta name="keywords" content="äggloggare, höns app, hobbyhöns, hönsägare, äggproduktion, hönshälsa, foderkostnad höns, hönsregister, höns Sverige, ägg logg">
+    <meta name="author" content="Hönsgården" />
+    <meta name="google-site-verification" content="nh4GKSpzM-VOYIOTjAK0p9WraVGHFx0YJm6EkZ4bT_A" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <!-- canonical is set per-route by SeoCanonical / useSeo / prerender -->
+    <link rel="alternate" hreflang="sv-SE" href="https://honsgarden.se/" />
+    <link rel="alternate" hreflang="sv" href="https://honsgarden.se/" />
+    <link rel="alternate" hreflang="en-US" href="https://honsgarden.app/" />
+    <link rel="alternate" hreflang="en" href="https://honsgarden.app/" />
+    <link rel="alternate" hreflang="x-default" href="https://honsgarden.app/" />
+
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-192.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192.png" />
+
+    <!-- Preconnect for speed -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://sikbymtrbhrofysgkqsj.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!-- Non-blocking Google Fonts -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Young+Serif&family=DM+Serif+Display&family=Fira+Sans:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=DM+Serif+Display&family=Fira+Sans:wght@300;400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" />
+    </noscript>
+
+    <!-- prerendering hints for crawlers -->
+
+    <!-- RSS & Open Search -->
+    
+    <link rel="alternate" type="application/rss+xml" title="Hönsgården – blogg om höns" href="https://sikbymtrbhrofysgkqsj.supabase.co/functions/v1/rss" />
+    <link rel="search" type="application/opensearchdescription+xml" title="Hönsgården" href="/opensearch.xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://honsgarden.se/" />
+    <meta property="og:site_name" content="Hönsgården" />
+    <meta property="og:locale" content="sv_SE" />
+    <meta property="og:locale:alternate" content="en_US" />
+
+    <meta property="og:image" content="https://honsgarden.se/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Höns i en vacker trädgård – Hönsgården" />
+    <meta property="og:title" content="Hönsgården – Äggloggare & App för Hobbyuppfödare av Höns">
+    <meta property="og:description" content="Logga ägg, spåra hälsa och räkna ut din foderkostnad. Gratis för Sveriges hobbyhönsägare.">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@honsgarden" />
+    <meta name="twitter:title" content="Hönsgården – Äggloggare & App för Hobbyuppfödare av Höns">
+    <meta name="twitter:description" content="Logga ägg, spåra hälsa och räkna ut din foderkostnad. Gratis för Sveriges hobbyhönsägare.">
+    <meta name="twitter:image" content="https://honsgarden.se/og-image.jpg">
+    <meta name="twitter:image:alt" content="Höns i en vacker trädgård – Hönsgården" />
+
+    <!-- Additional SEO meta -->
+    <meta name="geo.region" content="SE" />
+    <meta name="geo.placename" content="Sverige" />
+    <meta name="content-language" content="sv" />
+    
+    <!-- AI visibility / citation meta -->
+    <meta name="citation_title" content="Hönsgården – Digital äggloggare och hönsverktyg" />
+    <meta name="citation_author" content="Hönsgården" />
+    <meta name="citation_language" content="sv" />
+
+    <!-- Organization + WebSite + SoftwareApplication schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://honsgarden.se/#organization",
+          "name": "Hönsgården",
+          "url": "https://honsgarden.se",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://honsgarden.se/logo.png",
+            "width": 512,
+            "height": 512
+          },
+          "description": "Hönsgården hjälper hobbyuppfödare att hålla koll på ägg, höns, foder och ekonomi – helt digitalt.",
+          "sameAs": [
+            "https://www.facebook.com/honsgarden",
+            "https://www.instagram.com/honsgarden"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://honsgarden.se/#website",
+          "name": "Hönsgården",
+          "url": "https://honsgarden.se",
+          "publisher": { "@id": "https://honsgarden.se/#organization" },
+          "inLanguage": "sv-SE"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Hönsgården",
+          "applicationCategory": "LifestyleApplication",
+          "operatingSystem": "Web",
+          "url": "https://honsgarden.se",
+          "description": "Digital äggloggare och gårdsverktyg för hönsägare. Logga ägg, spåra hälsa, hantera foder och ekonomi.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "SEK",
+            "description": "Gratis grundversion"
+          }
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://honsgarden.se/#webpage",
+          "url": "https://honsgarden.se",
+          "name": "Hönsgården – Din digitala äggloggare för hönsägare",
+          "isPartOf": { "@id": "https://honsgarden.se/#website" },
+          "about": { "@id": "https://honsgarden.se/#organization" },
+          "description": "Håll koll på ägg, hönor, foder och ekonomi – dag för dag. Gratis digitala verktyg för den moderna hönsbonden.",
+          "inLanguage": "sv-SE",
+          "primaryImageOfPage": {
+            "@type": "ImageObject",
+            "url": "https://honsgarden.se/og-image.jpg"
+          }
+        }
+      ]
+    }
+    </script>
+  </head>
+
+  <body>
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:outline-none">
+      Hoppa till innehåll
+    </a>
+    <div id="root"></div>
+    <noscript>
+      <div style="padding:2rem;text-align:center;font-family:sans-serif;">
+        <h1>Hönsgården</h1>
+        <p>JavaScript behöver vara aktiverat för att använda Hönsgården. Aktivera JavaScript i din webbläsare och ladda om sidan.</p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

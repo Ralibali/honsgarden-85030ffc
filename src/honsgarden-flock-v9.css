@@ -1,0 +1,499 @@
+/* Hönsgården v9 — Flocken ska kännas som djur man känner, inte poster i ett register. */
+
+[data-app-section="flock"],
+[data-app-section="hen-profile"] {
+  --flock-ink: #173728;
+  --flock-muted: #746d5e;
+  --flock-paper: #fcf8ef;
+  --flock-paper-deep: #f1e8d7;
+  --flock-moss: #315d3f;
+  --flock-straw: #d9c98d;
+  --flock-clay: #a95f43;
+  --flock-line: rgba(63, 74, 58, .13);
+}
+
+/* --------------------------------------------------------------------------
+   FLOCK — COLLECTION, NOT ADMIN GRID
+   -------------------------------------------------------------------------- */
+[data-app-section="flock"] #main-content > div.max-w-5xl {
+  max-width: 70rem;
+  gap: 1.4rem;
+}
+
+[data-app-section="flock"] .app-page-header {
+  position: relative;
+  margin-bottom: .35rem;
+  padding: clamp(1.15rem, 3vw, 1.65rem);
+  overflow: hidden;
+  border: 1px solid var(--flock-line);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 88% 10%, rgba(217, 201, 141, .22), transparent 32%),
+    linear-gradient(145deg, rgba(252, 248, 239, .98), rgba(244, 237, 221, .86));
+  box-shadow: 0 18px 45px rgba(57, 61, 45, .07);
+}
+
+[data-app-section="flock"] .app-page-header::after {
+  content: "";
+  position: absolute;
+  right: -1.25rem;
+  bottom: -2.4rem;
+  width: 8.5rem;
+  height: 8.5rem;
+  border: 1px solid rgba(49, 93, 63, .08);
+  border-radius: 50%;
+  box-shadow: 0 0 0 18px rgba(49, 93, 63, .025), 0 0 0 36px rgba(49, 93, 63, .018);
+  pointer-events: none;
+}
+
+[data-app-section="flock"] .app-page-header__emoji {
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 1px solid rgba(49, 93, 63, .1);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, .48);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .7);
+  font-size: 1.65rem;
+}
+
+[data-app-section="flock"] .app-page-header__title {
+  color: var(--flock-ink);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  letter-spacing: -.035em;
+}
+
+[data-app-section="flock"] .app-page-header__subtitle {
+  color: var(--flock-muted);
+  max-width: 42rem;
+}
+
+[data-app-section="flock"] .app-page-header__actions button {
+  min-height: 2.8rem;
+  border-radius: 999px;
+  padding-inline: 1rem;
+  box-shadow: none;
+}
+
+/* Quick-create flock becomes a discreet journal action. */
+[data-app-section="flock"] .app-page-header + div.flex.items-center.gap-2.flex-wrap {
+  margin-top: -.45rem;
+  padding-left: .15rem;
+}
+
+/* Flock groups feel like places on the property. */
+[data-app-section="flock"] h2.data-label {
+  margin: .35rem 0 .75rem;
+  color: var(--flock-muted);
+  font-size: .68rem;
+  letter-spacing: .16em;
+}
+
+[data-app-section="flock"] h2.data-label + .grid {
+  display: flex;
+  gap: .65rem;
+  overflow-x: auto;
+  padding: .1rem .1rem .5rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+[data-app-section="flock"] h2.data-label + .grid::-webkit-scrollbar {
+  display: none;
+}
+
+[data-app-section="flock"] h2.data-label + .grid > div {
+  flex: 0 0 min(82vw, 18.5rem);
+  scroll-snap-align: start;
+  border-color: var(--flock-line) !important;
+  border-radius: 1.35rem !important;
+  background: rgba(252, 248, 239, .72) !important;
+  box-shadow: none !important;
+}
+
+[data-app-section="flock"] h2.data-label + .grid > div:hover {
+  transform: translateY(-2px);
+  border-color: rgba(49, 93, 63, .22) !important;
+  background: rgba(252, 248, 239, .96) !important;
+}
+
+/* Filter controls stop dominating the animals. */
+[data-app-section="flock"] [role="tablist"] {
+  width: 100%;
+  min-height: 2.75rem;
+  justify-content: flex-start;
+  overflow-x: auto;
+  padding: .28rem;
+  border: 1px solid var(--flock-line);
+  border-radius: 1rem !important;
+  background: rgba(245, 239, 226, .68);
+  scrollbar-width: none;
+}
+
+[data-app-section="flock"] [role="tablist"]::-webkit-scrollbar {
+  display: none;
+}
+
+[data-app-section="flock"] [role="tablist"] [role="tab"] {
+  flex: 0 0 auto;
+  min-height: 2.15rem;
+  border-radius: .75rem !important;
+  padding-inline: .8rem;
+}
+
+/* The last large grid on Hens.tsx is the actual animals. */
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .85rem;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div {
+  position: relative;
+  overflow: hidden;
+  min-height: 15rem;
+  border: 1px solid var(--flock-line) !important;
+  border-radius: 1.65rem !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .82), rgba(249, 244, 233, .82)) !important;
+  box-shadow: 0 12px 32px rgba(58, 60, 45, .055) !important;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 18px 40px rgba(58, 60, 45, .09) !important;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div > div {
+  padding: 1.1rem !important;
+}
+
+/* Portrait row */
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div > div > .flex.items-center.gap-3.mb-3 {
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div > div > .flex.items-center.gap-3.mb-3 > div:first-child > div > div:first-child {
+  width: 4.65rem !important;
+  height: 4.65rem !important;
+  border-radius: 1.35rem !important;
+  box-shadow: 0 7px 20px rgba(55, 65, 49, .09);
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children h3 {
+  color: var(--flock-ink);
+  font-size: 1.3rem !important;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children h3 + p {
+  margin-top: .28rem;
+  color: var(--flock-muted);
+  font-size: .78rem !important;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children [role="combobox"] {
+  height: 2.35rem;
+  border-color: rgba(63, 74, 58, .1);
+  border-radius: .8rem;
+  background: rgba(255, 255, 255, .55);
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children .border-t {
+  border-color: rgba(63, 74, 58, .1) !important;
+}
+
+[data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children p.italic {
+  position: relative;
+  margin-top: .85rem !important;
+  padding: .75rem .85rem;
+  border-radius: .85rem;
+  background: rgba(217, 201, 141, .11);
+  color: #665f51 !important;
+  font-size: .75rem !important;
+  font-style: normal !important;
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   HEN PROFILE — PORTRAIT + STORY
+   -------------------------------------------------------------------------- */
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl {
+  max-width: 48rem;
+  gap: 1.1rem;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .flex.items-center.gap-2:first-child {
+  margin-bottom: -.25rem;
+}
+
+/* Main identity card */
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--flock-line) !important;
+  border-radius: 2rem !important;
+  background:
+    radial-gradient(circle at 82% 14%, rgba(217, 201, 141, .24), transparent 27%),
+    linear-gradient(145deg, rgba(252, 248, 239, .98), rgba(241, 232, 215, .84)) !important;
+  box-shadow: 0 20px 52px rgba(55, 61, 44, .08) !important;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden > div:first-child.h-2 {
+  display: none;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden > div:last-child {
+  padding: clamp(1.3rem, 4vw, 2.1rem) !important;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden .text-center > .flex.justify-center {
+  margin-bottom: 1rem;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden .text-center > .flex.justify-center > div > div:first-child {
+  width: 8.25rem !important;
+  height: 8.25rem !important;
+  border: 5px solid rgba(255, 255, 255, .7);
+  border-radius: 2rem !important;
+  box-shadow: 0 16px 34px rgba(62, 67, 48, .14);
+  font-size: 3.5rem !important;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden h1 {
+  color: var(--flock-ink);
+  font-size: clamp(2.25rem, 9vw, 3.5rem) !important;
+  letter-spacing: -.045em;
+  line-height: .98;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden h1 + div {
+  margin-top: .75rem;
+}
+
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden [class*="Badge"],
+[data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden .rounded-full {
+  box-shadow: none;
+}
+
+/* Tabs become quiet book tabs. */
+[data-app-section="hen-profile"] [role="tablist"] {
+  height: auto;
+  padding: .3rem;
+  border: 1px solid var(--flock-line);
+  border-radius: 1rem !important;
+  background: rgba(244, 237, 222, .65);
+}
+
+[data-app-section="hen-profile"] [role="tablist"] [role="tab"] {
+  min-height: 2.55rem;
+  border-radius: .75rem !important;
+  font-size: .78rem;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] {
+  margin-top: 1rem !important;
+}
+
+/* "Om Greta" reads like a journal note. */
+[data-app-section="hen-profile"] [role="tabpanel"] > div:first-child {
+  border-color: var(--flock-line) !important;
+  border-radius: 1.5rem !important;
+  background: rgba(252, 248, 239, .72) !important;
+  box-shadow: none !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > div:first-child [class*="bg-primary"] {
+  background: rgba(49, 93, 63, .09) !important;
+}
+
+/* Egg statistics: one calm strip instead of four dashboard tiles. */
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--flock-line);
+  border-radius: 1.35rem;
+  background: rgba(252, 248, 239, .76);
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 > div {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 > div:not(:last-child) {
+  border-right: 1px solid rgba(63, 74, 58, .09) !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 > div > div {
+  padding: 1rem .55rem !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 .w-8.h-8 {
+  display: none;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 p.text-lg {
+  color: var(--flock-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.55rem !important;
+  font-weight: 500 !important;
+}
+
+/* Per-hen quick egg logger should feel tactile, not like a form. */
+[data-app-section="hen-profile"] [role="tabpanel"] > div.border-primary\/15 {
+  border: 1px solid rgba(49, 93, 63, .13) !important;
+  border-radius: 1.5rem !important;
+  background:
+    linear-gradient(135deg, rgba(238, 244, 231, .93), rgba(248, 242, 220, .77)) !important;
+  box-shadow: none !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > div.border-primary\/15 > div {
+  padding: 1rem !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] > div.border-primary\/15 input {
+  border: 0;
+  background: rgba(255,255,255,.6);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.1rem;
+}
+
+/* History + health become journal chapters. */
+[data-app-section="hen-profile"] [role="tabpanel"] > div.border-border\/50 {
+  border-color: var(--flock-line) !important;
+  border-radius: 1.5rem !important;
+  box-shadow: none !important;
+}
+
+[data-app-section="hen-profile"] [role="tabpanel"] .space-y-2 > .group {
+  border-color: rgba(63, 74, 58, .08) !important;
+  border-radius: 1rem !important;
+  background: rgba(246, 240, 228, .55) !important;
+}
+
+/* --------------------------------------------------------------------------
+   MOBILE — names, faces and actions above metadata
+   -------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+  [data-app-section="flock"] #main-content {
+    padding-inline: .75rem;
+  }
+
+  [data-app-section="flock"] .app-page-header {
+    padding: 1rem;
+    border-radius: 1.4rem;
+  }
+
+  [data-app-section="flock"] .app-page-header__identity {
+    align-items: flex-start;
+  }
+
+  [data-app-section="flock"] .app-page-header__emoji {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+  }
+
+  [data-app-section="flock"] .app-page-header__actions {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr 1.2fr;
+  }
+
+  [data-app-section="flock"] .app-page-header__actions button {
+    width: 100%;
+  }
+
+  [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .7rem;
+  }
+
+  [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div {
+    min-height: 0;
+    border-radius: 1.35rem !important;
+  }
+
+  [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div > div > .flex.items-center.gap-3.mb-3 > div:first-child > div > div:first-child {
+    width: 4.9rem !important;
+    height: 4.9rem !important;
+  }
+
+  [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children h3 {
+    font-size: 1.45rem !important;
+  }
+
+  [data-app-section="hen-profile"] #main-content {
+    padding-inline: .7rem;
+  }
+
+  [data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden {
+    border-radius: 1.55rem !important;
+  }
+
+  [data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden > div:last-child {
+    padding: 1.15rem !important;
+  }
+
+  [data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden .text-center > .flex.justify-center > div > div:first-child {
+    width: 7.25rem !important;
+    height: 7.25rem !important;
+    border-radius: 1.65rem !important;
+  }
+
+  [data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0,1fr));
+  }
+
+  [data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 > div:nth-child(2) {
+    border-right: 0 !important;
+  }
+
+  [data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 > div:nth-child(-n+2) {
+    border-bottom: 1px solid rgba(63, 74, 58, .09) !important;
+  }
+
+  [data-app-section="hen-profile"] [role="tablist"] [role="tab"] {
+    padding-inline: .35rem;
+    gap: .25rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   NIGHT / DARK — warm, not blue-SaaS dark mode
+   -------------------------------------------------------------------------- */
+.dark [data-app-section="flock"] .app-page-header,
+.dark [data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden {
+  background:
+    radial-gradient(circle at 85% 10%, rgba(201, 181, 115, .08), transparent 30%),
+    linear-gradient(145deg, rgba(29, 40, 31, .98), rgba(24, 31, 26, .96)) !important;
+  border-color: rgba(224, 218, 194, .1) !important;
+}
+
+.dark [data-app-section="flock"] .app-page-header__title,
+.dark [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children h3,
+.dark [data-app-section="hen-profile"] #main-content > div.max-w-2xl > .overflow-hidden h1 {
+  color: #f5f0e3;
+}
+
+.dark [data-app-section="flock"] #main-content > div.max-w-5xl > .grid.stagger-children > div,
+.dark [data-app-section="flock"] h2.data-label + .grid > div,
+.dark [data-app-section="hen-profile"] [role="tabpanel"] > div:first-child,
+.dark [data-app-section="hen-profile"] [role="tabpanel"] > .grid.grid-cols-2.sm\:grid-cols-4 {
+  background: rgba(31, 39, 32, .78) !important;
+  border-color: rgba(224, 218, 194, .09) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-app-section="flock"] *,
+  [data-app-section="hen-profile"] * {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

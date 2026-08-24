@@ -1,0 +1,156 @@
+/* Hönsgården v7 — one calm opening scene for the logged-in Today view.
+   This intentionally overrides the earlier v2 decorative dashboard image so
+   the farmhouse is never rendered twice on mobile. */
+
+/* The v2 shell reserved space for a decorative pseudo-image. The greeting is
+   now the actual semantic hero, so that spacer and both pseudo-images go away. */
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+  padding-top: 0 !important;
+}
+
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::before,
+.honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* One visual opening: farmhouse + local daypart + greeting. */
+.honsgarden-app-shell .hg-today-hero {
+  position: relative !important;
+  min-height: clamp(232px, 34vw, 282px) !important;
+  margin: 0 0 2px !important;
+  padding: 28px 28px 26px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  overflow: hidden !important;
+  isolation: isolate !important;
+  border: 1px solid rgba(26, 52, 38, .10) !important;
+  border-radius: 28px !important;
+  background:
+    linear-gradient(180deg, rgba(7, 24, 16, .02) 8%, rgba(7, 24, 16, .10) 48%, rgba(4, 17, 11, .72) 100%),
+    url('/hero-farm-v2.webp') 55% 55% / cover no-repeat !important;
+  box-shadow: 0 16px 44px rgba(32, 48, 37, .10) !important;
+}
+
+html[data-local-daypart='evening'] .honsgarden-app-shell .hg-today-hero {
+  background:
+    linear-gradient(180deg, rgba(58, 38, 23, .10), rgba(27, 24, 17, .15) 46%, rgba(4, 15, 10, .75)),
+    url('/hero-farm-v2.webp') 55% 55% / cover no-repeat !important;
+}
+
+html[data-local-daypart='night'] .honsgarden-app-shell .hg-today-hero {
+  background:
+    linear-gradient(180deg, rgba(1, 7, 15, .25), rgba(2, 12, 13, .24) 46%, rgba(2, 10, 8, .82) 100%),
+    url('/hero-farm-v2.webp') 55% 55% / cover no-repeat !important;
+  background-blend-mode: multiply, normal !important;
+}
+
+.honsgarden-app-shell .hg-today-hero .data-label {
+  margin: 0 0 7px !important;
+  color: rgba(255, 250, 240, .88) !important;
+  -webkit-text-fill-color: rgba(255, 250, 240, .88) !important;
+  font-size: .72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .105em !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .40) !important;
+}
+
+.honsgarden-app-shell .hg-today-hero h1 {
+  margin: 0 !important;
+  max-width: 620px !important;
+  color: #fffaf0 !important;
+  background: none !important;
+  -webkit-text-fill-color: #fffaf0 !important;
+  font-size: clamp(2rem, 6.8vw, 2.85rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: -.035em !important;
+  text-shadow: 0 3px 22px rgba(0, 0, 0, .48) !important;
+  text-wrap: balance !important;
+}
+
+/* Give cards normal document flow underneath the hero. */
+.honsgarden-app-shell .hg-dashboard-today {
+  gap: 18px !important;
+}
+
+.honsgarden-app-shell .hg-dashboard-today > .hg-today-hero + * {
+  margin-top: 18px !important;
+}
+
+/* The daily action should float above, never into, the bottom navigation. */
+.honsgarden-app-shell main#main-content {
+  padding-bottom: calc(7.5rem + env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-width: 767px) {
+  .honsgarden-app-shell main#main-content {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .honsgarden-app-shell main#main-content .max-w-2xl.mx-auto.space-y-5.pb-8 {
+    padding-top: 0 !important;
+  }
+
+  .honsgarden-app-shell .hg-today-hero {
+    min-height: clamp(228px, 33svh, 270px) !important;
+    margin: 0 !important;
+    padding: 22px 20px 21px !important;
+    border-radius: 24px !important;
+    background-position: 58% 55% !important;
+  }
+
+  html[data-local-daypart='evening'] .honsgarden-app-shell .hg-today-hero,
+  html[data-local-daypart='night'] .honsgarden-app-shell .hg-today-hero {
+    background-position: 58% 55% !important;
+  }
+
+  .honsgarden-app-shell .hg-today-hero h1 {
+    max-width: 94% !important;
+    font-size: clamp(2rem, 9.1vw, 2.55rem) !important;
+    line-height: 1.01 !important;
+  }
+
+  .honsgarden-app-shell .hg-today-hero .data-label {
+    font-size: .68rem !important;
+  }
+
+  .honsgarden-app-shell .hg-dashboard-today {
+    gap: 17px !important;
+  }
+
+  /* Prevent a large card immediately after the hero from visually climbing
+     into the image when third-party/mobile browser text sizing changes. */
+  .honsgarden-app-shell .hg-today-hero + * {
+    position: relative !important;
+    margin-top: 17px !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .honsgarden-app-shell .hg-today-hero {
+    min-height: 220px !important;
+    padding: 20px 18px !important;
+    border-radius: 22px !important;
+    background-position: 61% 55% !important;
+  }
+
+  html[data-local-daypart='evening'] .honsgarden-app-shell .hg-today-hero,
+  html[data-local-daypart='night'] .honsgarden-app-shell .hg-today-hero {
+    background-position: 61% 55% !important;
+  }
+
+  .honsgarden-app-shell .hg-today-hero h1 {
+    font-size: clamp(1.9rem, 9.4vw, 2.32rem) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell .hg-today-hero,
+  .honsgarden-app-shell .hg-today-hero::before,
+  .honsgarden-app-shell .hg-today-hero::after {
+    animation: none !important;
+  }
+}

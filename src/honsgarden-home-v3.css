@@ -1,0 +1,159 @@
+/* Hönsgården startsida v3 – "Sage & Cream", DM Serif Display + Fira Sans, bento.
+   Allt är scopat under .hg-home-v3 så att äldre landningssidestilar inte krockar. */
+
+.hg-home-v3 {
+  --hg-cream: #faf7f0;
+  --hg-cream-2: #f2eee3;
+  --hg-sage-soft: #dce5d4;
+  --hg-sage: #a8c0a0;
+  --hg-sage-deep: #7d9b76;
+  --hg-ink: #1f2a22;
+  --hg-ink-soft: rgba(31, 42, 34, 0.68);
+  --hg-line: rgba(31, 42, 34, 0.1);
+
+  font-family: 'Fira Sans', Inter, system-ui, sans-serif;
+  background: var(--hg-cream);
+  color: var(--hg-ink);
+}
+
+.hg-home-v3 .font-serif,
+.hg-home-v3 h1,
+.hg-home-v3 h2,
+.hg-home-v3 h3 {
+  font-family: 'DM Serif Display', 'Young Serif', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.hg-home-v3 .hg-eyebrow {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--hg-sage-deep);
+}
+
+.hg-home-v3 .hg-rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--hg-sage), transparent);
+}
+
+/* Bento-ytor: matta, papperslika kort med mjuk sage-kant. */
+.hg-home-v3 .hg-tile {
+  position: relative;
+  border-radius: 22px;
+  border: 1px solid var(--hg-line);
+  background: linear-gradient(160deg, #fffdf8 0%, var(--hg-cream-2) 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 10px 28px -18px rgba(38, 54, 42, 0.35);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.32s ease, border-color 0.32s ease;
+}
+
+.hg-home-v3 a.hg-tile:hover,
+.hg-home-v3 .hg-tile--hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(125, 155, 118, 0.4);
+  box-shadow: 0 18px 44px -22px rgba(38, 54, 42, 0.42);
+}
+
+.hg-home-v3 .hg-tile--deep {
+  background: linear-gradient(155deg, #2f4636 0%, #1f2f26 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f4f1e6;
+}
+
+.hg-home-v3 .hg-tile--sage {
+  background: linear-gradient(155deg, var(--hg-sage-soft) 0%, #e8eee1 100%);
+  border-color: rgba(125, 155, 118, 0.28);
+}
+
+.hg-home-v3 .hg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 14px;
+  background: rgba(125, 155, 118, 0.16);
+  color: #38553d;
+}
+
+.hg-home-v3 .hg-tile--deep .hg-icon {
+  background: rgba(255, 255, 255, 0.12);
+  color: #dbe7d4;
+}
+
+.hg-home-v3 .hg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--hg-line);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  color: var(--hg-ink-soft);
+}
+
+/* Hero */
+.hg-home-v3 .hg-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 84% 8%, rgba(168, 192, 160, 0.34), transparent 62%),
+    linear-gradient(180deg, #fbf9f3 0%, var(--hg-cream) 62%, var(--hg-cream-2) 100%);
+}
+
+.hg-home-v3 .hg-hero__photo {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 46%;
+  background: url('/hero-farm-v2.webp') 50% 72% / cover no-repeat;
+  opacity: 0.34;
+  mask-image: linear-gradient(180deg, transparent, #000 72%);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 72%);
+  z-index: -1;
+}
+
+.hg-home-v3 .hg-hero__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(250, 247, 240, 0.55) 78%, var(--hg-cream) 100%);
+  z-index: -1;
+}
+
+.hg-home-v3 .hg-cta-primary {
+  background: #26402f;
+  color: #f7f4ec;
+  border-radius: 999px;
+  box-shadow: 0 14px 30px -14px rgba(24, 48, 34, 0.6);
+}
+
+.hg-home-v3 .hg-cta-primary:hover {
+  background: #1b3124;
+}
+
+.hg-home-v3 .hg-cta-ghost {
+  border-radius: 999px;
+  border: 1px solid rgba(31, 42, 34, 0.18);
+  background: rgba(255, 255, 255, 0.72);
+  color: #23372b;
+  backdrop-filter: blur(8px);
+}
+
+.hg-home-v3 .hg-cta-ghost:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Navbar över den ljusa hero-ytan */
+.hg-home-v3 nav.bg-transparent {
+  background: linear-gradient(180deg, rgba(250, 247, 240, 0.9), rgba(250, 247, 240, 0.35) 60%, transparent) !important;
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hg-home-v3 .hg-tile {
+    transition: none;
+  }
+}

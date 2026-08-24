@@ -1,0 +1,83 @@
+{
+  "seo": {
+    "title": "Honsgarden Plus – AI coach, finance & insights for your flock",
+    "description": "Upgrade to Honsgarden Plus for the AI coach, weekly reports, deviation alerts, finance tools and hatching calendar. $3.99/month or $29.99/year – cancel anytime.",
+    "og_image_alt": "Honsgarden Plus – AI and finance for backyard flocks"
+  },
+  "hero": {
+    "badge": "Premium with AI, insights and finance",
+    "title": "Turn Honsgarden into your smart flock assistant",
+    "free_trial": "🎁 Seven days of free premium for new users",
+    "trial_status": "You have a Plus trial",
+    "trial_status_days": "You have a Plus trial · {{count}} days left",
+    "sync_status": "Sync premium status"
+  },
+  "trial": {
+    "title": "You have a Plus trial",
+    "subtitle": "Agda, insights and the smarter tools are already unlocked.",
+    "subtitle_days": "{{count}} days left on your Plus trial. Cancel or keep Plus whenever you want."
+  },
+  "active": {
+    "title": "Premium is active",
+    "subtitle": "Manage subscription, cards and receipts via the Stripe customer portal.",
+    "manage": "Manage subscription"
+  },
+  "social_proof": "Used by backyard chicken keepers around the world 🌍",
+  "plans": {
+    "yearly": {
+      "name": "Plus yearly",
+      "price": "$29.99",
+      "period": "/ year",
+      "description": "About $2.50/month",
+      "badge": "Save $17.89",
+      "cta": "Choose yearly"
+    },
+    "monthly": {
+      "name": "Plus monthly",
+      "price": "$3.99",
+      "period": "/ month",
+      "description": "Flexible subscription. Cancel anytime.",
+      "sub_price": "= a carton of eggs a month",
+      "cta": "Choose monthly"
+    },
+    "legacy_notice": "Early supporter? Your original price is locked in for life.",
+    "active_label": "Premium is active"
+  },
+  "features": {
+    "title": "What's included in Plus",
+    "subtitle": "Trial, paid premium and lifetime are tracked separately in the system.",
+    "items": [
+      "Agda AI coach — personalised advice for your specific flock",
+      "Weekly report every Sunday with clear next steps",
+      "Know what each egg costs — feed, finance and exports",
+      "Alerts when something in the flock deviates, before it becomes a problem",
+      "Hatching calendar that tracks every one of the 21 days",
+      "Full statistics, egg goals, PDF/CSV and all future features"
+    ]
+  },
+  "sticky_cta": "Try 7 days free",
+  "toasts": {
+    "welcome_title": "Welcome to Premium! 🎉",
+    "welcome_desc": "You now have AI, insights and the finance tools.",
+    "still_processing_title": "Payment is still processing",
+    "still_processing_desc": "Apple Pay and some card payments can take a minute. Tap Sync premium status if the page doesn't update automatically.",
+    "sync_ok_title": "Premium status checked ✅",
+    "sync_ok_desc": "We synced your subscription with the payment system.",
+    "sync_fail_title": "Couldn't sync right now",
+    "sync_fail_desc": "Please try again in a moment.",
+    "portal_error_title": "Something went wrong",
+    "portal_error_desc": "Couldn't open the customer portal.",
+    "login_required_title": "Sign in first",
+    "login_required_desc": "You need to be signed in to upgrade.",
+    "already_sub_title": "You already have an active subscription",
+    "already_sub_desc": "We're opening the customer portal so you can manage it.",
+    "checkout_fail_title": "Couldn't start payment",
+    "checkout_fail_desc": "Something went wrong.",
+    "no_checkout_url": "No checkout URL was returned"
+  },
+  "trust": {
+    "stripe": "Secure payment via Stripe",
+    "cancel": "Cancel anytime",
+    "support": "Personal support in English"
+  }
+}

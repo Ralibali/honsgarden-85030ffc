@@ -1,0 +1,1 @@
+UPDATE public.farm_invitations SET status = 'expired' WHERE status = 'pending';

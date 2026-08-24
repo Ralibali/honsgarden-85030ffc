@@ -1,0 +1,619 @@
+/* Gården — semantic, route-scoped routine styles.
+   This file intentionally avoids Tailwind-string selectors and nth-child overrides. */
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4 {
+  --yard-ink: #183729;
+  --yard-muted: #746d60;
+  --yard-paper: #fffaf0;
+  --yard-paper-deep: #f4ecdc;
+  --yard-moss: #315d3f;
+  --yard-line: rgba(82, 78, 61, .13);
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 48rem;
+  padding-bottom: 2rem;
+  color: var(--yard-ink);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4 {
+  --yard-ink: #eee8da;
+  --yard-muted: #aaa292;
+  --yard-paper: #1b2d21;
+  --yard-paper-deep: #17271d;
+  --yard-moss: #9cbd91;
+  --yard-line: rgba(255,255,255,.08);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__eyebrow {
+  margin: 0 0 .28rem;
+  color: var(--yard-moss);
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .3rem .1rem .45rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__header h1 {
+  margin: 0;
+  color: var(--yard-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 7vw, 2.8rem);
+  font-weight: 500;
+  letter-spacing: -.045em;
+  line-height: .98;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__header p:last-child {
+  max-width: 34rem;
+  margin: .55rem 0 0;
+  color: var(--yard-muted);
+  font-size: .84rem;
+  line-height: 1.45;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__header-mark {
+  display: grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  flex: 0 0 3.5rem;
+  place-items: center;
+  border: 1px solid var(--yard-line);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(255,255,255,.75), rgba(229, 237, 218, .76));
+  font-size: 1.55rem;
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__header-mark {
+  background: rgba(255,255,255,.035);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__status {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem 1.5rem;
+  overflow: hidden;
+  padding: 1.25rem 1.3rem 1.15rem;
+  border: 1px solid var(--yard-line);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 92% 12%, rgba(214, 181, 101, .17), transparent 30%),
+    linear-gradient(145deg, rgba(244, 239, 220, .9), rgba(255, 250, 240, .96));
+  box-shadow: 0 16px 42px rgba(52, 61, 44, .06);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__status {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(214,181,101,.07), transparent 30%),
+    linear-gradient(145deg, #203326, #18291e);
+  box-shadow: 0 16px 42px rgba(0,0,0,.12);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__status.is-done {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(143, 187, 131, .18), transparent 30%),
+    linear-gradient(145deg, rgba(236, 244, 228, .95), rgba(255, 250, 240, .96));
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__status.is-done {
+  background: linear-gradient(145deg, rgba(61, 99, 67, .32), #18291e);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__status h2 {
+  margin: 0;
+  color: var(--yard-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.25rem, 4vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__status-copy > p:last-child {
+  margin: .35rem 0 0;
+  color: var(--yard-muted);
+  font-size: .78rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: .15rem;
+  min-width: 5rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress strong {
+  color: var(--yard-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.8rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress span {
+  color: var(--yard-muted);
+  font-size: .66rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress-track {
+  grid-column: 1 / -1;
+  height: .36rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(49, 93, 63, .09);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #315d3f, #71905c);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer {
+  overflow: hidden;
+  border: 1px solid var(--yard-line);
+  border-radius: 1.5rem;
+  background: rgba(255, 250, 240, .72);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer {
+  background: rgba(255,255,255,.025);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .55rem;
+  min-height: 4.25rem;
+  padding: .65rem .75rem .65rem 1rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line > svg {
+  color: var(--yard-moss);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line input {
+  height: 2.8rem;
+  padding-inline: .45rem;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--yard-ink);
+  font-size: .92rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line input:focus-visible {
+  outline: none;
+  box-shadow: none !important;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line > button {
+  min-height: 2.65rem;
+  border-radius: 999px;
+  padding-inline: .95rem;
+  background: var(--yard-moss);
+  color: #fffaf0;
+  box-shadow: none;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem 1rem;
+  padding: 0 1rem .8rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-tools button {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  color: var(--yard-muted);
+  background: transparent;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-tools button svg:last-child {
+  transition: transform .16s ease;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  overflow: hidden;
+  padding: 0 .75rem .8rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .6rem;
+  min-height: 4.1rem;
+  padding: .65rem .75rem;
+  text-align: left;
+  border: 1px solid var(--yard-line);
+  border-radius: 1rem;
+  background: rgba(255,255,255,.38);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions button {
+  background: rgba(255,255,255,.02);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions button > span:first-child {
+  font-size: 1.15rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions strong,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions small {
+  display: block;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions strong {
+  color: var(--yard-ink);
+  font-size: .78rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions small {
+  margin-top: .13rem;
+  color: var(--yard-muted);
+  font-size: .65rem;
+  line-height: 1.25;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions button.is-added {
+  opacity: .55;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+  overflow: hidden;
+  padding: .8rem;
+  border-top: 1px solid var(--yard-line);
+  background: rgba(240, 233, 216, .45);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced,
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit {
+  background: rgba(255,255,255,.02);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced label,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit label {
+  display: grid;
+  gap: .35rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced label > span,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit label > span {
+  color: var(--yard-muted);
+  font-size: .64rem;
+  font-weight: 700;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced input,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced button[role='combobox'],
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit input,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit button[role='combobox'] {
+  min-height: 2.45rem;
+  border-radius: .8rem;
+  background: rgba(255,255,255,.48);
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced input,
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced button[role='combobox'],
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit input,
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit button[role='combobox'] {
+  background: rgba(255,255,255,.025);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__reminder-control > div {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.45rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__reminder-control button[role='combobox'] {
+  flex: 1;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__section {
+  padding: .45rem .1rem 0;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 .15rem .7rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__section-heading h2 {
+  margin: 0;
+  color: var(--yard-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  letter-spacing: -.025em;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__section-heading > div > p:last-child {
+  margin: .25rem 0 0;
+  color: var(--yard-muted);
+  font-size: .72rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__section-heading > strong {
+  color: var(--yard-muted);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__list,
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done-list {
+  overflow: hidden;
+  border-top: 1px solid var(--yard-line);
+  border-bottom: 1px solid var(--yard-line);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore + .yard-v4__chore {
+  border-top: 1px solid var(--yard-line);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  min-height: 4.7rem;
+  padding: .65rem .2rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__check {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  place-items: center;
+  border: 1.5px solid rgba(49, 93, 63, .26);
+  border-radius: 50%;
+  color: #fffaf0;
+  background: transparent;
+  transition: transform .12s ease, background-color .15s ease, border-color .15s ease;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__check:active {
+  transform: scale(.9);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore.is-done .yard-v4__check {
+  border-color: var(--yard-moss);
+  background: var(--yard-moss);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore.is-overdue .yard-v4__check {
+  border-color: rgba(170, 75, 51, .45);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-copy {
+  display: grid;
+  min-width: 0;
+  gap: .18rem;
+  padding: .25rem 0;
+  border: 0;
+  text-align: left;
+  background: transparent;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-title {
+  color: var(--yard-ink);
+  font-size: .93rem;
+  font-weight: 720;
+  letter-spacing: -.01em;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-description {
+  overflow: hidden;
+  color: var(--yard-muted);
+  font-size: .72rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore.is-done .yard-v4__chore-title {
+  color: var(--yard-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .6rem;
+  margin-top: .15rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__meta em {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  color: var(--yard-muted);
+  font-size: .62rem;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__meta em.is-overdue {
+  color: #a5503b;
+}
+
+.dark .honsgarden-app-shell[data-app-section='yard'] .yard-v4__meta em.is-overdue {
+  color: #d99a87;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-actions {
+  display: flex;
+  gap: .15rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-actions button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 0;
+  border-radius: .7rem;
+  color: color-mix(in srgb, var(--yard-muted) 65%, transparent);
+  background: transparent;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-actions button:hover {
+  color: var(--yard-moss);
+  background: rgba(49, 93, 63, .06);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit-wrap {
+  overflow: hidden;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+  border-top: 1px solid var(--yard-line);
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit > button {
+  min-height: 2.45rem;
+  border-radius: .8rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done {
+  margin-top: .1rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done-toggle {
+  width: 100%;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .2rem .1rem;
+  border: 0;
+  color: var(--yard-muted);
+  background: transparent;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done-toggle > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done-toggle small {
+  display: inline-grid;
+  min-width: 1.4rem;
+  min-height: 1.4rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(49, 93, 63, .08);
+  font-size: .62rem;
+}
+
+.honsgarden-app-shell[data-app-section='yard'] .yard-v4__done-toggle > svg {
+  transition: transform .16s ease;
+}
+
+@media (max-width: 639px) {
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4 {
+    gap: .85rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__header {
+    padding-top: .1rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__header h1 {
+    max-width: 16rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__status {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 1.05rem 1rem 1rem;
+    border-radius: 1.5rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__progress strong {
+    font-size: 1.55rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer {
+    border-radius: 1.25rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding-bottom: .45rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__composer-line > button {
+    grid-column: 1 / -1;
+    min-height: 2.8rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__suggestions {
+    grid-template-columns: 1fr;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__advanced,
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__edit {
+    grid-template-columns: 1fr;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-main {
+    gap: .65rem;
+    min-height: 4.55rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__check {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4__chore-actions {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4 *,
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4 *::before,
+  .honsgarden-app-shell[data-app-section='yard'] .yard-v4 *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
