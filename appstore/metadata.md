@@ -120,7 +120,7 @@ Testkonto ovan har Plus-abonnemang aktiverat så att ni kan granska AI-konsulten
 
 Push-notiser: aktiveras första gången användaren öppnar Inställningar > Notiser.
 Kamera/bilder: används för hönsprofilbilder och annonser på marknadsplatsen.
-Abonnemang hanteras via Stripe på webben – iOS-appen visar endast status.
+Digital Plus säljs i iOS-appen via StoreKit (se.honsgarden.plus.monthly / yearly). Stripe-checkout finns inte i iOS-binären. Befintliga webb-Plus-kunder behåller tillgång via profiles.subscription_status. Återställ köp finns på Plus-sidan. Kontoradering: Inställningar → Radera konto, eller /delete-account.
 
 Frågor: info@auroramedia.se
 ```

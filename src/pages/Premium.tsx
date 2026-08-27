@@ -14,6 +14,16 @@ import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
+import { isNativeIos } from '@/lib/nativePlatform';
+import {
+  isIosBillingAvailable,
+  loadStoreKitProducts,
+  openAppStoreSubscriptions,
+  purchaseStoreKitPlan,
+  restoreStoreKitTransactions,
+  syncAppleTransactions,
+  type StoreKitProduct,
+} from '@/lib/appleIapClient';
 import PremiumValueStats from '@/components/premium/PremiumValueStats';
 
 type BillingPlan = 'monthly' | 'yearly';
@@ -27,6 +37,10 @@ export default function Premium() {
   const [loadingPlan, setLoadingPlan] = useState<BillingPlan | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [iosProducts, setIosProducts] = useState<StoreKitProduct[]>([]);
+  const [iosProductsReady, setIosProductsReady] = useState(!isNativeIos());
+  const nativeIos = isNativeIos();
   const [searchParams] = useSearchParams();
   const premiumType = user?.premium_type;
   const {
@@ -122,6 +136,26 @@ export default function Premium() {
   }, []);
 
   useEffect(() => {
+    if (!nativeIos) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const supported = await isIosBillingAvailable();
+        const products = supported ? await loadStoreKitProducts() : [];
+        if (!cancelled) setIosProducts(products);
+      } catch (err) {
+        console.warn('[Premium] StoreKit products unavailable', err);
+        if (!cancelled) setIosProducts([]);
+      } finally {
+        if (!cancelled) setIosProductsReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [nativeIos]);
+
+  useEffect(() => {
     if (searchParams.get('success') !== 'true') return;
 
     let cancelled = false;
@@ -189,6 +223,10 @@ export default function Premium() {
   const handleManageSubscription = async () => {
     setLoadingPortal(true);
     try {
+      if (nativeIos) {
+        await openAppStoreSubscriptions();
+        return;
+      }
       const { data, error } = await supabase.functions.invoke('customer-portal');
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
@@ -204,7 +242,78 @@ export default function Premium() {
     }
   };
 
+  const handleRestorePurchases = async () => {
+    if (!nativeIos) return;
+    setRestoring(true);
+    try {
+      const jwsList = await restoreStoreKitTransactions();
+      if (jwsList.length === 0) {
+        await refreshSubscription();
+        toast({
+          title: t('ios.restore_none_title'),
+          description: t('ios.restore_none_desc'),
+        });
+        return;
+      }
+      const result = await syncAppleTransactions(jwsList);
+      await refreshSubscription();
+      toast({
+        title: result.subscribed ? t('toasts.welcome_title') : t('ios.restore_none_title'),
+        description: result.subscribed ? t('toasts.welcome_desc') : t('ios.restore_none_desc'),
+      });
+    } catch (err: any) {
+      toast({
+        title: t('ios.restore_fail_title'),
+        description: err.message || t('ios.restore_fail_desc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setRestoring(false);
+    }
+  };
+
+  const handleIosPurchase = async (plan: BillingPlan) => {
+    if (!user) {
+      toast({
+        title: t('toasts.login_required_title'),
+        description: t('toasts.login_required_desc'),
+        variant: 'destructive',
+      });
+      return;
+    }
+    trackClick('checkout_start', { metadata: { plan, source: 'storekit' } });
+    setLoadingPlan(plan);
+    try {
+      const jws = await purchaseStoreKitPlan(plan, user.id);
+      const result = await syncAppleTransactions([jws]);
+      await refreshSubscription();
+      trackEvent('Premium Purchased', {
+        plan: 'plus',
+        billing_interval: plan,
+      });
+      toast({
+        title: t('toasts.welcome_title'),
+        description: result.subscribed ? t('toasts.welcome_desc') : t('ios.restore_none_desc'),
+      });
+    } catch (err: any) {
+      const message = String(err?.message || '');
+      if (/cancel|user cancelled|paymentcancelled/i.test(message)) return;
+      toast({
+        title: t('toasts.checkout_fail_title'),
+        description: message || t('toasts.checkout_fail_desc'),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
+
   const handleCheckout = async (plan: BillingPlan) => {
+    if (nativeIos) {
+      await handleIosPurchase(plan);
+      return;
+    }
+
     if (!user) {
       toast({
         title: t('toasts.login_required_title'),
@@ -318,6 +427,12 @@ export default function Premium() {
               {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
               {t('hero.sync_status')}
             </Button>
+            {nativeIos && (
+              <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={handleRestorePurchases} disabled={restoring}>
+                {restoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                {t('ios.restore')}
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -339,7 +454,7 @@ export default function Premium() {
             </div>
             <Button onClick={handleManageSubscription} disabled={loadingPortal} className="rounded-xl">
               {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {t('active.manage')}
+              {nativeIos ? t('ios.manage_appstore') : t('active.manage')}
             </Button>
           </CardContent>
         </Card>
@@ -351,6 +466,12 @@ export default function Premium() {
       {showFreeTrialCta && !intl && (
         <p className="text-center text-xs text-muted-foreground -mb-2">
           {t('social_proof')}
+        </p>
+      )}
+
+      {nativeIos && iosProductsReady && iosProducts.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground">
+          {t('ios.products_unavailable')}
         </p>
       )}
 
@@ -394,23 +515,25 @@ export default function Premium() {
 
               <div>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
+                  <span className="text-4xl font-bold text-foreground">{iosProducts.find((p) => p.plan === plan.id)?.priceString || plan.price}</span>
                   <span className="pb-1 text-muted-foreground">{plan.period}</span>
                 </div>
-                {plan.subPrice && (
+                {plan.subPrice && !nativeIos && (
                   <p className="text-xs text-muted-foreground mt-1">{plan.subPrice}</p>
                 )}
               </div>
 
+              {!(nativeIos && iosProductsReady && iosProducts.length === 0) && (
               <Button
                 className="w-full rounded-xl"
                 variant={plan.highlighted ? 'default' : 'outline'}
                 onClick={() => handleCheckout(plan.id)}
-                disabled={loadingPlan !== null || !allowPaidCheckout}
+                disabled={loadingPlan !== null || !allowPaidCheckout || (nativeIos && !iosProducts.some((p) => p.plan === plan.id))}
               >
                 {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {!allowPaidCheckout ? t('plans.active_label') : (plan.id === 'monthly' ? t('plans.monthly.cta') : t('plans.yearly.cta'))}
               </Button>
+              )}
             </CardContent>
           </Card>
           </motion.div>
@@ -425,7 +548,7 @@ export default function Premium() {
           transition={{ delay: 0.5 }}
           className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
         >
-          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />{t('trust.stripe')}</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />{nativeIos ? t('ios.trust_appstore') : t('trust.stripe')}</span>
           <span className="flex items-center gap-1.5"><RefreshCcw className="h-3.5 w-3.5 text-primary" />{t('trust.cancel')}</span>
           <span className="flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5 text-primary" />{t('trust.support')}</span>
         </motion.div>
@@ -476,7 +599,7 @@ export default function Premium() {
         </CardContent>
       </Card>
 
-      {showFreeTrialCta && (
+      {showFreeTrialCta && !(nativeIos && iosProducts.length === 0) && (
         <StickyMobileUpgradeCTA
           label={t('sticky_cta')}
           onClick={() => handleCheckout('yearly')}

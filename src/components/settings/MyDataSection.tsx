@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +78,13 @@ export function MyDataSection() {
   const isPremium = user?.subscription_status === "premium";
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
+
+  useEffect(() => {
+    if (window.location.hash !== "#delete-account") return;
+    const el = document.getElementById("delete-account");
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setDeleteStep(1);
+  }, []);
   const [confirmText, setConfirmText] = useState("");
 
   const { data: backups = [] } = useQuery({
@@ -263,7 +270,7 @@ export function MyDataSection() {
           </div>
 
           {/* Radera konto */}
-          <div className="border-t border-destructive/20 pt-4">
+          <div id="delete-account" className="border-t border-destructive/20 pt-4 scroll-mt-24">
             <div className="flex items-start gap-2 mb-2">
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
               <div>

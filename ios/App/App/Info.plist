@@ -51,6 +51,27 @@
 	<string>Hönsgården använder kameran för att du ska kunna fotografera dina hönor och din gård.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Hönsgården hämtar bilder från ditt bibliotek för att du ska kunna lägga upp foton på dina hönor.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Hönsgården kan spara hönsfoton till ditt bibliotek om du väljer det.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>se.honsgarden.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>se.honsgarden.app</string>
+				<string>honsgarden</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

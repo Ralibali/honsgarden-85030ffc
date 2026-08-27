@@ -55,7 +55,7 @@ export default function SalesJournal() {
     <div className="space-y-6 pb-8">
       <PageHeader
         title="Försäljningsjournal"
-        description="Journal över all äggförsäljning – datum, antal och köpare – enligt salmonellakontrollens krav (SJVFS 2007:19)."
+        subtitle="Journal över all äggförsäljning – datum, antal och köpare – enligt salmonellakontrollens krav (SJVFS 2007:19)."
       />
 
       {/* Compliance-info */}

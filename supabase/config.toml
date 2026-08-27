@@ -25,6 +25,10 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = true
   [functions.stripe-webhook]
     verify_jwt = false
+  [functions.apple-subscription-webhook]
+    verify_jwt = false
+  [functions.verify-apple-subscription]
+    verify_jwt = true
   [functions.daily-egg-reminder]
     verify_jwt = false
   [functions.day-2-activation-email]

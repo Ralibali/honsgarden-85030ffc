@@ -79,5 +79,15 @@
     "stripe": "Secure payment via Stripe",
     "cancel": "Cancel anytime",
     "support": "Personal support in English"
+  },
+  "ios": {
+    "restore": "Restore purchases",
+    "manage_appstore": "Manage in App Store",
+    "products_unavailable": "Plus in the iOS app is sold through the App Store. Existing web Plus still unlocks here. Use Restore purchases after changing devices.",
+    "trust_appstore": "Payment via the App Store",
+    "restore_none_title": "No App Store purchase found",
+    "restore_none_desc": "If you already have Plus on the web, tap Sync premium status.",
+    "restore_fail_title": "Could not restore purchases",
+    "restore_fail_desc": "Please try again in a moment."
   }
 }
