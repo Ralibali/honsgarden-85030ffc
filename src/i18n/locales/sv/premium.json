@@ -79,5 +79,15 @@
     "stripe": "Säker betalning via Stripe",
     "cancel": "Avsluta när du vill",
     "support": "Personlig support på svenska"
+  },
+  "ios": {
+    "restore": "Återställ köp",
+    "manage_appstore": "Hantera i App Store",
+    "products_unavailable": "Plus i iOS-appen köps via App Store. Har du redan Plus på webben synkas det automatiskt. Återställ köp om du bytt telefon.",
+    "trust_appstore": "Betalning via App Store",
+    "restore_none_title": "Inget App Store-köp hittades",
+    "restore_none_desc": "Om du har Plus via webben synkas det med knappen Kontrollera Plus-status.",
+    "restore_fail_title": "Kunde inte återställa köp",
+    "restore_fail_desc": "Försök igen om en stund."
   }
 }

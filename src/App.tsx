@@ -192,6 +192,7 @@ const AppRoutes = () => (
         <Route path="/avboka/:token" element={<CancelBooking />} />
         <Route path="/bestallning/:token" element={<OrderPortal />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/delete-account" element={<Navigate to="/app/settings#delete-account" replace />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/integritet" element={<Integritet />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -235,6 +236,7 @@ const AppRoutes = () => (
           <Route path="statistics" element={<Statistics />} />
           <Route path="overview" element={<Overview />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="delete-account" element={<Navigate to="/app/settings#delete-account" replace />} />
           <Route path="profile" element={<Profile />} />
           <Route path="feedback" element={<Feedback />} />
           <Route path="premium" element={<Premium />} />

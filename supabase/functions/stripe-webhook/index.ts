@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { isAppleIapActive, readAppleIapPreference } from "../_shared/appleIap.ts";
+import { parseTimestamp } from "../_shared/localPremium.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -92,7 +94,18 @@ serve(async (req) => {
       if (isPremiumStatus) {
         update.premium_expires_at = endsAt;
       } else if (isFreeStatus) {
-        update.premium_expires_at = null;
+        const { data: existing } = await supabase
+          .from("profiles")
+          .select("preferences")
+          .eq("user_id", userId)
+          .maybeSingle();
+        const appleIap = readAppleIapPreference(existing?.preferences);
+        if (isAppleIapActive(appleIap, new Date(), parseTimestamp)) {
+          update.subscription_status = "premium";
+          update.premium_expires_at = appleIap?.expires_at ?? null;
+        } else {
+          update.premium_expires_at = null;
+        }
       }
 
       const { error } = await supabase

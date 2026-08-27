@@ -24,12 +24,14 @@
     "capacitor:assets": "capacitor-assets generate --iconBackgroundColor '#3A6B35' --iconBackgroundColorDark '#3A6B35' --splashBackgroundColor '#FAF8F4' --splashBackgroundColorDark '#FAF8F4'"
   },
   "dependencies": {
+    "@capawesome/capacitor-apple-sign-in": "^0.1.2",
     "@capacitor/android": "^8.4.1",
     "@capacitor/camera": "^8.2.0",
     "@capacitor/core": "^8.4.1",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.4.1",
     "@capacitor/push-notifications": "^8.1.1",
+    "@capgo/native-purchases": "^8.7.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

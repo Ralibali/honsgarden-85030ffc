@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { isAppleIapActive, readAppleIapPreference, resolveEntitlement } from "../_shared/appleIap.ts";
 import { hasActiveLocalPremium, shouldClearLocalPremium } from "../_shared/localPremium.ts";
 
 const corsHeaders = {
@@ -69,11 +70,17 @@ serve(async (req) => {
 
     const { data: profile } = await supabaseClient
       .from("profiles")
-      .select("subscription_status, premium_expires_at, is_lifetime_premium, stripe_customer_id")
+      .select("subscription_status, premium_expires_at, is_lifetime_premium, stripe_customer_id, preferences")
       .eq("user_id", user.id)
       .maybeSingle();
 
     const now = new Date();
+    const appleIap = readAppleIapPreference(profile?.preferences);
+    const applePaid = isAppleIapActive(appleIap, now, (value) => {
+      if (!value) return null;
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date;
+    });
     const hasLifetimePremium = profile?.is_lifetime_premium === true;
     const localTrialActive = hasActiveLocalPremium(profile?.premium_expires_at, now);
 
@@ -91,8 +98,17 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    const applePaidResponse = () => new Response(JSON.stringify({
+      subscribed: true,
+      premium_type: "paid",
+      subscription_end: appleIap?.expires_at ?? null,
+      source: "apple",
+      product_id: appleIap?.product_id ?? null,
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeKey) {
+      if (applePaid) return applePaidResponse();
       if (localTrialActive) return localTrialResponse();
       throw new Error("STRIPE_SECRET_KEY is not set");
     }
@@ -105,6 +121,7 @@ serve(async (req) => {
     } catch (stripeError) {
       const message = stripeError instanceof Error ? stripeError.message : String(stripeError);
       console.error("[check-subscription] Stripe customer lookup failed", message);
+      if (applePaid) return applePaidResponse();
       if (localTrialActive) return localTrialResponse();
       throw stripeError;
     }
@@ -142,6 +159,7 @@ serve(async (req) => {
       } catch (stripeError) {
         const message = stripeError instanceof Error ? stripeError.message : String(stripeError);
         console.error("[check-subscription] Stripe subscription lookup failed", message);
+        if (applePaid) return applePaidResponse();
         if (localTrialActive) return localTrialResponse();
         throw stripeError;
       }
@@ -181,7 +199,33 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (localTrialActive) {
+    const entitlement = resolveEntitlement({
+      hasLifetime: hasLifetimePremium,
+      stripePaid: false,
+      stripeEnd: null,
+      applePaid,
+      appleEnd: appleIap?.expires_at ?? null,
+      localTrialActive,
+      localTrialEnd: profile?.premium_expires_at ?? null,
+    });
+
+    if (entitlement.source === "apple") {
+      const needsAppleUpdate =
+        profile?.subscription_status !== "premium" ||
+        (profile?.premium_expires_at ?? null) !== entitlement.subscription_end;
+      if (needsAppleUpdate) {
+        await supabaseClient
+          .from("profiles")
+          .update({
+            subscription_status: "premium",
+            premium_expires_at: entitlement.subscription_end,
+          })
+          .eq("user_id", user.id);
+      }
+      return applePaidResponse();
+    }
+
+    if (entitlement.source === "trial") {
       if (profile?.subscription_status !== "premium") {
         await supabaseClient
           .from("profiles")
@@ -192,7 +236,7 @@ serve(async (req) => {
       return localTrialResponse();
     }
 
-    if (shouldClearLocalPremium(profile?.subscription_status, profile?.premium_expires_at, now)) {
+    if (!applePaid && shouldClearLocalPremium(profile?.subscription_status, profile?.premium_expires_at, now)) {
       await supabaseClient
         .from("profiles")
         .update({ subscription_status: "free", premium_expires_at: null })
