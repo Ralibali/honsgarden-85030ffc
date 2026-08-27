@@ -7,6 +7,7 @@ import { NavigationRoute, registerRoute } from "workbox-routing";
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
+import { PWA_NAVIGATION_DENYLIST } from "./lib/pwaNavigationDenylist";
 
 self.importScripts("/push-sw.js");
 precacheAndRoute(self.__WB_MANIFEST);
@@ -21,14 +22,18 @@ const AUTH_SENSITIVE_CACHES = ["supabase-rest", "supabase-storage", "images"];
 const LEGACY_CACHES = [
   "js-chunks",
   "js-chunks-v2",
+  "js-chunks-v3",
   "workbox-precache-v2-https://honsgarden.se/",
 ];
 
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
 
 const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
   new NavigationRoute(handler, {
-    denylist: [/^\/~oauth/, /^\/api/],
+    denylist: PWA_NAVIGATION_DENYLIST,
   }),
 );
 
@@ -83,7 +88,7 @@ registerRoute(supabaseMutationMatcher, new NetworkOnly(), "DELETE");
 registerRoute(
   ({ request }) => request.destination === "script",
   new NetworkFirst({
-    cacheName: "js-chunks-v3",
+    cacheName: "js-chunks-v4",
     networkTimeoutSeconds: 8,
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),

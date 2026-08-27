@@ -84,6 +84,49 @@ export function isGenericBrandTitle(title = '') {
   return !value || value === 'Hönsgården' || value.startsWith('Hönsgården – Äggloggare');
 }
 
+export const HOME_PATH = '/';
+export const HOME_TOPIC_H1 = 'Lite enklare att ha höns';
+export const HOME_DOCUMENT_TITLE =
+  'Hönsgården – svensk app för hönsägare, ägglogg och hönskalender';
+
+export function renderHomeTopicBody() {
+  return `<div class="min-h-screen" style="background:#faf8f4;color:#22392b">
+<main class="container mx-auto max-w-6xl px-5 pt-28 pb-16" id="main-content">
+  <p class="text-sm tracking-wide mb-5" style="color:#7d9b76">Svensk app för hönsägare</p>
+  <h1 class="font-serif text-4xl md:text-6xl leading-tight mb-5">Lite enklare att ha höns.<br /><span style="color:#7d9b76">Lite roligare att följa dem.</span></h1>
+  <p class="max-w-xl text-base leading-relaxed mb-8">Ägglogg, hönsprofiler, foderkostnad, kalender och Agdas äggbod på ett ställe. Logga vardagen, se mönstren och sälj ägg utan Excel-kaos.</p>
+  <p><a href="/login?mode=register" class="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium" style="background:#3a6b35;color:#f4f1e6">Kom igång gratis</a></p>
+</main>
+</div>`;
+}
+
+export function extractRootInnerHtml(html = '') {
+  const startMatch = String(html).match(/<div id="root"[^>]*>/i);
+  if (!startMatch || startMatch.index == null) return '';
+  const from = startMatch.index + startMatch[0].length;
+  const rest = String(html).slice(from);
+  const noscriptAt = rest.search(/<noscript[\s>]/i);
+  const scriptAt = rest.search(/<script[\s>]/i);
+  const candidates = [noscriptAt, scriptAt].filter((index) => index >= 0);
+  const end = candidates.length ? Math.min(...candidates) : rest.length;
+  return rest.slice(0, end).replace(/<\/div>\s*$/i, '').trim();
+}
+
+export function assertHomePageHtml(html) {
+  const root = extractRootInnerHtml(html);
+  if (!root) {
+    throw new Error('/ har tomt #root');
+  }
+  if (!root.includes(HOME_TOPIC_H1)) {
+    throw new Error(`/#root saknar topic-H1 «${HOME_TOPIC_H1}»`);
+  }
+  return assertTopicPageHtml(html, {
+    path: HOME_PATH,
+    topicH1: HOME_TOPIC_H1,
+    titleIncludes: ['ägglogg', 'hönskalender'],
+  });
+}
+
 export function assertTopicPageHtml(html, { topicH1, titleIncludes, path }) {
   const h1s = extractH1Texts(html);
   const title = extractTitle(html);

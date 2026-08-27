@@ -20,6 +20,8 @@ import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import SettingsPage from "./pages/Settings";
 const Profile = lazyWithRetry(() => import("./pages/Profile"));
 
+const PwaUpdatePrompt = lazyWithRetry(() => import("./components/PwaUpdatePrompt"));
+
 import Index from "./pages/IndexUpdated";
 import Login from "./pages/Login";
 
@@ -286,6 +288,9 @@ const App = () => (
             <CacheClearer />
             <AppRoutes />
             <CookieConsent />
+            <Suspense fallback={null}>
+              <PwaUpdatePrompt />
+            </Suspense>
           </AuthProvider>
         </TooltipProvider>
       </PersistQueryClientProvider>

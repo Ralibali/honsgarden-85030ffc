@@ -2,13 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { BREED_PRERENDER_PROFILES } from '@/data/honsraserBreedProfiles.mjs';
 import {
   CTR_DOCUMENT_TITLES,
+  HOME_DOCUMENT_TITLE,
+  HOME_PATH,
+  HOME_TOPIC_H1,
   TOPIC_PAGE_PATHS,
+  assertHomePageHtml,
   assertTopicPageHtml,
   breedTopicH1,
   documentTitleForPath,
   extractH1Texts,
+  extractRootInnerHtml,
   injectTopicBody,
   renderBreedTopicBody,
+  renderHomeTopicBody,
   stripGenericBrandH1,
 } from '@/lib/prerenderTopicPages';
 
@@ -101,6 +107,22 @@ describe('prerender topic H1 + CTR titles', () => {
     });
     expect(result.title).toBe(CTR_DOCUMENT_TITLES[page.path]);
     expect(result.h1s).not.toContain('Hönsgården');
+  });
+
+  it('SPA-skalet för / har tomt #root och bara generic Hönsgården-H1', () => {
+    expect(extractRootInnerHtml(SPA_SHELL)).toBe('');
+    expect(() => assertHomePageHtml(SPA_SHELL)).toThrow(/tomt #root/);
+  });
+
+  it('prerenderad startsida får marketing-H1 i #root, inte generic Hönsgården', () => {
+    const html = injectTopicBody(withTitle(SPA_SHELL, HOME_DOCUMENT_TITLE), renderHomeTopicBody());
+    expect(extractRootInnerHtml(html)).toContain(HOME_TOPIC_H1);
+    expect(html).not.toContain('<h1>Hönsgården</h1>');
+    const result = assertHomePageHtml(html);
+    expect(result.title).toBe(HOME_DOCUMENT_TITLE);
+    expect(result.h1s.some((h1) => h1.includes(HOME_TOPIC_H1))).toBe(true);
+    expect(result.h1s).not.toContain('Hönsgården');
+    expect(HOME_PATH).toBe('/');
   });
 
   it('title-overrides gäller bara de tre URL:erna', () => {
