@@ -19,6 +19,7 @@ import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
+import { documentTitleForPath } from '@/lib/prerenderTopicPages';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -286,7 +287,7 @@ export default function GuideArticle() {
     if (!post) return;
     const BASE = 'https://honsgarden.se';
     const fullUrl = `${BASE}/blogg/${post.slug}`;
-    const pageTitle = `${post.title} | Hönsgården`;
+    const pageTitle = documentTitleForPath(`/blogg/${post.slug}`, `${post.title} | Hönsgården`);
     const pageDesc = post.meta_description || post.excerpt || '';
     const featureImage = heroForPost(post);
     const imageUrl = featureImage.startsWith('http') ? featureImage : `${BASE}${featureImage}`;
