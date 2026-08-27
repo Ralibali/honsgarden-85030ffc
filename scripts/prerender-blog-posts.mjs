@@ -12,6 +12,7 @@ import {
   documentTitleForPath,
   injectTopicBody,
   renderBreedTopicBody,
+  renderHomeTopicBody,
 } from '../src/lib/prerenderTopicPages.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
@@ -295,7 +296,11 @@ const CATEGORY_META = {
 
 function buildStaticPage(template, page) {
   const jsonLd = { '@context': 'https://schema.org', '@type': page.path === '/' ? 'WebSite' : 'WebPage', name: page.title, description: page.description, url: `${BASE_URL}${page.path}`, inLanguage: 'sv-SE' };
-  return injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
+  const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
+  if (page.path === '/') {
+    return injectTopicBody(withHead, renderHomeTopicBody());
+  }
+  return withHead;
 }
 
 function buildCategoryPage(template, slug, meta) {

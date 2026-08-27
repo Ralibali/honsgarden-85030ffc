@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { assertTopicPageHtml } from "../src/lib/prerenderTopicPages.mjs";
+import { assertHomePageHtml, assertTopicPageHtml } from "../src/lib/prerenderTopicPages.mjs";
 
 const required = [
   "dist/index.html",
@@ -30,6 +30,8 @@ const articles = readdirSync("dist/blogg", { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && !excluded.has(entry.name));
 if (articles.length < 5) throw new Error(`För få prerenderade bloggartiklar: ${articles.length}`);
 
+assertHomePageHtml(readFileSync("dist/index.html", "utf8"));
+
 const topicPages = [
   {
     file: "dist/honsraser/orpington/index.html",
@@ -56,4 +58,4 @@ for (const page of topicPages) {
   assertTopicPageHtml(readFileSync(page.file, "utf8"), page);
 }
 
-console.log(`SEO-build verifierad: ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+console.log(`SEO-build verifierad: / + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
