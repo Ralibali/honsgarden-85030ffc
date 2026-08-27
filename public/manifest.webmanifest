@@ -1,0 +1,31 @@
+{
+  "name": "Hönsgården – Din digitala äggloggare",
+  "short_name": "Hönsgården",
+  "description": "Håll koll på ägg, hönor, foder och ekonomi – dag för dag.",
+  "theme_color": "#3a6b35",
+  "background_color": "#faf8f5",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/app",
+  "categories": ["lifestyle", "productivity"],
+  "lang": "sv",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
