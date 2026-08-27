@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BREED_PROFILES } from '@/data/honsraserBreedProfiles';
+import { BREED_PRERENDER_PROFILES } from '@/data/honsraserBreedProfiles.mjs';
 import {
   CTR_DOCUMENT_TITLES,
   TOPIC_PAGE_PATHS,
@@ -33,7 +33,7 @@ function withTitle(html: string, title: string) {
 }
 
 function prerenderBreed(slug: string) {
-  const breed = BREED_PROFILES.find((item) => item.slug === slug);
+  const breed = BREED_PRERENDER_PROFILES.find((item: { slug: string }) => item.slug === slug);
   if (!breed) throw new Error(`saknar rasprofil ${slug}`);
   const path = `/honsraser/${slug}`;
   const h1 = breedTopicH1(breed);

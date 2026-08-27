@@ -79,6 +79,11 @@ export function isGenericBrandH1(text = '') {
   return String(text).replace(/<[^>]+>/g, '').trim() === 'Hönsgården';
 }
 
+export function isGenericBrandTitle(title = '') {
+  const value = String(title).trim();
+  return !value || value === 'Hönsgården' || value.startsWith('Hönsgården – Äggloggare');
+}
+
 export function assertTopicPageHtml(html, { topicH1, titleIncludes, path }) {
   const h1s = extractH1Texts(html);
   const title = extractTitle(html);
@@ -89,7 +94,7 @@ export function assertTopicPageHtml(html, { topicH1, titleIncludes, path }) {
   if (!h1s.some((h1) => h1.includes(topicH1))) {
     throw new Error(`${path || 'sidan'} saknar topic-H1 «${topicH1}» (hittade: ${h1s.join(' | ') || 'ingen'})`);
   }
-  if (!title || /^Hönsgården(?:\s*[–-|].*)?$/.test(title) || title.startsWith('Hönsgården – Äggloggare')) {
+  if (isGenericBrandTitle(title)) {
     throw new Error(`${path || 'sidan'} har generic title: ${title || '(saknas)'}`);
   }
   for (const needle of titleIncludes || []) {
