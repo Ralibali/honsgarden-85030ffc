@@ -131,7 +131,7 @@ export default function IndexUpdated() {
   });
 
   return (
-    <main id="main-content" className="min-h-dvh overflow-x-hidden">
+    <main id="main-content" tabIndex={-1} className="min-h-dvh overflow-x-hidden">
       <div className="hg-home-v3">
         <Suspense fallback={null}><StickyMobileCTA /></Suspense>
         <LandingNavbar />
