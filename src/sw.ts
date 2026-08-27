@@ -4,7 +4,7 @@ declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
@@ -18,7 +18,12 @@ const SUPABASE_HOST = "sikbymtrbhrofysgkqsj.supabase.co";
 const AUTH_SENSITIVE_CACHES = ["supabase-rest", "supabase-storage", "images"];
 // Legacy caches from previous SW versions must be purged on activate so users
 // don't keep serving the broken pre-hotfix JS bundle.
-const LEGACY_CACHES = ["js-chunks", "workbox-precache-v2-https://honsgarden.se/"];
+const LEGACY_CACHES = [
+  "js-chunks",
+  "js-chunks-v2",
+  "workbox-precache-v2-https://honsgarden.se/",
+];
+
 
 const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
@@ -72,11 +77,16 @@ registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PATCH");
 registerRoute(supabaseMutationMatcher, new NetworkOnly(), "PUT");
 registerRoute(supabaseMutationMatcher, new NetworkOnly(), "DELETE");
 
+// JS-chunkar hämtas alltid nätverket först. StaleWhileRevalidate kunde annars
+// servera en gammal shell/chunk-kombination efter en deploy → vit sida.
+// Cachen används bara som offline-fallback.
 registerRoute(
   ({ request }) => request.destination === "script",
-  new StaleWhileRevalidate({
-    cacheName: "js-chunks-v2",
+  new NetworkFirst({
+    cacheName: "js-chunks-v3",
+    networkTimeoutSeconds: 8,
     plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({
         maxEntries: 100,
         maxAgeSeconds: 60 * 60 * 24 * 7,
@@ -84,6 +94,7 @@ registerRoute(
     ],
   }),
 );
+
 
 // Den generella bildcachen får aldrig fånga någon Supabase-resurs. Publika
 // Supabase-bilder hanteras av den uttryckliga routen ovan; privata går nätverket.
