@@ -7,6 +7,12 @@ import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mj
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { extractBlogArticlePosts, isRobotsDisallowed, mergeBlogPosts, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
+import {
+  breedTopicH1,
+  documentTitleForPath,
+  injectTopicBody,
+  renderBreedTopicBody,
+} from '../src/lib/prerenderTopicPages.mjs';
 
 const BASE_URL = 'https://honsgarden.se';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -122,9 +128,9 @@ ${post.excerpt ? `<p class="text-lg text-muted-foreground leading-relaxed mb-6">
 }
 
 function buildArticleHead(post) {
-  const title = `${post.title} | Hönsgården`;
-  const description = post.meta_description || post.excerpt || stripTags(post.content).slice(0, 155);
   const path = `/blogg/${post.slug}`;
+  const title = documentTitleForPath(path, `${post.title} | Hönsgården`);
+  const description = post.meta_description || post.excerpt || stripTags(post.content).slice(0, 155);
   const url = `${BASE_URL}${path}`;
   const image = heroForPost(post);
   const imageUrl = image.startsWith('http') ? image : `${BASE_URL}${image}`;
@@ -355,13 +361,15 @@ function buildRegulationGuidePage(template, guide) {
 function buildBreedPage(template, breed) {
   const path = `/honsraser/${breed.slug}`;
   const url = `${BASE_URL}${path}`;
-  const title = `${breed.namn} – värpning, temperament & skötsel | Hönsgården`;
+  const h1 = breedTopicH1(breed);
+  const title = documentTitleForPath(path, `${breed.namn} – värpning, temperament & skötsel | Hönsgården`);
   const jsonLd = [
-    { '@context': 'https://schema.org', '@type': 'Article', headline: `${breed.namn} – värpning, temperament och skötsel`, description: breed.description, url, inLanguage: 'sv-SE', author: { '@type': 'Organization', name: 'Hönsgården' }, publisher: { '@type': 'Organization', name: 'Hönsgården' }, mainEntityOfPage: { '@type': 'WebPage', '@id': url } },
+    { '@context': 'https://schema.org', '@type': 'Article', headline: h1, description: breed.description, url, inLanguage: 'sv-SE', author: { '@type': 'Organization', name: 'Hönsgården' }, publisher: { '@type': 'Organization', name: 'Hönsgården' }, mainEntityOfPage: { '@type': 'WebPage', '@id': url } },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: breed.faq.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [ { '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Hönsraser', item: `${BASE_URL}/honsraser` }, { '@type': 'ListItem', position: 3, name: breed.namn, item: url } ] },
   ];
-  return injectHead(template, buildHeadGeneric({ title, description: breed.description, path, ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: `${breed.namn} – hönsras`, ogType: 'article', jsonLd }));
+  const withHead = injectHead(template, buildHeadGeneric({ title, description: breed.description, path, ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: `${breed.namn} – hönsras`, ogType: 'article', jsonLd }));
+  return injectTopicBody(withHead, renderBreedTopicBody(breed, h1));
 }
 
 function renderMarketplaceCategoryBody(page) {
@@ -394,7 +402,7 @@ function buildMarketplaceCategoryPage(template, page) {
 }
 
 function buildArticlePage(template, post) {
-  return injectHead(template, buildArticleHead(post)).replace('<div id="root"></div>', `<div id="root">${renderArticle(post)}</div>`);
+  return injectTopicBody(injectHead(template, buildArticleHead(post)), renderArticle(post));
 }
 
 

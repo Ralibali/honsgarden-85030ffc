@@ -4,6 +4,7 @@
 // inga uppfunna siffror. Riktvärden på värpning och vikt är vedertagna.
 
 import type { LongformPage, ContentSection } from './honsraserContent';
+import { breedTopicH1, documentTitleForPath } from '../lib/prerenderTopicPages';
 
 export interface BreedProfile {
   slug: string;                 // /honsraser/<slug>
@@ -80,9 +81,9 @@ export function buildBreedPage(b: BreedProfile): LongformPage {
   return {
     slug: b.slug,
     path: `/honsraser/${b.slug}`,
-    title: `${b.namn} – värpning, temperament & skötsel | Hönsgården`,
+    title: documentTitleForPath(`/honsraser/${b.slug}`, `${b.namn} – värpning, temperament & skötsel | Hönsgården`),
     description: b.description,
-    h1: b.h1Suffix ? `${b.namn} – ${b.h1Suffix}` : `${b.namn} – värpning, temperament och skötsel`,
+    h1: breedTopicH1(b),
     eyebrow: b.swedishHeritage ? 'Svensk lantras' : 'Hönsras',
     intro: [...b.intro],
     toc: [
