@@ -4,7 +4,7 @@ declare const self: ServiceWorkerGlobalScope & typeof globalThis;
 
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from "workbox-precaching";
 import { NavigationRoute, registerRoute } from "workbox-routing";
-import { CacheFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
+import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 
@@ -18,7 +18,12 @@ const SUPABASE_HOST = "sikbymtrbhrofysgkqsj.supabase.co";
 const AUTH_SENSITIVE_CACHES = ["supabase-rest", "supabase-storage", "images"];
 // Legacy caches from previous SW versions must be purged on activate so users
 // don't keep serving the broken pre-hotfix JS bundle.
-const LEGACY_CACHES = ["js-chunks", "workbox-precache-v2-https://honsgarden.se/"];
+const LEGACY_CACHES = [
+  "js-chunks",
+  "js-chunks-v2",
+  "workbox-precache-v2-https://honsgarden.se/",
+];
+
 
 const handler = createHandlerBoundToURL("/index.html");
 registerRoute(
