@@ -76,7 +76,7 @@ function extractQuotedField(block, field) {
 
 function parseSaljaAggUseSeo() {
   const source = readFileSync("src/pages/SaljaAgg.tsx", "utf8");
-  const match = source.match(/useSeo\(\{([\s\S]*?)\n  \}\);/);
+  const match = source.match(/useSeo\(\{([\s\S]*?)\n {2}\}\);/);
   if (!match) throw new Error("SaljaAgg.tsx saknar useSeo-anrop");
   return {
     title: extractQuotedField(match[1], "title"),
