@@ -378,7 +378,7 @@ function buildRegulationGuidePage(template, guide) {
     ],
   };
   const head = buildHeadGeneric({ title: guide.title, description: guide.metaDescription, path, ogImage: guide.ogImage, ogImageAlt: guide.h1, ogType: 'article', jsonLd });
-  return injectHead(template, head).replace('<div id="root"></div>', `<div id="root">${renderRegulationGuideBody(guide, updatedFormatted)}</div>`);
+  return injectTopicBody(injectHead(template, head), renderRegulationGuideBody(guide, updatedFormatted));
 }
 
 
