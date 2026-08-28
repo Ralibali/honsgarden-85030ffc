@@ -144,6 +144,138 @@ export function trackEvent<E extends AnalyticsEventName>(
   }
 }
 
+/**
+ * Minimal auth-user shape used to decide whether an account was just created.
+ * Matches the fields already present on the Supabase user / signUp response.
+ */
+export type AuthAccountSnapshot = {
+  id?: string | null;
+  created_at?: string | null;
+  last_sign_in_at?: string | null;
+  is_anonymous?: boolean | null;
+  app_metadata?: {
+    provider?: string | null;
+    providers?: string[] | null;
+  } | null;
+  identities?: Array<{
+    provider?: string | null;
+    created_at?: string | null;
+    last_sign_in_at?: string | null;
+  }> | null;
+};
+
+const OAUTH_PROVIDERS = new Set(['google', 'apple']);
+/** created_at and last_sign_in_at are the same instant on a first OAuth session. */
+const NEW_ACCOUNT_WINDOW_MS = 5_000;
+const SIGNUP_TRACKED_PREFIX = 'hg_signup_tracked_v1:';
+const trackedSignupIds = new Set<string>();
+
+/** Clears the in-memory one-shot set. Tests must also `localStorage.clear()`. */
+export function resetSignupTrackingForTests(): void {
+  trackedSignupIds.clear();
+}
+
+function parseAuthTimestampMs(value?: string | null): number | null {
+  if (!value) return null;
+  const ms = Date.parse(value);
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function hasOAuthIdentity(user: AuthAccountSnapshot | null | undefined): boolean {
+  if (!user) return false;
+  if ((user.identities ?? []).some((identity) => identity.provider != null && OAUTH_PROVIDERS.has(identity.provider))) {
+    return true;
+  }
+  const provider = user.app_metadata?.provider;
+  if (provider && OAUTH_PROVIDERS.has(provider)) return true;
+  return (user.app_metadata?.providers ?? []).some((item) => OAUTH_PROVIDERS.has(item));
+}
+
+/**
+ * True only when the auth payload looks like a brand-new account.
+ *
+ * - Empty `identities` is Supabase's anti-enumeration signUp response for an
+ *   existing email — not a created account.
+ * - `created_at` ≈ `last_sign_in_at` (or missing last_sign_in) is how a first
+ *   session looks. A later login updates last_sign_in and fails this check.
+ */
+export function isNewAuthAccount(user: AuthAccountSnapshot | null | undefined): boolean {
+  if (!user?.id || user.is_anonymous) return false;
+
+  const identities = user.identities;
+  if (Array.isArray(identities) && identities.length === 0) return false;
+
+  const createdMs = parseAuthTimestampMs(user.created_at);
+  if (createdMs == null) return false;
+
+  const lastSignInMs = parseAuthTimestampMs(user.last_sign_in_at);
+  if (lastSignInMs != null && Math.abs(lastSignInMs - createdMs) > NEW_ACCOUNT_WINDOW_MS) {
+    return false;
+  }
+
+  if (Array.isArray(identities) && identities.length > 0) {
+    return identities.some((identity) => {
+      const identityCreated = parseAuthTimestampMs(identity.created_at);
+      if (identityCreated == null) return true;
+      const identityLast = parseAuthTimestampMs(identity.last_sign_in_at);
+      const createdTogether = Math.abs(identityCreated - createdMs) <= NEW_ACCOUNT_WINDOW_MS;
+      const firstIdentitySignIn =
+        identityLast == null || Math.abs(identityLast - identityCreated) <= NEW_ACCOUNT_WINDOW_MS;
+      return createdTogether && firstIdentitySignIn;
+    });
+  }
+
+  return lastSignInMs == null || Math.abs(lastSignInMs - createdMs) <= NEW_ACCOUNT_WINDOW_MS;
+}
+
+function hasTrackedSignup(userId: string): boolean {
+  if (trackedSignupIds.has(userId)) return true;
+  try {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(`${SIGNUP_TRACKED_PREFIX}${userId}`) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function markSignupTracked(userId: string): void {
+  trackedSignupIds.add(userId);
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(`${SIGNUP_TRACKED_PREFIX}${userId}`, '1');
+  } catch {
+    // privat läge: minnes-set räcker för den här sidladdningen
+  }
+}
+
+/**
+ * One authoritative "Signup Completed" fire per new account on this device.
+ * Reuses the existing Plausible event — no second pixel or event name.
+ */
+export function trackSignupIfNew(
+  user: AuthAccountSnapshot | null | undefined,
+  props?: AnalyticsEventMap['Signup Completed'],
+): boolean {
+  if (!user?.id || !isNewAuthAccount(user) || hasTrackedSignup(user.id)) return false;
+  markSignupTracked(user.id);
+  trackEvent('Signup Completed', props);
+  return true;
+}
+
+/**
+ * OAuth lands on /app via SIGNED_IN. Email register is tracked at signUp
+ * success instead, so this ignores email/password sessions and every event
+ * other than SIGNED_IN (no login, refresh, or INITIAL_SESSION).
+ */
+export function maybeTrackAuthSignup(
+  event: string,
+  user: AuthAccountSnapshot | null | undefined,
+  props?: AnalyticsEventMap['Signup Completed'],
+): boolean {
+  if (event !== 'SIGNED_IN' || !hasOAuthIdentity(user)) return false;
+  return trackSignupIfNew(user, props);
+}
+
 const FIRST_EGG_FLAG = 'hg_first_egg_tracked_v1';
 
 /**

@@ -284,6 +284,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      if (event === 'SIGNED_IN') {
+        void import('@/lib/analytics').then(({ maybeTrackAuthSignup }) => {
+          maybeTrackAuthSignup(event, session?.user);
+        });
+      }
+
       const shouldHydrateProfile = event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED';
       applySession(session, shouldHydrateProfile);
       setLoading(false);
