@@ -130,10 +130,10 @@ export default function Login() {
       };
 
       const data = await register(email.trim().toLowerCase(), password, name.trim(), meta);
-      // Analytics: faktisk lyckad signup (efter att register() returnerat utan att kasta).
-      // Inga personuppgifter skickas – endast en source-property med låg kardinalitet.
-      const { trackEvent } = await import('@/lib/analytics');
-      trackEvent('Signup Completed', { source: signupSource });
+      // Authoritative Signup: only after signUp created a real account (identities present).
+      // Existing-email anti-enumeration responses have empty identities and are ignored.
+      const { trackSignupIfNew } = await import('@/lib/analytics');
+      trackSignupIfNew(data?.user, { source: signupSource });
       if (referralCode.trim() && data?.user?.id) {
         try {
           await supabase.rpc('process_referral', {
