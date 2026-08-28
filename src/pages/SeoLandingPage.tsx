@@ -206,7 +206,7 @@ export function SeoLandingPage({ pageKey }: { pageKey: PageKey }) {
   });
 
   return (
-    <main id="main-content" className="min-h-dvh bg-background overflow-x-hidden">
+    <main id="main-content" tabIndex={-1} className="min-h-dvh bg-background overflow-x-hidden">
       <Suspense fallback={null}><StickyMobileCTA /></Suspense>
       <LandingNavbar />
 

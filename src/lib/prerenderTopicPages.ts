@@ -52,7 +52,7 @@ export function renderBreedTopicBody(
   )).join('');
 
   return `<div class="min-h-screen bg-background">
-<main class="container mx-auto max-w-4xl px-5 pt-24 pb-16" id="main-content">
+<main class="container mx-auto max-w-4xl px-5 pt-24 pb-16" id="main-content" tabindex="-1">
   <nav class="text-xs text-muted-foreground mb-4"><a href="/">Hem</a> / <a href="/honsraser">Hönsraser</a> / ${escapeHtml(breed.namn)}</nav>
   <h1 class="font-serif text-4xl md:text-5xl text-foreground mb-3">${escapeHtml(h1)}</h1>
   <p class="text-muted-foreground max-w-2xl mb-8 leading-relaxed">${escapeHtml(breed.description || '')}</p>
@@ -91,7 +91,7 @@ export const HOME_DOCUMENT_TITLE =
 
 export function renderHomeTopicBody(): string {
   return `<div class="min-h-screen" style="background:#faf8f4;color:#22392b">
-<main class="container mx-auto max-w-6xl px-5 pt-28 pb-16" id="main-content">
+<main class="container mx-auto max-w-6xl px-5 pt-28 pb-16" id="main-content" tabindex="-1">
   <p class="text-sm tracking-wide mb-5" style="color:#7d9b76">Svensk app för hönsägare</p>
   <h1 class="font-serif text-4xl md:text-6xl leading-tight mb-5">Lite enklare att ha höns.<br /><span style="color:#7d9b76">Lite roligare att följa dem.</span></h1>
   <p class="max-w-xl text-base leading-relaxed mb-8">Ägglogg, hönsprofiler, foderkostnad, kalender och Agdas äggbod på ett ställe. Logga vardagen, se mönstren och sälj ägg utan Excel-kaos.</p>
