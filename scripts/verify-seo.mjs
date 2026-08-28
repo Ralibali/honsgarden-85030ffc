@@ -7,6 +7,7 @@ const required = [
   "dist/blogg/index.html",
   "dist/borja-med-hons/index.html",
   "dist/honsraser-lista/index.html",
+  "dist/salja-agg/index.html",
 ];
 
 for (const file of required) {
@@ -58,4 +59,72 @@ for (const page of topicPages) {
   assertTopicPageHtml(readFileSync(page.file, "utf8"), page);
 }
 
-console.log(`SEO-build verifierad: / + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+function decodeHtml(value = "") {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function extractQuotedField(block, field) {
+  const match = block.match(new RegExp(`${field}:\\s*'((?:\\\\'|[^'])*)'`));
+  if (!match) throw new Error(`Saknar ${field} i SaljaAgg.tsx useSeo`);
+  return match[1].replace(/\\'/g, "'");
+}
+
+function parseSaljaAggUseSeo() {
+  const source = readFileSync("src/pages/SaljaAgg.tsx", "utf8");
+  const match = source.match(/useSeo\(\{([\s\S]*?)\n {2}\}\);/);
+  if (!match) throw new Error("SaljaAgg.tsx saknar useSeo-anrop");
+  return {
+    title: extractQuotedField(match[1], "title"),
+    description: extractQuotedField(match[1], "description"),
+  };
+}
+
+function attr(html, pattern, label) {
+  const match = html.match(pattern);
+  if (!match) throw new Error(`/salja-agg saknar ${label}`);
+  return decodeHtml(match[1]);
+}
+
+const saljaAggSeo = parseSaljaAggUseSeo();
+const saljaAggHtml = readFileSync("dist/salja-agg/index.html", "utf8");
+const saljaAggTitle = attr(saljaAggHtml, /<title>([\s\S]*?)<\/title>/i, "title");
+const saljaAggDescription = attr(saljaAggHtml, /<meta name="description" content="([^"]*)"/i, "meta description");
+const saljaAggOgTitle = attr(saljaAggHtml, /<meta property="og:title" content="([^"]*)"/i, "og:title");
+const saljaAggOgDescription = attr(saljaAggHtml, /<meta property="og:description" content="([^"]*)"/i, "og:description");
+const saljaAggTwitterTitle = attr(saljaAggHtml, /<meta name="twitter:title" content="([^"]*)"/i, "twitter:title");
+const saljaAggTwitterDescription = attr(saljaAggHtml, /<meta name="twitter:description" content="([^"]*)"/i, "twitter:description");
+const saljaAggJsonLdRaw = attr(
+  saljaAggHtml,
+  /<script type="application\/ld\+json" id="json-ld-prerendered">([\s\S]*?)<\/script>/i,
+  "prerenderad WebPage JSON-LD",
+);
+const saljaAggJsonLd = JSON.parse(saljaAggJsonLdRaw);
+
+if (saljaAggTitle !== saljaAggSeo.title) {
+  throw new Error(`/salja-agg title matchar inte useSeo: ${saljaAggTitle}`);
+}
+if (saljaAggDescription !== saljaAggSeo.description) {
+  throw new Error("/salja-agg meta description matchar inte useSeo");
+}
+if (saljaAggOgTitle !== saljaAggSeo.title || saljaAggOgDescription !== saljaAggSeo.description) {
+  throw new Error("/salja-agg og-taggar matchar inte useSeo");
+}
+if (saljaAggTwitterTitle !== saljaAggSeo.title || saljaAggTwitterDescription !== saljaAggSeo.description) {
+  throw new Error("/salja-agg twitter-taggar matchar inte useSeo");
+}
+if (saljaAggJsonLd["@type"] !== "WebPage") {
+  throw new Error(`/salja-agg JSON-LD måste vara WebPage, fick ${saljaAggJsonLd["@type"]}`);
+}
+if (saljaAggJsonLd.name !== saljaAggSeo.title || saljaAggJsonLd.description !== saljaAggSeo.description) {
+  throw new Error("/salja-agg WebPage JSON-LD name/description matchar inte useSeo");
+}
+if (/regler|priser/i.test(saljaAggTitle) || /regler|prissättning|priser/i.test(saljaAggDescription)) {
+  throw new Error("/salja-agg first-byte SEO leder med regler/priser");
+}
+
+console.log(`SEO-build verifierad: / + /salja-agg + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
