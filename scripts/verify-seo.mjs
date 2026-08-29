@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { assertHomePageHtml, assertTopicPageHtml } from "../src/lib/prerenderTopicPages.mjs";
+import { NOINDEX_BLOG_SLUGS } from "../src/lib/blogNoindex.mjs";
 
 const required = [
   "dist/index.html",
@@ -127,4 +128,22 @@ if (/regler|priser/i.test(saljaAggTitle) || /regler|prissättning|priser/i.test(
   throw new Error("/salja-agg first-byte SEO leder med regler/priser");
 }
 
-console.log(`SEO-build verifierad: / + /salja-agg + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+for (const slug of NOINDEX_BLOG_SLUGS) {
+  const file = `dist/blogg/${slug}/index.html`;
+  if (!existsSync(file)) throw new Error(`SEO-build saknar noindex-artikel ${file}`);
+  const html = readFileSync(file, "utf8");
+  if (!/<meta name="robots" content="noindex/i.test(html)) {
+    throw new Error(`/blogg/${slug} first-byte saknar robots noindex`);
+  }
+}
+
+const chickenControlFile = "dist/blogg/kvalster-hons/index.html";
+if (!existsSync(chickenControlFile)) {
+  throw new Error("SEO-build saknar chicken control /blogg/kvalster-hons");
+}
+const chickenControlHtml = readFileSync(chickenControlFile, "utf8");
+if (/<meta name="robots" content="noindex/i.test(chickenControlHtml)) {
+  throw new Error("/blogg/kvalster-hons first-byte blev noindex");
+}
+
+console.log(`SEO-build verifierad: / + /salja-agg + ${articles.length} artiklar + ${topicPages.length} topic-sidor + ${NOINDEX_BLOG_SLUGS.length} noindex-leftovers`);
