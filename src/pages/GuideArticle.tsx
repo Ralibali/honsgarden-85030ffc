@@ -20,6 +20,7 @@ import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
+import { robotsMetaForBlogSlug } from '@/lib/blogNoindex';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -319,7 +320,7 @@ export default function GuideArticle() {
 
     // Core meta
     setMeta('name', 'description', pageDesc);
-    setMeta('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    setMeta('name', 'robots', robotsMetaForBlogSlug(post.slug));
 
     // Canonical + hreflang
     document.querySelector('link[rel="canonical"]')?.remove();

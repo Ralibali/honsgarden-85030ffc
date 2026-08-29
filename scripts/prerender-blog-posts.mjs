@@ -7,6 +7,7 @@ import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mj
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { extractBlogArticlePosts, isRobotsDisallowed, mergeBlogPosts, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
+import { isNoindexBlogSlug } from '../src/lib/blogNoindex.mjs';
 import {
   breedTopicH1,
   documentTitleForPath,
@@ -142,7 +143,7 @@ function buildArticleHead(post) {
       { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Blogg', item: `${BASE_URL}/blogg` }, { '@type': 'ListItem', position: 3, name: post.title, item: url }] },
     ],
   };
-  return buildHeadGeneric({ title, description, path, ogImage: image, ogImageAlt: post.title, ogType: 'article', jsonLd });
+  return buildHeadGeneric({ title, description, path, ogImage: image, ogImageAlt: post.title, ogType: 'article', jsonLd, noindex: isNoindexBlogSlug(post.slug) });
 }
 
 async function fetchPosts() {
