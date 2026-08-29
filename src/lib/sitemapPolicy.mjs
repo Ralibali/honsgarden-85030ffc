@@ -5,7 +5,8 @@
  *  - .ts  används av tester
  *  - .mjs används av scripts/prerender-blog-posts.mjs och scripts/generate-sitemap.mjs
  *
- * Disallow: /app matchar /app och /app/dashboard, men inte /app-for-honsagare.
+ * Google prefix-matchar Disallow: /app mot /app-for-honsagare. Använd /app/.
+ * Intern matchning strippar avslutande slash, så /app/ blockerar /app och /app/dashboard.
  */
 
 export function pathnameFromLoc(loc = '') {

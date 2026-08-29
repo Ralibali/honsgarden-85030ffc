@@ -17,7 +17,7 @@ const disallows = parseStarDisallows(robotsTxt);
 describe('sitemapPolicy', () => {
   it('läser Disallow-regler från User-agent: * i robots.txt', () => {
     expect(disallows).toEqual([
-      '/app',
+      '/app/',
       '/login',
       '/reset-password',
       '/inbjudan',
@@ -26,12 +26,29 @@ describe('sitemapPolicy', () => {
     ]);
   });
 
+  it('använder Disallow: /app/ så Google inte prefix-blockerar /app-for-honsagare', () => {
+    const appRules = [...robotsTxt.matchAll(/^Disallow:\s+(\S+)/gm)]
+      .map((match) => match[1])
+      .filter((rule) => rule.startsWith('/app'));
+    expect(appRules).toHaveLength(7);
+    expect(appRules.every((rule) => rule === '/app/')).toBe(true);
+    expect(robotsTxt).not.toMatch(/^Disallow:\s*\/app\s*$/m);
+    expect(robotsTxt).toMatch(/^Disallow:\s*\/login\s*$/m);
+
+    const googlePrefix = (path: string, rule: string) => path.startsWith(rule);
+    expect(googlePrefix('/app-for-honsagare', '/app/')).toBe(false);
+    expect(googlePrefix('/app/', '/app/')).toBe(true);
+    expect(googlePrefix('/app/eggs', '/app/')).toBe(true);
+    expect(googlePrefix('/app', '/app/')).toBe(false);
+  });
+
   it('blockerar /app och undersidor men inte /app-for-honsagare', () => {
-    expect(pathMatchesDisallow('/app', '/app')).toBe(true);
-    expect(pathMatchesDisallow('/app/', '/app')).toBe(true);
-    expect(pathMatchesDisallow('/app/dashboard', '/app')).toBe(true);
-    expect(pathMatchesDisallow('/app-for-honsagare', '/app')).toBe(false);
+    expect(pathMatchesDisallow('/app', '/app/')).toBe(true);
+    expect(pathMatchesDisallow('/app/', '/app/')).toBe(true);
+    expect(pathMatchesDisallow('/app/dashboard', '/app/')).toBe(true);
+    expect(pathMatchesDisallow('/app-for-honsagare', '/app/')).toBe(false);
     expect(isRobotsDisallowed('https://honsgarden.se/app', disallows)).toBe(true);
+    expect(isRobotsDisallowed('https://honsgarden.se/app/', disallows)).toBe(true);
     expect(isRobotsDisallowed('https://honsgarden.se/app-for-honsagare', disallows)).toBe(false);
     expect(isRobotsDisallowed('https://honsgarden.se/login', disallows)).toBe(true);
     expect(isRobotsDisallowed('https://honsgarden.se/blogg/bast-honsras-sverige', disallows)).toBe(false);
