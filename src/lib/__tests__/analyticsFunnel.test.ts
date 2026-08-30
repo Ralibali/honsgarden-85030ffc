@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { trackEvent } from '@/lib/analytics';
+import { trackEvent, trackFirstHenIfNew, ANALYTICS_SOURCES } from '@/lib/analytics';
 
 function mockPlausible() {
   const calls: Array<{ event: string; props?: Record<string, unknown> }> = [];
@@ -80,5 +80,34 @@ describe('V2 funnel event catalog (swarm U)', () => {
 
   it('fails silently when plausible is not loaded', () => {
     expect(() => trackEvent('Demo Opened')).not.toThrow();
+  });
+});
+
+describe('aktiveringskedjan signup → första hönan (swarm G)', () => {
+  it('skickar onboarding-stegen i funnelns ordning', () => {
+    const calls = mockPlausible();
+    trackEvent('Onboarding Step Completed', { step: 'welcome' });
+    trackEvent('Onboarding Step Completed', { step: 'first_hen' });
+    trackEvent('Onboarding Step Completed', { step: 'first_egg' });
+    trackEvent('Onboarding Step Completed', { step: 'completed' });
+    trackEvent('Onboarding Completed');
+    expect(calls.map((c) => c.props?.step ?? c.event)).toEqual([
+      'welcome', 'first_hen', 'first_egg', 'completed', 'Onboarding Completed',
+    ]);
+  });
+
+  it('trackFirstHenIfNew skickar bara en gång per enhet', () => {
+    localStorage.clear();
+    const calls = mockPlausible();
+    trackFirstHenIfNew('onboarding');
+    trackFirstHenIfNew('hens_page');
+    expect(calls).toHaveLength(1);
+    expect(calls[0].event).toBe('First Hen Added');
+    expect(calls[0].props).toEqual({ source: 'onboarding' });
+  });
+
+  it('onboarding och hens_page är giltiga source-värden i runtime-listan', () => {
+    expect(ANALYTICS_SOURCES).toContain('onboarding');
+    expect(ANALYTICS_SOURCES).toContain('hens_page');
   });
 });

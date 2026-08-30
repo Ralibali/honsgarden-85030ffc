@@ -35,6 +35,8 @@ export type AnalyticsSource =
   | 'landing_navbar'
   | 'landing_final_cta'
   | 'demo_banner'
+  | 'onboarding'
+  | 'hens_page'
   | 'blog_header'
   | 'blog_inline'
   | 'blog_final'
@@ -375,6 +377,25 @@ export function trackFirstEggIfNew(source: AnalyticsSource): void {
   }
 }
 
+const FIRST_HEN_FLAG = 'hg_first_hen_tracked_v1';
+
+/**
+ * Fire "First Hen Added" en gång per enhet.
+ * Anropas efter faktiskt lyckad hönskapelse från valfri UI-yta.
+ * (Exempeldata i onboarding räknas inte — användaren har inte lagt till
+ * sin egen höna då.)
+ */
+export function trackFirstHenIfNew(source: AnalyticsSource): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(FIRST_HEN_FLAG)) return;
+    localStorage.setItem(FIRST_HEN_FLAG, '1');
+    trackEvent('First Hen Added', { source });
+  } catch {
+    // localStorage kan vara blockerat i privat läge
+  }
+}
+
 /** Alla tillåtna source-värden i runtime (för validering av query-params). */
 export const ANALYTICS_SOURCES = [
   'premium_page',
@@ -388,6 +409,8 @@ export const ANALYTICS_SOURCES = [
   'landing_navbar',
   'landing_final_cta',
   'demo_banner',
+  'onboarding',
+  'hens_page',
   'blog_header',
   'blog_inline',
   'blog_final',
