@@ -24,7 +24,8 @@
     "capacitor:assets": "capacitor-assets generate --iconBackgroundColor '#3A6B35' --iconBackgroundColorDark '#3A6B35' --splashBackgroundColor '#FAF8F4' --splashBackgroundColorDark '#FAF8F4'",
     "verify:routes": "node scripts/route-inventory.mjs --check",
     "audit:content": "node scripts/editorial-audit.mjs",
-    "audit:content:check": "node scripts/editorial-audit.mjs --check"
+    "audit:content:check": "node scripts/editorial-audit.mjs --check",
+    "audit:native": "node scripts/native-readiness.mjs"
   },
   "dependencies": {
     "@capawesome/capacitor-apple-sign-in": "^0.1.2",
