@@ -100,3 +100,57 @@ export function filterSitemapXml(xml = '', disallows: string[] = []): string {
     isRobotsDisallowed(loc, disallows) ? '' : block
   ));
 }
+
+/* ------------------------------------------------------------------ */
+/* Indexhygiene (V2 Swarm C) — speglar src/lib/sitemapPolicy.mjs        */
+/* ------------------------------------------------------------------ */
+
+/** Minsta antal publicerade artiklar för att en taggsida ska indexeras. */
+export const TAG_MIN_POSTS = 2;
+
+/** Räknar publicerade artiklar per tagg. Kategorier räknas inte som taggar. */
+export function countPostsPerTag(posts: { tags?: unknown }[] = []): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const post of posts) {
+    if (!Array.isArray(post?.tags)) continue;
+    for (const tag of post.tags as unknown[]) {
+      if (typeof tag !== 'string' || !tag) continue;
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/** Taggar med minst `minPosts` artiklar — de enda som får sitemap-post och indexeras. */
+export function indexableTags(posts: { tags?: unknown }[] = [], minPosts = TAG_MIN_POSTS): string[] {
+  const counts = countPostsPerTag(posts);
+  return [...counts.entries()]
+    .filter(([, count]) => count >= minPosts)
+    .map(([tag]) => tag)
+    .sort();
+}
+
+/**
+ * Normaliserar fritext-ort ("Örnsköldsvik", "Göteborg kommun") till samma
+ * form som ort-slugarna i src/data/saljaAggOrter.ts ("ornskoldsvik").
+ */
+export function normalizeOrtKey(text = ''): string {
+  return String(text)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Sant om minst en aktiv annonsplats matchar ort-slugen på ordgräns.
+ * Matchar t.ex. slug "goteborg" mot platsen "Göteborg" men inte "lund"
+ * mot "Lundby".
+ */
+export function ortHasSupply(ortSlug: string, activeLocations: string[] = []): boolean {
+  const key = normalizeOrtKey(ortSlug);
+  if (!key) return false;
+  const boundary = new RegExp(`(^|-)${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(-|$)`);
+  return activeLocations.some((location) => boundary.test(normalizeOrtKey(location)));
+}

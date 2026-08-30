@@ -37,14 +37,6 @@
       "destination": "/index.html"
     },
     {
-      "source": "/dvarghons",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/skansk-blommehona",
-      "destination": "/index.html"
-    },
-    {
       "source": "/salja-agg",
       "destination": "/index.html"
     },
@@ -214,6 +206,16 @@
     {
       "source": "/index.html",
       "destination": "/",
+      "statusCode": 308
+    },
+    {
+      "source": "/dvarghons",
+      "destination": "/honsraser/dvarghons",
+      "statusCode": 308
+    },
+    {
+      "source": "/skansk-blommehona",
+      "destination": "/honsraser/skansk-blommehona",
       "statusCode": 308
     }
   ]

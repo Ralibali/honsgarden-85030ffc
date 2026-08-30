@@ -74,10 +74,10 @@ Deno.serve(async (req) => {
     .limit(1)
     .maybeSingle();
 
-  // Active public egg-sale listings (drives /s/:slug)
+  // Active public egg-sale listings (drives /s/:slug and the locality gate)
   const { data: eggSaleListings } = await supabase
     .from("public_egg_sale_listings")
-    .select("slug, updated_at")
+    .select("slug, updated_at, location")
     .eq("is_active", true);
 
   // Active marketplace listings (drives /marknad/:slug)
@@ -112,16 +112,41 @@ Deno.serve(async (req) => {
   const SALJA_AGG_ORTER = ["goteborg","malmo","lund","helsingborg","angelholm","bastad","kristianstad","ystad","simrishamn","trelleborg","eslov","hassleholm","landskrona","lomma","staffanstorp","laholm","halmstad","falkenberg","varberg","kungsbacka","molndal","partille","lerum","alingsas","kungalv","stenungsund","uddevalla","trollhattan","vanersborg","boras","ulricehamn","vargarda","skovde","mariestad","lidkoping","jonkoping","huskvarna","vetlanda","eksjo","nassjo","varnamo","vaxjo","alvesta","kalmar","nybro","oskarshamn","vastervik","visby","karlskrona","ronneby","karlshamn","linkoping","norrkoping","motala","mjolby","soderkoping","finspang","vadstena","stockholm","solna","sundbyberg","jarfalla","taby","vallentuna","osteraker","norrtalje","nacka","varmdo","tyreso","haninge","nynashamn","huddinge","botkyrka","sodertalje","nykvarn","uppsala","enkoping","knivsta","tierp","vasteras","koping","eskilstuna","strangnas","nykoping","katrineholm","orebro","kumla","lindesberg","karlskoga","karlstad","kristinehamn","arvika","forshaga","falun","borlange","leksand","mora","gavle","sandviken","soderhamn","hudiksvall","sundsvall","harnosand","ornskoldsvik","ostersund","umea","skelleftea","pitea","lulea","boden","kiruna"];
 
 
-  // Collect unique tags
-  const allTags = new Set<string>();
+  // Indexhygiene (samma policy som src/lib/sitemapPolicy.mjs):
+  //  - taggar listas bara om de har minst TAG_MIN_POSTS publicerade artiklar
+  //  - kategorier läggs INTE till som taggar (de har egna /blogg/kategori/-sidor)
+  const TAG_MIN_POSTS = 2;
+  const tagCounts = new Map<string, number>();
   if (posts) {
     for (const post of posts) {
       if (post.tags) {
-        for (const tag of post.tags) allTags.add(tag);
+        for (const tag of post.tags) {
+          if (tag) tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
       }
-      if (post.category) allTags.add(post.category);
     }
   }
+  const allTags = [...tagCounts.entries()]
+    .filter(([, count]) => count >= TAG_MIN_POSTS)
+    .map(([tag]) => tag);
+
+  // Likviditetsgrind för /salja-agg/:ort — matchar normalizeOrtKey i
+  // sitemapPolicy.mjs (håll i sync). Orter utan aktivt utbud listas inte.
+  const normalizeOrtKey = (text: string): string =>
+    String(text)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  const activeLocations = (eggSaleListings || [])
+    .map((listing) => listing.location)
+    .filter(Boolean)
+    .map((location: string) => normalizeOrtKey(location));
+  const ortHasSupply = (slug: string): boolean => {
+    const boundary = new RegExp(`(^|-)${slug}(-|$)`);
+    return activeLocations.some((location) => boundary.test(location));
+  };
 
   const staticPages = [
     { loc: "/", priority: "1.0", changefreq: "weekly" },
@@ -136,8 +161,8 @@ Deno.serve(async (req) => {
     { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
     { loc: "/honsraser", priority: "0.9", changefreq: "monthly" },
     { loc: "/honsraser-lista", priority: "0.8", changefreq: "monthly" },
-    { loc: "/dvarghons", priority: "0.8", changefreq: "monthly" },
-    { loc: "/skansk-blommehona", priority: "0.8", changefreq: "monthly" },
+    // /dvarghons och /skansk-blommehona är borttagna: de 308:as till
+    // /honsraser/<slug> (se nedan) och får inte stå i sitemap med annan canonical.
     { loc: "/salja-agg", priority: "0.8", changefreq: "weekly" },
     { loc: "/karta", priority: "0.6", changefreq: "weekly" },
     { loc: "/s/agg", priority: "0.5", changefreq: "monthly" },
@@ -194,8 +219,9 @@ Deno.serve(async (req) => {
 `;
   }
 
-  // Locality pages /salja-agg/:ort
+  // Locality pages /salja-agg/:ort — bara orter med aktivt utbud
   for (const ort of SALJA_AGG_ORTER) {
+    if (!ortHasSupply(ort)) continue;
     xml += `  <url>
     <loc>${BASE_URL}/salja-agg/${ort}</loc>
     <lastmod>${now}</lastmod>
@@ -207,8 +233,10 @@ Deno.serve(async (req) => {
 `;
   }
 
-  // Breed pages /honsraser/:slug
-  for (const slug of HONSRASER_SLUGS) {
+  // Breed pages /honsraser/:slug — inklusive de två äldre landningssidorna
+  // vars canonical nu lever under /honsraser/ (gamla URL:er 308:as dit).
+  const LEGACY_BREED_LANDING_SLUGS = ["dvarghons", "skansk-blommehona"];
+  for (const slug of [...HONSRASER_SLUGS, ...LEGACY_BREED_LANDING_SLUGS]) {
     xml += `  <url>
     <loc>${BASE_URL}/honsraser/${slug}</loc>
     <lastmod>${now}</lastmod>

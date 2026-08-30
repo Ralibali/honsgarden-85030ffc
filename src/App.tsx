@@ -178,8 +178,8 @@ const AppRoutes = () => (
         <Route path="/honsraser" element={<HonsrasLanding slug="honsraser" />} />
         <Route path="/honsraser-lista" element={<HonsrasLanding slug="honsraser-lista" />} />
         <Route path="/honsraser/:slug" element={<HonsrasLanding />} />
-        <Route path="/dvarghons" element={<HonsrasLanding slug="dvarghons" canonicalPath="/honsraser/dvarghons" />} />
-        <Route path="/skansk-blommehona" element={<HonsrasLanding slug="skansk-blommehona" canonicalPath="/honsraser/skansk-blommehona" />} />
+        {/* /dvarghons och /skansk-blommehona har flyttats till /honsraser/<slug>
+            och 308-omdirigeras på edge-nivå (se ROUTE_REDIRECTS i routeInventory). */}
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/karta" element={<MarketplaceMap />} />

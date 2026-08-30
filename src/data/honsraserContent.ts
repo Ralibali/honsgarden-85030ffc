@@ -243,7 +243,7 @@ const honsraserLista: LongformPage = {
         'Bohuslän-Dals svarthöna – svensk lantras, svart. Läs mer: /honsraser/bohuslan-dals-svarthona',
         'Brahma – lugn jätte. Läs mer: /honsraser/brahma',
         'Cochin – fluffig ruvare. Läs mer: /honsraser/cochin',
-        'Dvärghöns – översikt av dvärgraser. Läs mer: /dvarghons',
+        'Dvärghöns – översikt av dvärgraser. Läs mer: /honsraser/dvarghons',
         'Faverolle – lugn skäggig fransk ras. Läs mer: /honsraser/faverolle',
         'Frisisk höna – pigg gammal lantras. Läs mer: /honsraser/frisisk-hona',
         'Gotlandshöna – svensk lantras, aktiv. Läs mer: /honsraser/gotlandshona',
@@ -309,7 +309,7 @@ const honsraserLista: LongformPage = {
 // ---------- Dvärghöns (480/mån, position 30) ----------
 const dvarghons: LongformPage = {
   slug: 'dvarghons',
-  path: '/dvarghons',
+  path: '/honsraser/dvarghons',
   title: 'Dvärghöns – små höns för tomten | Hönsgården',
   description:
     'Dvärghöns är perfekta för små tomter, barnfamiljer och de som vill ha färre ägg men mer charm. Guide till raser, skötsel och ägg.',
@@ -392,7 +392,7 @@ const dvarghons: LongformPage = {
 // ---------- Skånsk blommehöna äggfärg (140/mån, position 10) ----------
 const skanskBlommehona: LongformPage = {
   slug: 'skansk-blommehona',
-  path: '/skansk-blommehona',
+  path: '/honsraser/skansk-blommehona',
   title: 'Skånsk blommehöna – äggfärg, värpning & skötsel',
   description:
     'Allt om skånsk blommehöna: äggfärg, värpning per år, temperament, vinterhärdighet och varför den är en av Sveriges bästa lantraser.',

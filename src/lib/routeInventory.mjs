@@ -15,6 +15,11 @@
 export const ROUTE_REDIRECTS = [
   { source: '/index', destination: '/', statusCode: 308 },
   { source: '/index.html', destination: '/', statusCode: 308 },
+  // Äldre landningssidor sammanslagna under /honsraser/ (MERGE+REDIRECT).
+  // Canonical-pekarna loopade tidigare mellan de två URL:erna — nu finns
+  // exakt en indexerbar URL per sida.
+  { source: '/dvarghons', destination: '/honsraser/dvarghons', statusCode: 308 },
+  { source: '/skansk-blommehona', destination: '/honsraser/skansk-blommehona', statusCode: 308 },
 ];
 
 /**
@@ -32,8 +37,6 @@ export const STATIC_PUBLIC_ROUTES = [
   '/borja-med-hons',
   '/honsraser',
   '/honsraser-lista',
-  '/dvarghons',
-  '/skansk-blommehona',
   '/salja-agg',
   '/karta',
   '/karta/bekrafta',

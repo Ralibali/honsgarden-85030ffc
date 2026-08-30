@@ -51,7 +51,7 @@ export default function SaljaAggOrt() {
   const prefersReduced = useReducedMotion();
   const fadeUp = makeFadeUp(prefersReduced);
 
-  const { data: sellerCount = 0 } = useQuery({
+  const { data: sellerCount = 0, isFetched: supplyChecked } = useQuery({
     queryKey: ['ort-seller-count', ort?.name],
     enabled: !!ort,
     queryFn: async () => {
@@ -63,6 +63,10 @@ export default function SaljaAggOrt() {
       return count ?? 0;
     },
   });
+
+  // Likviditetsgrind: orter utan aktivt utbud noindexas (samma beslut som
+  // byggtidens sitemap/prerender via ortHasSupply i sitemapPolicy).
+  const noSupply = supplyChecked && sellerCount === 0;
 
   const meta = ort ? buildOrtMeta(ort) : null;
   const title = meta?.title ?? 'Sälja ägg lokalt i Sverige | Hönsgården';
@@ -141,7 +145,7 @@ export default function SaljaAggOrt() {
     ogType: 'website',
     ogImage: 'https://honsgarden.se/og-image.jpg',
     ogImageAlt: ort ? `Sälja ägg lokalt i ${ort.name}` : 'Sälja ägg lokalt i Sverige',
-    noindex: !ort,
+    noindex: !ort || noSupply,
     jsonLd,
   });
 

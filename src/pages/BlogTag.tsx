@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg, ArrowLeft, Tag } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
+import { TAG_MIN_POSTS } from '@/lib/sitemapPolicy';
 
 const categoryLabels: Record<string, string> = {
   guide: 'Guide', recension: 'Recension', tips: 'Tips & tricks', halsa: 'Hälsa',
@@ -34,9 +35,10 @@ export default function BlogTag() {
     enabled: !!tag,
   });
 
-  // Noindex om taggen saknar artiklar (när laddningen är klar) eller är tom
-  const isEmpty = !isLoading && posts.length === 0;
-  const shouldNoindex = !decodedTag || isEmpty;
+  // Noindex om taggen är tom eller tunn (< TAG_MIN_POSTS artiklar) när
+  // laddningen är klar — samma tröskel som sitemap/prerender (sitemapPolicy).
+  const isThin = !isLoading && posts.length < TAG_MIN_POSTS;
+  const shouldNoindex = !decodedTag || isThin;
 
   useSeo({
     title: `${displayTag} – Artiklar om ${decodedTag} | Hönsgården`,
