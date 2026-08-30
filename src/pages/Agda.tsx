@@ -11,6 +11,8 @@ import ReactMarkdown from 'react-markdown';
 import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
 import PageHeader from '@/components/PageHeader';
 import { assessHealthUrgency, HEALTH_ESCALATION_NOTICE, HEALTH_GENERAL_NOTICE } from '@/lib/agdaHealthGuard';
+import { findQuickAnswer } from '@/lib/agdaQuickAnswers';
+import { ensureVetEscalation } from '@/lib/agdaResponseGuard';
 import { Stethoscope } from 'lucide-react';
 
 interface ChatMessage {
@@ -60,6 +62,7 @@ async function streamAgda({
   onDone,
   onError,
   onQuota,
+  onCreditExhausted,
 }: {
   message: string;
   history: ChatMessage[];
@@ -67,6 +70,8 @@ async function streamAgda({
   onDone: () => void;
   onError: (err: string) => void;
   onQuota?: (remaining: number) => void;
+  /** 402 – AI-krediter slut. Om den inte sätts faller vi tillbaka på onError. */
+  onCreditExhausted?: () => void;
 }) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -90,7 +95,11 @@ async function streamAgda({
         return;
       }
       if (response.status === 402) {
-        onError('Agdas AI-krediter är tillfälligt slut. Försök igen senare.');
+        if (onCreditExhausted) {
+          onCreditExhausted();
+        } else {
+          onError('Agdas AI-krediter är tillfälligt slut. Försök igen senare.');
+        }
         return;
       }
       let errorMessage = 'Kunde inte nå Agda';
@@ -233,11 +242,41 @@ export default function Agda() {
         });
       },
       onDone: () => {
+        // Post-svars-säkerhetskontroll: akuta hälsfrågor ska ALLTID få
+        // veterinär-hänvisning, även om AI-svaret saknade den. Kontrollen
+        // kompletterar — den ändrar eller tar aldrig bort AI:ns text.
+        const answer = assistantContentRef.current;
+        const ensured = ensureVetEscalation(text, answer);
+        if (ensured !== answer) {
+          setMessages((previous) => {
+            const last = previous[previous.length - 1];
+            if (last?.role !== 'assistant') return previous;
+            return previous.map((message, index) =>
+              index === previous.length - 1 ? { ...message, content: ensured } : message);
+          });
+        }
         setLoading(false);
         inputRef.current?.focus();
       },
       onError: (error) => {
         toast({ title: 'Agda kunde inte svara', description: error, variant: 'destructive' });
+        setLoading(false);
+        inputRef.current?.focus();
+      },
+      onCreditExhausted: () => {
+        // Graceful 402-degradation: svara med kuraterat snabbsvar om
+        // frågan matchar, så att Agda aldrig lämnar användaren tomhänt.
+        const quick = findQuickAnswer(text);
+        if (quick) {
+          const fallback = `${quick.answer}${quick.link ? `\n\n[Läs mer: ${quick.link.label}](${quick.link.href})` : ''}\n\n---\n*Det här är ett förberett svar – Agdas fulla AI är tillfälligt ur drift. Försök igen lite senare för en mer personlig genomgång.*`;
+          setMessages((previous) => [...previous, { role: 'assistant', content: fallback }]);
+        } else {
+          toast({
+            title: 'Agda kunde inte svara',
+            description: 'Agdas AI-krediter är tillfälligt slut. Försök igen senare – eller kika i våra guider under Blogg.',
+            variant: 'destructive',
+          });
+        }
         setLoading(false);
         inputRef.current?.focus();
       },
