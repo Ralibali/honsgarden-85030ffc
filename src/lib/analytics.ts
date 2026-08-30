@@ -47,6 +47,33 @@ export type AnalyticsOAuthProvider = 'google' | 'apple';
 /** Tillåtna auth-lägen (låg kardinalitet). */
 export type AnalyticsAuthMode = 'login' | 'register';
 
+/** Demofunktioner som får förekomma i funnel-events (låg kardinalitet). */
+export type AnalyticsDemoFeature =
+  | 'egg_log'
+  | 'hens'
+  | 'calendar'
+  | 'marketplace'
+  | 'agda_preview'
+  | 'reports_preview';
+
+/** Onboarding-steg (låg kardinalitet). */
+export type AnalyticsOnboardingStep =
+  | 'welcome'
+  | 'flock_created'
+  | 'first_hen'
+  | 'first_egg'
+  | 'reminder_offered'
+  | 'completed';
+
+/** Påminnelsekanaler (låg kardinalitet). */
+export type AnalyticsReminderChannel = 'push' | 'email' | 'in_app';
+
+/** Push-permission-resultat (låg kardinalitet). */
+export type AnalyticsPushPermission = 'accepted' | 'denied' | 'dismissed' | 'unsupported';
+
+/** Säsongslägen (låg kardinalitet). */
+export type AnalyticsSeasonalMode = 'winter' | 'normal';
+
 /**
  * Strikt event-map. Endast dessa event får skickas.
  * Håll properties låga och icke-identifierande.
@@ -86,6 +113,52 @@ export type AnalyticsEventMap = {
   'Smart Upsell Dismissed': {
     trigger?: string;
   };
+
+  /* -------- V2 north-star funnel (swarm U) --------
+   * Full kedja: demo → signup → första hönan → första ägget → retention.
+   * Alla properties är strikt låg-kardinalitet; aldrig fritext eller ID:n. */
+  'Demo Opened': {
+    source?: AnalyticsSource;
+  };
+  'Demo Feature Used': {
+    feature?: AnalyticsDemoFeature;
+  };
+  'Demo To Signup': {
+    feature?: AnalyticsDemoFeature;
+  };
+  'First Hen Added': {
+    source?: AnalyticsSource;
+  };
+  'Onboarding Step Completed': {
+    step?: AnalyticsOnboardingStep;
+  };
+  'Onboarding Completed': Record<string, never>;
+  'Reminder Created': {
+    channel?: AnalyticsReminderChannel;
+  };
+  'Push Prompt Shown': {
+    source?: AnalyticsSource;
+  };
+  'Push Permission Result': {
+    result?: AnalyticsPushPermission;
+  };
+  'Push Subscription Created': Record<string, never>;
+  'Notification Clicked': {
+    channel?: AnalyticsReminderChannel;
+  };
+  'Plus Gate Shown': {
+    feature?: string;
+  };
+  'Plus Gate Clicked': {
+    feature?: string;
+  };
+  'Seasonal Mode Changed': {
+    mode?: AnalyticsSeasonalMode;
+  };
+  'Referral Link Shared': Record<string, never>;
+  'Referral Signup': Record<string, never>;
+  'Marketplace Listing Created': Record<string, never>;
+  'Marketplace Contact Clicked': Record<string, never>;
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
