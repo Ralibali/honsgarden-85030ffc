@@ -14,6 +14,9 @@ import { supabase } from '@/integrations/supabase/client';
 import type { EggLog, Hen } from '@/lib/api';
 import { boldMarkdownToSafeHtml } from '@/lib/safeHtml';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
+import { getSeasonalMode, trackSeasonalModeIfChanged } from '@/lib/seasonalMode';
+import { lastLogDateFromEggs } from '@/lib/retentionLoop';
+import RetentionSeasonCard from '@/components/dashboard/RetentionSeasonCard';
 import { DailySummaryModal } from '@/components/DailySummaryModal';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -287,6 +290,17 @@ export default function DashboardV2() {
   const streak = calculateStreak(eggs);
   const topHen = getTopHen(eggs, hens);
   const seasonal = getSeasonalTip();
+  const seasonalMode = getSeasonalMode();
+  const lastLogDate = useMemo(() => lastLogDateFromEggs(eggs), [eggs]);
+
+  // Mäter säsongs-lägets utbredning (en gång per enhet och säsongsskifte).
+  useEffect(() => {
+    trackSeasonalModeIfChanged(seasonalMode);
+  }, [seasonalMode]);
+
+  const scrollToQuickLog = () => {
+    document.getElementById('quick-egg-log')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const achievements = useMemo(
     () => buildAchievements(eggs, hens, streak, feedRecords, transactions, chores),
@@ -506,6 +520,14 @@ export default function DashboardV2() {
 
       {/* Streak-räddning – visas när streaken riskerar att brytas idag */}
       <StreakRescueCard streak={streak} todayEggs={todayEggs} />
+
+      {/* Fri retention-loop + säsongsutbildning (vintern: "lugnet är normalt") */}
+      <RetentionSeasonCard
+        lastLogDate={lastLogDate}
+        todayIso={todayStr}
+        mode={seasonalMode}
+        onLogClick={scrollToQuickLog}
+      />
 
       {/* Veckans värptävling – flockens ranking senaste 7 dagarna */}
       {!hideHenRace && <HenRaceCard eggs={eggs} hens={hens} />}
