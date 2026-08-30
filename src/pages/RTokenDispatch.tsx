@@ -1,5 +1,6 @@
 import { useParams, Navigate } from 'react-router-dom';
 import PublicReview from './PublicReview';
+import { isReferralCode, normalizeReferralCode } from '@/lib/referral';
 
 /**
  * `/r/:token` används både för publika omdömen (UUID-token) och för värvningskoder.
@@ -8,10 +9,9 @@ import PublicReview from './PublicReview';
  */
 export default function RTokenDispatch() {
   const { token = '' } = useParams<{ token: string }>();
-  const isReferralCode = /^[A-Za-z0-9]{4,12}$/.test(token) && !token.includes('-');
 
-  if (isReferralCode) {
-    return <Navigate to={`/login?mode=register&ref=${token.toUpperCase()}`} replace />;
+  if (isReferralCode(token)) {
+    return <Navigate to={`/login?mode=register&ref=${normalizeReferralCode(token)}`} replace />;
   }
   return <PublicReview />;
 }

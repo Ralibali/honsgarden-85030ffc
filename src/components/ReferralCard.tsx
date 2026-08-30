@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { buildReferralShareUrl } from '@/lib/referral';
 
 interface Props {
   variant?: 'default' | 'compact';
@@ -47,9 +48,8 @@ export default function ReferralCard({ variant = 'default' }: Props) {
   const code = profile?.referral_code || '';
   // Delningslänken ska alltid peka på produktionsdomänen – aldrig preview/lovableproject.com.
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isProdDomain = /honsgarden\.(se|app)$/i.test(host);
-  const origin = isProdDomain ? window.location.origin : 'https://honsgarden.se';
-  const shareUrl = code ? `${origin}/r/${code}` : '';
+  const browserOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const shareUrl = buildReferralShareUrl(code, host, browserOrigin);
   const shareText = `Bjud in en hönskompis 🐔 Använd min länk så får vi båda 30 dagar Hönsgården Plus när du loggar ditt första ägg.`;
 
   const handleCopyCode = () => {
@@ -60,9 +60,17 @@ export default function ReferralCard({ variant = 'default' }: Props) {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
+  // Värvningsloopen mäts: länk-delningar räknas oavsett kanal (Swarm M).
+  const trackLinkShared = () => {
+    void import('@/lib/analytics')
+      .then(({ trackEvent }) => trackEvent('Referral Link Shared'))
+      .catch(() => {});
+  };
+
   const handleCopyLink = () => {
     if (!shareUrl) return;
     navigator.clipboard.writeText(shareUrl);
+    trackLinkShared();
     setCopiedLink(true);
     toast({ title: 'Länk kopierad! 🔗' });
     setTimeout(() => setCopiedLink(false), 2000);
@@ -77,6 +85,7 @@ export default function ReferralCard({ variant = 'default' }: Props) {
           text: shareText,
           url: shareUrl,
         });
+        trackLinkShared();
         return;
       } catch {
         /* föll ur, faller ner till kopiera */
