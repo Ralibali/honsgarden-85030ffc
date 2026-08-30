@@ -10,10 +10,14 @@ import { toast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
 import PageHeader from '@/components/PageHeader';
+import { assessHealthUrgency, HEALTH_ESCALATION_NOTICE, HEALTH_GENERAL_NOTICE } from '@/lib/agdaHealthGuard';
+import { Stethoscope } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Satt deterministiskt av agdaHealthGuard när användarens fråga rör hälsa. */
+  healthUrgency?: 'health' | 'urgent';
 }
 
 const STORAGE_KEY = 'agda-chat-history';
@@ -198,7 +202,15 @@ export default function Agda() {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: text.trim() };
+    // Hälsoguard: deterministisk klassificering innan AI:n anropas. Svaret
+    // blockeras aldrig – men en fast, mänskligt skriven säkerhetsnotis
+    // följer alltid med hälsorelaterade frågor.
+    const guard = assessHealthUrgency(text);
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: text.trim(),
+      ...(guard.urgency !== 'none' ? { healthUrgency: guard.urgency } : {}),
+    };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput('');
@@ -372,16 +384,31 @@ export default function Agda() {
                 transition={{ duration: 0.16 }}
                 className={`agda-message-row flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`agda-message ${message.role === 'user' ? 'agda-message--user' : 'agda-message--assistant'}`}>
-                  {message.role === 'assistant' && (
-                    <div className="agda-message-name"><span>🐔</span> Agda</div>
-                  )}
-                  {message.role === 'assistant' ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_h2]:text-base [&_h2]:font-serif [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:text-foreground">
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                <div className="flex flex-col gap-2 max-w-full">
+                  <div className={`agda-message ${message.role === 'user' ? 'agda-message--user' : 'agda-message--assistant'}`}>
+                    {message.role === 'assistant' && (
+                      <div className="agda-message-name"><span>🐔</span> Agda</div>
+                    )}
+                    {message.role === 'assistant' ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_h2]:text-base [&_h2]:font-serif [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:text-foreground">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p>{message.content}</p>
+                    )}
+                  </div>
+                  {message.role === 'user' && message.healthUrgency && (
+                    <div
+                      role="note"
+                      className={`agda-health-notice flex items-start gap-2 rounded-xl border p-3 text-xs leading-relaxed ${
+                        message.healthUrgency === 'urgent'
+                          ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100'
+                          : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100'
+                      }`}
+                    >
+                      <Stethoscope className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden />
+                      <span>{message.healthUrgency === 'urgent' ? HEALTH_ESCALATION_NOTICE : HEALTH_GENERAL_NOTICE}</span>
                     </div>
-                  ) : (
-                    <p>{message.content}</p>
                   )}
                 </div>
               </motion.div>

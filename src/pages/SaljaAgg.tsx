@@ -25,6 +25,30 @@ import {
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ORTER } from '@/data/saljaAggOrter';
+import { ContentSources } from '@/components/content/ContentSources';
+import { LastReviewed } from '@/components/content/ContentTrust';
+
+/** Myndighetskällor för regelpåståendena på sidan (swarm A – trust). */
+const SALJAGG_SOURCES = [
+  {
+    publisher: 'Livsmedelsverket',
+    label: 'Ägg – försäljning (små mängder, äggpackeri, direktförsäljning)',
+    href: 'https://www.livsmedelsverket.se/foretagande-regler-kontroll/regler-for-livsmedelsforetag/primarproduktion/forsaljning-av-honsagg/',
+  },
+  {
+    publisher: 'Jordbruksverket',
+    label: 'Registrera anläggning – platser med djur (fjäderfä)',
+    href: 'https://jordbruksverket.se/djur/lantbruksdjur/register-och-mark/registrera-anlaggning-med-djur',
+  },
+  {
+    publisher: 'Skatteverket',
+    label: 'Hobbyverksamhet – så beskattas överskottet',
+    href: 'https://skatteverket.se/privat/etjansterochblanketter/svarpavanligafragor/hobbyverksamhet.4.7b95a48d12c1b52b3f5800027236.html',
+  },
+];
+
+/** Datum då regelpåståendena på sidan senast verifierades mot källorna. */
+const SALJAGG_REVIEWED = '2026-08-30';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 const StickyMobileCTA = lazy(() => import('@/components/StickyMobileCTA'));
@@ -90,11 +114,11 @@ const faq = [
   },
   {
     q: 'Behöver jag F-skatt eller företag för att sälja ägg?',
-    a: 'Nej, inte för enstaka försäljning av ägg från egna höns. Hobbyförsäljning är skattefritt upp till en viss gräns. Tjänar du över 50 000 kr/år bör du kontakta Skatteverket.',
+    a: 'Nej, inte för enstaka försäljning av ägg från egna höns. Vid hobbyförsäljning beskattas bara överskottet – intäkter minus dina kostnader för hönsen. Det finns ingen fast beloppsgräns; läs Skatteverkets regler om hobbyverksamhet om försäljningen växer.',
   },
   {
     q: 'Får jag verkligen sälja ägg från mina höns?',
-    a: 'Ja, du får sälja ägg direkt från gården till privatpersoner. Det kallas "primärproduktion till slutkonsument" och är tillåtet utan tillstånd. Säljer du till butik gäller andra regler – då måste du anmäla till Livsmedelsverket.',
+    a: 'Ja, du får sälja ägg direkt från gården till privatpersoner utan tillstånd. Platsen där du håller hönsen ska alltid registreras i Jordbruksverkets anläggningsregister – oavsett om du säljer eller inte. Har du fler än 50 värphöns ska äggproduktionen dessutom anmälas till länsstyrelsen. Vill du sälja hönsägg till butik eller restaurang måste äggen först sorteras och märkas på ett godkänt äggpackeri – godkännandet ansöks hos Livsmedelsverket, eller så säljer du via ett befintligt packeri.',
   },
   {
     q: 'Vad är ett bra pris på hemmagjorda ägg 2026?',
@@ -521,10 +545,11 @@ export default function SaljaAgg() {
               <p className="text-foreground/85 leading-relaxed mb-4">
                 Som privatperson får du sälja ägg direkt från gården till slutkonsument utan tillstånd. Det
                 kallas <em>primärproduktion till konsument</em> och är fullt lagligt så länge du säljer från
-                produktionsplatsen och inte distribuerar via butik. Vill du sälja till en lokal handlare eller
-                restaurang behöver du anmäla till Livsmedelsverket – men för "äggförsäljning Swish" till
-                privatpersoner räcker det med några praktiska rutiner kring renhet, märkning av bäst-före-datum
-                och ett ställe att förvara äggen kallt.
+                produktionsplatsen och inte distribuerar via butik. Vill du sälja hönsägg till en lokal handlare
+                eller restaurang måste äggen först sorteras och märkas på ett godkänt äggpackeri (godkännandet
+                ansöks hos Livsmedelsverket, alternativt säljer du via ett befintligt packeri) – men för
+                försäljning direkt till privatpersoner räcker det med några praktiska rutiner kring renhet,
+                märkning av bäst-före-datum och ett ställe att förvara äggen svalt.
               </p>
               <h3 className="font-serif text-2xl text-foreground mt-8 mb-3">Pris på ägg från egna höns</h3>
               <p className="text-foreground/85 leading-relaxed mb-4">
@@ -568,6 +593,10 @@ export default function SaljaAgg() {
                   </Card>
                 </motion.div>
               ))}
+            </div>
+            <div className="mt-8 space-y-3">
+              <ContentSources sources={SALJAGG_SOURCES} heading="Källor och myndighetsinformation" />
+              <LastReviewed date={SALJAGG_REVIEWED} />
             </div>
           </div>
         </section>
