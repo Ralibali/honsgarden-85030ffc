@@ -55,6 +55,7 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const EggCalculator = lazyWithRetry(() => import("./pages/EggCalculator"));
 const AggReglerVagvisare = lazyWithRetry(() => import("./pages/AggReglerVagvisare"));
+const HatchCalculator = lazyWithRetry(() => import("./pages/HatchCalculator"));
 const AcceptInvite = lazyWithRetry(() => import("./pages/AcceptInvite"));
 const Agda = lazyWithRetry(() => import("./pages/Agda"));
 const Overview = lazyWithRetry(() => import("./pages/Overview"));
@@ -199,6 +200,7 @@ const AppRoutes = () => (
         <Route path="/om-oss" element={<About />} />
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
         <Route path="/verktyg/aggregler-vagvisare" element={<AggReglerVagvisare />} />
+        <Route path="/verktyg/klackningskalkylator" element={<HatchCalculator />} />
         <Route path="/inbjudan/:token" element={<AcceptInvite />} />
         <Route path="/guider" element={<GuiderRedirect />} />
         <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />

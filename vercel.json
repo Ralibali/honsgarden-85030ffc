@@ -89,6 +89,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/verktyg/klackningskalkylator",
+      "destination": "/index.html"
+    },
+    {
       "source": "/guider",
       "destination": "/index.html"
     },

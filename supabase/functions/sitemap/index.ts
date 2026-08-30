@@ -153,6 +153,7 @@ Deno.serve(async (req) => {
     { loc: "/blogg", priority: "0.9", changefreq: "daily" },
     { loc: "/om-oss", priority: "0.7", changefreq: "monthly" },
     { loc: "/verktyg/aggkalkylator", priority: "0.8", changefreq: "monthly" },
+    { loc: "/verktyg/klackningskalkylator", priority: "0.8", changefreq: "monthly" },
     { loc: "/app-for-honsagare", priority: "0.8", changefreq: "monthly" },
     { loc: "/agglogg", priority: "0.8", changefreq: "monthly" },
     { loc: "/honskalender", priority: "0.7", changefreq: "monthly" },

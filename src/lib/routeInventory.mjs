@@ -50,6 +50,7 @@ export const STATIC_PUBLIC_ROUTES = [
   '/om-oss',
   '/verktyg/aggkalkylator',
   '/verktyg/aggregler-vagvisare',
+  '/verktyg/klackningskalkylator',
   '/guider',
   '/guider/registrera-hons-jordbruksverket',
   '/guider/salja-agg-regler',

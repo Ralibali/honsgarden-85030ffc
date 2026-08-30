@@ -56,6 +56,12 @@ export type AnalyticsDemoFeature =
   | 'agda_preview'
   | 'reports_preview';
 
+/** Publika anonyma verktyg under /verktyg/ (låg kardinalitet). */
+export type AnalyticsPublicTool =
+  | 'aggkalkylator'
+  | 'aggregler_vagvisare'
+  | 'klackningskalkylator';
+
 /** Onboarding-steg (låg kardinalitet). */
 export type AnalyticsOnboardingStep =
   | 'welcome'
@@ -154,6 +160,9 @@ export type AnalyticsEventMap = {
   };
   'Seasonal Mode Changed': {
     mode?: AnalyticsSeasonalMode;
+  };
+  'Public Tool Used': {
+    tool?: AnalyticsPublicTool;
   };
   'Referral Link Shared': Record<string, never>;
   'Referral Signup': Record<string, never>;
