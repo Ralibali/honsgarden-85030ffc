@@ -17,6 +17,9 @@ import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { getSeasonalMode, trackSeasonalModeIfChanged } from '@/lib/seasonalMode';
 import { lastLogDateFromEggs } from '@/lib/retentionLoop';
 import RetentionSeasonCard from '@/components/dashboard/RetentionSeasonCard';
+import { hasCapability } from '@/lib/entitlements';
+import { buildPremiumInsights } from '@/lib/premiumInsights';
+import PremiumInsightsCard from '@/components/dashboard/PremiumInsightsCard';
 import { DailySummaryModal } from '@/components/DailySummaryModal';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -293,6 +296,13 @@ export default function DashboardV2() {
   const seasonalMode = getSeasonalMode();
   const lastLogDate = useMemo(() => lastLogDateFromEggs(eggs), [eggs]);
 
+  // Plus-insikter (Swarm K): egen data, befintlig entitlement, inga nya betalväggar.
+  const canSeeInsights = hasCapability(user?.premium_type ?? null, 'advanced_analytics');
+  const premiumInsights = useMemo(
+    () => (canSeeInsights ? buildPremiumInsights(eggs, hens, feedRecords, todayStr) : []),
+    [canSeeInsights, eggs, hens, feedRecords, todayStr],
+  );
+
   // Mäter säsongs-lägets utbredning (en gång per enhet och säsongsskifte).
   useEffect(() => {
     trackSeasonalModeIfChanged(seasonalMode);
@@ -528,6 +538,14 @@ export default function DashboardV2() {
         mode={seasonalMode}
         onLogClick={scrollToQuickLog}
       />
+
+      {/* Plus-insikter – egen data, aldrig platshållare (Swarm K) */}
+      {canSeeInsights && premiumInsights.length > 0 && (
+        <PremiumInsightsCard
+          insights={premiumInsights}
+          trendDirection={weekDelta > 0 ? 'up' : weekDelta < 0 ? 'down' : null}
+        />
+      )}
 
       {/* Veckans värptävling – flockens ranking senaste 7 dagarna */}
       {!hideHenRace && <HenRaceCard eggs={eggs} hens={hens} />}
