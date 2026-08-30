@@ -25,7 +25,8 @@
     "verify:routes": "node scripts/route-inventory.mjs --check",
     "audit:content": "node scripts/editorial-audit.mjs",
     "audit:content:check": "node scripts/editorial-audit.mjs --check",
-    "audit:native": "node scripts/native-readiness.mjs"
+    "audit:native": "node scripts/native-readiness.mjs",
+    "audit:perf": "node scripts/perf-budget.mjs"
   },
   "dependencies": {
     "@capawesome/capacitor-apple-sign-in": "^0.1.2",
