@@ -40,6 +40,7 @@ const Premium = lazyWithRetry(() => import("./pages/Premium"));
 const Community = lazyWithRetry(() => import("./pages/Community"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
+const GrowthIntelligence = lazyWithRetry(() => import("./pages/GrowthIntelligence"));
 const Shop = lazyWithRetry(() => import("./pages/Shop"));
 const Terms = lazyWithRetry(() => import("./pages/Terms"));
 const Integritet = lazyWithRetry(() => import("./pages/Integritet"));
@@ -244,6 +245,7 @@ const AppRoutes = () => (
           <Route path="premium" element={<Premium />} />
           <Route path="community" element={<Community />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="growth-intelligence" element={<GrowthIntelligence />} />
           <Route path="butik" element={<Shop />} />
           <Route path="hens/:henId" element={<HenProfile />} />
           <Route path="weekly-report" element={<WeeklyReport />} />
