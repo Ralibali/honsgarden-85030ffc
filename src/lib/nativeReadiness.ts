@@ -94,7 +94,7 @@ export function evaluateNativeReadiness(facts: NativeReadinessFacts): NativeRead
   add('splash', (ios.splashCount ?? 0) > 0 ? 'pass' : 'fail', 'Splash-bilder', `${ios.splashCount ?? 0} bilder`);
   add(
     'versions',
-    Boolean(ios.marketingVersion && ios.buildNumber) ? 'pass' : 'fail',
+    ios.marketingVersion && ios.buildNumber ? 'pass' : 'fail',
     'Versionsnummer',
     `MARKETING_VERSION=${ios.marketingVersion || '?'} CURRENT_PROJECT_VERSION=${ios.buildNumber || '?'}`,
   );

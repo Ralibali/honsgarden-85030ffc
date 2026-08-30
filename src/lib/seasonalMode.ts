@@ -86,7 +86,8 @@ export function trackSeasonalModeIfChanged(mode: SeasonalMode): void {
     if (typeof window === 'undefined') return;
     if (localStorage.getItem(SEASON_MODE_FLAG) === mode) return;
     localStorage.setItem(SEASON_MODE_FLAG, mode);
-    trackEvent('Seasonal Mode Changed', { mode });
+    // Analytaxonomin är avsiktligt låg-kardinal: vinter vs. övriga säsonger.
+    trackEvent('Seasonal Mode Changed', { mode: mode === 'winter' ? 'winter' : 'normal' });
   } catch {
     // localStorage kan vara blockerat i privat läge
   }

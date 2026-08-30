@@ -3,7 +3,8 @@
  * The .mjs module is the source of truth so Node build scripts can import
  * it without a TS transpile step; this wrapper gives the app types.
  */
-// @ts-expect-error – sibling .mjs module has no bundled declarations
+// Sibling .mjs module has no bundled declarations; with noImplicitAny=false
+// the import is allowed untyped and typed explicitly below.
 import {
   ROUTE_REDIRECTS as REDIRECTS,
   STATIC_PUBLIC_ROUTES as STATIC_ROUTES,
