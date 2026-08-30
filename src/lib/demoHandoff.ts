@@ -18,14 +18,33 @@ export function mapAppPathToDemoFeature(pathname: string): AnalyticsDemoFeature 
   if (!path.startsWith('/app')) return undefined;
   if (/^\/app\/eggs/.test(path)) return 'egg_log';
   if (/^\/app\/hens/.test(path)) return 'hens';
+  if (/^\/app\/feed(?![a-z])/.test(path)) return 'feed';
+  if (/^\/app\/finance/.test(path)) return 'finance';
   if (/^\/app\/(calendar|tasks|reminders|hatching)/.test(path)) return 'calendar';
   if (/^\/app\/(community|marknad)/.test(path)) return 'marketplace';
   if (/^\/app\/agda/.test(path)) return 'agda_preview';
-  if (/^\/app\/(statistics|overview|weekly-report|year-report|smart-report)/.test(path)) {
+  if (/^\/app\/(statistics|overview|weekly-report|year-report|smart-report|rapporter)/.test(path)) {
     return 'reports_preview';
   }
   return undefined;
 }
+
+/**
+ * /app/-ytor som medvetet INTE räknas som demo-features: engångs-
+ * (import), kontoadmin (settings/profile/premium/admin) och stöd
+ * (feedback). Produk-motståndartestet (Swarm Y) tillåter bara dessa
+ * som omappade navigeringsmål från demots ytor.
+ */
+export const DEMO_UNMAPPED_ALLOWLIST: readonly string[] = [
+  '/app/import',
+  '/app/settings',
+  '/app/delete-account',
+  '/app/profile',
+  '/app/premium',
+  '/app/admin',
+  '/app/feedback',
+  '/app/butik',
+];
 
 export interface DemoNavigationEvents {
   /** Fires första gången per feature under en demosejour. */

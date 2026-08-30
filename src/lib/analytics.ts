@@ -56,7 +56,9 @@ export type AnalyticsDemoFeature =
   | 'calendar'
   | 'marketplace'
   | 'agda_preview'
-  | 'reports_preview';
+  | 'reports_preview'
+  | 'feed'
+  | 'finance';
 
 /** Publika anonyma verktyg under /verktyg/ (låg kardinalitet). */
 export type AnalyticsPublicTool =
