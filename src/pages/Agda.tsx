@@ -10,10 +10,16 @@ import { toast } from '@/hooks/use-toast';
 import ReactMarkdown from 'react-markdown';
 import { readScoped, writeScoped, removeScoped } from '@/lib/userScopedStorage';
 import PageHeader from '@/components/PageHeader';
+import { assessHealthUrgency, HEALTH_ESCALATION_NOTICE, HEALTH_GENERAL_NOTICE } from '@/lib/agdaHealthGuard';
+import { findQuickAnswer } from '@/lib/agdaQuickAnswers';
+import { ensureVetEscalation } from '@/lib/agdaResponseGuard';
+import { Stethoscope } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** Satt deterministiskt av agdaHealthGuard när användarens fråga rör hälsa. */
+  healthUrgency?: 'health' | 'urgent';
 }
 
 const STORAGE_KEY = 'agda-chat-history';
@@ -56,6 +62,7 @@ async function streamAgda({
   onDone,
   onError,
   onQuota,
+  onCreditExhausted,
 }: {
   message: string;
   history: ChatMessage[];
@@ -63,6 +70,8 @@ async function streamAgda({
   onDone: () => void;
   onError: (err: string) => void;
   onQuota?: (remaining: number) => void;
+  /** 402 – AI-krediter slut. Om den inte sätts faller vi tillbaka på onError. */
+  onCreditExhausted?: () => void;
 }) {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -86,7 +95,11 @@ async function streamAgda({
         return;
       }
       if (response.status === 402) {
-        onError('Agdas AI-krediter är tillfälligt slut. Försök igen senare.');
+        if (onCreditExhausted) {
+          onCreditExhausted();
+        } else {
+          onError('Agdas AI-krediter är tillfälligt slut. Försök igen senare.');
+        }
         return;
       }
       let errorMessage = 'Kunde inte nå Agda';
@@ -198,7 +211,15 @@ export default function Agda() {
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading) return;
 
-    const userMessage: ChatMessage = { role: 'user', content: text.trim() };
+    // Hälsoguard: deterministisk klassificering innan AI:n anropas. Svaret
+    // blockeras aldrig – men en fast, mänskligt skriven säkerhetsnotis
+    // följer alltid med hälsorelaterade frågor.
+    const guard = assessHealthUrgency(text);
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: text.trim(),
+      ...(guard.urgency !== 'none' ? { healthUrgency: guard.urgency } : {}),
+    };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput('');
@@ -221,11 +242,41 @@ export default function Agda() {
         });
       },
       onDone: () => {
+        // Post-svars-säkerhetskontroll: akuta hälsfrågor ska ALLTID få
+        // veterinär-hänvisning, även om AI-svaret saknade den. Kontrollen
+        // kompletterar — den ändrar eller tar aldrig bort AI:ns text.
+        const answer = assistantContentRef.current;
+        const ensured = ensureVetEscalation(text, answer);
+        if (ensured !== answer) {
+          setMessages((previous) => {
+            const last = previous[previous.length - 1];
+            if (last?.role !== 'assistant') return previous;
+            return previous.map((message, index) =>
+              index === previous.length - 1 ? { ...message, content: ensured } : message);
+          });
+        }
         setLoading(false);
         inputRef.current?.focus();
       },
       onError: (error) => {
         toast({ title: 'Agda kunde inte svara', description: error, variant: 'destructive' });
+        setLoading(false);
+        inputRef.current?.focus();
+      },
+      onCreditExhausted: () => {
+        // Graceful 402-degradation: svara med kuraterat snabbsvar om
+        // frågan matchar, så att Agda aldrig lämnar användaren tomhänt.
+        const quick = findQuickAnswer(text);
+        if (quick) {
+          const fallback = `${quick.answer}${quick.link ? `\n\n[Läs mer: ${quick.link.label}](${quick.link.href})` : ''}\n\n---\n*Det här är ett förberett svar – Agdas fulla AI är tillfälligt ur drift. Försök igen lite senare för en mer personlig genomgång.*`;
+          setMessages((previous) => [...previous, { role: 'assistant', content: fallback }]);
+        } else {
+          toast({
+            title: 'Agda kunde inte svara',
+            description: 'Agdas AI-krediter är tillfälligt slut. Försök igen senare – eller kika i våra guider under Blogg.',
+            variant: 'destructive',
+          });
+        }
         setLoading(false);
         inputRef.current?.focus();
       },
@@ -372,16 +423,31 @@ export default function Agda() {
                 transition={{ duration: 0.16 }}
                 className={`agda-message-row flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`agda-message ${message.role === 'user' ? 'agda-message--user' : 'agda-message--assistant'}`}>
-                  {message.role === 'assistant' && (
-                    <div className="agda-message-name"><span>🐔</span> Agda</div>
-                  )}
-                  {message.role === 'assistant' ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_h2]:text-base [&_h2]:font-serif [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:text-foreground">
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                <div className="flex flex-col gap-2 max-w-full">
+                  <div className={`agda-message ${message.role === 'user' ? 'agda-message--user' : 'agda-message--assistant'}`}>
+                    {message.role === 'assistant' && (
+                      <div className="agda-message-name"><span>🐔</span> Agda</div>
+                    )}
+                    {message.role === 'assistant' ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:my-1.5 [&_ul]:my-1.5 [&_ol]:my-1.5 [&_li]:my-0.5 [&_h2]:text-base [&_h2]:font-serif [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:text-foreground">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p>{message.content}</p>
+                    )}
+                  </div>
+                  {message.role === 'user' && message.healthUrgency && (
+                    <div
+                      role="note"
+                      className={`agda-health-notice flex items-start gap-2 rounded-xl border p-3 text-xs leading-relaxed ${
+                        message.healthUrgency === 'urgent'
+                          ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100'
+                          : 'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900 dark:bg-amber-950/20 dark:text-amber-100'
+                      }`}
+                    >
+                      <Stethoscope className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden />
+                      <span>{message.healthUrgency === 'urgent' ? HEALTH_ESCALATION_NOTICE : HEALTH_GENERAL_NOTICE}</span>
                     </div>
-                  ) : (
-                    <p>{message.content}</p>
                   )}
                 </div>
               </motion.div>

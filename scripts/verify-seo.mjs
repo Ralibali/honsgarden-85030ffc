@@ -3,6 +3,7 @@ import { assertHomePageHtml, assertTopicPageHtml } from "../src/lib/prerenderTop
 
 const required = [
   "dist/index.html",
+  "dist/404.html",
   "dist/sitemap.xml",
   "dist/blogg/index.html",
   "dist/borja-med-hons/index.html",

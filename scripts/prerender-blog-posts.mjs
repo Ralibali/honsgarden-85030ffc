@@ -6,7 +6,7 @@ import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
-import { extractBlogArticlePosts, isRobotsDisallowed, mergeBlogPosts, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
+import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 import {
   breedTopicH1,
   documentTitleForPath,
@@ -166,6 +166,21 @@ async function fetchPosts() {
   return response.json();
 }
 
+// Aktiva äggförsäljningsorter (likviditetsgrind för /salja-agg/:ort).
+// Returnerar null vid fel — då faller vi tillbaka på att inkludera alla orter
+// (fail-open, dvs. dagens beteende, så att ett trasigt läs stopp inga sidor).
+async function fetchActiveListingLocations() {
+  const url = SUPABASE_URL || SITEMAP_SUPABASE_URL;
+  const key = SUPABASE_KEY || SITEMAP_SUPABASE_KEY;
+  const params = new URLSearchParams({ select: 'location', is_active: 'eq.true', limit: '1000' });
+  const response = await fetch(`${url}/rest/v1/public_egg_sale_listings?${params}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  if (!response.ok) throw new Error(`Kunde inte hämta aktiva ägglistor (${response.status})`);
+  const rows = await response.json();
+  return rows.map((row) => row?.location).filter(Boolean);
+}
+
 async function fetchPublishedPostsForSitemap() {
   const params = new URLSearchParams({
     select: 'slug,updated_at,published_at',
@@ -192,13 +207,16 @@ const STATIC_PAGES = [
   { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, tips & hälsa | Hönsgården', description: 'Läs Sveriges bästa blogg om höns. Guider för nybörjare, hälsotips, hönsraser och allt om hobbyhönsägande.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'daily' },
   { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? | Hönsgården', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
+  { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/karta', route: 'karta', title: 'Hönskarta – hitta säljare av färska ägg nära dig | Hönsgården', description: 'Interaktiv karta över svenska hönsägare som säljer färska ägg. Hitta säljare i din närhet, se öppettider och boka direkt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'weekly' },
   { path: '/marknad', route: 'marknad', title: 'Marknad för höns, ägg och tillbehör | Hönsgården', description: 'Köp och sälj höns, tuppar, kläckägg och tillbehör mellan svenska hönsägare. Enkla annonser, direkt kontakt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'daily' },
   { path: '/salja-agg', route: 'salja-agg', title: 'Sälja ägg lokalt med Swish – gratis säljsida | Hönsgården', description: 'Sälja ägg från egna höns? Skapa en gratis säljsida med bokning och Swish-betalning på 2 minuter. Få stamkunder, hantera lager och äggförsäljning enkelt med Hönsgården.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'weekly' },
   { path: '/honsraser', route: 'honsraser', title: 'Hönsraser i Sverige – jämför lämpliga raser för hobbyn | Hönsgården', description: 'Guide till svenska och internationella hönsraser för hobbyn: värpning, temperament, storlek och vinterhärdighet.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/honsraser-lista', route: 'honsraser-lista', title: 'Lista över hönsraser – A till Ö | Hönsgården', description: 'Komplett lista över hönsraser med egenskaper, ursprung och tips. Hitta rätt ras för din flock.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
-  { path: '/dvarghons', route: 'dvarghons', title: 'Dvärghöns – raser, skötsel och tips för nybörjare | Hönsgården', description: 'Allt om dvärghöns: populära raser, plats- och foderkrav, temperament och vad du bör tänka på innan du skaffar dvärghöns.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
-  { path: '/skansk-blommehona', route: 'skansk-blommehona', title: 'Skånsk blommehöna – lantras med värpning, temperament och skötsel | Hönsgården', description: 'Skånsk blommehöna är en gammal svensk lantras. Läs om värpning, temperament, färgvariation och skötsel av blommehönor.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  // /dvarghons och /skansk-blommehona är sammanslagna till canonical-URL:erna
+  // under /honsraser/ (gamla sökvägar 308:as på edge-nivå via routeInventory).
+  { path: '/honsraser/dvarghons', route: 'honsraser/dvarghons', title: 'Dvärghöns – raser, skötsel och tips för nybörjare | Hönsgården', description: 'Allt om dvärghöns: populära raser, plats- och foderkrav, temperament och vad du bör tänka på innan du skaffar dvärghöns.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/honsraser/skansk-blommehona', route: 'honsraser/skansk-blommehona', title: 'Skånsk blommehöna – lantras med värpning, temperament och skötsel | Hönsgården', description: 'Skånsk blommehöna är en gammal svensk lantras. Läs om värpning, temperament, färgvariation och skötsel av blommehönor.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/app', route: 'app', title: 'Öppna Hönsgården-appen – logga ägg och sköt flocken | Hönsgården', description: 'Logga in i Hönsgården-appen. Registrera ägg, hönor, foder och påminnelser. Fungerar direkt i webbläsaren och som PWA i mobilen.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
 ];
 
@@ -273,12 +291,12 @@ function renderOrtCta(ort) {
 </aside>`;
 }
 
-function buildOrtPage(template, ort, ogImagePath) {
+function buildOrtPage(template, ort, ogImagePath, { noindex = false } = {}) {
   const path = `/salja-agg/${ort.slug}`;
   const title = `Köp färska ägg i ${ort.name} – hitta säljare nära dig | Hönsgården`;
   const description = `Hitta lokala hönsägare i ${ort.name} (${ort.lan}) som säljer färska ägg direkt från gården. Bläddra i säljlistor, se priser och boka hämtning nära dig.`;
   const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: `Köp färska ägg i ${ort.name}`, description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE', about: { '@type': 'Place', name: ort.name, address: { '@type': 'PostalAddress', addressLocality: ort.name, addressRegion: ort.lan, addressCountry: 'SE' } } };
-  const withHead = injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, jsonLd }));
+  const withHead = injectHead(template, buildHeadGeneric({ title, description, path, ogImage: ogImagePath || '/og-image.jpg', ogImageAlt: `Färska ägg i ${ort.name} – karta över lokala äggsäljare`, noindex, jsonLd }));
   return withHead.replace('<div id="root"></div>', `<div id="root">${renderOrtCta(ort)}</div>`);
 }
 
@@ -417,7 +435,8 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
-function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = [], disallows = []) {
+// suppliedOrtSlugs: null = okänd likviditet (inkludera alla), Set = bara orter med aktivt utbud.
+function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = [], disallows = [], suppliedOrtSlugs = null) {
   const now = new Date().toISOString().split('T')[0];
   const urls = [];
   const push = (loc, opts = {}) => {
@@ -429,7 +448,13 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [
   Object.keys(CATEGORY_META).forEach((slug) => push(`${BASE_URL}/blogg/kategori/${slug}`, { changefreq: 'weekly', priority: '0.7' }));
   tags.forEach((tag) => push(`${BASE_URL}/blogg/tagg/${encodeURIComponent(tag)}`, { changefreq: 'weekly', priority: '0.6' }));
   posts.forEach((post) => push(`${BASE_URL}/blogg/${post.slug}`, { lastmod: (post.updated_at || post.published_at || now).split('T')[0], changefreq: 'weekly', priority: '0.8' }));
-  orter.forEach((ort) => push(`${BASE_URL}/salja-agg/${ort.slug}`, { changefreq: 'weekly', priority: '0.75' }));
+  orter.forEach((ort) => {
+    // Likviditetsgrind: orter utan aktivt utbud listas inte i sitemap och
+    // får noindex i prerender (se ort-pages-steget). Runtime-sidan speglar
+    // samma beslut mot live-databasen.
+    if (suppliedOrtSlugs && !suppliedOrtSlugs.has(ort.slug)) return;
+    push(`${BASE_URL}/salja-agg/${ort.slug}`, { changefreq: 'weekly', priority: '0.75' });
+  });
   regulationGuides.forEach((g) => push(`${BASE_URL}/guider/${g.slug}`, { lastmod: g.updated, changefreq: 'monthly', priority: '0.85' }));
   breeds.forEach((b) => push(`${BASE_URL}/honsraser/${b.slug}`, { changefreq: 'monthly', priority: '0.8' }));
   marketplaceCategories.forEach((p) => push(`${BASE_URL}/marknad/k/${p.slug}`, { changefreq: 'daily', priority: '0.8' }));
@@ -462,15 +487,17 @@ async function main() {
 
   let posts = [];
   let orter = [];
+  let activeListingLocations = null; // null = okänd likviditet → fail-open
   const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
-  const tagSet = new Set();
 
   await runStep('fetch-posts', async () => {
     posts = await fetchPosts();
-    for (const post of posts) if (Array.isArray(post.tags)) post.tags.forEach(t => t && tagSet.add(t));
   });
   await runStep('load-orter', async () => {
     orter = await loadOrter();
+  });
+  await runStep('fetch-ort-supply', async () => {
+    activeListingLocations = await fetchActiveListingLocations();
   });
 
   await runStep('static-pages', async () => {
@@ -482,7 +509,10 @@ async function main() {
     for (const [slug, meta] of Object.entries(CATEGORY_META)) await writeRoute(`blogg/kategori/${slug}`, buildCategoryPage(template, slug, meta));
   });
 
-  const tags = Array.from(tagSet);
+  // Indexhygiene: bara taggar med minst TAG_MIN_POSTS artiklar prerenderas
+  // och listas i sitemap. Tunna taggar (0–1 artikel) nås fortfarande via
+  // SPA-routen men får noindex av BlogTag.tsx i runtime.
+  const tags = indexableTags(posts);
   await runStep('tag-pages', async () => {
     for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(template, tag));
   });
@@ -504,10 +534,15 @@ async function main() {
     }
   });
 
+  const suppliedOrtSlugs = Array.isArray(activeListingLocations)
+    ? new Set(orter.filter((ort) => ortHasSupply(ort.slug, activeListingLocations)).map((ort) => ort.slug))
+    : null;
+
   await runStep('ort-pages', async () => {
     for (const ort of orter) {
       const ogPath = await generateOrtOgImage(ort);
-      await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath));
+      const noSupply = suppliedOrtSlugs ? !suppliedOrtSlugs.has(ort.slug) : false;
+      await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath, { noindex: noSupply }));
     }
   });
 
@@ -548,12 +583,13 @@ async function main() {
     }
     await writeFile(
       join('dist', 'sitemap.xml'),
-      buildSitemap(sitemapPosts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES, disallows),
+      buildSitemap(sitemapPosts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES, disallows, suppliedOrtSlugs),
       'utf8',
     );
   });
 
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- + ${posts.length} artikel- + ${orter.length} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
+  const ortSummary = suppliedOrtSlugs ? `${suppliedOrtSlugs.size}/${orter.length} med utbud` : `${orter.length} (likviditet okänd)`;
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
 
 
 

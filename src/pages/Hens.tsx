@@ -20,6 +20,7 @@ import { HEN_TYPES, isPullet, isRooster, isLayingHen, henTypeLabel, henTypeEmoji
 import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { readActiveFlockId, resolveFlockIdForHenCreate, writeActiveFlockId } from '@/lib/flockSelection';
+import { trackFirstHenIfNew } from '@/lib/analytics';
 
 export default function Hens() {
   const navigate = useNavigate();
@@ -92,6 +93,7 @@ export default function Hens() {
       queryClient.invalidateQueries({ queryKey: ['hens'] });
       queryClient.invalidateQueries({ queryKey: ['flocks'] });
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
+      trackFirstHenIfNew('hens_page');
       // Sync hen count to coop settings
       try {
         const allHens = await api.getHens();

@@ -6,15 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { useSeo } from '@/hooks/useSeo';
 import { DemoAuthProvider } from '@/hooks/useAuth';
 import { installDemoShim, uninstallDemoShim } from '@/lib/demoShim';
+import { trackDemoNavigation } from '@/lib/demoHandoff';
 import DashboardV2 from '@/pages/DashboardV2';
 
 const DEMO_USER_ID = 'demo-user';
 
-/** Trattmätning: klick på registrerings-CTA i demon. */
+/** Trattmätning: klick på registrerings-CTA i demon = explicit överlämning. */
 function trackDemoCta() {
-  void import('@/lib/analytics').then(({ trackEvent }) =>
-    trackEvent('CTA Register Clicked', { source: 'demo_banner' }),
-  );
+  void import('@/lib/analytics').then(({ trackEvent }) => {
+    trackEvent('CTA Register Clicked', { source: 'demo_banner' });
+    trackEvent('Demo To Signup', {});
+  });
 }
 
 /** Förhindra att onboarding-guide, checklista och dagsmodal täcker demon. */
@@ -63,6 +65,19 @@ export default function DemoApp() {
     installDemoShim(queryClient); // no-op om redan installerad (StrictMode-säkert)
     return () => uninstallDemoShim();
   }, [queryClient]);
+
+  // Funnel: Demo Opened → Demo Feature Used → Demo To Signup.
+  useEffect(() => {
+    let analytics: typeof import('@/lib/analytics') | null = null;
+    void import('@/lib/analytics').then((mod) => {
+      analytics = mod;
+      mod.trackEvent('Demo Opened', {});
+    });
+    return trackDemoNavigation({
+      onFeatureUsed: (feature) => analytics?.trackEvent('Demo Feature Used', { feature }),
+      onHandoff: () => analytics?.trackEvent('Demo To Signup', {}),
+    });
+  }, []);
 
   return (
     <DemoAuthProvider>

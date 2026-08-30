@@ -100,3 +100,62 @@ export function filterSitemapXml(xml = '', disallows = []) {
     isRobotsDisallowed(loc, disallows) ? '' : block
   ));
 }
+
+/* ------------------------------------------------------------------ */
+/* Indexhygiene (V2 Swarm C)                                           */
+/*                                                                     */
+/* Samma policy används på tre ställen:                                */
+/*  1. scripts/prerender-blog-posts.mjs (byggtidens sitemap + meta)    */
+/*  2. supabase/functions/sitemap/index.ts (dynamisk sitemap, speglad) */
+/*  3. src/pages/BlogTag.tsx + src/pages/SaljaAggOrt.tsx (runtime)     */
+/* ------------------------------------------------------------------ */
+
+/** Minsta antal publicerade artiklar för att en taggsida ska indexeras. */
+export const TAG_MIN_POSTS = 2;
+
+/** Räknar publicerade artiklar per tagg. Kategorier räknas inte som taggar. */
+export function countPostsPerTag(posts = []) {
+  const counts = new Map();
+  for (const post of posts) {
+    if (!Array.isArray(post?.tags)) continue;
+    for (const tag of post.tags) {
+      if (!tag) continue;
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    }
+  }
+  return counts;
+}
+
+/** Taggar med minst `minPosts` artiklar — de enda som får sitemap-post och indexeras. */
+export function indexableTags(posts = [], minPosts = TAG_MIN_POSTS) {
+  const counts = countPostsPerTag(posts);
+  return [...counts.entries()]
+    .filter(([, count]) => count >= minPosts)
+    .map(([tag]) => tag)
+    .sort();
+}
+
+/**
+ * Normaliserar fritext-ort ("Örnsköldsvik", "Göteborg kommun") till samma
+ * form som ort-slugarna i src/data/saljaAggOrter.ts ("ornskoldsvik").
+ */
+export function normalizeOrtKey(text = '') {
+  return String(text)
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Sant om minst en aktiv annonsplats matchar ort-slugen på ordgräns.
+ * Matchar t.ex. slug "goteborg" mot platsen "Göteborg" men inte "lund"
+ * mot "Lundby".
+ */
+export function ortHasSupply(ortSlug, activeLocations = []) {
+  const key = normalizeOrtKey(ortSlug);
+  if (!key) return false;
+  const boundary = new RegExp(`(^|-)${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(-|$)`);
+  return activeLocations.some((location) => boundary.test(normalizeOrtKey(location)));
+}

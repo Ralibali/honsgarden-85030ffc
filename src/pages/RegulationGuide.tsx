@@ -2,10 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useSeo } from '@/hooks/useSeo';
-import { Egg, Shield, AlertTriangle, ExternalLink, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Egg, Shield, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { getRegulationGuide } from '@/data/regulationGuides.mjs';
 import type { RegulationGuide as RegulationGuideType } from '@/data/regulationGuides.d.mts';
 import { brandName } from '@/lib/brand';
+import { ContentSources } from '@/components/content/ContentSources';
+import { ContentDisclaimer, LastReviewed } from '@/components/content/ContentTrust';
 
 interface Props {
   slug: string;
@@ -120,26 +122,15 @@ export default function RegulationGuide({ slug }: Props) {
           ))}
         </article>
 
-        {/* Disclaimer */}
-        <aside className="mt-10 rounded-2xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 p-4 sm:p-5 flex gap-3">
-          <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-900 dark:text-amber-100 space-y-2">
-            <p className="font-medium">Regler kan ändras – dubbelkolla alltid källan</p>
-            <p>
-              Den här guiden är en översikt och ersätter inte myndigheternas information. För aktuella regler,
-              hänvisar vi till <strong>Jordbruksverket</strong> och <strong>Livsmedelsverket</strong>:
-            </p>
-            <ul className="list-disc ml-5 space-y-1">
-              {guide.authorityLinks.map((l) => (
-                <li key={l.href}>
-                  <a href={l.href} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
-                    {l.label} <ExternalLink className="h-3 w-3" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
+        {/* Disclaimer + källor (delade trust-komponenter, swarm A) */}
+        <ContentDisclaimer variant="regler" className="mt-10">
+          <ContentSources
+            sources={guide.authorityLinks}
+            heading=""
+            className="border-0 bg-transparent p-0"
+          />
+        </ContentDisclaimer>
+        <LastReviewed date={guide.updated} className="mt-3" />
 
         {/* FAQ */}
         <section className="mt-10">

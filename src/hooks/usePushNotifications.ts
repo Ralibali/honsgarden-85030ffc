@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { trackEvent } from '@/lib/analytics';
+
+/**
+ * SW -> klient: push-sw.js postar detta meddelande vid notificationclick så
+ * att kedjan eligible → prompted → accepted → subscription → click går att
+ * mäta även för klick (swarm I, full-chain instrumentering).
+ */
+const PUSH_CLICK_MESSAGE = 'honsgarden:push-notification-click';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -53,6 +61,7 @@ export function usePushNotifications() {
         if (status === 'prompt' || status === 'prompt-with-rationale') {
           const req = await PushNotifications.requestPermissions();
           status = req.receive;
+          trackEvent('Push Permission Result', { result: status === 'granted' ? 'accepted' : 'denied' });
         }
         if (status !== 'granted') {
           setEnabled(false);
@@ -80,9 +89,10 @@ export function usePushNotifications() {
         const recv = await PushNotifications.addListener('pushNotificationReceived', (n) =>
           console.log('[push] received', n),
         );
-        const act = await PushNotifications.addListener('pushNotificationActionPerformed', (a) =>
-          console.log('[push] action', a),
-        );
+        const act = await PushNotifications.addListener('pushNotificationActionPerformed', (a) => {
+          console.log('[push] action', a);
+          trackEvent('Notification Clicked', { channel: 'push' });
+        });
         removeFns = [() => reg.remove(), () => err.remove(), () => recv.remove(), () => act.remove()];
       } catch (e) {
         console.error('[push] native setup failed', e);
@@ -98,26 +108,44 @@ export function usePushNotifications() {
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => setEnabled(!!sub))
       .catch(() => {});
+
+    // Notisklick: SW postar PUSH_CLICK_MESSAGE efter focus/navigate.
+    const onMessage = (event: MessageEvent) => {
+      if ((event.data as { type?: string } | null)?.type === PUSH_CLICK_MESSAGE) {
+        trackEvent('Notification Clicked', { channel: 'push' });
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage);
   }, [isNative, webSupported]);
 
   const enable = useCallback(async () => {
+    trackEvent('Push Prompt Shown', { source: 'dashboard' });
     if (isNative) {
       // På native försöker vi be om behörighet igen
       try {
         const { PushNotifications } = await import('@capacitor/push-notifications');
         const req = await PushNotifications.requestPermissions();
+        trackEvent('Push Permission Result', { result: req.receive === 'granted' ? 'accepted' : 'denied' });
         if (req.receive !== 'granted') return false;
         await PushNotifications.register();
         setEnabled(true);
+        trackEvent('Push Subscription Created');
         return true;
       } catch {
         return false;
       }
     }
-    if (!webSupported || !user?.id) return false;
+    if (!webSupported || !user?.id) {
+      if (!webSupported) trackEvent('Push Permission Result', { result: 'unsupported' });
+      return false;
+    }
     setBusy(true);
     try {
       const perm = await Notification.requestPermission();
+      trackEvent('Push Permission Result', {
+        result: perm === 'granted' ? 'accepted' : perm === 'denied' ? 'denied' : 'dismissed',
+      });
       if (perm !== 'granted') return false;
       const reg = await navigator.serviceWorker.ready;
       let sub = await reg.pushManager.getSubscription();
@@ -139,6 +167,7 @@ export function usePushNotifications() {
       }, { onConflict: 'endpoint' });
       if (error) throw error;
       setEnabled(true);
+      trackEvent('Push Subscription Created');
       return true;
     } finally { setBusy(false); }
   }, [isNative, webSupported, user?.id]);

@@ -35,6 +35,8 @@ export type AnalyticsSource =
   | 'landing_navbar'
   | 'landing_final_cta'
   | 'demo_banner'
+  | 'onboarding'
+  | 'hens_page'
   | 'blog_header'
   | 'blog_inline'
   | 'blog_final'
@@ -46,6 +48,41 @@ export type AnalyticsOAuthProvider = 'google' | 'apple';
 
 /** Tillåtna auth-lägen (låg kardinalitet). */
 export type AnalyticsAuthMode = 'login' | 'register';
+
+/** Demofunktioner som får förekomma i funnel-events (låg kardinalitet). */
+export type AnalyticsDemoFeature =
+  | 'egg_log'
+  | 'hens'
+  | 'calendar'
+  | 'marketplace'
+  | 'agda_preview'
+  | 'reports_preview'
+  | 'feed'
+  | 'finance';
+
+/** Publika anonyma verktyg under /verktyg/ (låg kardinalitet). */
+export type AnalyticsPublicTool =
+  | 'aggkalkylator'
+  | 'aggregler_vagvisare'
+  | 'klackningskalkylator';
+
+/** Onboarding-steg (låg kardinalitet). */
+export type AnalyticsOnboardingStep =
+  | 'welcome'
+  | 'flock_created'
+  | 'first_hen'
+  | 'first_egg'
+  | 'reminder_offered'
+  | 'completed';
+
+/** Påminnelsekanaler (låg kardinalitet). */
+export type AnalyticsReminderChannel = 'push' | 'email' | 'in_app';
+
+/** Push-permission-resultat (låg kardinalitet). */
+export type AnalyticsPushPermission = 'accepted' | 'denied' | 'dismissed' | 'unsupported';
+
+/** Säsongslägen (låg kardinalitet). */
+export type AnalyticsSeasonalMode = 'winter' | 'normal';
 
 /**
  * Strikt event-map. Endast dessa event får skickas.
@@ -86,6 +123,55 @@ export type AnalyticsEventMap = {
   'Smart Upsell Dismissed': {
     trigger?: string;
   };
+
+  /* -------- V2 north-star funnel (swarm U) --------
+   * Full kedja: demo → signup → första hönan → första ägget → retention.
+   * Alla properties är strikt låg-kardinalitet; aldrig fritext eller ID:n. */
+  'Demo Opened': {
+    source?: AnalyticsSource;
+  };
+  'Demo Feature Used': {
+    feature?: AnalyticsDemoFeature;
+  };
+  'Demo To Signup': {
+    feature?: AnalyticsDemoFeature;
+  };
+  'First Hen Added': {
+    source?: AnalyticsSource;
+  };
+  'Onboarding Step Completed': {
+    step?: AnalyticsOnboardingStep;
+  };
+  'Onboarding Completed': Record<string, never>;
+  'Reminder Created': {
+    channel?: AnalyticsReminderChannel;
+  };
+  'Push Prompt Shown': {
+    source?: AnalyticsSource;
+  };
+  'Push Permission Result': {
+    result?: AnalyticsPushPermission;
+  };
+  'Push Subscription Created': Record<string, never>;
+  'Notification Clicked': {
+    channel?: AnalyticsReminderChannel;
+  };
+  'Plus Gate Shown': {
+    feature?: string;
+  };
+  'Plus Gate Clicked': {
+    feature?: string;
+  };
+  'Seasonal Mode Changed': {
+    mode?: AnalyticsSeasonalMode;
+  };
+  'Public Tool Used': {
+    tool?: AnalyticsPublicTool;
+  };
+  'Referral Link Shared': Record<string, never>;
+  'Referral Signup': Record<string, never>;
+  'Marketplace Listing Created': Record<string, never>;
+  'Marketplace Contact Clicked': Record<string, never>;
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
@@ -293,6 +379,25 @@ export function trackFirstEggIfNew(source: AnalyticsSource): void {
   }
 }
 
+const FIRST_HEN_FLAG = 'hg_first_hen_tracked_v1';
+
+/**
+ * Fire "First Hen Added" en gång per enhet.
+ * Anropas efter faktiskt lyckad hönskapelse från valfri UI-yta.
+ * (Exempeldata i onboarding räknas inte — användaren har inte lagt till
+ * sin egen höna då.)
+ */
+export function trackFirstHenIfNew(source: AnalyticsSource): void {
+  try {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(FIRST_HEN_FLAG)) return;
+    localStorage.setItem(FIRST_HEN_FLAG, '1');
+    trackEvent('First Hen Added', { source });
+  } catch {
+    // localStorage kan vara blockerat i privat läge
+  }
+}
+
 /** Alla tillåtna source-värden i runtime (för validering av query-params). */
 export const ANALYTICS_SOURCES = [
   'premium_page',
@@ -306,6 +411,8 @@ export const ANALYTICS_SOURCES = [
   'landing_navbar',
   'landing_final_cta',
   'demo_banner',
+  'onboarding',
+  'hens_page',
   'blog_header',
   'blog_inline',
   'blog_final',

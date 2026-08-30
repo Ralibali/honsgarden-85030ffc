@@ -55,6 +55,7 @@ const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const EggCalculator = lazyWithRetry(() => import("./pages/EggCalculator"));
 const AggReglerVagvisare = lazyWithRetry(() => import("./pages/AggReglerVagvisare"));
+const HatchCalculator = lazyWithRetry(() => import("./pages/HatchCalculator"));
 const AcceptInvite = lazyWithRetry(() => import("./pages/AcceptInvite"));
 const Agda = lazyWithRetry(() => import("./pages/Agda"));
 const Overview = lazyWithRetry(() => import("./pages/Overview"));
@@ -178,8 +179,8 @@ const AppRoutes = () => (
         <Route path="/honsraser" element={<HonsrasLanding slug="honsraser" />} />
         <Route path="/honsraser-lista" element={<HonsrasLanding slug="honsraser-lista" />} />
         <Route path="/honsraser/:slug" element={<HonsrasLanding />} />
-        <Route path="/dvarghons" element={<HonsrasLanding slug="dvarghons" canonicalPath="/honsraser/dvarghons" />} />
-        <Route path="/skansk-blommehona" element={<HonsrasLanding slug="skansk-blommehona" canonicalPath="/honsraser/skansk-blommehona" />} />
+        {/* /dvarghons och /skansk-blommehona har flyttats till /honsraser/<slug>
+            och 308-omdirigeras på edge-nivå (se ROUTE_REDIRECTS i routeInventory). */}
         <Route path="/salja-agg" element={<SaljaAgg />} />
         <Route path="/salja-agg/:ort" element={<SaljaAggOrt />} />
         <Route path="/karta" element={<MarketplaceMap />} />
@@ -199,6 +200,7 @@ const AppRoutes = () => (
         <Route path="/om-oss" element={<About />} />
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
         <Route path="/verktyg/aggregler-vagvisare" element={<AggReglerVagvisare />} />
+        <Route path="/verktyg/klackningskalkylator" element={<HatchCalculator />} />
         <Route path="/inbjudan/:token" element={<AcceptInvite />} />
         <Route path="/guider" element={<GuiderRedirect />} />
         <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />

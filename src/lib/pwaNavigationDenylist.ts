@@ -10,7 +10,9 @@ export const PWA_NAVIGATION_DENYLIST: RegExp[] = [
   /^\/api/,
   /^\/$/,
   /^\/index(?:\.html)?$/,
-  /^\/(?:blogg|honsraser|honsraser-lista|borja-med-hons|app-for-honsagare|agglogg|honskalender|foderkostnad-hons|klackningskalender|om-oss|salja-agg|karta|marknad|guider|verktyg|dvarghons|skansk-blommehona)(?:\/|$)/,
+  // /dvarghons och /skansk-blommehona 308:as på edge till /honsraser/<slug>
+  // och behöver inga egna poster — prefixet "honsraser" täcker dem.
+  /^\/(?:blogg|honsraser|honsraser-lista|borja-med-hons|app-for-honsagare|agglogg|honskalender|foderkostnad-hons|klackningskalender|om-oss|salja-agg|karta|marknad|guider|verktyg)(?:\/|$)/,
 ];
 
 export function isPwaNavigationDenied(pathname: string): boolean {

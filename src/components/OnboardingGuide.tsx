@@ -14,6 +14,13 @@ import { hapticSuccess } from '@/lib/haptics';
 import { todayLocal } from '@/lib/datetime';
 import { api } from '@/lib/api';
 import { readActiveFlockId, resolveFlockIdForHenCreate } from '@/lib/flockSelection';
+import { trackEvent, trackFirstHenIfNew, trackFirstEggIfNew } from '@/lib/analytics';
+import type { AnalyticsOnboardingStep } from '@/lib/analytics';
+
+/** Funnel-steg i onboardingen (låg kardinalitet, se analytics-katalogen). */
+function trackOnboardingStep(step: AnalyticsOnboardingStep) {
+  trackEvent('Onboarding Step Completed', { step });
+}
 
 const ONBOARDING_KEY = 'honsgarden-onboarding-done';
 const getOnboardingKey = (userId: string) => `${ONBOARDING_KEY}-${userId}`;
@@ -100,6 +107,7 @@ export default function OnboardingGuide() {
         if (!isCancelled) {
           setStep(0);
           setOpen(true);
+          trackOnboardingStep('welcome');
         }
       }, 800);
     })();
@@ -129,6 +137,8 @@ export default function OnboardingGuide() {
 
   const finish = () => {
     setOpen(false);
+    trackOnboardingStep('completed');
+    trackEvent('Onboarding Completed');
     void markDone();
   };
 
@@ -159,6 +169,8 @@ export default function OnboardingGuide() {
       setCreatedHenName(henName.trim());
       setCreatedHenId(inserted?.id ?? null);
       setStep(2);
+      trackOnboardingStep('first_hen');
+      trackFirstHenIfNew('onboarding');
       await markDone();
     } catch (err) {
       console.error('[OnboardingGuide] addHen failed:', err);
@@ -203,6 +215,9 @@ export default function OnboardingGuide() {
       setCreatedHenName('Greta, Astrid & Signe');
       setCreatedHenId(null);
       setStep(2);
+      // Exempeldata räknas som genomfört steg men INTE som "First Hen Added"
+      // — användaren har ännu inte lagt till sin egen höna.
+      trackOnboardingStep('first_hen');
       await markDone();
       toast({ title: 'Exempeldata är inlagt! 🐔', description: 'Nu kan du se hur Hönsgården fungerar med hönor och äggloggar.' });
     } catch (err) {
@@ -232,6 +247,8 @@ export default function OnboardingGuide() {
       hapticSuccess();
       setEggCount((c) => c + 1);
       setEggLogged(true);
+      trackOnboardingStep('first_egg');
+      trackFirstEggIfNew('onboarding');
       toast({ title: '🥚 Första ägget loggat!', description: 'Din streak har börjat.' });
     } catch (err) {
       console.error('[OnboardingGuide] logFirstEgg failed:', err);

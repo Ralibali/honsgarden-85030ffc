@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES, detectTimezone, type CountryCode } from '@/lib/countries';
 import { validatePostalCode } from '@/lib/postalCode';
+import { normalizeReferralCode } from '@/lib/referral';
 import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
 import GoogleAuthButton, { AuthDivider } from '@/components/GoogleAuthButton';
 import AppleAuthButton from '@/components/AppleAuthButton';
@@ -137,9 +138,12 @@ export default function Login() {
       if (referralCode.trim() && data?.user?.id) {
         try {
           await supabase.rpc('process_referral', {
-            _referral_code: referralCode.trim().toUpperCase(),
+            _referral_code: normalizeReferralCode(referralCode.trim()),
             _new_user_id: data.user.id,
           });
+          // Värvnings-attribution lyckades — mät konverteringen (Swarm M).
+          const { trackEvent } = await import('@/lib/analytics');
+          trackEvent('Referral Signup');
         } catch {
           // Referral is a bonus and may be retried after first login.
         }
@@ -373,7 +377,7 @@ export default function Login() {
                   <Label htmlFor="referral" className="text-muted-foreground">Värvningskod (valfritt)</Label>
                   <div className="relative mt-1.5">
                     <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} className="pl-10 h-12 rounded-xl uppercase" maxLength={6} />
+                    <Input id="referral" type="text" placeholder="T.ex. A1B2C3" value={referralCode} onChange={(e) => setReferralCode(normalizeReferralCode(e.target.value))} className="pl-10 h-12 rounded-xl uppercase" maxLength={6} />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Har du en kod från en vän? Bonus aktiveras när du börjar använda appen.</p>
                 </div>

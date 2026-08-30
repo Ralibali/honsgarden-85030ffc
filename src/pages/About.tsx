@@ -192,7 +192,13 @@ export default function About() {
 
       <footer className="border-t border-border/50 mt-16 py-8 px-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} {brand}</span>
+          <span>
+            © {new Date().getFullYear()} {brand}
+            {' · '}
+            {intl
+              ? 'Operated by Aurora Media AB (reg. no. 559272-0220), Linköping, Sweden'
+              : 'Drivs av Aurora Media AB (org.nr 559272-0220), Linköping'}
+          </span>
           <div className="flex gap-4">
             <Link to="/" className="hover:text-foreground transition-colors">{t('footer.home')}</Link>
             <Link to="/salja-agg" className="hover:text-foreground transition-colors">{t('footer.sell_eggs')}</Link>

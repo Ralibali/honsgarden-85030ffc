@@ -12,11 +12,11 @@ function TermsSv() {
   return (
     <>
       <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-1">Användarvillkor</h1>
-      <p className="text-xs text-muted-foreground mb-6">honsgarden.se | Senast uppdaterad: 2026-11-15</p>
+      <p className="text-xs text-muted-foreground mb-6">honsgarden.se | Senast uppdaterad: 2026-08-30</p>
 
       <h2 className="font-serif text-lg text-foreground mt-6 mb-2">1. Allmänt</h2>
       <p className="text-sm text-foreground leading-relaxed">
-        Dessa användarvillkor ("villkoren") gäller när du skapar ett konto och använder webbplatsen och tjänsten honsgarden.se ("vi", "oss", "tjänsten"). Tjänsten drivs av Hönsgården.
+        Dessa användarvillkor ("villkoren") gäller när du skapar ett konto och använder webbplatsen och tjänsten honsgarden.se ("vi", "oss", "tjänsten"). Tjänsten drivs av Aurora Media AB (org.nr 559272-0220, Linköping) under varumärket Hönsgården. Kontakt: info@auroramedia.se.
       </p>
       <p className="text-sm text-foreground leading-relaxed">
         Genom att registrera ett konto bekräftar du att du har läst, förstått och godkänt dessa villkor samt vår integritetspolicy nedan.
@@ -84,11 +84,11 @@ function TermsEn() {
   return (
     <>
       <h1 className="font-serif text-2xl sm:text-3xl text-foreground mb-1">Terms of Service</h1>
-      <p className="text-xs text-muted-foreground mb-6">honsgarden.app | Last updated: 2026-11-15</p>
+      <p className="text-xs text-muted-foreground mb-6">honsgarden.app | Last updated: 2026-08-30</p>
 
       <h2 className="font-serif text-lg text-foreground mt-6 mb-2">1. General</h2>
       <p className="text-sm text-foreground leading-relaxed">
-        These Terms of Service ("Terms") apply when you create an account and use the website and service honsgarden.app ("we", "us", "the service"). The service is operated by {brand}.
+        These Terms of Service ("Terms") apply when you create an account and use the website and service honsgarden.app ("we", "us", "the service"). The service is operated by Aurora Media AB (reg. no. 559272-0220, Linköping, Sweden) under the brand {brand}. Contact: info@auroramedia.se.
       </p>
       <p className="text-sm text-foreground leading-relaxed">
         By registering an account you confirm that you have read, understood and accepted these Terms and our Privacy Policy below.
