@@ -190,9 +190,3 @@ export default function Terms() {
     </div>
   );
 }
-  {isEnglish ? <TermsEn /> : <TermsSv />}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
