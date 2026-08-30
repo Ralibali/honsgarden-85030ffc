@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/generate-sitemap.mjs",
-    "build": "vite build && node scripts/prerender-blog-posts.mjs && npm run verify:seo",
+    "build": "vite build && node scripts/prerender-blog-posts.mjs && npm run verify:seo && npm run verify:routes",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -21,7 +21,8 @@
     "optimize:images:dry": "node scripts/optimize-blog-images.mjs --dry-run",
     "replace:blog-images": "node scripts/replace-blog-image-refs.mjs",
     "replace:blog-images:dry": "node scripts/replace-blog-image-refs.mjs --dry-run",
-    "capacitor:assets": "capacitor-assets generate --iconBackgroundColor '#3A6B35' --iconBackgroundColorDark '#3A6B35' --splashBackgroundColor '#FAF8F4' --splashBackgroundColorDark '#FAF8F4'"
+    "capacitor:assets": "capacitor-assets generate --iconBackgroundColor '#3A6B35' --iconBackgroundColorDark '#3A6B35' --splashBackgroundColor '#FAF8F4' --splashBackgroundColorDark '#FAF8F4'",
+    "verify:routes": "node scripts/route-inventory.mjs --check"
   },
   "dependencies": {
     "@capawesome/capacitor-apple-sign-in": "^0.1.2",

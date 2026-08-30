@@ -5,8 +5,216 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/app-for-honsagare",
       "destination": "/index.html"
+    },
+    {
+      "source": "/agglogg",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honskalender",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/foderkostnad-hons",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/klackningskalender",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/borja-med-hons",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honsraser",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honsraser-lista",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/dvarghons",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/skansk-blommehona",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/salja-agg",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/karta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/karta/bekrafta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/demo",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/s/agg",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/delete-account",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/integritet",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/om-oss",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verktyg/aggkalkylator",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verktyg/aggregler-vagvisare",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/registrera-hons-jordbruksverket",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/salja-agg-regler",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blogg",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/marknad",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/marknad/ny",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/butik",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/butik/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/butik/villkor",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/butik/angra",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honsraser/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/salja-agg/:ort",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/karta/hantera/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/s/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/r/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/avboka/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/bestallning/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/inbjudan/:token",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blogg/kategori/:category",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blogg/tagg/:tag",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/blogg/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/marknad/k/:kategori",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/marknad/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/butik/:slug",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/index",
+      "destination": "/",
+      "statusCode": 308
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "statusCode": 308
     }
   ]
 }

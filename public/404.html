@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sidan hittades inte – Hönsgården</title>
+    <meta name="description" content="Den här sidan finns inte. Gå tillbaka till startsidan för att hitta det du söker." />
+    <meta name="robots" content="noindex, nofollow" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #faf8f4;
+        --fg: #2d2a26;
+        --muted: #6f6a61;
+        --accent: #3a6b35;
+        --accent-fg: #ffffff;
+        --border: #e3ddd2;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        padding: 24px;
+      }
+      main { text-align: center; max-width: 26rem; }
+      .emoji { font-size: 3.5rem; margin: 0 0 0.5rem; }
+      h1 { font-family: Georgia, "Times New Roman", serif; font-size: 2.25rem; margin: 0 0 0.5rem; }
+      p { color: var(--muted); font-size: 1.05rem; line-height: 1.6; margin: 0 0 1.75rem; }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+      a {
+        display: inline-block;
+        padding: 0.65rem 1.25rem;
+        border-radius: 0.6rem;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: 1px solid var(--border);
+        color: var(--fg);
+        background: #fff;
+      }
+      a.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+      a:hover { filter: brightness(0.96); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="emoji">🐔</p>
+      <h1>404</h1>
+      <p>Hoppsan! Den här sidan verkar ha flytt hönsgården.</p>
+      <div class="actions">
+        <a class="primary" href="/">Startsidan</a>
+        <a href="/blogg">Bloggen</a>
+        <a href="/verktyg/aggkalkylator">Äggkalkylator</a>
+      </div>
+    </main>
+  </body>
+</html>
