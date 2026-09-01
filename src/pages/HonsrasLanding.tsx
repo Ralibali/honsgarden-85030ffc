@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
 import LandingNavbar from '@/components/LandingNavbar';
+import ContextualRegisterCta from '@/components/ContextualRegisterCta';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { ArrowRight, BookOpen, Bird, Egg } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { longformPages, type LongformPage } from '@/data/honsraserContent';
 import { getBreedLayingRate, DEFAULT_BREED_RATE } from '@/data/breedLayingRates';
+import { contextualRegisterCtaForSlug } from '@/lib/contextualRegisterCtas';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -66,6 +68,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
 
   const breedRate = page?.breedName ? getBreedLayingRate(page.breedName) : null;
   const hasBreedRate = !!breedRate && breedRate !== DEFAULT_BREED_RATE;
+  const registerCta = contextualRegisterCtaForSlug(activeSlug);
 
   if (!page) {
     return (
@@ -228,12 +231,21 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
           </motion.h2>
           <div className="space-y-3">
             {page.faq.map((item) => (
-              <Card key={item.q} className="border-border shadow-sm">
-                <CardContent className="p-5">
-                  <h3 className="font-serif text-lg text-foreground mb-2">{item.q}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
-                </CardContent>
-              </Card>
+              <React.Fragment key={item.q}>
+                <Card className="border-border shadow-sm">
+                  <CardContent className="p-5">
+                    <h3 className="font-serif text-lg text-foreground mb-2">{item.q}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.a}</p>
+                  </CardContent>
+                </Card>
+                {registerCta?.afterHeading === item.q && (
+                  <ContextualRegisterCta
+                    body={registerCta.body}
+                    button={registerCta.button}
+                    href={registerCta.href}
+                  />
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>

@@ -9,6 +9,11 @@
  * gäller alla rassidor (samma bugg) plus den angivna bloggartikeln.
  */
 
+import {
+  contextualRegisterCtaForSlug,
+  renderContextualRegisterCtaHtml,
+} from './contextualRegisterCtas.mjs';
+
 export const CTR_DOCUMENT_TITLES = {
   '/honsraser/orpington': 'Orpington-höna – nybörjarvänlig ras, ~180 ägg/år | Hönsgården',
   '/honsraser/sussex': 'Sussex-höna – nyfiken ras som värper ~240 ägg | Hönsgården',
@@ -46,10 +51,15 @@ export function injectTopicBody(html, bodyHtml) {
 }
 
 export function renderBreedTopicBody(breed, h1 = breedTopicH1(breed)) {
-  const faqHtml = (breed.faq || []).map(([q, a]) => (
-    `<div><h2 class="text-sm font-semibold text-foreground mb-1">${escapeHtml(q)}</h2>`
-    + `<p class="text-sm text-muted-foreground leading-relaxed">${escapeHtml(a)}</p></div>`
-  )).join('');
+  const faqHtml = (breed.faq || []).map(([q, a]) => {
+    const item = `<div><h2 class="text-sm font-semibold text-foreground mb-1">${escapeHtml(q)}</h2>`
+      + `<p class="text-sm text-muted-foreground leading-relaxed">${escapeHtml(a)}</p></div>`;
+    const cta = contextualRegisterCtaForSlug(breed?.slug);
+    if (cta?.afterHeading && q === cta.afterHeading) {
+      return `${item}${renderContextualRegisterCtaHtml(cta)}`;
+    }
+    return item;
+  }).join('');
 
   return `<div class="min-h-screen bg-background">
 <main class="container mx-auto max-w-4xl px-5 pt-24 pb-16" id="main-content" tabindex="-1">
