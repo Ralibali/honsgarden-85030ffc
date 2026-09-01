@@ -85,6 +85,12 @@ describe('parseAnalyticsSource', () => {
     expect(parseAnalyticsSource('blog_header')).toBe('blog_header');
   });
 
+  it('accepterar ras- och artikel-sources för Signup Completed', () => {
+    expect(parseAnalyticsSource('orpington')).toBe('orpington');
+    expect(parseAnalyticsSource('sussex')).toBe('sussex');
+    expect(parseAnalyticsSource('bast-honsras')).toBe('bast-honsras');
+  });
+
   it('faller tillbaka på signup_form för okänd eller saknad input', () => {
     expect(parseAnalyticsSource(null)).toBe('signup_form');
     expect(parseAnalyticsSource('')).toBe('signup_form');

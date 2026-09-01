@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { assertHomePageHtml, assertTopicPageHtml } from "../src/lib/prerenderTopicPages.mjs";
+import { CONTEXTUAL_REGISTER_CTAS, assertContextualRegisterCta } from "../src/lib/contextualRegisterCtas.mjs";
 
 const required = [
   "dist/index.html",
@@ -58,6 +59,12 @@ const topicPages = [
 for (const page of topicPages) {
   if (!existsSync(page.file)) throw new Error(`SEO-build saknar ${page.file}`);
   assertTopicPageHtml(readFileSync(page.file, "utf8"), page);
+}
+
+for (const cta of CONTEXTUAL_REGISTER_CTAS) {
+  const file = `dist${cta.path}/index.html`;
+  if (!existsSync(file)) throw new Error(`SEO-build saknar ${file}`);
+  assertContextualRegisterCta(readFileSync(file, "utf8"), cta);
 }
 
 function decodeHtml(value = "") {

@@ -41,7 +41,10 @@ export type AnalyticsSource =
   | 'blog_inline'
   | 'blog_final'
   | 'blog_sidebar'
-  | 'blog_popup';
+  | 'blog_popup'
+  | 'orpington'
+  | 'sussex'
+  | 'bast-honsras';
 
 /** Tillåtna OAuth-leverantörer (låg kardinalitet). */
 export type AnalyticsOAuthProvider = 'google' | 'apple';
@@ -418,6 +421,9 @@ export const ANALYTICS_SOURCES = [
   'blog_final',
   'blog_sidebar',
   'blog_popup',
+  'orpington',
+  'sussex',
+  'bast-honsras',
 ] as const satisfies readonly AnalyticsSource[];
 
 /**
