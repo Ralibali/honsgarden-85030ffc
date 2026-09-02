@@ -1,5 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { assertHomePageHtml, assertTopicPageHtml } from "../src/lib/prerenderTopicPages.mjs";
+import {
+  assertHomePageHtml,
+  assertTopicPageHtml,
+  extractH1Texts,
+  extractTitle,
+} from "../src/lib/prerenderTopicPages.mjs";
 import { CONTEXTUAL_REGISTER_CTAS, assertContextualRegisterCta } from "../src/lib/contextualRegisterCtas.mjs";
 
 const required = [
@@ -135,4 +140,25 @@ if (/regler|priser/i.test(saljaAggTitle) || /regler|prissättning|priser/i.test(
   throw new Error("/salja-agg first-byte SEO leder med regler/priser");
 }
 
-console.log(`SEO-build verifierad: / + /salja-agg + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+const reglerFile = "dist/guider/salja-agg-regler/index.html";
+if (!existsSync(reglerFile)) throw new Error(`SEO-build saknar ${reglerFile}`);
+const reglerHtml = readFileSync(reglerFile, "utf8");
+const reglerH1s = extractH1Texts(reglerHtml);
+const reglerTitle = extractTitle(reglerHtml);
+if (reglerTitle !== "Sälja ägg från egna höns – reglerna i klartext (2026)") {
+  throw new Error(`/guider/salja-agg-regler title ändrades: ${reglerTitle}`);
+}
+if (reglerH1s.length !== 1) {
+  throw new Error(`/guider/salja-agg-regler first-byte har ${reglerH1s.length} H1: ${reglerH1s.join(" | ") || "ingen"}`);
+}
+if (reglerH1s[0] !== "Sälja ägg från egna höns – reglerna i klartext") {
+  throw new Error(`/guider/salja-agg-regler H1 ändrades: ${reglerH1s[0]}`);
+}
+if (reglerH1s.includes("Hönsgården")) {
+  throw new Error("/guider/salja-agg-regler har leftover generic H1 «Hönsgården»");
+}
+if (!/"@type"\s*:\s*"FAQPage"/.test(reglerHtml)) {
+  throw new Error("/guider/salja-agg-regler saknar FAQPage");
+}
+
+console.log(`SEO-build verifierad: / + /salja-agg + /guider/salja-agg-regler + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
