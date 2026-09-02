@@ -43,11 +43,15 @@ describe('/guider/salja-agg-regler first-byte H1', () => {
     'utf8',
   );
 
-  it('ändrar inte title eller FAQ', () => {
+  it('ändrar inte title, FAQ eller relatedLinks-CTA', () => {
     expect(guide).toBeTruthy();
     expect(guide?.title).toBe(REGLER_TITLE);
     expect(guide?.h1).toBe(REGLER_H1);
     expect(guide?.faqs.map((faq) => faq.q)).toEqual(REGLER_FAQS);
+    expect(guide?.relatedLinks.find((link) => link.href === '/salja-agg')?.label)
+      .toBe('Sälja ägg privat – kom igång');
+    expect(guide?.relatedLinks.map((link) => link.label).join(' '))
+      .not.toMatch(/Skapa gratis säljsida med Swish/);
   });
 
   it('prerender strippar leftover noscript-H1 via injectTopicBody', () => {
