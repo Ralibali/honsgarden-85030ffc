@@ -56,7 +56,12 @@ describe('V2 funnel event catalog (swarm U)', () => {
     trackEvent('Referral Signup');
     trackEvent('Marketplace Listing Created');
     trackEvent('Marketplace Contact Clicked');
-    expect(calls).toHaveLength(7);
+    trackEvent('Outbound Clicked', { program: 'granngarden', page: '/blogg/kopa-hons' });
+    expect(calls).toHaveLength(8);
+    expect(calls[7]).toEqual({
+      event: 'Outbound Clicked',
+      props: { program: 'granngarden', page: '/blogg/kopa-hons' },
+    });
   });
 
   it('drops empty/undefined props instead of sending noise', () => {

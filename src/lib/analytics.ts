@@ -87,6 +87,22 @@ export type AnalyticsPushPermission = 'accepted' | 'denied' | 'dismissed' | 'uns
 /** Säsongslägen (låg kardinalitet). */
 export type AnalyticsSeasonalMode = 'winter' | 'normal';
 
+/** Shop-program för publika blogg-outbound-klick (låg kardinalitet). */
+export type AnalyticsOutboundProgram =
+  | 'granngarden'
+  | 'vetzoo'
+  | 'bonden'
+  | 'p-lindberg'
+  | 'wexthuset'
+  | 'vetapotek';
+
+/** Endast de fyra HQ-slugarnas pathname — aldrig fritext. */
+export type AnalyticsOutboundPage =
+  | '/blogg/kopa-hons'
+  | '/blogg/brahma-hons'
+  | '/blogg/bygga-honshus'
+  | '/blogg/vad-ater-hons';
+
 /**
  * Strikt event-map. Endast dessa event får skickas.
  * Håll properties låga och icke-identifierande.
@@ -175,6 +191,10 @@ export type AnalyticsEventMap = {
   'Referral Signup': Record<string, never>;
   'Marketplace Listing Created': Record<string, never>;
   'Marketplace Contact Clicked': Record<string, never>;
+  'Outbound Clicked': {
+    program: AnalyticsOutboundProgram;
+    page: AnalyticsOutboundPage;
+  };
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;

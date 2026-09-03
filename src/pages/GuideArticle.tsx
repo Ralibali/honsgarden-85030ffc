@@ -20,6 +20,7 @@ import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { injectContextualRegisterCta } from '@/lib/contextualRegisterCtas';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
+import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
@@ -38,6 +39,8 @@ function handleProseAffiliateClick(
   if (!anchor) return;
   const href = anchor.href;
   if (!href) return;
+
+  trackOutboundShopClick(href, slug);
 
   // Identifiera affiliate-länkar: sponsored rel ELLER känd tracking-domän
   const rel = (anchor.getAttribute('rel') || '').toLowerCase();
