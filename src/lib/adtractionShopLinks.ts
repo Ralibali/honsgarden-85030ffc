@@ -5,8 +5,10 @@
  * Only rewrites existing hrefs on an explicit slug allowlist. Does not add
  * links, CTAs, or new merchants.
  *
- * Left naked on purpose (no real program `a=` in-repo or on the köpguide):
- * Granngården (`id.granngarden.se` is Microsoft login, not Adtraction) and Vetzoo.
+ * Left naked on purpose — wrap BLOCKED until a real merchant `a=` + tracking
+ * host exist. Lookup (repo comments, this helper, PR 25/26/34): none for
+ * Granngården or Vetzoo. `id.granngarden.se` is Microsoft login, not Adtraction.
+ * VetZoo advertiser `1139817003` is not the channel `a=`. Do not invent IDs.
  *
  * Keep in sync with `src/lib/adtractionShopLinks.mjs` (prerender).
  */

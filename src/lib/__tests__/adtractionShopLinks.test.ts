@@ -300,6 +300,27 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     },
   );
 
+  it.each(['kopa-hons', 'brahma-hons', 'bygga-honshus'] as const)(
+    'leaves Granngården naked on HQ slug %s (wrap BLOCKED — no real a=/host)',
+    (slug) => {
+      const rewritten = rewriteNakedShopAffiliateHrefs(PAGE_FIXTURES[slug], slug);
+      const hrefs = extractHrefValues(rewritten);
+      expect(hrefs.some((href) => href === 'https://www.granngarden.se/' || href === 'https://granngarden.se/')).toBe(
+        true,
+      );
+      expect(rewritten).toContain('href="https://www.granngarden.se/"');
+      expect(rewritten).not.toMatch(/https:\/\/[^"']+\/t\/t\?a=[^"']*url=https%3A%2F%2Fwww\.granngarden\.se/);
+      expect(rewritten).not.toMatch(/https:\/\/[^"']+\/t\/t\?a=[^"']*url=https:\/\/www\.granngarden\.se/);
+    },
+  );
+
+  it('leaves VetZoo naked on HQ slug vad-ater-hons (wrap BLOCKED — no real a=/host)', () => {
+    const rewritten = rewriteNakedShopAffiliateHrefs(PAGE_FIXTURES['vad-ater-hons'], 'vad-ater-hons');
+    expect(rewritten).toContain('href="https://www.vetzoo.se/"');
+    expect(rewritten).not.toMatch(/https:\/\/[^"']+\/t\/t\?a=[^"']*url=https%3A%2F%2Fwww\.vetzoo\.se/);
+    expect(rewritten).not.toMatch(/https:\/\/[^"']+\/t\/t\?a=[^"']*url=https:\/\/www\.vetzoo\.se/);
+  });
+
   it('does not wrap Granngården or Vetzoo (no program a=)', () => {
     const rewritten = rewriteNakedShopAffiliateHrefs(PAGE_FIXTURES['vad-ater-hons'], 'vad-ater-hons');
     expect(rewritten).toContain('href="https://www.vetzoo.se/"');

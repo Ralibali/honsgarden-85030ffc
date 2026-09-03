@@ -2,7 +2,8 @@
  * Wraps naked shop hrefs with the Adtraction tracking prefix already used
  * on /blogg/honshus-2026-kompletta-kopguiden (and owner / in-repo program IDs).
  *
- * Granngården and Vetzoo stay naked (no real program `a=`).
+ * Granngården and Vetzoo stay naked — wrap BLOCKED (no real program `a=` /
+ * tracking host after repo + PR 25/26/34 lookup). Do not invent IDs.
  * Keep in sync with `src/lib/adtractionShopLinks.ts` (React app + tests).
  */
 
