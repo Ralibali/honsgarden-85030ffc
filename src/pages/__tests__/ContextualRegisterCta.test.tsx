@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ContextualRegisterCta from '@/components/ContextualRegisterCta';
-import { CONTEXTUAL_REGISTER_CTAS } from '@/lib/contextualRegisterCtas';
+import { CONTEXTUAL_CTAS } from '@/lib/contextualRegisterCtas';
 
 vi.mock('@/hooks/useSeo', () => ({ useSeo: vi.fn() }));
 vi.mock('@/components/LandingNavbar', () => ({ default: () => <nav>navbar</nav> }));
@@ -11,7 +11,7 @@ vi.mock('@/components/LandingFooter', () => ({ default: () => <footer>footer</fo
 import HonsrasLanding from '@/pages/HonsrasLanding';
 
 describe('ContextualRegisterCta', () => {
-  it.each(CONTEXTUAL_REGISTER_CTAS)('renderar exakt knapptext och href för $path', (cta) => {
+  it.each(CONTEXTUAL_CTAS)('renderar exakt knapptext och href för $path', (cta) => {
     render(
       <MemoryRouter>
         <ContextualRegisterCta body={cta.body} button={cta.button} href={cta.href} />
