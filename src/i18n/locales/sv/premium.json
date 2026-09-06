@@ -7,7 +7,7 @@
   "hero": {
     "badge": "Lite mer hjälp i vardagen",
     "title": "Mer hjälp när din hönsgård börjar leva i appen",
-    "free_trial": "🌿 Prova Plus i lugn och ro i 7 dagar",
+    "free_trial": "Ägglogg och dagbok ingår alltid gratis",
     "trial_status": "Du har Plus-trial",
     "trial_status_days": "Du har Plus-trial · {{count}} dagar kvar",
     "sync_status": "Kontrollera Plus-status"
@@ -15,7 +15,8 @@
   "trial": {
     "title": "Du har Plus-trial",
     "subtitle": "Agda, insikter och de smartare verktygen är redan upplåsta.",
-    "subtitle_days": "{{count}} dagar kvar av din Plus-trial. Avsluta eller behåll Plus när du vill."
+    "subtitle_days": "{{count}} dagar kvar av din Plus-trial. Prova verktygen nu och välj en betalplan om du vill fortsätta.",
+    "explore": "Utforska dina insikter"
   },
   "active": {
     "title": "Plus är igång",
@@ -30,15 +31,18 @@
       "period": "/ år",
       "description": "För dig som vill låta Hönsgården följa flocken genom hela året.",
       "badge": "Mest för pengarna",
-      "cta": "Välj ett år med Plus"
+      "cta": "Välj ett år med Plus",
+      "sub_price": "24,92 kr/månad · spara 169 kr jämfört med 12 månadsbetalningar",
+      "billing": "Hela årsbeloppet betalas vid köp. Förnyas årsvis tills du avslutar."
     },
     "monthly": {
       "name": "Plus månadsvis",
       "price": "39 kr",
       "period": "/ månad",
       "description": "Prova i din egen takt och avsluta när du vill.",
-      "sub_price": "ungefär som en kartong ägg i månaden",
-      "cta": "Välj Plus månadsvis"
+      "sub_price": "Betala en månad i taget",
+      "cta": "Välj Plus månadsvis",
+      "billing": "Månadsbeloppet betalas vid köp. Förnyas månadsvis tills du avslutar."
     },
     "legacy_notice": "Var du med från start? Ditt gamla pris fortsätter att gälla.",
     "active_label": "Plus är aktivt"
@@ -55,7 +59,7 @@
       "Fördjupa dig i statistik, rapporter och historik när du själv vill"
     ]
   },
-  "sticky_cta": "Prova Plus gratis i 7 dagar",
+  "sticky_cta": "Välj Plus · 299 kr/år",
   "toasts": {
     "welcome_title": "Välkommen till Plus 🌿",
     "welcome_desc": "Nu finns Agda och de smartare verktygen redo när du behöver dem.",
@@ -89,5 +93,8 @@
     "restore_none_desc": "Om du har Plus via webben synkas det med knappen Kontrollera Plus-status.",
     "restore_fail_title": "Kunde inte återställa köp",
     "restore_fail_desc": "Försök igen om en stund."
-  }
+  },
+  "free_reassurance": "Du kan fortsätta gratis med ägglogg och dagbok. Dina inlägg finns kvar även utan Plus.",
+  "terms_link": "Villkor",
+  "privacy_link": "Integritet"
 }

@@ -1,214 +1,70 @@
-# App Store Connect – Metadata för Hönsgården
+# Hönsgården – App Store-underlag
 
-Färdig text att kopiera in i App Store Connect när du skapar appen. Allt är på svenska (primärt språk: `Swedish`). Lägg till engelsk lokalisering senare om du vill nå fler marknader.
+Granskat mot koden 2026-09-07. Detta är förberett material, inte en publicerad App Store-version. Slutlig metadata ska stämmas av mot den signerade TestFlight-versionen.
 
----
+## Appinformation
 
-## 1. App Information
+| Fält | Förberett värde |
+| --- | --- |
+| Namn | Hönsgården |
+| Underrubrik | Ägglogg, flock och dagbok |
+| Bundle ID | se.honsgarden.app |
+| Föreslagen SKU | honsgarden-ios-001, kontrollera mot befintlig app |
+| Primärt språk | Svenska |
+| Föreslagen kategori | Livsstil; sekundärt Verktyg |
+| Support | https://honsgarden.se/om-oss |
+| Marknadsföring | https://honsgarden.se |
+| Integritet | https://honsgarden.se/integritet |
+| Supportmejl | info@auroramedia.se |
+| Version i projektet | 1.0 / build 1; stäm av mot tidigare uppladdningar |
+| Enheter i projektet | iPhone och iPad (TARGETED_DEVICE_FAMILY = 1,2) |
+| iOS i projektet | 15.0; slutligt minimum avgörs av Xcode och beroenden vid arkivering |
 
-| Fält | Värde |
-|---|---|
-| **App Name** (30 tecken) | `Hönsgården` |
-| **Subtitle** (30 tecken) | `Din digitala hönsgård` |
-| **Bundle ID** | `se.honsgarden.app` (matcha `capacitor.config.ts`) |
-| **SKU** | `honsgarden-ios-001` |
-| **Primary Language** | Swedish |
-| **Category (Primary)** | Lifestyle |
-| **Category (Secondary)** | Utilities |
-| **Content Rights** | Innehåller inte tredjepartsinnehåll |
-| **Age Rating** | 4+ |
+Åldersgräns, innehållsrättigheter och integritetssvar är inte ifyllda som verifierade fakta. Besvara App Store Connects aktuella formulär utifrån appens community, marknad, AI, användarinnehåll och databehandling. Ange inte automatiskt 4+ eller att tredjepartsinnehåll saknas.
 
-Alternativa subtitles (välj en, max 30 tecken):
-- `Äggloggning & hönskoll` (22)
-- `Håll koll på dina höns` (22)
-- `Smart hönshållning` (18)
+## Marknadsföringstext
 
----
+Logga äggen, lär känna flocken och spara små minnen i dagboken. Hönsgården hjälper dig hålla ihop vardagen med höns.
 
-## 2. Promotional Text (170 tecken – går att uppdatera utan ny release)
+## Beskrivning
 
-```
-Nyhet: Agda AI-konsulten hjälper dig med råd om dina höns, foder och äggproduktion. Logga ägg på sekunder och följ trender över tid.
-```
+Hönsgården samlar vardagen med höns på ett ställe. Logga dagens ägg, håll ordning på flocken och skriv ned det du vill minnas.
 
----
+DIN HÖNSGÅRD I VARDAGEN
+• Registrera ägg och följ din äggproduktion.
+• Samla hönornas namn, bilder och anteckningar.
+• Skriv i dagboken, sök bland gamla inlägg och redigera dina minnen.
+• Håll ordning på sysslor, påminnelser och hälsonoteringar.
 
-## 3. Description (upp till 4000 tecken)
+MER HJÄLP MED HÖNSGÅRDEN PLUS
+Plus är ett valfritt abonnemang med bland annat Agda, fördjupade insikter, rapporter och verktyg för foder och ekonomi. Äggloggen och dagboken ingår i gratisversionen.
 
-```
-Hönsgården är appen för dig som håller höns – från nybörjaren med tre höns på tomten till familjegården med flera flockar.
+Agda använder AI. Svaren kan innehålla fel och ersätter inte veterinärens bedömning.
 
-Logga ägg på under fem sekunder, håll koll på varje höna och få smarta insikter om din produktion, ekonomi och djurens hälsa. Allt samlat på ett ställe, byggt tillsammans med svenska hönsägare.
+Abonnemang i iOS-appen köps och hanteras via App Store. Pris och betalningsperiod visas före köp. Abonnemanget förnyas automatiskt tills du avslutar det. Tidigare App Store-köp kan återställas i appen.
 
-FUNKTIONER
-• Snabb äggloggning med ett tryck – även för gårdagens ägg
-• Profil för varje höna med foton, vikt, ålder och anteckningar
-• Flera flockar och familjedelning – bjud in partner eller barn
-• Statistik och trender: dagens, veckans och årets produktion
-• Ekonomi: intäkter, foder- och driftskostnader, resultat per ägg
-• Säsongskalender anpassad efter svenskt klimat
-• Dagliga sysslor och påminnelser
-• Väderwidget med skötselråd baserat på prognosen
-• Marknadsplats för ägg, höns och tillbehör
-• Import från Excel, Google Sheets eller CSV
-• Fungerar offline – synkar när du är uppkopplad
+Support: info@auroramedia.se
+Integritet: https://honsgarden.se/integritet
+Villkor: https://honsgarden.se/terms
 
-PLUS (valfritt abonnemang)
-• Agda – AI-konsult med råd dygnet runt
-• Avancerad ekonomi- och produktionsanalys
-• Veckorapport varje måndag
-• Anpassningsbar dashboard
-• Obegränsat antal höns och flockar
+## Sökord
 
-Hönsgården är byggt i Sverige och drivs av ett litet team som själva håller höns. Vi lyssnar på användarna och släpper uppdateringar varje månad.
+höns,ägg,hönsgård,dagbok,ägglogg,flock,hönor,småbruk,självhushållning,hönshållning
 
-Har du frågor eller önskemål? Skriv till info@auroramedia.se.
-```
+## Bilder som ska tas från den verifierade iOS-versionen
 
----
+1. Idag: ”Din hönsgård, samlad” – dagens ägg och genvägar.
+2. Äggloggen: ”Följ äggen från dag till dag”.
+3. Dagboken: ”Spara det du vill minnas” – exempeldata, aldrig kunders privata inlägg.
+4. Flocken: ”Lär känna varje höna”.
+5. Plus-insikter: ”Förstå mer av flockens vardag” – märk tydligt Plus.
 
-## 4. Keywords (100 tecken, kommaseparerade utan mellanslag)
+Använd riktiga skärmbilder från binären. Välj en godkänd iPhone 6,9-tumsupplösning, exempelvis 1320 × 2868, och relevanta iPad-bilder eftersom projektet stöder iPad. Lägg inte in felaktiga påståenden om att både 6,9 och 6,5 tum alltid krävs. Kontrollera de aktuella kraven hos [Apple](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/).
 
-```
-höns,ägg,hönsgård,hönshållning,äggloggning,flock,hönor,gård,djur,småbruk,självhushållning,agda
-```
+## Information till granskaren
 
----
+Appen använder inbyggda webbfiler i en Capacitor-app. iOS startar i appflödet. Plus använder StoreKit med produkterna se.honsgarden.plus.monthly och se.honsgarden.plus.yearly. Återställ köp finns på Plus-sidan. Kontoradering nås via Inställningar. Dagboken finns under Idag och Mer → Dagbok.
 
-## 5. Support & Marketing
+Komplettera före inskick: fungerande granskningskonto med åtkomst till relevanta funktioner, kontaktperson, verifierade köp/återställning och exakta teststeg. Den publika demon är inte ett bevis för att hela binären och betalningen fungerar.
 
-| Fält | Värde |
-|---|---|
-| **Support URL** | https://honsgarden.se/support |
-| **Marketing URL** | https://honsgarden.se |
-| **Privacy Policy URL** | https://honsgarden.se/integritet |
-| **Copyright** | © 2026 Aurora Media |
-| **Support email** | info@auroramedia.se |
-
----
-
-## 6. What's New in This Version (första release)
-
-```
-Välkommen till första versionen av Hönsgården för iPhone!
-• Snabb äggloggning, hönsprofiler och statistik
-• Familjedelning och flera flockar
-• Agda AI-konsult för Plus-medlemmar
-• Push-notiser, kamera och offline-stöd
-
-Tack för att du provar appen. Skriv gärna till info@auroramedia.se om du har feedback.
-```
-
----
-
-## 7. App Review Information
-
-| Fält | Värde |
-|---|---|
-| **First name / Last name** | (ditt namn) |
-| **Phone** | (ditt telefonnummer, +46...) |
-| **Email** | info@auroramedia.se |
-| **Demo account username** | `review@honsgarden.se` |
-| **Demo account password** | (skapa ett Plus-konto och ange lösenordet här) |
-| **Notes** | Se nedan |
-
-**Review notes (kopiera in):**
-```
-Hönsgården är en app för hobby- och småskaliga hönsägare i Sverige.
-
-Testkonto ovan har Plus-abonnemang aktiverat så att ni kan granska AI-konsulten Agda och avancerade rapporter.
-
-Push-notiser: aktiveras första gången användaren öppnar Inställningar > Notiser.
-Kamera/bilder: används för hönsprofilbilder och annonser på marknadsplatsen.
-Digital Plus säljs i iOS-appen via StoreKit (se.honsgarden.plus.monthly / yearly). Stripe-checkout finns inte i iOS-binären. Befintliga webb-Plus-kunder behåller tillgång via profiles.subscription_status. Återställ köp finns på Plus-sidan. Kontoradering: Inställningar → Radera konto, eller /delete-account.
-
-Frågor: info@auroramedia.se
-```
-
----
-
-## 8. Privacy (App Privacy – Data Collection)
-
-Data som samlas in och kopplas till användaren:
-- **Contact Info**: E-postadress (autentisering)
-- **User Content**: Foton, anteckningar, äggloggar
-- **Identifiers**: User ID
-- **Usage Data**: Produktinteraktion (för att förbättra appen)
-- **Diagnostics**: Kraschdata
-
-Data som INTE samlas in: plats (exakt), kontakter, hälsodata, finansiell info (Stripe hanterar betalning separat).
-
-Tracking: **Nej** – appen spårar inte användare mellan andra appar/webbplatser.
-
----
-
-## 9. Screenshots – förslag och specifikation
-
-Apple kräver screenshots för minst **6.9"** (iPhone 16 Pro Max) och **6.5"** (iPhone 11 Pro Max/XS Max). 6.9" kan återanvändas för 6.7". Lämna 5.5" om du inte vill stödja äldre enheter.
-
-| Storlek | Upplösning | Krav |
-|---|---|---|
-| 6.9" | 1290 × 2796 | Obligatoriskt |
-| 6.5" | 1284 × 2778 | Obligatoriskt |
-| 5.5" | 1242 × 2208 | Frivilligt |
-
-**Förslag på 6 screenshots (i denna ordning):**
-
-1. **Dashboard** – rubrik: *"Din hönsgård – i fickan"*
-   Visa dagens ägg-widget, väder och snabbknapp.
-
-2. **Äggloggning** – rubrik: *"Logga ägg på 3 sekunder"*
-   Visa den stora +-knappen och färgvalen.
-
-3. **Hönsprofil** – rubrik: *"Varje höna, sin egen historia"*
-   Profilbild, 14-dagarsgraf och anteckningar.
-
-4. **Statistik & trender** – rubrik: *"Se vad flocken presterar"*
-   Vecko-/månadsgraf med produktion.
-
-5. **Agda AI** – rubrik: *"Fråga Agda – din AI-konsult"* (märk *Plus*)
-   Chattvy med ett svar om värphöns.
-
-6. **Familjedelning** – rubrik: *"Dela gården med familjen"*
-   Vy med inbjudna medlemmar.
-
-**Tips:**
-- Använd samma mockup-ram och bakgrundsfärg (`#FAF8F4`) på alla för enhetlig look.
-- Rubriktext i Young Serif, brödtext i Inter – matchar appens identitet.
-- Undvik lorem ipsum – använd riktiga hönsnamn (t.ex. Agda, Stina, Berta).
-- Verktyg: Figma-mall "App Store Screenshot Kit" eller `screenshots.pro`.
-
----
-
-## 10. App Preview (valfri video, 15–30 sek)
-
-Om du vill göra en preview-video:
-- Spela in i Xcode Simulator via `File > Record Screen`
-- Fokus: äggloggning → statistik → Agda AI
-- Ingen röstpålägg krävs, men lugn musik och textöverlägg fungerar bra
-- Levereras i samma upplösning som screenshots
-
----
-
-## 11. Version & Build
-
-| Fält | Värde |
-|---|---|
-| **Version** | 1.0.0 |
-| **Build** | 1 (öka för varje uppladdning till TestFlight) |
-| **Minimum iOS** | 15.0 (Capacitor-standard) |
-| **Devices** | iPhone (lägg till iPad senare om önskat) |
-
----
-
-## Checklista innan submission
-
-- [ ] Bundle ID matchar Xcode-projektet
-- [ ] Alla ikoner + splash genererade (`npm run capacitor:assets`)
-- [ ] Push notifications-capability aktiverad i Xcode
-- [ ] `NSCameraUsageDescription` + `NSPhotoLibraryUsageDescription` finns i Info.plist
-- [ ] Privacy Policy-sidan (`/integritet`) är live
-- [ ] Support-sidan (`/support`) är live
-- [ ] Testkonto skapat och verifierat
-- [ ] Screenshots exporterade i rätt upplösning
-- [ ] TestFlight-build godkänd av dig själv innan review
+Se [lanseringskontrollen](LAUNCH.md) för kvarvarande steg och verifieringsstatus.

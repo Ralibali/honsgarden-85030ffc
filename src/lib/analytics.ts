@@ -54,6 +54,7 @@ export type AnalyticsAuthMode = 'login' | 'register';
 
 /** Demofunktioner som får förekomma i funnel-events (låg kardinalitet). */
 export type AnalyticsDemoFeature =
+  | 'diary'
   | 'egg_log'
   | 'hens'
   | 'calendar'
@@ -108,6 +109,8 @@ export type AnalyticsOutboundPage =
  * Håll properties låga och icke-identifierande.
  */
 export type AnalyticsEventMap = {
+  'Premium Viewed': { source?: AnalyticsSource };
+  'Diary Entry Saved': { action: 'create' | 'edit' };
   'Signup Started': {
     source?: AnalyticsSource;
   };

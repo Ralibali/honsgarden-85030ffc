@@ -89,6 +89,8 @@ export function useAutoClickTracking() {
 
       const target = e.target as HTMLElement;
       if (!target) return;
+      // Private user content must never become an automatic click label.
+      if (target.closest?.('[data-private-content]')) return;
 
       // Walk up to find the clickable element (button, a, [role=button])
       let el: HTMLElement | null = target;

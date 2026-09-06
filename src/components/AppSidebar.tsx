@@ -3,7 +3,7 @@ import {
   Home, Egg, Bird, Coins, BarChart3, Settings, LogOut, Package, Syringe,
   ClipboardCheck, Crown, Shield, Feather, Bot, CalendarDays, Users,
   ReceiptText, Newspaper, CloudSun, Stethoscope, Heart, Boxes, FileText, Tag,
-  ChevronDown, Sun, Moon, PieChart, ShoppingBag,
+  ChevronDown, Sun, Moon, PieChart, ShoppingBag, BookOpen,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -36,6 +36,7 @@ const groups: NavGroup[] = [
     items: [
       { titleKey: 'dashboard', url: '/app', icon: Home },
       { titleKey: 'log_eggs', url: '/app/eggs', icon: Egg },
+      { titleKey: 'diary', url: '/app/dagbok', icon: BookOpen },
       { titleKey: 'tasks', url: '/app/tasks', icon: ClipboardCheck },
       { titleKey: 'reminders', url: '/app/reminders', icon: Syringe },
       { titleKey: 'calendar', url: '/app/calendar', icon: CalendarDays },

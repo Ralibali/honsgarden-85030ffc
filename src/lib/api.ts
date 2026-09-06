@@ -315,6 +315,26 @@ export async function getHealthLogs(): Promise<HealthLog[]> {
   return data ?? [];
 }
 
+/** Scope personal diaries to the user's shared farm even when they have admin read access.
+ * Page explicitly so older entries are not silently cut off by the API row limit. */
+export async function getDiaryLogs(): Promise<HealthLog[]> {
+  const userId = await getUserId();
+  const { data: farmIds, error: farmError } = await supabase.rpc('get_farm_user_ids', { _uid: userId });
+  if (farmError) throw new Error(farmError.message);
+  const owners = [...new Set([userId, ...(farmIds ?? [])])];
+  const entries: HealthLog[] = [];
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase.from('health_logs').select('*')
+      .eq('type', 'diary').in('user_id', owners)
+      .order('date', { ascending: false }).order('created_at', { ascending: false }).order('id')
+      .range(offset, offset + pageSize - 1);
+    if (error) throw new Error(error.message);
+    entries.push(...(data ?? []));
+    if (!data || data.length < pageSize) return entries;
+  }
+}
+
 export async function createHealthLog(record: HealthLogInsert): Promise<HealthLog> {
   const userId = await getUserId();
   const { data, error } = await supabase.from('health_logs').insert({ ...record, user_id: userId }).select().single();
@@ -1314,7 +1334,7 @@ export const api = {
   getFeedRecords, createFeedRecord, deleteFeedRecord, getFeedInventory, getFeedStatistics,
   getHatchings, createHatching, updateHatching, deleteHatching, getHatchingAlerts,
   getTransactions, createTransaction, deleteTransaction,
-  getHealthLogs, createHealthLog, getHenHealthLogs, updateHealthLog, deleteHealthLog,
+  getHealthLogs, getDiaryLogs, createHealthLog, getHenHealthLogs, updateHealthLog, deleteHealthLog,
   submitFeedback, getUserFeedback,
   getDailyChores, completeChore, uncompleteChore, createChore, deleteChore, updateChore,
   getCoopSettings, updateCoopSettings,

@@ -6,6 +6,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+import { isNativePlatform } from '@/lib/nativePlatform';
 import SeoCanonical from "./components/SeoCanonical";
 
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
@@ -25,6 +26,7 @@ import Login from "./pages/Login";
 
 const AppLayout = lazyWithRetry(() => import("./components/AppLayout"));
 const Dashboard = lazyWithRetry(() => import("./pages/DashboardV3"));
+const Diary = lazyWithRetry(() => import("./pages/Diary"));
 const Eggs = lazyWithRetry(() => import("./pages/Eggs"));
 const Hens = lazyWithRetry(() => import("./pages/Hens"));
 const Finance = lazyWithRetry(() => import("./pages/Finance"));
@@ -166,7 +168,7 @@ const AppRoutes = () => (
     <SeoCanonical />
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route path="/" element={isNativePlatform() ? <Navigate to="/app" replace /> : <Index />} />
         <Route path="/index" element={<Navigate to="/" replace />} />
         <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="/app-for-honsagare" element={<SeoLandingPage pageKey="app-for-honsagare" />} />
@@ -225,6 +227,8 @@ const AppRoutes = () => (
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Navigate to="/app" replace />} />
           <Route path="eggs" element={<Eggs />} />
+          <Route path="dagbok" element={<Diary />} />
+          <Route path="diary" element={<Navigate to="/app/dagbok" replace />} />
           <Route path="hens" element={<Hens />} />
           <Route path="feed" element={<Feed />} />
           <Route path="reminders" element={<Reminders />} />

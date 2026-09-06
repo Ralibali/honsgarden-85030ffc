@@ -20,6 +20,7 @@ import HenRaceCard from '@/components/dashboard/HenRaceCard';
 import OnboardingChecklistCard from '@/components/dashboard/OnboardingChecklistCard';
 import StreakRescueCard from '@/components/dashboard/StreakRescueCard';
 import TrialExpiryBanner from '@/components/TrialExpiryBanner';
+import DiaryCard from '@/components/diary/DiaryCard';
 
 type WeatherSnapshot = {
   temperature: number;
@@ -131,7 +132,7 @@ function agdaSentence({
   return `${todayEggs} ägg idag. Jag håller koll på mönstret medan du tar hand om hönsen.`;
 }
 
-export default function DashboardV3() {
+export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   usePageTitle('Idag');
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -156,6 +157,7 @@ export default function DashboardV3() {
   const { data: weather, isLoading: weatherLoading } = useQuery({
     queryKey: ['dashboard-local-weather'],
     queryFn: fetchLocalWeather,
+    enabled: !demo,
     staleTime: 20 * 60 * 1000,
     retry: false,
   });
@@ -289,6 +291,8 @@ export default function DashboardV3() {
           )}
         </div>
       </section>
+
+      <DiaryCard demo={demo} />
 
       <section className="today-v3__agda" aria-labelledby="agda-heading">
         <div className="today-v3__agda-mark" aria-hidden="true">A</div>

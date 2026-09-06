@@ -7,7 +7,7 @@
   "hero": {
     "badge": "Premium with AI, insights and finance",
     "title": "Turn Honsgarden into your smart flock assistant",
-    "free_trial": "🎁 Seven days of free premium for new users",
+    "free_trial": "Egg logging and your diary are always free",
     "trial_status": "You have a Plus trial",
     "trial_status_days": "You have a Plus trial · {{count}} days left",
     "sync_status": "Sync premium status"
@@ -15,7 +15,8 @@
   "trial": {
     "title": "You have a Plus trial",
     "subtitle": "Agda, insights and the smarter tools are already unlocked.",
-    "subtitle_days": "{{count}} days left on your Plus trial. Cancel or keep Plus whenever you want."
+    "subtitle_days": "{{count}} days left in your Plus trial. Explore the tools and choose a paid plan if you want to continue.",
+    "explore": "Explore your insights"
   },
   "active": {
     "title": "Premium is active",
@@ -30,7 +31,9 @@
       "period": "/ year",
       "description": "About $2.50/month",
       "badge": "Save $17.89",
-      "cta": "Choose yearly"
+      "cta": "Choose yearly",
+      "sub_price": "$2.50/month · save $17.89 compared with 12 monthly payments",
+      "billing": "The full annual amount is charged at purchase. Renews yearly until cancelled."
     },
     "monthly": {
       "name": "Plus monthly",
@@ -38,7 +41,8 @@
       "period": "/ month",
       "description": "Flexible subscription. Cancel anytime.",
       "sub_price": "= a carton of eggs a month",
-      "cta": "Choose monthly"
+      "cta": "Choose monthly",
+      "billing": "The monthly amount is charged at purchase. Renews monthly until cancelled."
     },
     "legacy_notice": "Early supporter? Your original price is locked in for life.",
     "active_label": "Premium is active"
@@ -55,7 +59,7 @@
       "Full statistics, egg goals, PDF/CSV and all future features"
     ]
   },
-  "sticky_cta": "Try 7 days free",
+  "sticky_cta": "Choose Plus · $29.99/year",
   "toasts": {
     "welcome_title": "Welcome to Premium! 🎉",
     "welcome_desc": "You now have AI, insights and the finance tools.",
@@ -89,5 +93,8 @@
     "restore_none_desc": "If you already have Plus on the web, tap Sync premium status.",
     "restore_fail_title": "Could not restore purchases",
     "restore_fail_desc": "Please try again in a moment."
-  }
+  },
+  "free_reassurance": "Keep logging eggs and writing your diary for free. Your entries remain available without Plus.",
+  "terms_link": "Terms",
+  "privacy_link": "Privacy"
 }

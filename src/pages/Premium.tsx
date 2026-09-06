@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bot, Crown, Loader2, ShieldCheck, Sparkles, RefreshCcw, MessageCircle, FileText, Coins, BellRing, CalendarDays, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -12,7 +12,7 @@ import { useSeo } from '@/hooks/useSeo';
 import { trackClick } from '@/hooks/useTracking';
 import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
-import { trackEvent } from '@/lib/analytics';
+import { trackEvent, parseAnalyticsSource } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
 import { isNativeIos } from '@/lib/nativePlatform';
 import {
@@ -42,6 +42,7 @@ export default function Premium() {
   const [iosProductsReady, setIosProductsReady] = useState(!isNativeIos());
   const nativeIos = isNativeIos();
   const [searchParams] = useSearchParams();
+  const entrySource = parseAnalyticsSource(searchParams.get('source'), 'premium_page');
   const premiumType = user?.premium_type;
   const {
     isPaidPremium,
@@ -79,6 +80,7 @@ export default function Premium() {
       description: t('plans.yearly.description'),
       badge: t('plans.yearly.badge'),
       highlighted: true,
+      subPrice: t('plans.yearly.sub_price'),
     },
     {
       id: 'monthly',
@@ -133,7 +135,8 @@ export default function Premium() {
 
   useEffect(() => {
     trackClick('premium_page_view');
-  }, []);
+    trackEvent('Premium Viewed', { source: entrySource });
+  }, [entrySource]);
 
   useEffect(() => {
     if (!nativeIos) return;
@@ -354,7 +357,7 @@ export default function Premium() {
         trackEvent('Premium Checkout Started', {
           plan: 'plus',
           billing_interval: plan,
-          source: 'premium_page',
+          source: entrySource,
         });
         window.location.href = data.url;
       } else throw new Error(t('toasts.no_checkout_url'));
@@ -452,16 +455,16 @@ export default function Premium() {
                   : t('active.subtitle')}
               </p>
             </div>
-            <Button onClick={handleManageSubscription} disabled={loadingPortal} className="rounded-xl">
+            {isTrialing ? <Button asChild className="rounded-xl"><Link to="/app/statistics">{t('trial.explore')}</Link></Button> : <Button onClick={handleManageSubscription} disabled={loadingPortal} className="rounded-xl">
               {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {nativeIos ? t('ios.manage_appstore') : t('active.manage')}
-            </Button>
+            </Button>}
           </CardContent>
         </Card>
       )}
 
       {/* Personligt värdebevis: användarens egen uppbyggda data */}
-      {showFreeTrialCta && user && <PremiumValueStats />}
+      {allowPaidCheckout && user && <PremiumValueStats />}
 
       {showFreeTrialCta && !intl && (
         <p className="text-center text-xs text-muted-foreground -mb-2">
@@ -515,13 +518,15 @@ export default function Premium() {
 
               <div>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-foreground">{iosProducts.find((p) => p.plan === plan.id)?.priceString || plan.price}</span>
+                  <span className="text-4xl font-bold text-foreground">{nativeIos ? (iosProducts.find((p) => p.plan === plan.id)?.priceString ?? '—') : plan.price}</span>
                   <span className="pb-1 text-muted-foreground">{plan.period}</span>
                 </div>
                 {plan.subPrice && !nativeIos && (
                   <p className="text-xs text-muted-foreground mt-1">{plan.subPrice}</p>
                 )}
               </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">{t(plan.id === 'yearly' ? 'plans.yearly.billing' : 'plans.monthly.billing')}</p>
 
               {!(nativeIos && iosProductsReady && iosProducts.length === 0) && (
               <Button
@@ -599,9 +604,14 @@ export default function Premium() {
         </CardContent>
       </Card>
 
-      {showFreeTrialCta && !(nativeIos && iosProducts.length === 0) && (
+      <div className="text-center text-sm text-muted-foreground space-y-2">
+        <p>{t('free_reassurance')}</p>
+        <p className="flex justify-center gap-5"><Link to="/terms" className="underline min-h-11 inline-flex items-center">{t('terms_link')}</Link><Link to="/integritet" className="underline min-h-11 inline-flex items-center">{t('privacy_link')}</Link></p>
+      </div>
+
+      {showFreeTrialCta && (!nativeIos || iosProducts.some((product) => product.plan === 'yearly')) && (
         <StickyMobileUpgradeCTA
-          label={t('sticky_cta')}
+          label={nativeIos ? `${t('plans.yearly.cta')} · ${iosProducts.find((p) => p.plan === 'yearly')?.priceString ?? ''} ${t('plans.yearly.period')}` : t('sticky_cta')}
           onClick={() => handleCheckout('yearly')}
           loading={loadingPlan !== null}
         />
