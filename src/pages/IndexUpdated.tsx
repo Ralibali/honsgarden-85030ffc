@@ -278,8 +278,8 @@ export default function IndexUpdated() {
             />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
-              <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova Plus" />
-              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Välj årsplan" />
+              <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova 7 dagar gratis" />
+              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Prova 7 dagar – välj år" />
             </div>
           </div>
         </section>

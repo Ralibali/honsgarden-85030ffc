@@ -8,7 +8,7 @@ function trackHeroCta() {
   );
 }
 
-const trust = ['Gratis att testa', 'Igång på 2 minuter', 'Inga kortuppgifter'];
+const trust = ['7 dagar Premium gratis', 'Igång på 2 minuter', 'Inga kortuppgifter'];
 
 /**
  * Startsidans hero, v3: rolig morgonstämning i sage & cream, redaktionell
