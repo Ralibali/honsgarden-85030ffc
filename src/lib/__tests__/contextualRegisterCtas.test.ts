@@ -73,6 +73,7 @@ describe('contextual register CTAs in prerendered pages', () => {
     expect(html.indexOf(cta.button)).toBeLessThan(html.indexOf('Kostnad per ägg'));
     expect(html.indexOf('När månadssiffran blir missvisande')).toBeLessThan(html.indexOf(cta.button));
     expect(html).toContain('href="/demo?source=foderkostnad"');
+    expect(html).toContain('class="contextual-cta-button');
     expect(html).not.toMatch(/trial|7 dagar|Premium/i);
     expect(html).not.toContain('/login?mode=register');
   });

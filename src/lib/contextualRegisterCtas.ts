@@ -96,7 +96,7 @@ function escapeHtml(value = ''): string {
 export function renderContextualRegisterCtaHtml(cta: ContextualCtaSpec): string {
   return `<aside class="my-8 rounded-2xl border border-border/40 bg-gradient-to-br from-primary/8 via-card to-accent/5 p-5 sm:p-6" aria-label="${escapeHtml(cta.button)}">`
     + `<p class="text-sm text-muted-foreground leading-relaxed">${escapeHtml(cta.body)}</p>`
-    + `<p class="mt-4"><a href="${escapeHtml(cta.href)}" class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">${escapeHtml(cta.button)}</a></p>`
+    + `<p class="mt-4"><a href="${escapeHtml(cta.href)}" class="contextual-cta-button inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">${escapeHtml(cta.button)}</a></p>`
     + `</aside>`;
 }
 
