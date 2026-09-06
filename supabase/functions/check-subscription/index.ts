@@ -123,6 +123,7 @@ serve(async (req) => {
       subscribed: true,
       premium_type: "trial",
       subscription_end: profileExpiry,
+      granted: grantDecision.grant && profileStatus === "premium",
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     if (hasLifetimePremium) {

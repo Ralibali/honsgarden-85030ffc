@@ -1,13 +1,36 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isConfirmedSignupTrial, signupResultToast } from '@/lib/signupTrial';
+import { isConfirmedSignupTrial, profileHasSignupTrial, signupResultToast } from '@/lib/signupTrial';
 
 const future = '2026-09-13T10:00:00.000Z';
 const past = '2026-08-01T10:00:00.000Z';
 const now = new Date('2026-09-06T10:00:00.000Z');
 
 describe('signup trial toast vs entitlement', () => {
+  it('treats a profiles row as a real signup trial only with premium + future expiry', () => {
+    expect(profileHasSignupTrial({
+      subscriptionStatus: 'premium',
+      premiumExpiresAt: future,
+      now,
+    })).toBe(true);
+    expect(profileHasSignupTrial({
+      subscriptionStatus: 'free',
+      premiumExpiresAt: future,
+      now,
+    })).toBe(false);
+    expect(profileHasSignupTrial({
+      subscriptionStatus: 'premium',
+      premiumExpiresAt: null,
+      now,
+    })).toBe(false);
+    expect(profileHasSignupTrial({
+      subscriptionStatus: 'premium',
+      premiumExpiresAt: past,
+      now,
+    })).toBe(false);
+  });
+
   it('confirms trial only when premium_type is trial and expiry is still in the future', () => {
     expect(isConfirmedSignupTrial({
       premiumType: 'trial',
@@ -47,8 +70,10 @@ describe('signup trial toast vs entitlement', () => {
     expect(login).toContain('signupResultToast');
     expect(login).toContain('data?.trialConfirmed');
     expect(login).not.toMatch(/toast\(\{\s*title: 'Konto skapat!',\s*description: referralCode/);
-    expect(auth).toContain('isConfirmedSignupTrial');
+    expect(auth).toContain('syncSubscriptionStatus');
+    expect(auth).toContain('profileHasSignupTrial');
+    expect(auth).toContain('premium_expires_at');
     expect(auth).toContain('trialConfirmed');
-    expect(auth).toContain('hydratePremiumProfile');
+    expect(auth).toContain('check-subscription');
   });
 });
