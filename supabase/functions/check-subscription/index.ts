@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { isAppleIapActive, readAppleIapPreference, resolveEntitlement } from "../_shared/appleIap.ts";
-import { hasActiveLocalPremium, shouldClearLocalPremium } from "../_shared/localPremium.ts";
+import { hasActiveLocalPremium, shouldClearLocalPremium, shouldGrantSignupTrial } from "../_shared/localPremium.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -82,12 +82,47 @@ serve(async (req) => {
       return Number.isNaN(date.getTime()) ? null : date;
     });
     const hasLifetimePremium = profile?.is_lifetime_premium === true;
-    const localTrialActive = hasActiveLocalPremium(profile?.premium_expires_at, now);
+    let profileExpiry = profile?.premium_expires_at ?? null;
+    let profileStatus = profile?.subscription_status ?? null;
+
+    const grantDecision = shouldGrantSignupTrial({
+      isLifetime: hasLifetimePremium,
+      stripeCustomerId: profile?.stripe_customer_id ?? null,
+      applePaid,
+      premiumExpiresAt: profileExpiry,
+      userCreatedAt: user.created_at ?? null,
+      now,
+    });
+
+    if (grantDecision.grant) {
+      const grantPayload = {
+        subscription_status: "premium",
+        premium_expires_at: grantDecision.expiresAt,
+        is_lifetime_premium: false,
+      };
+      const grantWrite = profile
+        ? await supabaseClient.from("profiles").update(grantPayload).eq("user_id", user.id)
+        : await supabaseClient.from("profiles").insert({
+          user_id: user.id,
+          email: user.email,
+          display_name: typeof user.user_metadata?.name === "string" ? user.user_metadata.name : null,
+          ...grantPayload,
+        });
+
+      if (grantWrite.error) {
+        console.error("[check-subscription] signup trial grant failed", grantWrite.error.message);
+      } else {
+        profileExpiry = grantDecision.expiresAt;
+        profileStatus = "premium";
+      }
+    }
+
+    const localTrialActive = hasActiveLocalPremium(profileExpiry, now);
 
     const localTrialResponse = () => new Response(JSON.stringify({
       subscribed: true,
       premium_type: "trial",
-      subscription_end: profile?.premium_expires_at ?? null,
+      subscription_end: profileExpiry,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     if (hasLifetimePremium) {
@@ -206,13 +241,13 @@ serve(async (req) => {
       applePaid,
       appleEnd: appleIap?.expires_at ?? null,
       localTrialActive,
-      localTrialEnd: profile?.premium_expires_at ?? null,
+      localTrialEnd: profileExpiry,
     });
 
     if (entitlement.source === "apple") {
       const needsAppleUpdate =
-        profile?.subscription_status !== "premium" ||
-        (profile?.premium_expires_at ?? null) !== entitlement.subscription_end;
+        profileStatus !== "premium" ||
+        profileExpiry !== entitlement.subscription_end;
       if (needsAppleUpdate) {
         await supabaseClient
           .from("profiles")
@@ -226,7 +261,7 @@ serve(async (req) => {
     }
 
     if (entitlement.source === "trial") {
-      if (profile?.subscription_status !== "premium") {
+      if (profileStatus !== "premium") {
         await supabaseClient
           .from("profiles")
           .update({ subscription_status: "premium" })
@@ -236,7 +271,7 @@ serve(async (req) => {
       return localTrialResponse();
     }
 
-    if (!applePaid && shouldClearLocalPremium(profile?.subscription_status, profile?.premium_expires_at, now)) {
+    if (!applePaid && shouldClearLocalPremium(profileStatus, profileExpiry, now)) {
       await supabaseClient
         .from("profiles")
         .update({ subscription_status: "free", premium_expires_at: null })

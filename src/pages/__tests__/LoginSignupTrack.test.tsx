@@ -16,7 +16,8 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 
 vi.mock('@/hooks/useSeo', () => ({ useSeo: vi.fn() }));
-vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
+const toast = vi.fn();
+vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => toast(...args) }));
 vi.mock('@/lib/api', () => ({ api: { updateCoopSettings: vi.fn() } }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
@@ -68,10 +69,11 @@ describe('Login – Signup fires only when an account is created', () => {
     localStorage.clear();
     login.mockReset();
     register.mockReset();
+    toast.mockReset();
     plausible.mockReset();
     window.plausible = plausible;
     login.mockResolvedValue(undefined);
-    register.mockResolvedValue({ user: newEmailUser(), session: null });
+    register.mockResolvedValue({ user: newEmailUser(), session: null, trialConfirmed: false });
   });
 
   afterEach(() => {
@@ -139,5 +141,53 @@ describe('Login – Signup fires only when an account is created', () => {
       expect(register).toHaveBeenCalledTimes(2);
     });
     expect(signupCalls(plausible)).toHaveLength(0);
+  });
+});
+
+function fillRegisterForm() {
+  fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Ada' } });
+  fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+  fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+  fireEvent.click(screen.getByLabelText(/Jag godkänner/));
+}
+
+describe('Login – trial toast only after grant is confirmed', () => {
+  beforeEach(() => {
+    resetSignupTrackingForTests();
+    localStorage.clear();
+    login.mockReset();
+    register.mockReset();
+    toast.mockReset();
+  });
+
+  it('does not claim 7-day Premium when register did not confirm entitlement', async () => {
+    register.mockResolvedValue({ user: newEmailUser(), session: null, trialConfirmed: false });
+    renderLogin('/login?mode=register');
+    fillRegisterForm();
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+
+    await waitFor(() => {
+      expect(toast).toHaveBeenCalled();
+    });
+    const descriptions = toast.mock.calls.map((call) => String((call[0] as { description?: string })?.description ?? ''));
+    expect(descriptions.join(' ')).not.toMatch(/sju dagars gratis Premium/i);
+    expect(descriptions.join(' ')).toMatch(/Logga in för att komma igång/i);
+  });
+
+  it('claims 7-day Premium only when register reports trialConfirmed', async () => {
+    register.mockResolvedValue({
+      user: newEmailUser(),
+      session: { access_token: 'tok' },
+      trialConfirmed: true,
+    });
+    renderLogin('/login?mode=register');
+    fillRegisterForm();
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+
+    await waitFor(() => {
+      expect(toast).toHaveBeenCalledWith(expect.objectContaining({
+        description: expect.stringMatching(/sju dagars gratis Premium/i),
+      }));
+    });
   });
 });

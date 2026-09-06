@@ -19,6 +19,7 @@ import { normalizeReferralCode } from '@/lib/referral';
 import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
 import GoogleAuthButton, { AuthDivider } from '@/components/GoogleAuthButton';
 import AppleAuthButton from '@/components/AppleAuthButton';
+import { signupResultToast } from '@/lib/signupTrial';
 
 type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
 const TERMS_VERSION = '2026-07-12';
@@ -153,12 +154,10 @@ export default function Login() {
         try { localStorage.setItem('pending_postal_code', normalizedPostalCode); } catch { /* ignore */ }
       }
 
-      toast({
-        title: 'Konto skapat!',
-        description: referralCode.trim()
-          ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
-          : 'Du har fått sju dagars gratis Premium! 🎉',
-      });
+      toast(signupResultToast({
+        trialConfirmed: !!data?.trialConfirmed,
+        hasReferral: !!referralCode.trim(),
+      }));
       setAuthMode('login');
     } catch (err) {
       toast({ title: 'Registrering misslyckades', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
