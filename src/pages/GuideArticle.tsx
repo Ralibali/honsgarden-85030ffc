@@ -19,6 +19,7 @@ import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { injectContextualRegisterCta } from '@/lib/contextualRegisterCtas';
+import { injectGuideNextSteps } from '@/lib/guideNextSteps.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
@@ -179,7 +180,7 @@ function renderContent(
   // Wrap already-present naked shop hrefs on allowlisted slugs.
   raw = rewriteNakedShopAffiliateHrefs(raw, slug);
 
-  raw = injectContextualRegisterCta(raw, slug);
+  raw = injectGuideNextSteps(injectContextualRegisterCta(raw, slug), slug);
 
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],
