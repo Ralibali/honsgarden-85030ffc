@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
+  assertDemoPageHtml,
   assertHomePageHtml,
   assertTopicPageHtml,
   extractH1Texts,
@@ -15,6 +16,7 @@ const required = [
   "dist/borja-med-hons/index.html",
   "dist/honsraser-lista/index.html",
   "dist/salja-agg/index.html",
+  "dist/demo/index.html",
 ];
 
 for (const file of required) {
@@ -29,7 +31,7 @@ if (!sitemap.includes("https://honsgarden.se/blogg/bast-honsras-sverige")) {
 if (/https:\/\/honsgarden\.se\/app(?:<|\/)/.test(sitemap)) {
   throw new Error("sitemap.xml innehåller /app");
 }
-if (/https:\/\/honsgarden\.se\/(?:login|reset-password|inbjudan)(?:<|\/|\?)/.test(sitemap)) {
+if (/https:\/\/honsgarden\.se\/(?:login|reset-password|inbjudan|demo)(?:<|\/|\?)/.test(sitemap)) {
   throw new Error("sitemap.xml innehåller robots-blockerad URL");
 }
 
@@ -39,6 +41,7 @@ const articles = readdirSync("dist/blogg", { withFileTypes: true })
 if (articles.length < 5) throw new Error(`För få prerenderade bloggartiklar: ${articles.length}`);
 
 assertHomePageHtml(readFileSync("dist/index.html", "utf8"));
+assertDemoPageHtml(readFileSync("dist/demo/index.html", "utf8"));
 
 const topicPages = [
   {
@@ -161,4 +164,4 @@ if (!/"@type"\s*:\s*"FAQPage"/.test(reglerHtml)) {
   throw new Error("/guider/salja-agg-regler saknar FAQPage");
 }
 
-console.log(`SEO-build verifierad: / + /salja-agg + /guider/salja-agg-regler + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+console.log(`SEO-build verifierad: / + /demo + /salja-agg + /guider/salja-agg-regler + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);

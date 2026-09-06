@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { BREED_PRERENDER_PROFILES } from '@/data/honsraserBreedProfiles.mjs';
-import { renderBreedTopicBody, renderHomeTopicBody } from '@/lib/prerenderTopicPages';
+import { renderBreedTopicBody, renderDemoTopicBody, renderHomeTopicBody } from '@/lib/prerenderTopicPages';
 
 const indexHtml = readFileSync('index.html', 'utf8');
 
@@ -13,6 +13,12 @@ describe('skip-to-content target', () => {
 
   it('renderHomeTopicBody gör #main-content fokuserbar med tabindex="-1"', () => {
     const html = renderHomeTopicBody();
+    expect(html).toContain('id="main-content"');
+    expect(html).toContain('tabindex="-1"');
+  });
+
+  it('renderDemoTopicBody gör #main-content fokuserbar med tabindex="-1"', () => {
+    const html = renderDemoTopicBody();
     expect(html).toContain('id="main-content"');
     expect(html).toContain('tabindex="-1"');
   });
