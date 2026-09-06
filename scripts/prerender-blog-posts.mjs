@@ -495,6 +495,7 @@ async function main() {
   await runStep('fetch-posts', async () => {
     posts = await fetchPosts();
   });
+  if (!posts.length) throw new Error('Refusing to publish a build without native blog articles');
   await runStep('load-orter', async () => {
     orter = await loadOrter();
   });
@@ -528,6 +529,7 @@ async function main() {
       return ops;
     }));
     await writeRoute('guider', buildRedirectPage(template, '/blogg'));
+    await writeRoute('blogg/spåra-varpning-per-hona', buildRedirectPage(template, '/blogg/spara-varpning-per-hona'));
   });
 
   await runStep('regulation-guides', async () => {

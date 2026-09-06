@@ -208,6 +208,7 @@ const AppRoutes = () => (
         <Route path="/blogg" element={<Guides />} />
         <Route path="/blogg/kategori/:category" element={<BlogCategory />} />
         <Route path="/blogg/tagg/:tag" element={<BlogTag />} />
+        <Route path="/blogg/spåra-varpning-per-hona" element={<Navigate to="/blogg/spara-varpning-per-hona" replace />} />
         <Route path="/blogg/:slug" element={<GuideArticle />} />
         <Route path="/marknad" element={<Marketplace />} />
         <Route path="/marknad/ny" element={<MarketplaceNew />} />

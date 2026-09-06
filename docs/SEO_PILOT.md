@@ -52,3 +52,7 @@ Ta bort anrop/import av `injectGuideNextSteps` i klient och prerender, eller rev
 - Det befintliga scriptet för kontextuella produktkort kan även lägga produktkort vid de nya rubrikerna. Ingen affiliatekonfiguration eller produktprissättning har ändrats.
 
 Första testkörningen överlappade bygget och ett befintligt test hittade därför bara en av tre byggda ras-/bloggsidor. Det passerade efter bygget; den avslutande fulla testkörningen ovan kördes sekventiellt efter ett färdigt produktionsbygge.
+
+## Samordning med den egna redaktionen
+
+Under piloten uppdaterades main till `dc0b7a8f46fb791ca38e6051d050ab393b3b6d14` med Soro-flytt och egen artikelpublicering. Dessa ändringar har integrerats utan att skrivas över. `content/editorial/README.md` länkar nu till denna pilot och videomanuset, så att instruktionerna finns även i den faktiska redaktionella arbetsvägen.
