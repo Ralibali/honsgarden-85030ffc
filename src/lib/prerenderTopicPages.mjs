@@ -85,6 +85,10 @@ export function extractTitle(html = '') {
   return match ? match[1].replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim() : '';
 }
 
+export function extractCanonicalHrefs(html = '') {
+  return [...String(html).matchAll(/<link\s+rel="canonical"\s+href="([^"]+)"/gi)].map((match) => match[1]);
+}
+
 export function isGenericBrandH1(text = '') {
   return String(text).replace(/<[^>]+>/g, '').trim() === 'Hönsgården';
 }
@@ -107,6 +111,36 @@ export function renderHomeTopicBody() {
   <p class="max-w-xl text-base leading-relaxed mb-8">Ägglogg, hönsprofiler, foderkostnad, kalender och Agdas äggbod på ett ställe. Logga vardagen, se mönstren och sälj ägg utan Excel-kaos.</p>
   <p><a href="/login?mode=register" class="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium" style="background:#3a6b35;color:#f4f1e6">Kom igång gratis</a></p>
 </main>
+</div>`;
+}
+
+export const DEMO_PATH = '/demo';
+export const DEMO_TOPIC_H1 = 'Prova Hönsgården';
+export const DEMO_DOCUMENT_TITLE = 'Prova Hönsgården – se appen i aktion | Hönsgården';
+export const DEMO_DESCRIPTION =
+  'Utforska Hönsgårdens riktiga dashboard med exempeldata: ägglogg, flock, statistik, AI-råd och mål. Ingen registrering, inget sparas.';
+
+/** First-byte demo shell — hydrates into DemoApp. Must not reuse the landing hero. */
+export function renderDemoTopicBody() {
+  return `<div class="min-h-screen bg-background" style="background:#faf8f4;color:#22392b">
+  <div class="sticky top-0 z-50 border-b" style="border-color:#d7e0d4;background:rgba(250,248,244,0.92)">
+    <div class="px-4 md:px-6 lg:px-8 py-2.5 flex items-center gap-3">
+      <a href="/" class="text-sm" style="color:#5b6e60">← Tillbaka</a>
+      <div class="flex-1 flex items-center justify-center gap-2 min-w-0">
+        <span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background:#e6efe4;color:#3a6b35">Demo</span>
+        <p class="text-xs sm:text-sm truncate" style="color:#5b6e60">Du ser den riktiga appen med exempeldata från Lillgården – inget sparas</p>
+      </div>
+      <a href="/login?mode=register" class="inline-flex items-center justify-center rounded-xl px-3 py-2 text-xs font-medium shrink-0" style="background:#3a6b35;color:#f4f1e6">Skapa konto gratis</a>
+    </div>
+  </div>
+  <main class="px-4 md:px-6 lg:px-8 pt-6 pb-24 max-w-2xl mx-auto" id="main-content" tabindex="-1">
+    <h1 class="font-serif text-2xl sm:text-3xl leading-snug mb-3">${escapeHtml(DEMO_TOPIC_H1)}</h1>
+    <p class="text-sm leading-relaxed mb-6" style="color:#5b6e60">Lillgården är en fiktiv demogård. Öppna ägglogg, flock och statistik – inget konto behövs och inget sparas.</p>
+    <ul class="grid grid-cols-2 gap-3 text-sm">
+      <li class="rounded-2xl p-4" style="background:#fff;border:1px solid #e5e0d5">5 hönor · Blanka, Agda, Doris, Greta, Sigrid</li>
+      <li class="rounded-2xl p-4" style="background:#fff;border:1px solid #e5e0d5">Ägglogg, foder och mål från Lillgården</li>
+    </ul>
+  </main>
 </div>`;
 }
 
@@ -134,6 +168,31 @@ export function assertHomePageHtml(html) {
     path: HOME_PATH,
     topicH1: HOME_TOPIC_H1,
     titleIncludes: ['ägglogg', 'hönskalender'],
+  });
+}
+
+export function assertDemoPageHtml(html) {
+  const root = extractRootInnerHtml(html);
+  if (!root) {
+    throw new Error('/demo har tomt #root');
+  }
+  if (root.includes(HOME_TOPIC_H1) || String(html).includes(HOME_TOPIC_H1)) {
+    throw new Error('/demo first-byte är fortfarande landningens H1 «Lite enklare att ha höns»');
+  }
+  const canonicals = extractCanonicalHrefs(html);
+  if (canonicals.length !== 1) {
+    throw new Error(`/demo har ${canonicals.length} canonicals: ${canonicals.join(' | ') || 'ingen'}`);
+  }
+  if (canonicals[0] !== 'https://honsgarden.se/demo') {
+    throw new Error(`/demo canonical pekar fel: ${canonicals[0]}`);
+  }
+  if (!/noindex/i.test(String(html).match(/<meta name="robots" content="([^"]*)"/i)?.[1] ?? '')) {
+    throw new Error('/demo saknar noindex');
+  }
+  return assertTopicPageHtml(html, {
+    path: DEMO_PATH,
+    topicH1: DEMO_TOPIC_H1,
+    titleIncludes: ['Prova Hönsgården', 'aktion'],
   });
 }
 

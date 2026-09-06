@@ -10,9 +10,13 @@ import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.m
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 import {
   breedTopicH1,
+  DEMO_DESCRIPTION,
+  DEMO_DOCUMENT_TITLE,
+  DEMO_TOPIC_H1,
   documentTitleForPath,
   injectTopicBody,
   renderBreedTopicBody,
+  renderDemoTopicBody,
   renderHomeTopicBody,
 } from '../src/lib/prerenderTopicPages.mjs';
 
@@ -322,6 +326,31 @@ function buildStaticPage(template, page) {
   return withHead;
 }
 
+function buildDemoPage(template) {
+  const path = '/demo';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: DEMO_DOCUMENT_TITLE,
+    description: DEMO_DESCRIPTION,
+    url: `${BASE_URL}${path}`,
+    inLanguage: 'sv-SE',
+  };
+  // Drop the landing graph baked into the Vite shell so first-byte /demo
+  // is not a homepage WebPage with a leftover marketing identity.
+  const cleaned = String(template).replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/i, '');
+  const withHead = injectHead(cleaned, buildHeadGeneric({
+    title: DEMO_DOCUMENT_TITLE,
+    description: DEMO_DESCRIPTION,
+    path,
+    ogImage: '/og-image.jpg',
+    ogImageAlt: DEMO_TOPIC_H1,
+    noindex: true,
+    jsonLd,
+  }));
+  return injectTopicBody(withHead, renderDemoTopicBody());
+}
+
 function buildCategoryPage(template, slug, meta) {
   const path = `/blogg/kategori/${slug}`;
   const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: meta.label, description: meta.description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE' };
@@ -485,6 +514,12 @@ function noteSkipped(name, reason) {
 
 async function main() {
   const template = await readFile('dist/index.html', 'utf8');
+
+  // Write /demo before network-dependent steps so first-byte never falls
+  // through to the prerendered landing shell at dist/index.html.
+  await runStep('demo-page', async () => {
+    await writeRoute('demo', buildDemoPage(template));
+  });
 
   let posts = [];
   let orter = [];

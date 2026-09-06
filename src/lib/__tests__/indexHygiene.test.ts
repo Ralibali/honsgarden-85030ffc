@@ -154,6 +154,14 @@ describe('byggtidens prerender följer samma policy', () => {
     expect(script).toContain('public_egg_sale_listings');
     expect(script).toContain('ortHasSupply');
   });
+
+  it('prerenderar /demo som egen noindex-sida utanför STATIC_PAGES/sitemap', () => {
+    expect(script).toContain("writeRoute('demo'");
+    expect(script).toContain('buildDemoPage');
+    expect(script).toContain('renderDemoTopicBody');
+    const staticPages = script.match(/const STATIC_PAGES = \[([\s\S]*?)\n\];/)?.[1] ?? '';
+    expect(staticPages).not.toContain("path: '/demo'");
+  });
 });
 
 describe('den dynamiska sitemap-edgefunktionen följer samma policy', () => {

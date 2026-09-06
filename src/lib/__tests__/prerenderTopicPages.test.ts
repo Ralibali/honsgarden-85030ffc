@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { BREED_PRERENDER_PROFILES } from '@/data/honsraserBreedProfiles.mjs';
 import {
   CTR_DOCUMENT_TITLES,
+  DEMO_DOCUMENT_TITLE,
+  DEMO_PATH,
+  DEMO_TOPIC_H1,
   HOME_DOCUMENT_TITLE,
   HOME_PATH,
   HOME_TOPIC_H1,
   TOPIC_PAGE_PATHS,
+  assertDemoPageHtml,
   assertHomePageHtml,
   assertTopicPageHtml,
   breedTopicH1,
@@ -14,6 +18,7 @@ import {
   extractRootInnerHtml,
   injectTopicBody,
   renderBreedTopicBody,
+  renderDemoTopicBody,
   renderHomeTopicBody,
   stripGenericBrandH1,
 } from '@/lib/prerenderTopicPages';
@@ -123,6 +128,18 @@ describe('prerender topic H1 + CTR titles', () => {
     expect(result.h1s.some((h1) => h1.includes(HOME_TOPIC_H1))).toBe(true);
     expect(result.h1s).not.toContain('Hönsgården');
     expect(HOME_PATH).toBe('/');
+  });
+
+  it('prerenderad /demo får demo-H1 och canonical, inte landningens hero', () => {
+    const html = injectTopicBody(withTitle(SPA_SHELL, DEMO_DOCUMENT_TITLE), renderDemoTopicBody())
+      .replace('</head>', '<link rel="canonical" href="https://honsgarden.se/demo">\n<meta name="robots" content="noindex, nofollow">\n</head>');
+    expect(extractRootInnerHtml(html)).toContain(DEMO_TOPIC_H1);
+    expect(html).not.toContain(HOME_TOPIC_H1);
+    expect(html).not.toContain('<h1>Hönsgården</h1>');
+    const result = assertDemoPageHtml(html);
+    expect(result.title).toBe(DEMO_DOCUMENT_TITLE);
+    expect(result.h1s.some((h1) => h1.includes(DEMO_TOPIC_H1))).toBe(true);
+    expect(DEMO_PATH).toBe('/demo');
   });
 
   it('title-overrides gäller bara de tre URL:erna', () => {

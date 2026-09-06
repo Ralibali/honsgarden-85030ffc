@@ -7,6 +7,11 @@ import { useSeo } from '@/hooks/useSeo';
 import { DemoAuthProvider } from '@/hooks/useAuth';
 import { installDemoShim, uninstallDemoShim } from '@/lib/demoShim';
 import { trackDemoNavigation } from '@/lib/demoHandoff';
+import {
+  DEMO_DESCRIPTION,
+  DEMO_DOCUMENT_TITLE,
+  DEMO_PATH,
+} from '@/lib/prerenderTopicPages';
 import DashboardV2 from '@/pages/DashboardV2';
 
 const DEMO_USER_ID = 'demo-user';
@@ -37,9 +42,9 @@ function suppressOneTimeOverlays() {
  */
 export default function DemoApp() {
   useSeo({
-    title: 'Prova Hönsgården – se appen i aktion | Hönsgården',
-    description: 'Utforska Hönsgårdens riktiga dashboard med exempeldata: ägglogg, flock, statistik, AI-råd och mål. Ingen registrering, inget sparas.',
-    path: '/demo',
+    title: DEMO_DOCUMENT_TITLE,
+    description: DEMO_DESCRIPTION,
+    path: DEMO_PATH,
     noindex: true,
   });
 
