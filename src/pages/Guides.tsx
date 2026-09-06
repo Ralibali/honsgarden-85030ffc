@@ -3,7 +3,8 @@ import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Link } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { legacyBlogTarget } from '@/lib/legacyBlog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,9 +23,10 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function Guides() {
+  const legacyTarget = legacyBlogTarget(useLocation().search);
   useSeo({
     title: 'Blogg om höns – Guider, recensioner & tips | Hönsgården',
-    description: 'Expertguider, produktrecensioner och tips om höns, hönshus, foder och hälsa. Allt du behöver veta som hönsägare – testat och granskat av Hönsgården.',
+    description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.',
     path: '/blogg',
     ogImage: '/blog-images/hens-garden.jpg',
     ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg',
@@ -60,6 +62,8 @@ export default function Guides() {
       return data;
     },
   });
+
+  if (legacyTarget) return <Navigate replace to={legacyTarget} />;
 
   return (
     <div className="min-h-dvh bg-background">
