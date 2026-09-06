@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "content_id": "editorial-20260907-fotologg-hons-jamforbara-bilder",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-09-06T22:37:36.331Z",
+  "not_before": "2026-09-08",
+  "sources_checked_at": "2026-09-06T22:37:36.331Z",
+  "quality_checked_at": "2026-09-06T22:37:36.331Z",
+  "site": "honsgarden",
+  "slug": "fotologg-hons-jamforbara-bilder",
+  "title": "Fotologg för höns: ta bilder som går att jämföra",
+  "description": "Gör en enkel fotologg med tydliga filnamn, liknande bildvinklar och korta anteckningar. En arbetsmall för att följa din flock över tid.",
+  "category": "guide",
+  "tags": [
+    "fotologg",
+    "flock",
+    "dokumentation"
+  ],
+  "cover_image": "/blog-images/hen-detail.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Skapa jämförbara fotografiska referenser för en hönsflock med konsekvent bildvinkel, datum och filnamn, utan att använda bilder som diagnos.",
+  "source_urls": [
+    "https://jordbruksverket.se/djur/lantbruksdjur-och-hastar/fjaderfan/skotsel-och-stallmiljo"
+  ],
+  "content_html": "<p>En mobil med hundratals hönsbilder är inte automatiskt en användbar fotologg. Det svåra brukar vara att hitta rätt höna, veta när bilden togs och förstå vad man ville dokumentera. Med några återkommande val kan bilderna bli lättare att använda tillsammans med dina vanliga flockanteckningar.</p>\n<p>Den här mallen hjälper dig att ordna fotografier, inte att bedöma djurens hälsa från en bild. Välj ett litet upplägg som går att behålla även under en vanlig vardag. En tydlig bild med en kort anteckning är ofta mer användbar än många nästan likadana bilder utan sammanhang.</p>\n<h2>Bestäm vad bilden ska hjälpa dig att minnas</h2>\n<p>Börja med ett konkret syfte. Vill du känna igen en individ, dokumentera hur en plats i hönsgården såg ut eller följa en förändring i din utrustning? Skilj dessa bildserier åt. Ett porträtt av en höna och en översikt över rastgården svarar på olika frågor.</p>\n<p>Skriv en mening före första bilden: ”Den här serien visar hur vi möblerat rastgården” eller ”Den här bilden hjälper oss att känna igen Vera”. Då blir det enklare att välja nästa bild och lättare för någon annan att förstå samlingen senare.</p>\n<h2>Återanvänd en lugn plats och en liknande vinkel</h2>\n<p>Försök fotografera från ungefär samma position när du vill jämföra två tillfällen. För en platsbild kan ett hörn av huset fungera som hållpunkt. För en individbild kan du vänta tills hönan står stilla i en situation som redan ingår i vardagen.</p>\n<p>Låt djuret röra sig naturligt. Avbryt om fotograferingen stör flocken och försök vid ett annat tillfälle. Skötseln går före bildserien. Liknande avstånd och ljus gör bilder lättare att jämföra, men en bild med annat ljus behöver bara få en anteckning om skillnaden.</p>\n<h2>Använd filnamn som säger något även utanför mobilen</h2>\n<p>Välj en enkel ordning: datum, individ eller plats och vad bilden visar. Exempelvis <strong>2026-09-07_vera_vanster</strong> eller <strong>2026-09-07_rastgard_ovre-hornet</strong>. Det är exempel på en namngivningsmodell, inte verkliga observationer från din flock.</p>\n<ul><li>Behåll originalbilden när du gör en beskuren kopia.</li><li>Använd samma namn på individen i bildmappen och i anteckningarna.</li><li>Märk bilder där du är osäker på vilken höna som syns.</li><li>Skriv det verkliga fotograferingsdatumet när en äldre bild importeras.</li></ul>\n<p>Om två personer fotograferar flocken kan ni använda samma namngivning. Bestäm också var originalen sparas, så att loggen inte blir beroende av en enskild persons telefon.</p>\n<h2>Lägg till en kort bildanteckning</h2>\n<p>En bild kan visa detaljer men förklara dåligt vad som hände runt omkring. Lägg därför till några fält som du faktiskt kan fylla i: datum, individ eller plats, syfte, observation och om förhållandena skiljer sig från förra bilden.</p>\n<p>Skriv vad du såg utan att gissa orsaken. ”Bilden togs i skugga efter regn” är tydligare än en säker slutsats om varför fjäderdräkten ser annorlunda ut. Om anteckningen gäller en fråga som behöver veterinärbedömning ska bildserien vara ett underlag att visa, inte en anledning att vänta med hjälp.</p>\n<h2>Håll fotologgen åtskild från den dagliga tillsynen</h2>\n<p><a href=\"https://jordbruksverket.se/djur/lantbruksdjur-och-hastar/fjaderfan/skotsel-och-stallmiljo\">Jordbruksverket beskriver kraven på skötsel och tillsyn av fjäderfän</a>. Bilder ersätter inte att du ser till djuren. Fotograferingen är ett komplement till de rutiner du redan behöver genomföra.</p>\n<p>Välj själv när bildloggen har ett syfte. Du behöver inte skapa en bild varje dag för att samlingen ska vara användbar. Anteckna hellre en tydlig förändring och dess sammanhang än att fylla arkivet med material som ingen hinner gå igenom.</p>\n<h2>Gör bilderna lätta att hitta nästa gång</h2>\n<p>Öppna två bilder från samma serie och kontrollera om namnen och anteckningarna räcker för att förstå skillnaderna. Saknas en uppgift, förbättra mallen inför nästa tillfälle. Spara en separat kopia av viktiga original och kontrollera att den går att öppna.</p>\n<p>Läs också vår guide om <a href=\"/blogg/basta-sattet-att-dokumentera-flocken\">att dokumentera flocken</a>. Vill du samla den övriga flockinformationen kan du <a href=\"/demo\">prova Hönsgårdens demo</a> och se hur den passar dina anteckningsrutiner.</p>"
+}

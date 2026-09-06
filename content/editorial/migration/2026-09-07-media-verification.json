@@ -1,0 +1,626 @@
+{
+  "checked_at": "2026-09-06T22:21:34.345714+00:00",
+  "source_articles": 88,
+  "database_content_matches": 88,
+  "owned_images_verified_over_http": 88,
+  "database_image_references_replaced": 88,
+  "article_text_and_publication_dates_preserved": true,
+  "records": [
+    {
+      "slug": "5-verktyg-for-hobbyhonsagare",
+      "source_id": "83e3e574-b6a3-4411-aded-763c20f1726b",
+      "source_sha256": "1f9488cc8bcafa205b17ad00ada4c0dece7b468297e6be22bbc00fb0b6df67a8",
+      "owned_path": "/blog-images/owned-archive/c5555e9abbf5a89228baec57.webp",
+      "image_sha256": "e282fb1828f863ba211740d147b480761dad129400a5c0b1784996319dc1c34c"
+    },
+    {
+      "slug": "spara-historik-for-varje-hona",
+      "source_id": "6b8dd9d1-3617-49ee-b6b3-20d10730ce6d",
+      "source_sha256": "e44ad08959994ccb4ad7a9061be206c0705b2dfe03662e98176d839f0d0b5112",
+      "owned_path": "/blog-images/owned-archive/e4abd15890bda7cd465d5561.webp",
+      "image_sha256": "5db27d96ed1ced237230c574207c6e45e2af27fccfe70ae4d046c698a4e6117c"
+    },
+    {
+      "slug": "basta-rutiner-for-foderplanering",
+      "source_id": "66e831e9-2ea5-467b-b458-6bc5afbc352d",
+      "source_sha256": "6efe3da933c27d2e89a316258fa388672b9764830add79f9c39ba67f4424731c",
+      "owned_path": "/blog-images/owned-archive/184d07187cb84b723a1223d2.webp",
+      "image_sha256": "69a7cb85b20ceb361782181d45f106bd6535a4244cd342ea0f6b78949ce214fc"
+    },
+    {
+      "slug": "mobilapp-jamfort-med-kalkylblad-for-hons",
+      "source_id": "8fa497c1-0a16-4562-91bd-20da22de8557",
+      "source_sha256": "d35226797b021045c784466d12a37259534d8816346e7cfa7ecafa3363ff24e8",
+      "owned_path": "/blog-images/owned-archive/589dd7f5d6acd7565f4df22c.webp",
+      "image_sha256": "b6ef65079a211836328e326e0afa9f3a0d97b035690ee5db99d538cec5057d42"
+    },
+    {
+      "slug": "guide-till-enklare-flockplanering",
+      "source_id": "c134e65b-a0bd-4f13-8eb4-772fe1b7d290",
+      "source_sha256": "3a980474fca4d81a32424b8ee764effefa141bc4fbc746dc7c4c5515655f0da9",
+      "owned_path": "/blog-images/owned-archive/dabe9df029443f1d6a4d9e0d.webp",
+      "image_sha256": "6bb8c55bc8f5450cb0932bb73ffaa878ab38142902d3418a6aa4c31bb5089ace"
+    },
+    {
+      "slug": "app-eller-parm-for-hons",
+      "source_id": "a699eba5-50ae-40da-97c8-bc94af00aae0",
+      "source_sha256": "9f2afdf0d7a405e42655e19b588bd8cb9364207bbda6abd871ff5269341629b2",
+      "owned_path": "/blog-images/owned-archive/24fc92a3790f882f211e6bf0.webp",
+      "image_sha256": "f23d64c20905a86e74a1ad5e011f3078716aa0d70052ce5d47b4e28fe7caab19"
+    },
+    {
+      "slug": "nar-minskar-varpningen-hos-hons",
+      "source_id": "488d3f55-c3e2-4f2a-87b1-1abb21a2f593",
+      "source_sha256": "9427c58b8e8eea1d160ea02cfeaacf1f8994a75546189850c65d5a857631c959",
+      "owned_path": "/blog-images/owned-archive/b2aaa6e96b708fd6f0f305ed.webp",
+      "image_sha256": "4810608159a90d2852f3770803c6b11817242e6f9c735b19a896a8064f9b9817"
+    },
+    {
+      "slug": "7-misstag-i-flockadministrationen-att-undvika",
+      "source_id": "187a8dcc-ac4d-4e3c-934e-51b42710cf0d",
+      "source_sha256": "b207aed8310ab01c0501fa5cbc790de144c21dcd2b6a33a815186c65f4a76d0c",
+      "owned_path": "/blog-images/owned-archive/86e242894f0c0d510d6e037c.webp",
+      "image_sha256": "1a0fb5282b1919e4e977df6fd2897f6e98d7e3910d795fe02bdbd8951197d0bc"
+    },
+    {
+      "slug": "recension-flockadministrationsapp-hons",
+      "source_id": "74683e98-4656-4008-8450-3ac7966f946e",
+      "source_sha256": "d7d2e980d982d5978be4bcd13aacbe576a9354f1b6cc1b0e791e2f4816c678c2",
+      "owned_path": "/blog-images/owned-archive/2581dccc5b7ac02f53911ad0.webp",
+      "image_sha256": "67d7cfd1d5987c0dc229d37b877caeaf60a343fb744e0617f32e8c1904e62fb9"
+    },
+    {
+      "slug": "app-eller-pappersjournal-for-hons-vad-passar",
+      "source_id": "2d61a8d4-6d86-47f2-93fb-907073628410",
+      "source_sha256": "ca8a766463f224a504dd24e9028ffb087c630942d55ca34d8fec5ed9c9b19f24",
+      "owned_path": "/blog-images/owned-archive/628f6293bba7ed014a5a3699.webp",
+      "image_sha256": "0d394d15b0fc83edb50487e23e797f372a1ee5306d31ce937f5f0dafe282168d"
+    },
+    {
+      "slug": "folja-kostnad-per-hona",
+      "source_id": "b0ee23e8-a945-47cc-8836-105323df862a",
+      "source_sha256": "4fafbdbf4162b075c23600b9d8013b27fd7894b41168acf167064ef6318ea1f6",
+      "owned_path": "/blog-images/owned-archive/4cc9bedd3651dc4659f031f6.webp",
+      "image_sha256": "35cbdec5bcfa176a2d990c82df4e87d5f38519596df5ff1f9b0eb2e09742e729"
+    },
+    {
+      "slug": "hur-raknar-du-aggsnitt-per-hona",
+      "source_id": "f4d5b863-c9ae-429b-b5a6-785f2f804dbb",
+      "source_sha256": "15bd895dc0ef237ee411b109953144b8ef87217dc837ac474aaa49f887845cb2",
+      "owned_path": "/blog-images/owned-archive/ac23033002bcd4745810d3a2.webp",
+      "image_sha256": "fef54cda2ff0cae3ae2a5139a36d85d78be29a89d1fe1ab7bc25368acc8135a1"
+    },
+    {
+      "slug": "vilka-uppgifter-bor-sparas-honsflock",
+      "source_id": "bde949e1-da6a-4286-a4ec-5ba2821359f5",
+      "source_sha256": "1e0bdb0146d1645136851eb183cf57457e64e87de05a4eb090a157387620867f",
+      "owned_path": "/blog-images/owned-archive/241cf9b2e025338bcbd8055e.webp",
+      "image_sha256": "a043a5fc091781b7ef8fec5762e4e9be2ceb2b79ee1fcfd22a5ca9341ef496af"
+    },
+    {
+      "slug": "fran-anteckningsbok-till-honsapp",
+      "source_id": "5a512750-9f15-4a4c-9c4b-8d1f12dc7616",
+      "source_sha256": "78b586934995e8090bbec0518c1b38057b8a39e8c7bc86547b405258002f0d7b",
+      "owned_path": "/blog-images/owned-archive/017e0288de9c2400e651ee08.webp",
+      "image_sha256": "45e78cb482f4bd5ffe2e0b8e2cc5f3d95714221bec5f00e50c9c74e938c72576"
+    },
+    {
+      "slug": "guide-digital-stalljournal-honsflock",
+      "source_id": "33300ec2-b263-4e18-acac-c725c7b52217",
+      "source_sha256": "98a589e51b8ae4ddc0812e774a2b643d9f6d34abd0a80c318d9d785ea612cc49",
+      "owned_path": "/blog-images/owned-archive/8a091e53ae58f4a05477cf1f.webp",
+      "image_sha256": "6ac188bdf8946117d82d7c83e34361c49eaaa5ed41d5371cc712c6ed1960c6e6"
+    },
+    {
+      "slug": "guide-till-halsokontroll-i-flock",
+      "source_id": "d492cc45-46b2-4cb3-8246-ee50480fcbfc",
+      "source_sha256": "49e880a9383e968823bf95f9e380971b715e14f313332e9ea032097699266edc",
+      "owned_path": "/blog-images/owned-archive/9725a7d797359db5fd982188.webp",
+      "image_sha256": "9cf381daa20d48b6c4a911111a175077498fc9a9ee645acf361df520a4d60a13"
+    },
+    {
+      "slug": "5-tecken-pa-frisk-flock",
+      "source_id": "d1cc67ae-f9e6-4a0f-b364-5abd2d725cd6",
+      "source_sha256": "3e4e2750df2445accbbdbcb8eaed2376bf70d16520fb83eb0109f4d58a168fca",
+      "owned_path": "/blog-images/owned-archive/e6874b34cd22d7c243c8591c.webp",
+      "image_sha256": "b6a72f879d0d316cf2f4b1b3775b6a12cfdafc34357db529863eae609f261a45"
+    },
+    {
+      "slug": "fordelar-med-mobil-flockjournal",
+      "source_id": "27be610e-ace3-44b6-81c1-739017442b35",
+      "source_sha256": "f430ae0568f5087eafa3bbb28aa1abe40d81b54334e503805db542c074db3f3a",
+      "owned_path": "/blog-images/owned-archive/3309527cc733afce5fc3d6c0.webp",
+      "image_sha256": "a37572460c7a6a03b52c7f158627ed5c35916b4e0675d98c8b208bcf1fac9a6d"
+    },
+    {
+      "slug": "hobbyhonsagarens-verktyg-flockkontroll",
+      "source_id": "0ca62367-7e76-40a4-8e01-699132edfbcb",
+      "source_sha256": "c1740c0a6bfabf9186e471f6db95406ee2d84de91614473b1f979fb7abe537bb",
+      "owned_path": "/blog-images/owned-archive/cb3fb75db81cb183ecf0897d.webp",
+      "image_sha256": "02e382c37d6001e482322f8db27dce63041b627ffab67caf39585ef0e8398e39"
+    },
+    {
+      "slug": "hur-startar-man-flockjournal",
+      "source_id": "bfe5d51e-6b69-44ff-9046-a60188ea8e88",
+      "source_sha256": "ae30949e0a2d32295c08e2cd0d7619a4244bcd0d96c5f15cc0457db9fa1deb7e",
+      "owned_path": "/blog-images/owned-archive/e8b6c0597d69b3c4cc3fede4.webp",
+      "image_sha256": "2e7c42acb9e17e760336dfd31dd2497b863b54cbe16d0c94ed4f8c77b3e8ec45"
+    },
+    {
+      "slug": "guide-till-halsologgning-honsflock",
+      "source_id": "8592178f-6e08-4c2c-8864-7180ca9f600b",
+      "source_sha256": "a4485a77ec059c2486c472e89aa07cfad3743ee2243c56a6e6a7db0fb956a8fe",
+      "owned_path": "/blog-images/owned-archive/ff719e10a1d04991e428e865.webp",
+      "image_sha256": "63bab99ec3f21dc40ee43ada0704b5ebbbfe7864b364043e4f0aef03f84fef41"
+    },
+    {
+      "slug": "planera-skotsel-av-hobbyhons-med-battre-koll",
+      "source_id": "5b778105-71f3-4043-82b9-80aee1ce984a",
+      "source_sha256": "752b0a8de5f6c7b063ddef8a09b01bc8ec5551d62ad665b47437c884c35a79ee",
+      "owned_path": "/blog-images/owned-archive/4abbd52aec71723243f0e05e.webp",
+      "image_sha256": "96b3ed9a64603b14bb5428aa16d38b4cbdab3c6adcf30edf84d7b0f6daca1062"
+    },
+    {
+      "slug": "guide-till-honsens-kostnadsoversikt",
+      "source_id": "e0db1fe9-c487-4dae-842c-b41996895e8a",
+      "source_sha256": "de41502e0f5c43729a04ef5f3baa7422ad8c2b1a25462b63b4052c466f98bca9",
+      "owned_path": "/blog-images/owned-archive/c15cbf2344dce5d2d065d422.webp",
+      "image_sha256": "0161d781afcde1b816ec9824525de91a10fc6ad51519d56c3db04ef5d0ca3199"
+    },
+    {
+      "slug": "mobilapp-vs-excel-for-hons",
+      "source_id": "1fabbaa0-e619-41bf-8c30-62c27278382b",
+      "source_sha256": "f1b87c76b16ed261bc8051fcc701c389d075e751a7ef3a17c14004840afacd2f",
+      "owned_path": "/blog-images/owned-archive/7c7980a12077ac15728f6efc.webp",
+      "image_sha256": "2397f25b5ee07efbd95f5c49f53e76e4ccfb70c1f089c063c2ab0e58c0d15840"
+    },
+    {
+      "slug": "kan-man-registrera-utan-internet",
+      "source_id": "f91f8667-4cfe-4974-b663-6143ed413418",
+      "source_sha256": "65f6fd76736e3150ed2dc1c03f94dcc5d175ea81d6de006d37198b1e8e0ecfa5",
+      "owned_path": "/blog-images/owned-archive/33949dbf5d94926fda8ae95b.webp",
+      "image_sha256": "de602ee5fcbaacbe74130c28cab82d24649bb04c2baeb152335c49a0185d1112"
+    },
+    {
+      "slug": "vad-paverkar-honsens-foderforbrukning",
+      "source_id": "8542bf5e-d3bb-4a3c-9b35-6a012b0a0b95",
+      "source_sha256": "78af59dadd4da189501890135c27399828ac1e160e661692c576e8ace0a0ab59",
+      "owned_path": "/blog-images/owned-archive/cc1870a8b348229cf8f35b9e.webp",
+      "image_sha256": "e4628e2c59e3a05bb43bcf1a61202731f6fc7171ede11353a2124f8190bdf613"
+    },
+    {
+      "slug": "basta-sattet-att-planera-honsskotsel",
+      "source_id": "d1817ed0-ce62-46eb-80e4-89d23be63c68",
+      "source_sha256": "1adfd97dc83701fcdf24b08645e98b9e6dc9cda3299d64a49a313ca53ba97ffc",
+      "owned_path": "/blog-images/owned-archive/108f982267a8559bea9c8415.webp",
+      "image_sha256": "f6b3a492a77d53532031864c950606304a4c8a9f40ddcf34b389ed4f999838db"
+    },
+    {
+      "slug": "guide-till-smaskalig-honsekonomi",
+      "source_id": "7fdf36e7-61ea-4054-a8e4-65c122214718",
+      "source_sha256": "aceea1745fb4ec6176172a28ce784a421513f1600d3e1b51d62dbc498ff3da86",
+      "owned_path": "/blog-images/owned-archive/6a4a7ec2ae86e3baa74ab681.webp",
+      "image_sha256": "174f969bb8a08d700c304d463da820fd3b55727b99fd60a8e5fe52cc7f897282"
+    },
+    {
+      "slug": "upptacka-avvikande-varpmonster-tidigt",
+      "source_id": "8fa66b95-0b4c-4a05-97ae-59ec37922e15",
+      "source_sha256": "54f075a48551d4c1b4dae637b90f16045c0b61090330818fe7b3768e4614cd32",
+      "owned_path": "/blog-images/owned-archive/3369e947dd9b6fb4bc4779e5.webp",
+      "image_sha256": "b832b2b4fdaa99c72838f01ed6093789c9869868610fce760a364ece131e1042"
+    },
+    {
+      "slug": "guide-till-flockadministration-for-hobbyhons",
+      "source_id": "2a6d1f9c-581b-4a33-885d-2420b64ab32e",
+      "source_sha256": "2f913fa5fee0b8ff843be8405c7c8c007b3dabd0840f7f503015ee36351512c3",
+      "owned_path": "/blog-images/owned-archive/73ef745ba8301b83c566cb38.webp",
+      "image_sha256": "f785510c0f1c3b249fc83236115a5f0cc2f675742816d6c2827ca0d5f015a816"
+    },
+    {
+      "slug": "kom-igang-med-honsapp",
+      "source_id": "5574ae2b-7ee9-4d1c-9ae5-92c730618b4a",
+      "source_sha256": "2622544c6258eae994b0b50ce54bd4a32ec9012297135b2bf2113625c0874206",
+      "owned_path": "/blog-images/owned-archive/0f01ae87977537f4e878551a.webp",
+      "image_sha256": "d6b5a050a2c7c48d4697fa5e55e8f622e37fc48cce3982eb1a8df3b110551b4b"
+    },
+    {
+      "slug": "folja-flockens-halsomonster-over-tid",
+      "source_id": "6b0878c8-0d4a-400b-be43-cf58373617c3",
+      "source_sha256": "2342ca458a9893ef2c8473d556a6dbe5ada15be402ef3ba2f6371addfa8b2f15",
+      "owned_path": "/blog-images/owned-archive/00e424f0ef94901b5dc39e65.webp",
+      "image_sha256": "d190bffdb3d75e2316e551c32ee23707527decd3df48896c4a3bf32a38beb4a7"
+    },
+    {
+      "slug": "offline-flockhantering-hons",
+      "source_id": "64dd5aad-58ab-4cbd-b04a-7bb996025924",
+      "source_sha256": "ce0bfe3d5f552ef9b839e0dcde07e22064c5e7fcd9e0c4c9f226d1c8a6e61f82",
+      "owned_path": "/blog-images/owned-archive/aed324697c0f5f2d5d26c792.webp",
+      "image_sha256": "25604d9a668bb94f7ca127144ee88a217a1b481b76002573673355d49343670f"
+    },
+    {
+      "slug": "starta-flockjournal-pa-mobilen",
+      "source_id": "20e33776-48f3-4db3-a9b3-fd4099ee4d25",
+      "source_sha256": "3dbfb69dba84fbeed160bb48b0a1c665899ac0ca672605d86a7f01291e503fcb",
+      "owned_path": "/blog-images/owned-archive/b08ed91d928b64f472ff6e67.webp",
+      "image_sha256": "7687e2783f235220043c53e0fe971002c996650275b75fe79b8cef02e22a5e29"
+    },
+    {
+      "slug": "mata-lonsamhet-i-hobbyhons",
+      "source_id": "6803372c-9828-4e3e-8edd-2d638874b819",
+      "source_sha256": "1516b9395ebe02d05ff7e321093666bc849c35636b8c28d8cbc212751d59c88e",
+      "owned_path": "/blog-images/owned-archive/2fc6afd8d4a80bdcacc26a4d.webp",
+      "image_sha256": "067bebc33cf61e0e245f9822d7c0d32e73cc3023f25464cb60f1b33b54890803"
+    },
+    {
+      "slug": "digital-flockjournal-vs-papper",
+      "source_id": "9e484f8c-a549-4f76-9813-cb339051f681",
+      "source_sha256": "3064e65b324968890b0c61fccb4b23d710e86302b28dd3ae6be1d9a2d145a702",
+      "owned_path": "/blog-images/owned-archive/2fdab6340b143e828ca54480.webp",
+      "image_sha256": "2e69f2612674a3b42731ea77c27bcf2e8704e54e6437221d7ee7258714b26c90"
+    },
+    {
+      "slug": "sa-forbattras-overblick-i-flocken-enkelt",
+      "source_id": "c72c9384-62ad-494a-98f2-4ef9b42464b4",
+      "source_sha256": "47cde247ae4cbb279f69ddcb0f7493adf39ea4496ebf0e3e0076aa2fda8e0166",
+      "owned_path": "/blog-images/owned-archive/4b05684ca5643d4653bf85fb.webp",
+      "image_sha256": "a73ea4aff1b3ece3cd111e87752f1cf6822f9d7dcdf1085bb589c384ad67c261"
+    },
+    {
+      "slug": "journal-for-honsens-halsa",
+      "source_id": "ae546c27-48e2-4408-8124-200e18caf7fa",
+      "source_sha256": "e2067e3d3a93dcf71694301b74d95cb2fe546ab4d2a3b604dbd0efa8523596f7",
+      "owned_path": "/blog-images/owned-archive/99d364afcaf682b595d4e836.webp",
+      "image_sha256": "57fd4d67fd208359263436da59fda35c504d00c36129a3053692f51425d6f3bf"
+    },
+    {
+      "slug": "skapa-rutiner-for-honsskottsel-som-haller",
+      "source_id": "7ec42c90-c204-4204-9027-8d09488944eb",
+      "source_sha256": "bcd78f57daf2e88ce73daabb90332538b93b886fb563885fa461643173a18f99",
+      "owned_path": "/blog-images/owned-archive/edad8d4294ca50d63ce7655b.webp",
+      "image_sha256": "6ce07b0160b81746fb393fbd56165b3fb6ed93e215fd96738471409fbd991000"
+    },
+    {
+      "slug": "test-av-offline-honsapp",
+      "source_id": "8aa20a56-6bdb-4c27-bcf1-a76826048fd3",
+      "source_sha256": "771492b671fba98aaa7de84a0bb4f82a1b9f114cb2d63d2963d670082af144ac",
+      "owned_path": "/blog-images/owned-archive/8e4d170f8ab385048ced85b3.webp",
+      "image_sha256": "6314d829b493703f8573f56bbb447bb83e82a2a00c769ba2d2fb9eae09d874f2"
+    },
+    {
+      "slug": "basta-sattet-att-dokumentera-flocken",
+      "source_id": "c47d6abf-882b-4613-a04e-795f8ebbdf36",
+      "source_sha256": "26458ea034008838cb6b934adfb4e74770e3628cb1d923b0dc818f3c4939f897",
+      "owned_path": "/blog-images/owned-archive/e1762ca96fb95f7ade34a65e.webp",
+      "image_sha256": "9aefcdc5938eeeba839d9feac5a50f461785fd24fa20ccd9eafbf738594e8c12"
+    },
+    {
+      "slug": "komma-igang-med-flockregister",
+      "source_id": "84fdc505-ab68-4501-bb8a-5d10e67b22f7",
+      "source_sha256": "59c4077d1571d7994a57379bc0dbf983bd2f82ccf27ee9a48cf78e553d230930",
+      "owned_path": "/blog-images/owned-archive/ead91e098036139605f76435.webp",
+      "image_sha256": "9cb17213f5ba0f6c63f8c922b4ccfd449f9daf67658b22cc0040aeb9c9261422"
+    },
+    {
+      "slug": "appar-for-hobbyuppfodare-av-hons",
+      "source_id": "79920847-8b7a-4260-b2a3-c85a51384ac1",
+      "source_sha256": "18a4e0f189679c097bbe78c9cf2d22c7ad13189abf09126052e67be76b87a9f2",
+      "owned_path": "/blog-images/owned-archive/13f3f67356965e607452f8ce.webp",
+      "image_sha256": "5a8feb3fa19b20ec5f54c6405e28e3883ef2cfdee228f97b3e827c7a9928acb9"
+    },
+    {
+      "slug": "guide-till-daglig-honsoversikt",
+      "source_id": "05159360-580c-4f12-84cc-29d1463fb8d2",
+      "source_sha256": "2607e9f33fa84f69ae83af2053172e5204a7cba3064f68c019b3417d8399e685",
+      "owned_path": "/blog-images/owned-archive/28d84d372ff6a4919a5cbbdc.webp",
+      "image_sha256": "acb937b719f446f2785d5131aebda32162572566fa482ad82b8aa9e20f62df89"
+    },
+    {
+      "slug": "verktyg-for-smaskalig-aggproduktion",
+      "source_id": "0fe0129f-13ea-4626-81b0-4586809eff17",
+      "source_sha256": "057ce2ad757340c20a20e2a898cc228cabf24b695815ca6da35b2b234f562c11",
+      "owned_path": "/blog-images/owned-archive/2f63d5c83861aae5292badef.webp",
+      "image_sha256": "4a26141652423ae92a66b0222af705c749f503c574268d35cfa94b1a957030da"
+    },
+    {
+      "slug": "spara-honsdata-offline-enkelt",
+      "source_id": "3313fec3-98c8-4233-bb36-c99dc1ae4070",
+      "source_sha256": "f03d581b23b486fe24e6a223bea7d66fdfea97d2df55feb55490f28750e78ff5",
+      "owned_path": "/blog-images/owned-archive/ad165523b20968a48e5e8bb9.webp",
+      "image_sha256": "1f143e9da9419a0fc7de3bf1e505f68ac594757b64d851e058169327085f9f6b"
+    },
+    {
+      "slug": "exempel-pa-digital-aggjournal",
+      "source_id": "358f43d8-0340-4ebb-9640-36fccbb8d0b8",
+      "source_sha256": "53da3be4990235cb1881dc300a9e99ed38c6401c7159362318a1188b4e0f3dda",
+      "owned_path": "/blog-images/owned-archive/9d1e4e345a4f87df1a33bd9b.webp",
+      "image_sha256": "ac1a0545d6faba87512bc8c538d99b814585d6d5df1c7bba199771c266615353"
+    },
+    {
+      "slug": "flockadministration-hobbyhons-app",
+      "source_id": "aac3dc30-dbb3-4813-8ac9-ec4b6558dffd",
+      "source_sha256": "541daa0ab3b7da6c15ac36984c8b2d1c6ce3d6d577a740c7d2696ceda75b7339",
+      "owned_path": "/blog-images/owned-archive/7f9021dfa21e7bf88f2a7991.webp",
+      "image_sha256": "e8b5ba283046bcd6e1333696ab4e4a7889913f1fb719dc92a9b574312b6458f9"
+    },
+    {
+      "slug": "honsapp-eller-kalkylblad",
+      "source_id": "61d93a05-04d0-41f5-9030-b592949e5b86",
+      "source_sha256": "79cdf181a87da9da0e54f70a44eb5af6f9d117aad0933864fbf2564eacb040a5",
+      "owned_path": "/blog-images/owned-archive/ba6086713cff6eb265915996.webp",
+      "image_sha256": "8c12fe0f91be77b6a3638a8006c18bad08be351c250ea8d5727ab34bed5c66eb"
+    },
+    {
+      "slug": "guide-till-daglig-flockuppfoljning",
+      "source_id": "ec6d3e4a-4443-4661-be2d-4d498e75a374",
+      "source_sha256": "cb2fd8f675f7b7f4b59ca60166cf27662afeb2afe210ddec14053c92f9b465d2",
+      "owned_path": "/blog-images/owned-archive/85a345d160c572108726e42f.webp",
+      "image_sha256": "1d8384b4588b0fe96d42ec89c3417542fce4192c9d6f70998c1a71b99f15d07e"
+    },
+    {
+      "slug": "verktyg-for-smaskalig-honshallning",
+      "source_id": "d4d0e747-7ec4-4b0d-84f4-690e0a8a6bf9",
+      "source_sha256": "ade7dba87e69a7f40172f8dbe3d70ead5500207316babf41702314c03849d9ba",
+      "owned_path": "/blog-images/owned-archive/b2f211fa65db43a44e79ed3b.webp",
+      "image_sha256": "ac98259748aee9db03d69dfd15200848acc63f1c3b49907466910db5529bed7d"
+    },
+    {
+      "slug": "recension-av-app-for-honsagare",
+      "source_id": "37a665fd-1d3c-4c09-99b8-0a5dad5975f3",
+      "source_sha256": "5b60d43c0ccc024476235ce78c30e05dec4fcea5a80a6d23d25c9ed7f40dfc67",
+      "owned_path": "/blog-images/owned-archive/9bc3bd3de54f4d1fff4f2227.webp",
+      "image_sha256": "1acdf9dfe65c1296c14f4f17baba5f394a66caac518f78b7abbb993ee28ac2ae"
+    },
+    {
+      "slug": "mata-flockens-foderforbrukning",
+      "source_id": "be6946b5-f810-4fa8-9dab-e1751bd2af2c",
+      "source_sha256": "e0eb598e63b0859cc0db9c3bd3b34e1f024e3947e1fe9ed8beb9f86813e6431e",
+      "owned_path": "/blog-images/owned-archive/0000264d290894ad4c437c53.webp",
+      "image_sha256": "1977a19aa744f7ecdb815884b69645b020c4eab00a0d27ec149d73fc30630f62"
+    },
+    {
+      "slug": "organisera-flocken-med-app",
+      "source_id": "3b978f0a-b03c-4520-8339-a084337d76f0",
+      "source_sha256": "e609f5bc2aee95ebad6c1033ce7cf03741e98da639156285db98dd534672dd7b",
+      "owned_path": "/blog-images/owned-archive/4ca50404e6b483299ce78b2c.webp",
+      "image_sha256": "ec770f033023748e1f9e038a3657e7301c0f58fe94842fe3202f488bf22aef74"
+    },
+    {
+      "slug": "logga-aggproduktion-i-app",
+      "source_id": "48c79dab-3ac8-45ab-b4ca-9e6fafe0c4be",
+      "source_sha256": "1d1d85d27bfa51b912c0b3cc13c518069c97b34fd3521c306994201982b0da5f",
+      "owned_path": "/blog-images/owned-archive/c233b1d11dba7f5541338d8e.webp",
+      "image_sha256": "867b472c337f2aa2a5c203ef0cc40bb0c756d961283e9256e7e74e06d0c0d4d0"
+    },
+    {
+      "slug": "honshalsa-digital-uppfoljning",
+      "source_id": "b067f4c7-8366-4dcc-a462-9abc2df81f03",
+      "source_sha256": "168b5394f25c18d6eba009c347aa49e268fc5cd0aba1e3e075b01e091e97f4a9",
+      "owned_path": "/blog-images/owned-archive/1e56af54380c823bd9473974.webp",
+      "image_sha256": "55126da9aebea7061e8fa328ee0862b25c43fbe946d8070f958514d14c6fe14c"
+    },
+    {
+      "slug": "honshalsa-symptom",
+      "source_id": "58da2f42-3084-47b4-9111-67e7f081b060",
+      "source_sha256": "77830269b4f2f4701f9d7cb3409c8e6d9d30c133f85f47cdb38216e9fa9bbcbd",
+      "owned_path": "/blog-images/owned-archive/137f927cf89f8b50457796d7.webp",
+      "image_sha256": "f991114f2d35f8240903551c9a5888465e746a15c06a06d61bff420adcc6fe52"
+    },
+    {
+      "slug": "agglogg-app-battre-koll-honsgarden",
+      "source_id": "1efc62bf-6697-4ce7-bd32-ba219c5731b3",
+      "source_sha256": "ae04aef7e7859a5d7bd2535001d013f5f9e6e38c3e3fc5180b2ec454645e044b",
+      "owned_path": "/blog-images/owned-archive/5b17af67703124e7c3fe03d6.webp",
+      "image_sha256": "ccfa6a8e7b82cf72c6202d4fa0ea5560fe834c562c72035cb7144b175863b31b"
+    },
+    {
+      "slug": "guide-for-kostnadskontroll-i-honsgard",
+      "source_id": "45fa41ef-f7d7-418f-a5a3-0418cbcdb204",
+      "source_sha256": "6364fcf6d3e5ce599192be6b70fdaf13306ecb894ae3bc7f924712dc6d0caa18",
+      "owned_path": "/blog-images/owned-archive/3229885740a2e619b9fb3e2b.webp",
+      "image_sha256": "525111862ad630c99473f95e832f07ebcc7ae33b97c07a3c2943f1d389ec6c71"
+    },
+    {
+      "slug": "honsapp-for-nyborjare",
+      "source_id": "8bedddf1-d338-4478-98df-417206042905",
+      "source_sha256": "cf620ba683cc3c5959b0caac3de6c8d1ce7f1962b6fd719b6e88e674bf073d97",
+      "owned_path": "/blog-images/owned-archive/5d5ef0e92675bf1ecf397d24.webp",
+      "image_sha256": "042bd92e2a909f77da208930f793cdd2697f701a1df9577f0d6346a2986d6480"
+    },
+    {
+      "slug": "hur-dokumenterar-man-sjuka-hons",
+      "source_id": "208b945b-61b9-47d3-88be-e8cf2643cf21",
+      "source_sha256": "200807ee8c10fb729a7dc962906406f36282644eb5d1cdc2efbc60aa4738060c",
+      "owned_path": "/blog-images/owned-archive/438c59892835ff3744a15d44.webp",
+      "image_sha256": "432624341e9661b22060e1787abe1757c39ffbd79cd3a265bebdc22a5c310449"
+    },
+    {
+      "slug": "folja-honsens-halsa-digitalt",
+      "source_id": "ba1d92d9-167b-4858-9da2-4ac5395aa799",
+      "source_sha256": "1e789aff4b9605563ea3ff14e8cb721c90e91fadb5cfb63517d3c97e8ccb737c",
+      "owned_path": "/blog-images/owned-archive/bc78e6e8b6d82c927779deb8.webp",
+      "image_sha256": "768dcf6ea32648901d4d71ba0d85665d3aed8d76b9295f62e9eeabbf767c96ed"
+    },
+    {
+      "slug": "honshalsa-app-battre-koll-flocken",
+      "source_id": "e7fed690-cb99-4921-b283-685bde6ce3c0",
+      "source_sha256": "29c2e822bdc95326536eaad8f7d26270954c1cf12f219854eef14ac8161ac416",
+      "owned_path": "/blog-images/owned-archive/d0ef1ac829d9ad86932b80e0.webp",
+      "image_sha256": "894236d76886ffa6a00925603921c572d573469b48f8127e7f49ca24a193105c"
+    },
+    {
+      "slug": "varfor-sjunker-aggproduktionen-plotsligt",
+      "source_id": "2972112e-7645-4d2a-9bd9-c2e239cf5266",
+      "source_sha256": "ea62298232956f6d8a19bd6c111f33b97c0d26c985e18507d271631bef737964",
+      "owned_path": "/blog-images/owned-archive/4a58bbbbb5e87e3c21191546.webp",
+      "image_sha256": "d9461e998aba58eb03985e101c56409b30995c206b4e456b245453aef50592b4"
+    },
+    {
+      "slug": "satt-att-minska-foderkostnader",
+      "source_id": "a9192d77-6573-4a55-b9ae-d949191b1c89",
+      "source_sha256": "008df5ad05ef18fea45407f600181e88a5573c806a3cd283bab3f6b04a45fcfc",
+      "owned_path": "/blog-images/owned-archive/16cdefc0fbd41992e845e23d.webp",
+      "image_sha256": "2d6fb50960e8cdfe6d83d4d12900d5df787f1246fbe64db49fee599d27cb469f"
+    },
+    {
+      "slug": "guide-for-daglig-honsskotsel-hemma",
+      "source_id": "b8b7b3a0-088f-4455-aa87-a33035311486",
+      "source_sha256": "997583e5d70771c236d88b8bb20a15bcf1120fca6b7e8115401a06f39104ba60",
+      "owned_path": "/blog-images/owned-archive/c3e5f0dfca1adf27501d1cd4.webp",
+      "image_sha256": "9e208a966e6bb52c7f5403817d2e8c592e146db48931fa19380bce77fdb13de0"
+    },
+    {
+      "slug": "registrera-agg-per-dag",
+      "source_id": "1f29b1d5-5316-46eb-9099-52b81d9fb137",
+      "source_sha256": "4fd1bc61b9b514b4dc3a2cea3027c14e88c7d1273dc7a8d15e1678f1f3797e4d",
+      "owned_path": "/blog-images/owned-archive/3f788471b5cd507b1219ae8b.webp",
+      "image_sha256": "0aa89854fbef4d548424e485a196f784ef1fee6d089c4fa1720821cf28704914"
+    },
+    {
+      "slug": "gratis-honsapp-jamforelse",
+      "source_id": "bfcba25e-fd21-42a4-a581-eb15e0ba43d3",
+      "source_sha256": "fcfe14bedf302f08133d71b0d2d97e1ef3f8c075e435f32b50d9c889fa507a23",
+      "owned_path": "/blog-images/owned-archive/f99f859823935230a7af08c5.webp",
+      "image_sha256": "b38979bce9d2a7a6246cefea73c61bdd3461f0fda12917e9cae1c859d9752534"
+    },
+    {
+      "slug": "hur-haller-man-koll-pa-varpning",
+      "source_id": "6737ffd4-c377-473a-b77c-33183ed17f05",
+      "source_sha256": "b2e0aff3bc2685205f490f7c90e1fd1c783fead648d64b75dd0007f163239e24",
+      "owned_path": "/blog-images/owned-archive/546d83e8806c9371eb450ed1.webp",
+      "image_sha256": "007f60ede811a3a22cc810f8d805b5b8458eabfa43131f52ce728587dbd6de6f"
+    },
+    {
+      "slug": "vad-kostar-fodret-per-agg",
+      "source_id": "4b9ef576-ce8a-457f-b2e4-b2e9634270de",
+      "source_sha256": "219860ea8bd9efd77afb025b4443abb687a268174c329249617bbe551f952be3",
+      "owned_path": "/blog-images/owned-archive/c3494d4df2f407d67e3c1039.webp",
+      "image_sha256": "4084f0e249979e50a7549c91580ac0d66c436f608d51b19931753d1b988eb664"
+    },
+    {
+      "slug": "basta-appen-for-aggloggning",
+      "source_id": "6ce512eb-3964-43ae-b841-145f345c7a88",
+      "source_sha256": "cdce2c4c3813676e04e6f7917a33f4d519b1292767a2dad1353f278408beba3c",
+      "owned_path": "/blog-images/owned-archive/145ae885b4765715f44b551f.webp",
+      "image_sha256": "ff78b8942da8b840eab46e8ebed080ca982efbd040f352bedaba2d65fc64e0c4"
+    },
+    {
+      "slug": "aggproduktion-hons-app",
+      "source_id": "a9b37008-eda7-488f-95ed-742a783ce719",
+      "source_sha256": "88356199c1e54e96b150930b25235d6cad79cd74fd8539e34268453753f51ac7",
+      "owned_path": "/blog-images/owned-archive/7d1f7ed5bc4671c7e23fee11.webp",
+      "image_sha256": "d87b2bcf63157690f496f0ade005ab97edcfdae3e9a2b94f182c8cc9bc4ac1f1"
+    },
+    {
+      "slug": "anvanda-honsapp-utan-internet",
+      "source_id": "5d0232c7-f18e-488c-b8a2-a5b53f11356b",
+      "source_sha256": "cfaf530c50511c4f61500eddc3fc4c37d80861f638d6eacf66fb6221b38ee7e2",
+      "owned_path": "/blog-images/owned-archive/1d5198706fd30865b913fbad.webp",
+      "image_sha256": "66ec4fa8258fc507f59b2efeff45552bad1963a37e03bfad955af5e01739d614"
+    },
+    {
+      "slug": "basta-appen-for-honshallning",
+      "source_id": "bdc180be-5226-410f-ba3e-001941720d12",
+      "source_sha256": "48240c7ead41904b214055aefd89e8ddd4ace205a590d39bf119113ac61807ed",
+      "owned_path": "/blog-images/owned-archive/d52c98fda15da8d6028bc120.webp",
+      "image_sha256": "7f107600613744ca6ef842c829d6315373c5322458ad7a7869edfe88685e9e1c"
+    },
+    {
+      "slug": "halla-koll-pa-foderatgang",
+      "source_id": "099a94af-2a95-46fb-b11a-05bf7245bf4f",
+      "source_sha256": "d8c0bd667097629caa913f85539d12cc8803c2ce7dca1e1abe031fb1438f94ac",
+      "owned_path": "/blog-images/owned-archive/2ba7beda3121fbb6d0c60b5c.webp",
+      "image_sha256": "142a80c88f7a85ec8224aa6ff1103881c905066f3d7fa8b687424014eea48b99"
+    },
+    {
+      "slug": "enkelt-system-for-hobbyuppfodare",
+      "source_id": "9389df01-86c8-4789-ad7c-39d830354a91",
+      "source_sha256": "19e8cc4eee591e5c4f226b9e323bf6e962a4003677fa225f6cab90c0fa4526d3",
+      "owned_path": "/blog-images/owned-archive/8d43c68129ee1bac64c7deed.webp",
+      "image_sha256": "0c0e469a4a24316f28804007e14513303260bce5c7cd791e0f22c5f6a7b963c4"
+    },
+    {
+      "slug": "fa-overblick-over-honsflock",
+      "source_id": "89f952fb-02ef-4cd7-826a-6580c5dd9c5e",
+      "source_sha256": "f289e4dbc9e8c0a113f36463395fdf0f367ab69d02da0c4e4c4685e1fa0e0b08",
+      "owned_path": "/blog-images/owned-archive/d1799315357ec8365201d476.webp",
+      "image_sha256": "24fea8fa5b344a201e8a69ae7791f543fd3ea8a6db0ba28260ca83ccbc74a022"
+    },
+    {
+      "slug": "dokumentera-sjukdom-hos-hons",
+      "source_id": "4170bbc8-917c-4fe7-b441-7403e37bb7c5",
+      "source_sha256": "900053c718d262bdb7018a90b1013a49d4a282acd0bb0df5d32eb558618ff77f",
+      "owned_path": "/blog-images/owned-archive/04e55695eeeffe951e17b002.webp",
+      "image_sha256": "99756067121b72ed4cd2652bbf7cf0f86b72f51ace45f95564ab659be76a1f81"
+    },
+    {
+      "slug": "spara-varpning-per-hona",
+      "source_id": "44edfdbb-6f5a-4d4a-ac47-6fdfcf69d724",
+      "source_sha256": "a6de7b9fcb74d10f494d693afb507c7db278be9adbc7fd90316f9fe457f17854",
+      "owned_path": "/blog-images/owned-archive/9974fa928dd6028fd1cb3a85.webp",
+      "image_sha256": "c6de9a92e1f919ae2d035bc063aee4f5f5ebd7b524462883f85a9b66d8d80309"
+    },
+    {
+      "slug": "daglig-kontroll-av-hons",
+      "source_id": "8b1b8553-8298-4f75-aeec-ccdaf7dd1bef",
+      "source_sha256": "4b97571996153559d994ae4d55fb5f3c913bb512762077a26c8d6ed2a4134f41",
+      "owned_path": "/blog-images/owned-archive/4b112149b306a2c59ea0dee3.webp",
+      "image_sha256": "59768db783761f7f8cb433a3c1f5434a96443b51fee3d20953194c1b3abbe5cf"
+    },
+    {
+      "slug": "hobbyhons-skotsel-schema",
+      "source_id": "2e0ce3ae-fac8-4e68-8f58-d6ed49a14ff7",
+      "source_sha256": "ecb7671bdb6006e00daa4d9e128cf245bf9d2331e726841fa277bee51d754572",
+      "owned_path": "/blog-images/owned-archive/a1385bbbf7c1ed88f7d6f88b.webp",
+      "image_sha256": "c9bd6f16481b5cab5b835784d594cbee49cbd765eb384be3547ddffdf7fc2ad7"
+    },
+    {
+      "slug": "verktyg-for-flockadministration",
+      "source_id": "b5dcf38b-09d5-42cc-8f3a-310b24c478a2",
+      "source_sha256": "4b305fa612b25c879c6ae8520832654b06a5e254594ef96c60185165adaf0532",
+      "owned_path": "/blog-images/owned-archive/44986a4eaee485f44dec2ae8.webp",
+      "image_sha256": "128a260eccec71a0087ead4924fcb8679fecd7fc30210acbdfa5ed89af3e121a"
+    },
+    {
+      "slug": "offline-app-for-stall",
+      "source_id": "5473e899-6784-4f8e-8e49-64948efa976a",
+      "source_sha256": "ae28eb4d6f35f8ee541c54f83261bfd543b30d58e8ea03f02e368731be076d7e",
+      "owned_path": "/blog-images/owned-archive/ef7fc8283a80b08d90e8d0ab.webp",
+      "image_sha256": "3f3c3a3c0b47703053d3e5e1c0c3dfb60dc5074acfcea10edc3c39a89413dc09"
+    },
+    {
+      "slug": "digitalt-honsregister",
+      "source_id": "b5c2130b-1216-4782-8a6e-a8f76c68e142",
+      "source_sha256": "7c986aa5e59a5f6136e2678c31595d01978d41915f30880bc1132011f825965f",
+      "owned_path": "/blog-images/owned-archive/e8b5e01fad2338d29b74a6f7.webp",
+      "image_sha256": "052b1e149a7302f5db04dd5859e81c4680ffe528b979379817ac0a5e989810dd"
+    },
+    {
+      "slug": "berakna-foderkostnad-for-hons",
+      "source_id": "5b9a4365-40cb-4c73-a52f-983ec850c614",
+      "source_sha256": "697e44f83d085b16f0cdef5424a5156e0075a8cacac8c6dbd47d39f329a4324b",
+      "owned_path": "/blog-images/owned-archive/71cd7ed00b83d960ba203445.webp",
+      "image_sha256": "6936beb81a336fdef756ce5f2f32ca0ae19bfeb1a3625a701989e08e3c7921a7"
+    },
+    {
+      "slug": "hur-foljer-man-honshalsa",
+      "source_id": "0a29fff5-5d4b-405f-a416-b833b17590b1",
+      "source_sha256": "a8747c06ffa2f5ae2e4f6c59a5d98d73cea8c171f2fa31be544207eb89d2be30",
+      "owned_path": "/blog-images/owned-archive/f12eda401e669e7f9261ce47.webp",
+      "image_sha256": "ee92ac15fcba6da6096bcd86c5605ab591717a94135454a411f453300d8519dc"
+    },
+    {
+      "slug": "app-for-honsagare",
+      "source_id": "11b9433c-3d53-4015-aaf4-bf439fc34534",
+      "source_sha256": "09ccd6e955890e5e3b85d95fd963be0afa8ca03f67d4211a62599b27781d38f7",
+      "owned_path": "/blog-images/owned-archive/d90218411e3a4fbf6333edb2.webp",
+      "image_sha256": "602c753a6d942822893649682610319edfae5f18094f321dfe4a3894f564718d"
+    },
+    {
+      "slug": "hur-loggar-man-aggproduktion",
+      "source_id": "1e1ebaa9-91a8-49bf-a0e7-dc6cd36f7456",
+      "source_sha256": "1ee8283d51406ac0261d66dbc85b7e29df6f8bb95668edf2ed9f9acbb78fe3d9",
+      "owned_path": "/blog-images/owned-archive/bd26d41c54b29e957eff12d2.webp",
+      "image_sha256": "354c881f7e3a1b3211e7ffde37889d058b887f0717b94a2e7822693bad04c6aa"
+    }
+  ]
+}
