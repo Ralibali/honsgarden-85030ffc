@@ -8,8 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/generate-sitemap.mjs",
-    "build": "vite build && node scripts/prerender-blog-posts.mjs && npm run verify:seo && npm run verify:routes",
+    "prebuild": "npm run editorial:check && node scripts/generate-sitemap.mjs",
+    "build": "vite build && npm run verify:seo && npm run verify:routes",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -29,7 +29,8 @@
     "audit:perf": "node scripts/perf-budget.mjs",
     "audit:urls": "node scripts/audit-urls.mjs",
     "audit:urls:check": "node scripts/audit-urls.mjs --check",
-    "audit:perf:check": "node scripts/perf-budget.mjs --check"
+    "audit:perf:check": "node scripts/perf-budget.mjs --check",
+    "editorial:check": "node scripts/editorial-publisher.mjs check && node --test scripts/editorial-publisher.test.mjs"
   },
   "dependencies": {
     "@capawesome/capacitor-apple-sign-in": "^0.1.2",

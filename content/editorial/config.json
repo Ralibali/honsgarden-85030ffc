@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "origin": "https://honsgarden.se",
+  "lovable_project_id": "f0c63bdf-2baf-4795-b008-16d49fc7d8ae",
+  "repository": "Ralibali/honsgarden-85030ffc",
+  "author_id": "00000000-0000-0000-0000-000000000000",
+  "extended_columns": true,
+  "categories": [
+    "guide",
+    "tips",
+    "nyborjare",
+    "tradgard",
+    "hem",
+    "friluftsliv"
+  ],
+  "cadence_days": 2,
+  "writer": "ChatGPT",
+  "publication_mode": "create_only",
+  "affiliate_programs": [
+    {
+      "name": "P Lindberg",
+      "channel_id": "2056181186",
+      "ad_id": "1954027467",
+      "host": "do.p-lindberg.se",
+      "destination_host": "www.p-lindberg.se",
+      "checked_at": "2026-09-06",
+      "evidence": "Authenticated Adtraction link builder: Tracking link created for https://honsgarden.se"
+    }
+  ]
+}

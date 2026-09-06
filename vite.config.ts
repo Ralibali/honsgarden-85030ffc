@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from "vite";
+import { execFileSync } from "node:child_process";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
@@ -50,6 +51,9 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      { name: "owned-editorial-prerender", apply: "build" as const, enforce: "post" as const, closeBundle() {
+        execFileSync(process.execPath, ["scripts/prerender-blog-posts.mjs"], { cwd: process.cwd(), stdio: "inherit" });
+      } },
       mode === "development" && componentTagger(),
     ].filter(Boolean),
     define: {
