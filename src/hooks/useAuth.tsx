@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '@/integrations/supabase/client';
 import { DEMO_USER_PROFILE } from '@/lib/demoData';
 import { resolvePremiumType, type PremiumType } from '@/lib/premiumStatus';
+import { isConfirmedSignupTrial, profileHasSignupTrial } from '@/lib/signupTrial';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 interface UserProfile {
@@ -20,7 +21,11 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: (mode?: 'login' | 'register') => Promise<void>;
-  register: (email: string, password: string, name: string, meta?: Record<string, any>) => Promise<any>;
+  register: (email: string, password: string, name: string, meta?: Record<string, any>) => Promise<{
+    user: SupabaseUser | null;
+    session: Session | null;
+    trialConfirmed: boolean;
+  }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
   refreshSubscription: () => Promise<void>;
@@ -341,7 +346,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       options: { data: { name, ...(meta ?? {}) } },
     });
     if (error) throw new Error(error.message);
-    return data;
+
+    let trialConfirmed = false;
+    let sessionUser = data.session?.user ?? null;
+    if (!sessionUser) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      sessionUser = sessionData.session?.user ?? null;
+    }
+    if (sessionUser) {
+      try {
+        // Grant path: trigger/RPC may miss; check-subscription writes the real trial row.
+        try { await supabase.rpc('sync_profile_from_auth' as any); } catch { /* non-blocking */ }
+        const sync = await syncSubscriptionStatus();
+        const { data: granted } = await supabase
+          .from('profiles')
+          .select('subscription_status, premium_expires_at, is_lifetime_premium')
+          .eq('user_id', sessionUser.id)
+          .maybeSingle();
+        const rowConfirmed = profileHasSignupTrial({
+          subscriptionStatus: granted?.subscription_status,
+          premiumExpiresAt: granted?.premium_expires_at,
+          isLifetime: granted?.is_lifetime_premium,
+        });
+        const syncConfirmed = sync.synced && isConfirmedSignupTrial({
+          premiumType: sync.premiumType,
+          subscriptionEnd: sync.subscriptionEnd ?? granted?.premium_expires_at ?? null,
+        });
+        trialConfirmed = rowConfirmed || syncConfirmed;
+
+        const profile = await hydratePremiumProfile(sessionUser, (next) => {
+          setUser(next);
+          if (next && !profileReadyRef.current) {
+            profileReadyRef.current = true;
+            startPeriodicSync(sessionUser);
+          }
+        }, { sync: false });
+        if (!trialConfirmed) {
+          trialConfirmed = isConfirmedSignupTrial({
+            premiumType: profile?.premium_type,
+            subscriptionEnd: profile?.subscription_end,
+          });
+        }
+      } catch {
+        trialConfirmed = false;
+      }
+    }
+
+    return { ...data, trialConfirmed };
   };
 
   const logout = async () => {
@@ -396,7 +447,7 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: true,
     login: async () => {},
     loginWithGoogle: async () => {},
-    register: async () => ({}),
+    register: async () => ({ user: null, session: null, trialConfirmed: false }),
     logout: async () => {},
     refreshSubscription: async () => {},
     reloadProfile: async () => {},
