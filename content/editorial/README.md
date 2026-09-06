@@ -32,3 +32,7 @@ Följ affiliate-klick per artikel från befintlig spårning och faktisk godkänd
 ## Soro-flytt
 
 De gamla texterna finns i tidigare sparat flyttarkiv. content/editorial/migration innehåller endast de saknade native-posterna som ska bevaras, inte nya ChatGPT-artiklar. soro-media-map.json kopplar varje källa till dess egna bildfil. Gamla ?post-länkar går via klientomdirigering till den native-artikeln; detta är inte en verifierad HTTP 301. Soro-jobben pausas vid bytet, inte andra jobb. Abonnemang kan avslutas först efter kontroll av alla gamla texter/bilder, riktiga URL:er och aktiv ersättande publicering. Återaktivera inte gamla Soro-upsert-jobb som en automatisk retry.
+
+## Förbättringspilot och kortvideo
+
+Vid förbättring av befintliga guider: läs `docs/SEO_PILOT.md` för projektbrief, fem dokumenterade sidor, mätplan och kvarstående källgranskning. `src/lib/guideNextSteps.mjs` delar nästa-steg-länkar mellan prerender och klient; behåll båda vyerna konsekventa. Ett konkret manus med tre alternativa öppningar finns i `docs/SEO_PILOT_VIDEO.md`. Använd verifierad produktdemo och egna/licensierade tillgångar; producera eller publicera inte video enbart för att manusfilen finns.
