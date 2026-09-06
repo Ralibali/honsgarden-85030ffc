@@ -6,7 +6,7 @@ import {
   extractH1Texts,
   extractTitle,
 } from "../src/lib/prerenderTopicPages.mjs";
-import { CONTEXTUAL_REGISTER_CTAS, assertContextualRegisterCta } from "../src/lib/contextualRegisterCtas.mjs";
+import { CONTEXTUAL_CTAS, assertContextualRegisterCta } from "../src/lib/contextualRegisterCtas.mjs";
 
 const required = [
   "dist/index.html",
@@ -69,7 +69,7 @@ for (const page of topicPages) {
   assertTopicPageHtml(readFileSync(page.file, "utf8"), page);
 }
 
-for (const cta of CONTEXTUAL_REGISTER_CTAS) {
+for (const cta of CONTEXTUAL_CTAS) {
   const file = `dist${cta.path}/index.html`;
   if (!existsSync(file)) throw new Error(`SEO-build saknar ${file}`);
   assertContextualRegisterCta(readFileSync(file, "utf8"), cta);

@@ -1,5 +1,5 @@
 /**
- * In-content register-CTAs for three existing public URLs.
+ * In-content CTAs for a few existing public URLs.
  * Copy is the Growth spec — do not rewrite.
  *
  * Keep in sync with `src/lib/contextualRegisterCtas.mjs`.
@@ -7,15 +7,23 @@
  *  - .mjs används av scripts/prerender-blog-posts.mjs
  */
 
-export type ContextualRegisterCtaSpec = {
+export type ContextualCtaSpec = {
   slug: string;
   path: string;
   href: string;
-  source: 'orpington' | 'sussex' | 'bast-honsras';
+  source: string;
   body: string;
   button: string;
   afterHeading?: string;
   after?: 'comparison-table';
+};
+
+export type ContextualRegisterCtaSpec = ContextualCtaSpec & {
+  source: 'orpington' | 'sussex' | 'bast-honsras';
+};
+
+export type ContextualDemoCtaSpec = ContextualCtaSpec & {
+  source: 'foderkostnad';
 };
 
 export const CONTEXTUAL_REGISTER_CTAS: readonly ContextualRegisterCtaSpec[] = [
@@ -48,9 +56,32 @@ export const CONTEXTUAL_REGISTER_CTAS: readonly ContextualRegisterCtaSpec[] = [
   },
 ];
 
+/** Path A copy-only demo CTA — /demo, never register/trial. One slug only. */
+export const CONTEXTUAL_DEMO_CTAS: readonly ContextualDemoCtaSpec[] = [
+  {
+    slug: 'berakna-foderkostnad-for-hons',
+    path: '/blogg/berakna-foderkostnad-for-hons',
+    href: '/demo?source=foderkostnad',
+    source: 'foderkostnad',
+    afterHeading: 'Beräkna foderkostnad för höns per månad',
+    body: 'Siffrorna i artikeln är exempel. Se foder och ägg ihop i appen — utan konto.',
+    button: 'Se demo utan konto',
+  },
+];
+
+export const CONTEXTUAL_CTAS: readonly ContextualCtaSpec[] = [
+  ...CONTEXTUAL_REGISTER_CTAS,
+  ...CONTEXTUAL_DEMO_CTAS,
+];
+
 export function contextualRegisterCtaForSlug(slug?: string | null): ContextualRegisterCtaSpec | undefined {
   if (!slug) return undefined;
   return CONTEXTUAL_REGISTER_CTAS.find((cta) => cta.slug === slug);
+}
+
+export function contextualDemoCtaForSlug(slug?: string | null): ContextualDemoCtaSpec | undefined {
+  if (!slug) return undefined;
+  return CONTEXTUAL_DEMO_CTAS.find((cta) => cta.slug === slug);
 }
 
 function escapeHtml(value = ''): string {
@@ -62,10 +93,10 @@ function escapeHtml(value = ''): string {
     .replace(/'/g, '&#39;');
 }
 
-export function renderContextualRegisterCtaHtml(cta: ContextualRegisterCtaSpec): string {
+export function renderContextualRegisterCtaHtml(cta: ContextualCtaSpec): string {
   return `<aside class="my-8 rounded-2xl border border-border/40 bg-gradient-to-br from-primary/8 via-card to-accent/5 p-5 sm:p-6" aria-label="${escapeHtml(cta.button)}">`
     + `<p class="text-sm text-muted-foreground leading-relaxed">${escapeHtml(cta.body)}</p>`
-    + `<p class="mt-4"><a href="${escapeHtml(cta.href)}" class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">${escapeHtml(cta.button)}</a></p>`
+    + `<p class="mt-4"><a href="${escapeHtml(cta.href)}" class="contextual-cta-button inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">${escapeHtml(cta.button)}</a></p>`
     + `</aside>`;
 }
 
@@ -73,18 +104,21 @@ function decodeHtml(value = ''): string {
   return String(value).replace(/&amp;/g, '&');
 }
 
-export function htmlHasContextualRegisterCta(html: string, cta: ContextualRegisterCtaSpec): boolean {
+export function htmlHasContextualRegisterCta(html: string, cta: ContextualCtaSpec): boolean {
   const decoded = decodeHtml(html);
-  return decoded.includes(cta.href) && html.includes(cta.button);
+  return decoded.includes(cta.href) && html.includes(cta.button) && html.includes(cta.body);
 }
 
-export function assertContextualRegisterCta(html: string, cta: ContextualRegisterCtaSpec): void {
+export function assertContextualRegisterCta(html: string, cta: ContextualCtaSpec): void {
   const decoded = decodeHtml(html);
   if (!decoded.includes(cta.href)) {
-    throw new Error(`${cta.path} saknar register-CTA href ${cta.href}`);
+    throw new Error(`${cta.path} saknar CTA href ${cta.href}`);
   }
   if (!html.includes(cta.button)) {
-    throw new Error(`${cta.path} saknar register-CTA-knapp «${cta.button}»`);
+    throw new Error(`${cta.path} saknar CTA-knapp «${cta.button}»`);
+  }
+  if (!html.includes(cta.body)) {
+    throw new Error(`${cta.path} saknar CTA-brödtext «${cta.body}»`);
   }
 }
 
@@ -107,10 +141,56 @@ function injectAfterComparisonTable(html: string, block: string): string {
   return `${html}${block}`;
 }
 
-/** Inject the bast-honsras CTA after the jämförelsetabell. Idempotent. Other slugs unchanged. */
+function escapeRegExp(value = ''): string {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** After the named heading's section (until next same/higher heading). Else after last aside, else end. */
+export function injectAfterHeadingSection(html: string, heading: string, block: string): string {
+  const escaped = escapeRegExp(heading);
+  const headingRe = new RegExp(
+    `(<h([2-4])\\b[^>]*>[\\s\\S]*?${escaped}[\\s\\S]*?<\\/h\\2>)`,
+    'i',
+  );
+  const match = headingRe.exec(html);
+  if (match && match.index !== undefined) {
+    const level = Number(match[2]);
+    const headingEnd = match.index + match[1].length;
+    const after = html.slice(headingEnd);
+    const nextHeadingRe = new RegExp(`<h[1-${level}]\\b`, 'i');
+    const next = after.search(nextHeadingRe);
+    const insertAt = next === -1 ? html.length : headingEnd + next;
+    return `${html.slice(0, insertAt)}${block}${html.slice(insertAt)}`;
+  }
+
+  const lastAside = html.lastIndexOf('</aside>');
+  if (lastAside !== -1) {
+    const insertAt = lastAside + '</aside>'.length;
+    return `${html.slice(0, insertAt)}${block}${html.slice(insertAt)}`;
+  }
+
+  return `${html}${block}`;
+}
+
+function injectOneCta(html: string, cta: ContextualCtaSpec): string {
+  if (!html || htmlHasContextualRegisterCta(html, cta)) return html;
+  const block = renderContextualRegisterCtaHtml(cta);
+  if (cta.after === 'comparison-table') return injectAfterComparisonTable(html, block);
+  if (cta.afterHeading) return injectAfterHeadingSection(html, cta.afterHeading, block);
+  return html;
+}
+
+/** Inject slug-matched register/demo CTAs. Idempotent. Other slugs unchanged. */
 export function injectContextualRegisterCta(html = '', slug?: string | null): string {
-  const cta = contextualRegisterCtaForSlug(slug);
-  if (!cta || cta.after !== 'comparison-table' || !html) return html;
-  if (htmlHasContextualRegisterCta(html, cta)) return html;
-  return injectAfterComparisonTable(html, renderContextualRegisterCtaHtml(cta));
+  if (!html) return html;
+  let result = html;
+  const registerCta = contextualRegisterCtaForSlug(slug);
+  if (registerCta?.after === 'comparison-table') {
+    result = injectOneCta(result, registerCta);
+  }
+  const demoCta = contextualDemoCtaForSlug(slug);
+  if (demoCta) {
+    result = injectOneCta(result, demoCta);
+  }
+  return result;
 }

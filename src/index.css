@@ -302,6 +302,19 @@
   font-weight: 600;
 }
 
+/* In-content CTA buttons sit inside .prose-custom; keep label readable on primary. */
+.prose-custom a.contextual-cta-button {
+  color: hsl(var(--primary-foreground)) !important;
+  background-color: hsl(var(--primary));
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.prose-custom a.contextual-cta-button:hover {
+  text-decoration: none;
+  opacity: 0.95;
+}
+
 .prose-custom a:hover {
   text-decoration: underline;
 }
