@@ -7,8 +7,9 @@
  * andra.
  *
  * Området är medvetet konservativt: ett "gated" betyder att ett
- * mänskligt steg krävs före release (t.ex. aps-environment=production
- * i releasekonfigurationen) — aldrig automatiska App Store-ändringar.
+ * mänskligt steg krävs före release. Release-entitlements sätter
+ * aps-environment=production; Debug stannar på development.
+ * Aldrig automatiska App Store-ändringar.
  */
 
 export type ReadinessLevel = 'pass' | 'gated' | 'fail';

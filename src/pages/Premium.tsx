@@ -15,6 +15,7 @@ import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
 import { isNativeIos } from '@/lib/nativePlatform';
+import { invokeCreateCheckout } from '@/lib/stripeCheckout';
 import {
   isIosBillingAvailable,
   loadStoreKitProducts,
@@ -326,9 +327,7 @@ export default function Premium() {
     trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
-      const checkoutResult = await supabase.functions.invoke('create-checkout', {
-        body: { plan },
-      });
+      const checkoutResult = await invokeCreateCheckout({ plan });
       let data = checkoutResult.data;
       const error = checkoutResult.error;
 

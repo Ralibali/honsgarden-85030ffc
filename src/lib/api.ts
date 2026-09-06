@@ -3,6 +3,7 @@ import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
+import { invokeCreateCheckout } from '@/lib/stripeCheckout';
 
 // ==================== TYPES ====================
 
@@ -755,7 +756,7 @@ export async function getPremiumStatus() {
 }
 
 export async function createCheckoutSession(sessionData: { priceId: string }): Promise<{ url: string }> {
-  const { data, error } = await supabase.functions.invoke('create-checkout', { body: sessionData });
+  const { data, error } = await invokeCreateCheckout(sessionData);
   if (error) throw new Error(error.message);
   return data;
 }

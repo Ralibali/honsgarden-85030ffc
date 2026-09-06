@@ -8,6 +8,8 @@ import {
 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { isNativeIos } from '@/lib/nativePlatform';
+import { invokeShopCheckout, NATIVE_IOS_SHOP_STRIPE_MESSAGE } from '@/lib/stripeCheckout';
 import type { Tables } from '@/integrations/supabase/types';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
@@ -221,11 +223,17 @@ export default function Shop() {
   };
 
   const handleCheckout = async () => {
+    if (isNativeIos()) {
+      toast({
+        title: 'Köp i webbläsaren',
+        description: NATIVE_IOS_SHOP_STRIPE_MESSAGE,
+      });
+      return;
+    }
+
     setCheckingOut(true);
     try {
-      const { data, error } = await supabase.functions.invoke('shop-checkout', {
-        body: { items: cart },
-      });
+      const { data, error } = await invokeShopCheckout({ items: cart });
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       if (!data?.url) throw new Error('Ingen checkout-URL från Stripe');

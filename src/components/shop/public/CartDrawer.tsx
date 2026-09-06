@@ -3,8 +3,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from '@/com
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Minus, Plus, Trash2, ShoppingBag, ShieldCheck } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { isNativeIos } from '@/lib/nativePlatform';
+import { invokeShopCheckout, NATIVE_IOS_SHOP_STRIPE_MESSAGE } from '@/lib/stripeCheckout';
 import {
   cartCount, cartSubtotalOre, shippingForSubtotal, formatSek, setQuantity, removeFromCart,
   type CartItem,
@@ -46,17 +47,22 @@ export function CartDrawer({ open, onOpenChange, cart, setCart, products, settin
 
   const handleCheckout = async () => {
     if (lines.length === 0) return;
+    if (isNativeIos()) {
+      toast({
+        title: 'Köp i webbläsaren',
+        description: NATIVE_IOS_SHOP_STRIPE_MESSAGE,
+      });
+      return;
+    }
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('shop-checkout', {
-        body: {
-          items: cart.map((it) => ({
-            product_id: it.product_id,
-            variant_id: it.variant_id ?? null,
-            quantity: it.quantity,
-          })),
-          preview: adminPreview,
-        },
+      const { data, error } = await invokeShopCheckout({
+        items: cart.map((it) => ({
+          product_id: it.product_id,
+          variant_id: it.variant_id ?? null,
+          quantity: it.quantity,
+        })),
+        preview: adminPreview,
       });
       if (error) throw error;
       const url = (data as { url?: string; error?: string })?.url;

@@ -1,5 +1,9 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { evaluateNativeReadiness, type NativeReadinessFacts } from '../nativeReadiness';
+
+const REPO_ROOT = join(__dirname, '..', '..', '..');
 
 const READY_FACTS: NativeReadinessFacts = {
   capacitor: { appId: 'se.honsgarden.app', appName: 'Hönsgården', webDir: 'dist', hasServerUrl: false },
@@ -84,6 +88,18 @@ describe('native readiness evaluator', () => {
     expect(bare.checks.find((c) => c.id === 'versions')?.level).toBe('fail');
     expect(bare.checks.find((c) => c.id === 'iap_products')?.level).toBe('fail');
     expect(bare.verdict).toBe('NOT_READY');
+  });
+
+  it('splits APS entitlements and ships a shared Archive scheme', () => {
+    const debugEntitlements = readFileSync(join(REPO_ROOT, 'ios/App/App/App.entitlements'), 'utf8');
+    const releaseEntitlements = readFileSync(join(REPO_ROOT, 'ios/App/App/AppRelease.entitlements'), 'utf8');
+    const pbxproj = readFileSync(join(REPO_ROOT, 'ios/App/App.xcodeproj/project.pbxproj'), 'utf8');
+    expect(debugEntitlements).toMatch(/<key>aps-environment<\/key>\s*<string>development<\/string>/);
+    expect(releaseEntitlements).toMatch(/<key>aps-environment<\/key>\s*<string>production<\/string>/);
+    expect(pbxproj).toContain('CODE_SIGN_ENTITLEMENTS = App/App.entitlements');
+    expect(pbxproj).toContain('CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements');
+    expect(pbxproj).not.toContain('DEVELOPMENT_TEAM');
+    expect(existsSync(join(REPO_ROOT, 'ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme'))).toBe(true);
   });
 
   it('handles entirely missing facts without crashing', () => {
