@@ -32,3 +32,7 @@ Följ affiliate-klick per artikel från befintlig spårning och faktisk godkänd
 ## Soro-flytt
 
 De gamla texterna finns i tidigare sparat flyttarkiv. content/editorial/migration innehåller endast de saknade native-posterna som ska bevaras, inte nya ChatGPT-artiklar. soro-media-map.json kopplar varje källa till dess egna bildfil. Gamla ?post-länkar går via klientomdirigering till den native-artikeln; detta är inte en verifierad HTTP 301. Soro-jobben pausas vid bytet, inte andra jobb. Abonnemang kan avslutas först efter kontroll av alla gamla texter/bilder, riktiga URL:er och aktiv ersättande publicering. Återaktivera inte gamla Soro-upsert-jobb som en automatisk retry.
+
+## Publiceringskö
+
+Nästa originalartikel finns i `queue/`. Filer där är utkast och räknas inte som publicerade. Följ `queue/README.md`, kontrollera senaste publicering före varje körning och publicera högst en ny artikel per sajt varannan kalenderdag i Europe/Stockholm.
