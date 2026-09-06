@@ -61,9 +61,8 @@ jobs:
       - name: Audit editorial content
         run: npm run audit:content:check
 
-      # Native readiness (Swarm R) är INFORMATIVE: aps-environment=development
-      # är avsiktligt före TestFlight-aktivering och ska aldrig blockera
-      # webb-merges. Rapporten syns i CI-loggen.
+      # Native readiness (Swarm R) är INFORMATIVE och blockerar inte webb-merges.
+      # Release-entitlements använder aps-environment=production; Debug stannar på development.
       - name: Native readiness (informational)
         run: npm run audit:native
 

@@ -36,6 +36,7 @@ function collectFacts() {
   const capSrc = read('capacitor.config.ts') || '';
   const plist = read('ios/App/App/Info.plist') || '';
   const entitlements = read('ios/App/App/App.entitlements') || '';
+  const releaseEntitlements = read('ios/App/App/AppRelease.entitlements') || entitlements;
   const privacy = read('ios/App/App/PrivacyInfo.xcprivacy') || '';
   const pbxproj = read('ios/App/App.xcodeproj/project.pbxproj') || '';
   const storekit = read('ios/App/App/Products.storekit') || '';
@@ -63,8 +64,14 @@ function collectFacts() {
       hasAts: plist.includes('NSAppTransportSecurity'),
       iconCount: countFiles('ios/App/App/Assets.xcassets/AppIcon.appiconset', '.png'),
       splashCount: countFiles('ios/App/App/Assets.xcassets/Splash.imageset', '.png'),
-      hasAppleSignIn: entitlements.includes('com.apple.developer.applesignin'),
-      apsEnvironment: (entitlements.match(/<key>aps-environment<\/key>\s*<string>([^<]+)<\/string>/) || [])[1],
+      hasAppleSignIn:
+        entitlements.includes('com.apple.developer.applesignin') ||
+        releaseEntitlements.includes('com.apple.developer.applesignin'),
+      apsEnvironment: (
+        releaseEntitlements.match(/<key>aps-environment<\/key>\s*<string>([^<]+)<\/string>/) ||
+        entitlements.match(/<key>aps-environment<\/key>\s*<string>([^<]+)<\/string>/) ||
+        []
+      )[1],
       marketingVersion: (pbxproj.match(/MARKETING_VERSION = ([^;]+);/) || [])[1],
       buildNumber: (pbxproj.match(/CURRENT_PROJECT_VERSION = ([^;]+);/) || [])[1],
       storeKitProductIds: [...storekit.matchAll(/"productID"\s*:\s*"([^"]+)"/g)].map((m) => m[1]),
