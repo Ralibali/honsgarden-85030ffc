@@ -22,7 +22,7 @@ export default function StickyMobileCTA() {
     <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden bg-background/95 backdrop-blur-md border-t border-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] animate-fade-in">
       <Button asChild className="w-full h-12 text-base gap-2 shadow-[0_-4px_20px_hsl(var(--primary)/0.2)]">
         <a href="/login?mode=register">
-          🥚 Skapa konto – gratis
+          Skapa konto – 7 dagar Premium gratis
           <ArrowRight className="h-4 w-4" />
         </a>
       </Button>
