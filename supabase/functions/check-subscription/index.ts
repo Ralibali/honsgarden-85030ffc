@@ -38,14 +38,25 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
-
+    if (!authHeader?.startsWith("Bearer ") || !authHeader.slice(7).trim()) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Auth error: ${userError.message}`);
-
+    if (userError) {
+      const unavailable = (userError.status ?? 0) >= 500;
+      return new Response(JSON.stringify({ error: unavailable ? "Authentication temporarily unavailable" : "Invalid session" }), {
+        status: unavailable ? 503 : 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    if (!user?.email) {
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
