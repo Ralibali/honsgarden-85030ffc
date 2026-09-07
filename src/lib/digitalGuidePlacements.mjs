@@ -33,7 +33,10 @@ export function digitalGuideAudienceForArticle(slug) {
 export function renderDigitalGuidePlacement(audience = 'beginner') {
   const copy = DIGITAL_GUIDE_COPY[audience];
   if (!copy) return '';
-  return `<aside data-digital-guide="${audience}" aria-label="Hönsgårdens PDF-guide" class="my-8 rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
+  // Static pages cannot know the visitor's session. Keep the offer hidden until
+  // DigitalGuideCard has confirmed a signed-out web visitor, avoiding a flash
+  // of advertising for signed-in readers during startup or a slow connection.
+  return `<aside hidden data-digital-guide="${audience}" aria-label="Hönsgårdens PDF-guide" class="my-8 rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
     <div class="flex items-start gap-4 sm:gap-6">
       <img src="${DIGITAL_GUIDE_COVER_PATH}" alt="Omslaget till Mina första höns" width="120" height="170" loading="lazy" class="w-20 sm:w-28 h-auto shrink-0 rounded border border-border shadow-sm" />
       <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-wide text-primary">Vår PDF-guide · 24 sidor</p>

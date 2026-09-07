@@ -2,13 +2,20 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import DigitalGuideCard from './DigitalGuideCard';
+import { useAuth } from '@/hooks/useAuth';
 import { isNativePlatform } from '@/lib/nativePlatform';
 import { trackEvent } from '@/lib/analytics';
 import { digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '@/lib/digitalGuidePlacements.mjs';
 
 vi.mock('@/lib/nativePlatform', () => ({ isNativePlatform: vi.fn(() => false) }));
+vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn(() => ({ isAuthenticated: false, loading: false })) }));
 vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn() }));
-afterEach(() => { cleanup(); vi.clearAllMocks(); vi.mocked(isNativePlatform).mockReturnValue(false); });
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+  vi.mocked(isNativePlatform).mockReturnValue(false);
+  vi.mocked(useAuth).mockReturnValue({ isAuthenticated: false, loading: false } as ReturnType<typeof useAuth>);
+});
 
 describe('PDF placements', () => {
   it('matches actual chicken articles and excludes unrelated beginner content', () => {
@@ -31,8 +38,28 @@ describe('PDF placements', () => {
     const { container } = render(<MemoryRouter><DigitalGuideCard placement="blog_index" /></MemoryRouter>);
     expect(container.innerHTML).toBe('');
   });
-  it('keeps the same offer and both links in prerendered HTML', () => {
+  it.each(['blog_index', 'blog_article', 'beginner_guide', 'breed_guide'] as const)('hides the offer for signed-in visitors at %s', (placement) => {
+    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true, loading: false } as ReturnType<typeof useAuth>);
+    const { container } = render(<MemoryRouter><DigitalGuideCard placement={placement} /></MemoryRouter>);
+    expect(container.innerHTML).toBe('');
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+  it('waits for authentication, shows the offer to guests and removes it after sign-in', () => {
+    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: false, loading: true } as ReturnType<typeof useAuth>);
+    const card = <MemoryRouter><DigitalGuideCard placement="blog_index" /></MemoryRouter>;
+    const { container, rerender } = render(card);
+    expect(container.innerHTML).toBe('');
+    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: false, loading: false } as ReturnType<typeof useAuth>);
+    rerender(<MemoryRouter><DigitalGuideCard placement="blog_index" /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: 'Se guiden – 199 kr' })).toBeVisible();
+    vi.mocked(useAuth).mockReturnValue({ isAuthenticated: true, loading: false } as ReturnType<typeof useAuth>);
+    rerender(<MemoryRouter><DigitalGuideCard placement="blog_index" /></MemoryRouter>);
+    expect(container.innerHTML).toBe('');
+  });
+  it('keeps the static offer hidden until the visitor is confirmed signed out', () => {
     const html = renderDigitalGuidePlacement('breed');
+    const { container } = render(<div dangerouslySetInnerHTML={{ __html: html }} />);
+    expect(container.querySelector('[data-digital-guide]')).not.toBeVisible();
     expect(html).toContain('När du valt ras');
     expect(html).toContain('199 kr inkl. moms');
     expect(html).toContain('href="/guider/mina-forsta-hons"');

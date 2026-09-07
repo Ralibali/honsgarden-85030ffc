@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { isNativePlatform } from '@/lib/nativePlatform';
 import { trackEvent } from '@/lib/analytics';
 import { GUIDE_COVER_PATH, GUIDE_SAMPLE_URL } from '@/lib/digitalGuide';
@@ -11,7 +12,8 @@ export default function DigitalGuideCard({ audience = 'beginner', placement }: {
   audience?: Audience;
   placement: Placement;
 }) {
-  if (isNativePlatform()) return null;
+  const { isAuthenticated, loading } = useAuth();
+  if (loading || isAuthenticated || isNativePlatform()) return null;
   const copy = DIGITAL_GUIDE_COPY[audience];
   const track = (action: 'product' | 'sample') => trackEvent('Guide CTA Clicked', { placement, audience, action });
 
