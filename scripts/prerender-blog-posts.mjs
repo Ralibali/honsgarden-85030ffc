@@ -1,3 +1,4 @@
+import { digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
@@ -130,6 +131,7 @@ function renderArticle(post) {
 <h1 class="font-serif text-3xl sm:text-5xl text-foreground leading-tight mb-4">${escapeHtml(post.title)}</h1>
 ${post.excerpt ? `<p class="text-lg text-muted-foreground leading-relaxed mb-6">${escapeHtml(post.excerpt)}</p>` : ''}
 <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" class="w-full aspect-[16/9] object-cover rounded-2xl mb-8" loading="eager" />
+${digitalGuideAudienceForArticle(post.slug) ? renderDigitalGuidePlacement(digitalGuideAudienceForArticle(post.slug)) : ''}
 <div class="prose-custom">${content}</div>
 </article></main></div>`;
 }
@@ -325,8 +327,9 @@ function buildStaticPage(template, page) {
     return injectTopicBody(withHead, renderHomeTopicBody());
   }
   const shopPlacement = shopPlacementForPath(page.path);
-  if (shopPlacement && (page.path === '/honsraser' || page.path === '/borja-med-hons')) {
-    return injectTopicBody(withHead, renderContextualShopPlacementHtml(shopPlacement));
+  if (['/blogg', '/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {
+    const audience = page.path.startsWith('/honsraser') ? 'breed' : 'beginner';
+    return injectTopicBody(withHead, renderDigitalGuidePlacement(audience) + (shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''));
   }
   return withHead;
 }

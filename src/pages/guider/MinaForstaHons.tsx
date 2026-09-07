@@ -10,6 +10,7 @@ import {
   BookOpen, CheckCircle2, Download, FileText, Printer, ShieldCheck, Loader2, ArrowRight,
 } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
+import ContentSources from '@/components/content/ContentSources';
 import { GUIDE_COVER_PATH, GUIDE_COVER_URL, GUIDE_SAMPLE_URL } from '@/lib/digitalGuide';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
@@ -23,16 +24,16 @@ const CHAPTERS: Array<{ title: string; body: string }> = [
   { title: 'Budgetmall med räkneexempel', body: 'Startkostnad och löpande kostnad per månad, med ett ifyllt exempel så att du ser hur du räknar på dina egna siffror.' },
   { title: 'Boende och säkerhet', body: 'Plan för hönshus, rastgård, sittpinnar, värpreden och skydd mot rovdjur och rymning.' },
   { title: 'Första 48 timmarna', body: 'Steg för steg när hönsen kommer hem: transport, insläpp, vatten, foder och vad du håller ögonen på.' },
-  { title: 'Första 30 dagarna', body: 'En dag-för-dag-plan som gör de första veckorna förutsägbara i stället för stressiga.' },
+  { title: 'Första 30 dagarna', body: 'Fem etapper för första månaden: lär känna flocken, justera rutinerna och prova din reservplan.' },
   { title: 'Rutiner morgon och kväll', body: 'Korta checklistor du kan sätta upp i hönshuset och bocka av utan att fundera.' },
   { title: 'Hönsvaktsblad', body: 'Ett blad att lämna till den som passar flocken: rutiner, kontaktuppgifter och vad som är viktigt.' },
-  { title: 'Individkort per höna', body: 'Namn, ras, ålder, kännetecken och anteckningar – ett kort per höna.' },
-  { title: 'Ägglogg', body: 'Enkel logg att skriva i för hand, eller använd som komplement till appen.' },
+  { title: 'Individkort per höna', body: 'Fyra individkort för namn, ras eller typ, födelseuppgift, ursprung och anteckningar. Skriv ut fler vid behov.' },
+  { title: 'Ägglogg', body: 'Ett arbetsblad för 30 dagar med datum, äggantal och observationer. Fyll i digitalt eller för hand.' },
 ];
 
 const FACTS = [
   { icon: FileText, label: '24 sidor i A4' },
-  { icon: Printer, label: 'Utskrivbar' },
+  { icon: Printer, label: 'Ifyllbar och utskrivbar' },
   { icon: BookOpen, label: 'Checklistor och arbetsblad' },
   { icon: Download, label: 'Direkt nedladdning' },
 ];
@@ -42,6 +43,7 @@ export default function MinaForstaHons() {
   const canceled = params.get('avbrutet') === '1';
   const [consent, setConsent] = useState(false);
   const [email, setEmail] = useState('');
+  const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(false);
   const native = isNativePlatform();
 
@@ -70,8 +72,8 @@ export default function MinaForstaHons() {
   });
 
   const startCheckout = async () => {
-    if (!consent) {
-      toast.error('Kryssa i rutan om omedelbar leverans först.');
+    if (!consent || country !== 'SE') {
+      toast.error('Välj Sverige som faktureringsland och godkänn omedelbar leverans.');
       return;
     }
     setLoading(true);
@@ -80,6 +82,7 @@ export default function MinaForstaHons() {
         body: {
           productSlug: 'mina-forsta-hons',
           consent: true,
+          country,
           termsVersion: TERMS_VERSION,
           email: email.trim() || undefined,
         },
@@ -94,6 +97,17 @@ export default function MinaForstaHons() {
       setLoading(false);
     }
   };
+
+  if (native) return (
+    <div className="min-h-dvh bg-background">
+      <LandingNavbar />
+      <main className="mx-auto max-w-2xl px-5 pb-16 pt-24">
+        <h1 className="font-serif text-3xl">Mina första höns</h1>
+        <p className="mt-4 text-muted-foreground">Den här produktvyn är inte tillgänglig i appen.</p>
+        <Link to="/blogg" className="mt-6 inline-flex text-primary underline">Till hönsguiderna</Link>
+      </main>
+    </div>
+  );
 
   return (
     <div className="min-h-dvh bg-background">
@@ -118,8 +132,8 @@ export default function MinaForstaHons() {
               </h1>
               <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
                 Från första funderingen till en vardag som fungerar. En svensk startguide på 24 sidor
-                med checklistor och arbetsblad du skriver ut och fyller i – budget och planer i
-                stället för lösa tips.
+                med checklistor och arbetsblad för din egen flock. Fyll i digitalt eller skriv ut
+                och använd med penna.
               </p>
 
               <ul className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -132,6 +146,7 @@ export default function MinaForstaHons() {
               </ul>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
+                <a href="#kop-guiden" className="inline-flex items-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Se köp – 199 kr inkl. moms</a>
                 <a
                   href={GUIDE_SAMPLE_URL}
                   target="_blank"
@@ -146,16 +161,16 @@ export default function MinaForstaHons() {
             </div>
 
             {/* Köpkort */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+            <div id="kop-guiden" className="scroll-mt-24 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
               <img
                 src={GUIDE_COVER_PATH}
                 alt="Omslaget till guiden Mina första höns – tre höns i en trädgård framför ett rött hönshus"
                 width={1000}
                 height={1414}
-                className="mb-6 w-full rounded-xl border border-border object-cover"
+                className="float-right mb-4 ml-4 h-auto w-24 rounded border border-border shadow-sm sm:w-32"
                 loading="eager"
               />
-              <div className="flex items-baseline gap-2">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="font-serif text-3xl text-foreground">{PRICE_LABEL}</span>
                 <span className="text-sm text-muted-foreground">inkl. moms · engångsköp</span>
               </div>
@@ -164,12 +179,7 @@ export default function MinaForstaHons() {
                 inte Hönsgården Plus.
               </p>
 
-              {native ? (
-                <div className="mt-6 rounded-xl border border-border bg-muted/50 px-4 py-4 text-sm text-muted-foreground">
-                  Guiden köps på honsgarden.se i webbläsaren. Öppna sidan där för att slutföra köpet.
-                </div>
-              ) : (
-                <div className="mt-6 space-y-4">
+                <div className="clear-both pt-6 space-y-4">
                   <label className="block text-sm font-medium text-foreground" htmlFor="digital-email">
                     E-post för kvitto och nedladdningslänk <span className="text-muted-foreground">(valfritt – annars fyller du i den i kassan)</span>
                   </label>
@@ -183,6 +193,13 @@ export default function MinaForstaHons() {
                     placeholder="din@epost.se"
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary"
                   />
+
+                  <label className="block text-sm font-medium text-foreground" htmlFor="digital-country">Faktureringsland</label>
+                  <select id="digital-country" value={country} onChange={(e) => setCountry(e.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm">
+                    <option value="">Välj faktureringsland</option>
+                    <option value="SE">Sverige</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">Köpet gäller svensk faktureringsadress. Bor du i ett annat land? Kontakta <a className="underline" href="mailto:info@auroramedia.se">info@auroramedia.se</a>.</p>
 
                   <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
                     <Checkbox
@@ -200,7 +217,7 @@ export default function MinaForstaHons() {
                   <Button
                     size="lg"
                     className="w-full"
-                    disabled={!consent || loading}
+                    disabled={!consent || country !== 'SE' || loading}
                     onClick={startCheckout}
                   >
                     {loading ? (
@@ -217,7 +234,6 @@ export default function MinaForstaHons() {
                     <Link to="/guider/mina-forsta-hons/hamta" className="underline">Hämta din länk igen</Link>.
                   </p>
                 </div>
-              )}
             </div>
           </div>
         </section>
@@ -226,9 +242,20 @@ export default function MinaForstaHons() {
         <section className="mx-auto mt-20 max-w-6xl px-4">
           <h2 className="font-serif text-3xl text-foreground">Det här finns i guiden</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
-            Tio delar som följer din väg från fundering till fungerande rutin. Arbetsbladen är
-            gjorda att skrivas ut och fyllas i med penna.
+            Guiden innehåller planering, rutiner och arbetsblad. Den utgår från att du köper
+            unghöns eller vuxna höns. Kläckning, kycklinguppfödning och avel ingår inte.
+            Fyll i fälten i en PDF-läsare som stöder formulär, eller skriv ut. Mobilens förhandsvisning
+            kan ha begränsat stöd. Budgeten räknas manuellt.
           </p>
+          <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
+            Utgåva 1.2. Sakråden källkontrollerades med AI-stöd den 7 september 2026 mot bland annat
+            Jordbruksverket och SVA. Guiden är inte veterinärgranskad. Källor och länkar till aktuella
+            regler finns i PDF:en.
+          </p>
+          <ContentSources className="mt-5 max-w-2xl" heading="Underlag för källkontrollen" sources={[
+            { href: 'https://jordbruksverket.se/djur/lantbruksdjur-och-hastar/fjaderfan/skotsel-och-stallmiljo', publisher: 'Jordbruksverket', label: 'Skötsel och stallmiljö' },
+            { href: 'https://www.sva.se/djurhaelsa/djurslag-a-oe/sport-och-saellskapsdjur/hobbyfjaederfaen/smittskydd-foer-hobbyfjaederfaen/smittskydd-vid-inkoep-av-aegg-och-hoens/', publisher: 'SVA', label: 'Smittskydd vid inköp' },
+          ]} />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CHAPTERS.map((c, i) => (
               <article key={c.title} className="rounded-2xl border border-border bg-card p-5">
@@ -248,7 +275,7 @@ export default function MinaForstaHons() {
           <ol className="mt-6 space-y-4">
             {[
               'Du kryssar i att filen levereras direkt och betalar med kort hos Stripe.',
-              'Vi bekräftar betalningen på servern – först då skapas din nedladdning.',
+              'När betalningen är bekräftad blir guiden tillgänglig att ladda ner.',
               'Du får PDF:en direkt på tack-sidan och en beständig länk i mejlet.',
               'Behöver du filen igen senare hämtar du en ny länk med din e-postadress.',
             ].map((step, i) => (
@@ -323,8 +350,10 @@ export default function MinaForstaHons() {
               <div>
                 <dt className="font-semibold text-foreground">Innehållets grund</dt>
                 <dd className="text-muted-foreground">
-                  Innehållet är sakligt kontrollerat mot Jordbruksverkets och SVA:s publika
-                  vägledningar. Det ersätter inte veterinärbedömning i enskilda fall.
+                  Sakråden källkontrollerades med AI-stöd den 7 september 2026 mot bland annat
+                  Jordbruksverket och SVA. Guiden är inte veterinärgranskad och ersätter inte
+                  veterinärbedömning. Regler och smittläge behöver kontrolleras på nytt inför inköp.
+                  Budgetpriserna är uttryckligen räkneexempel, inte aktuella prisuppgifter.
                 </dd>
               </div>
             </dl>
@@ -341,8 +370,7 @@ export default function MinaForstaHons() {
             </a>
             {!native && (
               <a
-                href="#top"
-                onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                href="#kop-guiden"
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
               >
                 <CheckCircle2 className="h-4 w-4" aria-hidden /> Köp och ladda ner – {PRICE_LABEL}

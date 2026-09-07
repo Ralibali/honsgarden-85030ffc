@@ -10,6 +10,8 @@ import { ArrowLeft, Egg, Loader2, BookOpen, CalendarDays, Clock } from 'lucide-r
 import ShareButtons from '@/components/ShareButtons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import ArticleCta from '@/components/blog/ArticleCta';
+import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
+import { digitalGuideAudienceForArticle } from '@/lib/digitalGuidePlacements.mjs';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
 import { trackEvent } from '@/lib/analytics';
@@ -649,7 +651,9 @@ export default function GuideArticle() {
           onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
         />
 
-        {!isAuthenticated && <ArticleCta category={post.category} variant="inline" />}
+        {digitalGuideAudienceForArticle(post.slug) ? (
+          <DigitalGuideCard audience={digitalGuideAudienceForArticle(post.slug)} placement="blog_article" />
+        ) : !isAuthenticated && <ArticleCta category={post.category} variant="inline" />}
 
         {articleRestHtml && (
           <div

@@ -1,3 +1,4 @@
+import { renderDigitalGuidePlacement } from './digitalGuidePlacements.mjs';
 /**
  * Topic H1 + CTR titles for prerendered public pages.
  *
@@ -72,6 +73,7 @@ export function renderBreedTopicBody(breed, h1 = breedTopicH1(breed)) {
   <nav class="text-xs text-muted-foreground mb-4"><a href="/">Hem</a> / <a href="/honsraser">Hönsraser</a> / ${escapeHtml(breed.namn)}</nav>
   <h1 class="font-serif text-4xl md:text-5xl text-foreground mb-3">${escapeHtml(h1)}</h1>
   <p class="text-muted-foreground max-w-2xl mb-8 leading-relaxed">${escapeHtml(breed.description || '')}</p>
+  ${renderDigitalGuidePlacement('breed')}
   <section class="max-w-3xl border-t border-border/40 pt-8">
     <h2 class="font-serif text-2xl text-foreground mb-4">Vanliga frågor</h2>
     <div class="space-y-5">${faqHtml}</div>

@@ -44,6 +44,11 @@ serve(async (req) => {
 
     // --- Väg 1: befintlig token ---
     if (body.token !== undefined) {
+      const tokenAllowed = await digitalRateLimitAllows(admin, {
+        scope: "digital-token-status-ip", value: clientIp(req) || "unknown",
+        max: 60, windowMinutes: 10,
+      });
+      if (!tokenAllowed) return jsonResponse({ error: "För många förfrågningar. Vänta en stund." }, 429, h);
       if (!isPlausibleToken(body.token)) return jsonResponse({ error: "Ogiltig länk." }, 400, h);
       const tokenHash = await hashAccessToken(body.token);
       const { data: tokenRow } = await admin
@@ -112,7 +117,7 @@ serve(async (req) => {
       const sessionSlug = session.metadata?.digital_product_slug;
       const mismatch = sessionOrderId !== order.id
         || session.id !== sessionId
-        || (sessionSlug ?? order.product_slug) !== order.product_slug
+        || sessionSlug !== order.product_slug
         || session.mode !== "payment"
         || session.livemode !== isLiveStripeKey(stripeKey)
         || (session.currency ?? "").toLowerCase() !== String(order.currency ?? "sek").toLowerCase();
@@ -178,7 +183,10 @@ serve(async (req) => {
       consent_at: order.consent_at,
       paid_at: order.paid_at,
     }, product);
-    if (!receipt.ok) console.error("[digital-order-status] receipt not queued", receipt.reason, order.id);
+    if (!receipt.ok) {
+      console.error("[digital-order-status] receipt not queued", receipt.reason, order.id);
+      return jsonResponse({ error: GENERIC, retry: true }, 503, h);
+    }
     if (receipt.queued) await flushEmailQueue("digital-order-status");
 
     const token = await issueAccessToken(admin, order.id, "thankyou");

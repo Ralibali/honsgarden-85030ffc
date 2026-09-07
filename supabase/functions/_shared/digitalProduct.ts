@@ -49,7 +49,7 @@ export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
     samplePath: "samples/mina-forsta-hons-smakprov.pdf",
     samplePages: 4,
     totalPages: 24,
-    assetVersion: "v1-1",
+    assetVersion: "v1-2",
     downloadFilename: "Honsgarden-Mina-forsta-hons.pdf",
     termsVersion: "2026-09-07",
     salesPath: "/guider/mina-forsta-hons",

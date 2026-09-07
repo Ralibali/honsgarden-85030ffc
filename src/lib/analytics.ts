@@ -109,6 +109,7 @@ export type AnalyticsOutboundPage =
  * Håll properties låga och icke-identifierande.
  */
 export type AnalyticsEventMap = {
+  'Guide CTA Clicked': { placement: 'blog_index' | 'blog_article' | 'beginner_guide' | 'breed_guide'; audience: 'beginner' | 'breed'; action: 'product' | 'sample' };
   'Premium Viewed': { source?: AnalyticsSource };
   'Diary Entry Saved': { action: 'create' | 'edit' };
   'Signup Started': {

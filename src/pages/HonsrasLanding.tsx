@@ -13,6 +13,7 @@ import { getBreedLayingRate, DEFAULT_BREED_RATE } from '@/data/breedLayingRates'
 import { contextualRegisterCtaForSlug } from '@/lib/contextualRegisterCtas';
 import { shopPlacementForPath } from '@/lib/contextualShopPlacements';
 import ContextualShopCta from '@/components/ContextualShopCta';
+import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -154,6 +155,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
       {/* Sektioner */}
       <section className="py-10 sm:py-14 bg-background">
         <div className="container max-w-3xl mx-auto px-5 sm:px-6 space-y-12">
+          <DigitalGuideCard audience="breed" placement="breed_guide" />
           {page.sections.map((section, idx) => (
             <motion.article key={section.heading} {...fadeUp(idx * 0.04)}>
               <h2 className="font-serif text-2xl sm:text-3xl text-foreground mb-4 leading-tight">

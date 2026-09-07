@@ -143,7 +143,13 @@ serve(async (req) => {
 
     if (!session.url) throw new Error("Stripe returned no checkout URL");
 
-    await admin.from("digital_orders").update({ stripe_session_id: session.id }).eq("id", order.id);
+    const { error: sessionSaveError } = await admin.from("digital_orders")
+      .update({ stripe_session_id: session.id }).eq("id", order.id);
+    if (sessionSaveError) {
+      // Never expose a payable session whose return cannot be resolved to its order.
+      await stripe.checkout.sessions.expire(session.id);
+      throw new Error(`session association failed: ${sessionSaveError.message}`);
+    }
 
     return jsonResponse({ url: session.url, orderNumber: order.order_number }, 200, corsHeaders);
   } catch (error) {
