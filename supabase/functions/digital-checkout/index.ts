@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse, safeSuccessOrigin } from "../_shared/cors.ts";
-import { getDigitalProduct } from "../_shared/digitalProduct.ts";
+import { clientIp, getDigitalProduct, hashKey, isLiveStripeKey } from "../_shared/digitalProduct.ts";
 
 const GENERIC_FAILURE = "Kunde inte starta betalningen. Försök igen om en stund.";
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -49,6 +49,38 @@ serve(async (req) => {
       return jsonResponse({ error: "Ange en giltig e-postadress." }, 400, corsHeaders);
     }
 
+    // Faktureringsland: vi kan bara momshantera Sverige automatiskt.
+    const rawCountry = typeof body.country === "string" ? body.country.trim().toUpperCase() : "SE";
+    if (!product.allowedBillingCountries.includes(rawCountry)) {
+      return jsonResponse({
+        error: "Vi säljer guiden till kunder med svensk faktureringsadress. Mejla "
+          + "info@auroramedia.se om du vill köpa från ett annat land.",
+      }, 400, corsHeaders);
+    }
+
+    // Hastighetsspärr: max 5 kassaförsök per IP och 10 minuter, 5 per e-post.
+    const ip = clientIp(req);
+    for (const [scope, value, max] of [
+      ["digital-checkout-ip", ip, 5],
+      ["digital-checkout-email", email ?? "", 5],
+    ] as const) {
+      if (!value) continue;
+      const { data: allowed, error: limitError } = await admin.rpc("digital_rate_limit", {
+        p_scope: scope,
+        p_key_hash: await hashKey(value),
+        p_max: max,
+        p_window_minutes: 10,
+      });
+      if (limitError) console.error("[digital-checkout] rate limit error", limitError.message);
+      if (allowed === false) {
+        return jsonResponse(
+          { error: "För många försök just nu. Vänta några minuter och prova igen." },
+          429,
+          corsHeaders,
+        );
+      }
+    }
+
     const now = new Date().toISOString();
     const { data: order, error: orderError } = await admin
       .from("digital_orders")
@@ -60,6 +92,8 @@ serve(async (req) => {
         currency: product.currency,
         vat_rate: product.vatRate,
         status: "pending",
+        declared_country: rawCountry,
+        livemode: isLiveStripeKey(stripeKey),
         consent_immediate_delivery: true,
         consent_terms_version: product.termsVersion,
         consent_at: now,
@@ -77,27 +111,18 @@ serve(async (req) => {
       locale: "sv",
       customer_email: email ?? undefined,
       customer_creation: "always",
-      billing_address_collection: "auto",
+      // Krävs för att kunna verifiera faktureringslandet mot momsen efteråt.
+      billing_address_collection: "required",
       // Endast svensk försäljning i detta första steg – ingen global momsrisk.
       payment_method_types: ["card"],
-      line_items: [{
-        quantity: 1,
-        price_data: {
-          currency: product.currency,
-          unit_amount: product.amountOre,
-          tax_behavior: "inclusive",
-          product_data: {
-            name: "Mina första höns – Hönsgårdens startpaket (PDF)",
-            description: product.description.slice(0, 500),
-            tax_code: product.taxCode,
-          },
-        },
-      }],
+      // Beständigt Stripe-pris (inte price_data) så att intäkter kan följas per produkt.
+      line_items: [{ quantity: 1, price: product.stripePriceId }],
       metadata: {
         digital_order_id: order.id,
         digital_product_slug: product.slug,
         order_number: order.order_number,
         terms_version: product.termsVersion,
+        declared_country: rawCountry,
       },
       payment_intent_data: {
         description: `Hönsgården – Mina första höns (PDF), order ${order.order_number}`,
