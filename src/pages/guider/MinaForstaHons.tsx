@@ -10,8 +10,7 @@ import {
   BookOpen, CheckCircle2, Download, FileText, Printer, ShieldCheck, Loader2, ArrowRight,
 } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
-import coverAsset from '@/assets/mina-forsta-hons-omslag.png.asset.json';
-import sampleAsset from '@/assets/mina-forsta-hons-smakprov.pdf.asset.json';
+import { GUIDE_COVER_PATH, GUIDE_COVER_URL, GUIDE_SAMPLE_URL } from '@/lib/digitalGuide';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -51,13 +50,13 @@ export default function MinaForstaHons() {
     description:
       'Ifyllbar och utskrivbar PDF på 24 sidor: beslut före hönsköp, inköpslistor, budget, boende, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg. 199 kr inkl. moms, engångsköp.',
     path: '/guider/mina-forsta-hons',
-    ogImage: coverAsset.url,
+    ogImage: GUIDE_COVER_PATH,
     ogImageAlt: 'Omslaget till guiden Mina första höns',
     jsonLd: [{
       '@type': 'Product',
       name: 'Mina första höns – Hönsgårdens startpaket (PDF)',
       description: 'Svensk startguide för nya hönsägare. 24 sidor, ifyllbar och utskrivbar PDF.',
-      image: `https://honsgarden.se${coverAsset.url}`,
+      image: GUIDE_COVER_URL,
       brand: { '@type': 'Brand', name: 'Hönsgården' },
       offers: {
         '@type': 'Offer',
@@ -134,7 +133,7 @@ export default function MinaForstaHons() {
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
-                  href={sampleAsset.url}
+                  href={GUIDE_SAMPLE_URL}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
@@ -149,10 +148,10 @@ export default function MinaForstaHons() {
             {/* Köpkort */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
               <img
-                src={coverAsset.url}
+                src={GUIDE_COVER_PATH}
                 alt="Omslaget till guiden Mina första höns – tre höns i en trädgård framför ett rött hönshus"
-                width={745}
-                height={1024}
+                width={1000}
+                height={1414}
                 className="mb-6 w-full rounded-xl border border-border object-cover"
                 loading="eager"
               />
@@ -331,7 +330,7 @@ export default function MinaForstaHons() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
-              href={sampleAsset.url}
+              href={GUIDE_SAMPLE_URL}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
