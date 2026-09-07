@@ -148,3 +148,34 @@ export async function sendDigitalReceipt(
   }
   return { ok: true, queued: !result.already_sent };
 }
+
+/**
+ * Väcker e-postkön direkt. Det finns inget schemalagt jobb som tömmer
+ * pgmq-köerna, så digitala kvitton skulle annars kunna ligga kvar.
+ * Fel loggas men får aldrig fälla köpflödet – mejlet ligger kvar i kön.
+ */
+export async function flushEmailQueue(source: string): Promise<void> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) {
+    console.error("[digital] flushEmailQueue missing env", source);
+    return;
+  }
+  try {
+    const res = await fetch(`${url}/functions/v1/process-email-queue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ triggered_by: source }),
+    });
+    const body = await res.text();
+    if (!res.ok) {
+      console.error("[digital] flushEmailQueue failed", source, res.status, body.slice(0, 300));
+    }
+  } catch (error) {
+    console.error("[digital] flushEmailQueue threw", source, error instanceof Error ? error.message : String(error));
+  }
+}

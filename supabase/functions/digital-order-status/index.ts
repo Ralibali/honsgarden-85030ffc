@@ -156,7 +156,7 @@ serve(async (req) => {
     }
 
     // Skicka kvitto om webhooken inte redan hunnit (atomärt och idempotent).
-    await sendDigitalReceipt(admin, {
+    const receipt = await sendDigitalReceipt(admin, {
       id: order.id,
       order_number: order.order_number,
       customer_email: email,
@@ -166,6 +166,7 @@ serve(async (req) => {
       consent_at: order.consent_at,
       paid_at: order.paid_at,
     }, product);
+    if (receipt.queued) await flushEmailQueue("digital-order-status");
 
     const token = await issueAccessToken(admin, order.id, "thankyou");
     if (!token) return jsonResponse({ error: GENERIC }, 500, h);
