@@ -579,24 +579,30 @@ export type Database = {
       }
       chore_completions: {
         Row: {
+          advanced_due_at: string | null
           chore_id: string
           completed_date: string
           created_at: string
           id: string
+          previous_due_at: string | null
           user_id: string
         }
         Insert: {
+          advanced_due_at?: string | null
           chore_id: string
           completed_date?: string
           created_at?: string
           id?: string
+          previous_due_at?: string | null
           user_id: string
         }
         Update: {
+          advanced_due_at?: string | null
           chore_id?: string
           completed_date?: string
           created_at?: string
           id?: string
+          previous_due_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -1937,6 +1943,50 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      farm_chore_events: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string
+          care_date: string
+          chore_id: string | null
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name: string
+          care_date: string
+          chore_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id: string
+          title: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string
+          care_date?: string
+          chore_id?: string | null
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "farm_chore_events_chore_id_fkey"
+            columns: ["chore_id"]
+            isOneToOne: false
+            referencedRelation: "daily_chores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       farm_invitations: {
         Row: {
@@ -5267,6 +5317,16 @@ export type Database = {
         Returns: Json
       }
       seo_public_routes_enabled: { Args: never; Returns: boolean }
+      set_farm_chore_completion: {
+        Args: {
+          p_chore_id: string
+          p_complete: boolean
+          p_completion_id?: string
+          p_date: string
+          p_timezone?: string
+        }
+        Returns: Json
+      }
       set_lifetime_premium: {
         Args: { _is_lifetime: boolean; _user_id: string }
         Returns: undefined
