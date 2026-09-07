@@ -43,7 +43,6 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError) {
@@ -52,7 +51,6 @@ serve(async (req) => {
         status: unavailable ? 503 : 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
     const user = userData.user;
     if (!user?.email) {
       return new Response(JSON.stringify({ error: "Authentication required" }), {
