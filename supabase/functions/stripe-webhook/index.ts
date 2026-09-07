@@ -117,8 +117,17 @@ serve(async (req) => {
     }
 
     switch (event.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Digitalt engångsköp (PDF): leverans först efter verifierad betalning.
+        if (session.mode === "payment" && session.metadata?.digital_order_id) {
+          await finalizeDigitalOrder(session);
+          break;
+        }
+
+
 
         // Webbshop: engångsbetalning för en shop-order
         if (session.mode === "payment" && session.metadata?.shop_order_id) {
