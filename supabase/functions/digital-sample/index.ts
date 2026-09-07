@@ -1,13 +1,9 @@
-// Gratis smakprov: strömmar de fyra första sidorna ur den riktiga guiden.
-// Utdraget genereras en gång ur originalfilen i den privata bucketen och
-// cachas där, så innehållet är alltid identiskt med den köpta PDF:en.
+// Gratis smakprov: strömmar det fasta, formgivna smakprovet ur den privata bucketen.
+// Filen genereras INTE längre automatiskt ur originalet – den laddas upp som en
+// egen, formgiven PDF så att provet alltid ser ut som det är tänkt.
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 import { getDigitalProduct } from "../_shared/digitalProduct.ts";
-
-const SAMPLE_PAGES = 4;
-const CACHE_PREFIX = "samples";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -33,54 +29,41 @@ serve(async (req) => {
   if (!supabaseUrl || !serviceRoleKey) return new Response("Konfigurationsfel", { status: 500 });
 
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } });
-  const samplePath = `${CACHE_PREFIX}/${product.slug}-smakprov.pdf`;
 
   const headers = {
     "Content-Type": "application/pdf",
     "Content-Disposition": `inline; filename="${product.slug}-smakprov.pdf"`,
-    "Cache-Control": "public, max-age=3600",
+    // Versionen ingår i etaggen så ett filbyte aldrig blir kvar i cachen.
+    "Cache-Control": "public, max-age=1800",
+    "ETag": `"${product.slug}-${product.assetVersion}"`,
+    "Referrer-Policy": "no-referrer",
+    "X-Content-Type-Options": "nosniff",
     "Access-Control-Allow-Origin": "*",
     "X-Robots-Tag": "noindex",
   };
 
   try {
-    // ?info=1 ger fakta om originalfilen (sidantal) så säljsidan kan hållas sann.
+    // ?info=1 ger sidfakta så säljsidan kan hållas sann utan att gissa.
     if (url.searchParams.get("info") === "1") {
-      const original = await admin.storage.from(product.bucket).download(product.objectPath);
-      if (!original.data) throw new Error("kunde inte läsa originalet");
-      const doc = await PDFDocument.load(new Uint8Array(await original.data.arrayBuffer()));
       return new Response(
-        JSON.stringify({ pages: doc.getPageCount(), samplePages: SAMPLE_PAGES }),
-        { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } },
+        JSON.stringify({
+          pages: product.totalPages,
+          samplePages: product.samplePages,
+          version: product.assetVersion,
+        }),
+        {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "public, max-age=1800",
+            "Access-Control-Allow-Origin": "*",
+          },
+        },
       );
     }
 
-    const cached = await admin.storage.from(product.bucket).download(samplePath);
-    if (cached.data) {
-      const bytes = new Uint8Array(await cached.data.arrayBuffer());
-      if (req.method === "HEAD") {
-        return new Response(null, { headers: { ...headers, "Content-Length": String(bytes.length) } });
-      }
-      return new Response(bytes, { headers });
-    }
-
-    const full = await admin.storage.from(product.bucket).download(product.objectPath);
-    if (!full.data) throw new Error(`kunde inte läsa originalet: ${full.error?.message}`);
-
-    const source = await PDFDocument.load(new Uint8Array(await full.data.arrayBuffer()));
-    const sample = await PDFDocument.create();
-    const count = Math.min(SAMPLE_PAGES, source.getPageCount());
-    const pages = await sample.copyPages(source, Array.from({ length: count }, (_, i) => i));
-    pages.forEach((p) => sample.addPage(p));
-    sample.setTitle("Mina första höns – smakprov");
-    sample.setProducer("Hönsgården");
-    const bytes = await sample.save();
-
-    const upload = await admin.storage.from(product.bucket).upload(samplePath, bytes, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
-    if (upload.error) console.error("[digital-sample] cache upload failed", upload.error.message);
+    const sample = await admin.storage.from(product.bucket).download(product.samplePath);
+    if (!sample.data) throw new Error(`kunde inte läsa smakprovet: ${sample.error?.message}`);
+    const bytes = new Uint8Array(await sample.data.arrayBuffer());
 
     if (req.method === "HEAD") {
       return new Response(null, { headers: { ...headers, "Content-Length": String(bytes.length) } });

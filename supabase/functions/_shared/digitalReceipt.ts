@@ -21,7 +21,8 @@ export interface ReceiptResult {
   reason?: string;
 }
 
-const FROM_DOMAIN = "notify.honsgarden.se";
+/** Verifierad avsändardomän som redan används av projektets fungerande utskick. */
+export const FROM_DOMAIN = "notify.honsgarden.se";
 const SITE = "https://honsgarden.se";
 
 function escapeHtml(value: string): string {
@@ -84,6 +85,11 @@ export async function sendDigitalReceipt(
   const link = deliveryUrl(product, token);
   const { netOre, vatOre } = vatBreakdown(order.amount_ore, Number(order.vat_rate ?? 0.06));
   const vatPercent = Math.round(Number(order.vat_rate ?? 0.06) * 100);
+  const termsVersion = order.consent_terms_version ?? product.termsVersion;
+  const consentTime = order.consent_at ? new Date(order.consent_at).toLocaleString("sv-SE") : null;
+  const consentLine = `Du godkände vid köpet (villkorsversion ${termsVersion}`
+    + `${consentTime ? `, ${consentTime}` : ""}) att filen levereras omedelbart`
+    + " och att ångerrätten därmed upphör. Reklamationsrätten gäller som vanligt.";
 
   const html = `<!DOCTYPE html><html lang="sv"><body style="margin:0;background:#faf8f4;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2b2b26">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px">
@@ -93,14 +99,14 @@ export async function sendDigitalReceipt(
     <p style="margin:0 0 28px"><a href="${link}" style="display:inline-block;background:#3a6b35;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:600">Ladda ner PDF:en</a></p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;background:#ffffff;border:1px solid #e6e0d4;border-radius:10px">
       <tr><td style="padding:10px 14px;color:#6b6b5f">Ordernummer</td><td style="padding:10px 14px;text-align:right">${escapeHtml(order.order_number)}</td></tr>
-      <tr><td style="padding:10px 14px;color:#6b6b5f">Produkt</td><td style="padding:10px 14px;text-align:right">Mina första höns (PDF, 24 sidor)</td></tr>
+      <tr><td style="padding:10px 14px;color:#6b6b5f">Produkt</td><td style="padding:10px 14px;text-align:right">Mina första höns (PDF, ${product.totalPages} sidor)</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Pris inkl. moms</td><td style="padding:10px 14px;text-align:right">${formatSek(order.amount_ore)}</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Varav moms (${vatPercent}%)</td><td style="padding:10px 14px;text-align:right">${formatSek(vatOre)}</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Exkl. moms</td><td style="padding:10px 14px;text-align:right">${formatSek(netOre)}</td></tr>
     </table>
-    <p style="font-size:13px;line-height:1.6;color:#6b6b5f;margin:22px 0 0">Du godkände vid köpet (villkorsversion ${escapeHtml(order.consent_terms_version ?? product.termsVersion)}${order.consent_at ? `, ${escapeHtml(new Date(order.consent_at).toLocaleString("sv-SE"))}` : ""}) att filen levereras omedelbart och att ångerrätten därmed upphör. Reklamationsrätten gäller som vanligt.</p>
+    <p style="font-size:13px;line-height:1.6;color:#6b6b5f;margin:22px 0 0">${escapeHtml(consentLine)}</p>
     <p style="font-size:13px;line-height:1.6;color:#6b6b5f;margin:14px 0 0">Guiden är ett separat köp och innehåller inte Hönsgården Plus.</p>
-    <p style="font-size:13px;line-height:1.6;color:#6b6b5f;margin:14px 0 0">Säljare: ${SELLER.name}, org.nr ${SELLER.orgNumber}, ${SELLER.address}. Frågor? Svara på detta mejl eller skriv till ${SELLER.supportEmail}.</p>
+    <p style="font-size:13px;line-height:1.6;color:#6b6b5f;margin:14px 0 0">Säljare: ${SELLER.name}, org.nr ${SELLER.orgNumber}, ${SELLER.address}. Frågor? Skriv till ${SELLER.supportEmail}.</p>
   </div></body></html>`;
 
   const text = [
@@ -108,12 +114,15 @@ export async function sendDigitalReceipt(
     "",
     `Ladda ner Mina första höns: ${link}`,
     `Ordernummer: ${order.order_number}`,
-    `Pris: ${formatSek(order.amount_ore)} inkl. moms (varav moms ${formatSek(vatOre)})`,
+    `Produkt: Mina första höns (PDF, ${product.totalPages} sidor)`,
+    `Pris: ${formatSek(order.amount_ore)} inkl. moms (varav moms ${vatPercent}% = ${formatSek(vatOre)}, exkl. moms ${formatSek(netOre)})`,
     "",
-    "Du godkände att filen levereras omedelbart och att ångerrätten därmed upphör. Reklamationsrätten gäller som vanligt.",
+    consentLine,
     "Guiden är ett separat köp och innehåller inte Hönsgården Plus.",
-    `${SELLER.name}, org.nr ${SELLER.orgNumber}, ${SELLER.address}, ${SELLER.supportEmail}`,
+    `${SELLER.name}, org.nr ${SELLER.orgNumber}, ${SELLER.address}. Frågor? Skriv till ${SELLER.supportEmail}.`,
   ].join("\n");
+
+
 
   // En transaktion i databasen: skapa länken, köa mejlet och sätt flaggan.
   // Misslyckas något rullas allt tillbaka, så vi får aldrig en order som är
