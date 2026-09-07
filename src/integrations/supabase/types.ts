@@ -1052,9 +1052,46 @@ export type Database = {
         }
         Relationships: []
       }
+      digital_access_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          last_used_at: string | null
+          order_id: string
+          revoked: boolean
+          source: string
+          token_hash: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          order_id: string
+          revoked?: boolean
+          source?: string
+          token_hash: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_used_at?: string | null
+          order_id?: string
+          revoked?: boolean
+          source?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_access_tokens_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "digital_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       digital_orders: {
         Row: {
-          access_token_hash: string
           admin_note: string | null
           amount_ore: number
           consent_at: string | null
@@ -1082,7 +1119,6 @@ export type Database = {
           vat_rate: number
         }
         Insert: {
-          access_token_hash: string
           admin_note?: string | null
           amount_ore: number
           consent_at?: string | null
@@ -1110,7 +1146,6 @@ export type Database = {
           vat_rate?: number
         }
         Update: {
-          access_token_hash?: string
           admin_note?: string | null
           amount_ore?: number
           consent_at?: string | null
