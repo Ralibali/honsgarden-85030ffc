@@ -3,6 +3,8 @@ import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { isAppleIapActive, readAppleIapPreference } from "../_shared/appleIap.ts";
 import { parseTimestamp } from "../_shared/localPremium.ts";
+import { getDigitalProduct } from "../_shared/digitalProduct.ts";
+import { sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
