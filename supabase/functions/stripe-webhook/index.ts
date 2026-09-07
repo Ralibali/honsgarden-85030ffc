@@ -291,9 +291,55 @@ serve(async (req) => {
         }
         break;
       }
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.digital_order_id) {
+          await supabase
+            .from("digital_orders")
+            .update({ status: "failed", admin_note: "Asynkron betalning misslyckades." })
+            .eq("id", session.metadata.digital_order_id)
+            .eq("status", "pending");
+        }
+        break;
+      }
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const digitalOrderId = charge.metadata?.digital_order_id
+          ?? (typeof charge.payment_intent === "string" ? null : charge.payment_intent?.metadata?.digital_order_id ?? null);
+        const paymentIntentId = typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : charge.payment_intent?.id ?? null;
+        if (digitalOrderId || paymentIntentId) {
+          const query = supabase
+            .from("digital_orders")
+            .update({
+              refunded_at: new Date().toISOString(),
+              fulfillment_status: "refunded",
+              admin_note: "Återbetald i Stripe – åtkomst återkallad.",
+            });
+          const { data: refunded, error: refundError } = digitalOrderId
+            ? await query.eq("id", digitalOrderId).is("refunded_at", null).select("id")
+            : await query.eq("payment_intent_id", paymentIntentId!).is("refunded_at", null).select("id");
+          if (refundError) console.error("[stripe-webhook] digital refund error:", refundError.message);
+          for (const row of refunded ?? []) {
+            await supabase.from("digital_access_tokens").update({ revoked: true }).eq("order_id", row.id);
+          }
+        }
+        break;
+      }
       case "payment_intent.payment_failed": {
         const intent = event.data.object as Stripe.PaymentIntent;
         const orderId = intent.metadata?.shop_order_id;
+        if (intent.metadata?.digital_order_id) {
+          await supabase
+            .from("digital_orders")
+            .update({
+              status: "failed",
+              admin_note: `Betalning misslyckades: ${intent.last_payment_error?.message ?? "Okänt fel"}`,
+            })
+            .eq("id", intent.metadata.digital_order_id)
+            .eq("status", "pending");
+        }
         if (orderId) {
           const reason = intent.last_payment_error?.message ?? "Okänt fel";
           await supabase
