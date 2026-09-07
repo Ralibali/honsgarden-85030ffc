@@ -4,6 +4,8 @@
 
 Hönsgården hjälper svenska hobbyhönsägare att samla ägg, hönor, foder, ekonomi, kläckning och rutiner på ett ställe. Publika sidor får läsas och citeras av AI-sökmotorer. Inloggade app-sidor under /app innehåller privat användardata och ska inte indexeras.
 
+Premium: 39 kr/mån eller 299 kr/år.
+
 ## Pages
 
 - [Startsida](https://honsgarden.se/): Översikt över Hönsgården och appens funktioner.
@@ -16,6 +18,7 @@ Hönsgården hjälper svenska hobbyhönsägare att samla ägg, hönor, foder, ek
 - [Sälja ägg](https://honsgarden.se/salja-agg): Tips och verktyg för att sälja ägg lokalt.
 - [Äggkalkylator](https://honsgarden.se/verktyg/aggkalkylator): Räkna värpmängd och förväntad äggproduktion.
 - [Blogg och guider](https://honsgarden.se/blogg): Artiklar om höns, skötsel, raser och hönsåret.
+- [Hönshus 2026 – kompletta köpguiden](https://honsgarden.se/blogg/honshus-2026-kompletta-kopguiden): Köpguide för hönshus – storlek, vinterklimat, rödlus och svenska regler.
 - [Om Hönsgården](https://honsgarden.se/om-oss): Bakgrund och syfte med tjänsten.
 
 ## Optional
