@@ -9,14 +9,16 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
 import {
   clientIp,
+  DIGITAL_PRIVATE_HEADERS,
+  digitalRateLimitAllows,
   getDigitalProduct,
   hashAccessToken,
-  hashKey,
   isLiveStripeKey,
   isPlausibleToken,
   maskEmail,
+  normalizeEmail,
 } from "../_shared/digitalProduct.ts";
-import { issueAccessToken, sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
+import { flushEmailQueue, issueAccessToken, sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const GENERIC = "Kunde inte hämta orderstatus just nu.";
 
@@ -29,7 +31,7 @@ serve(async (req) => {
   if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, cors.headers);
 
-  const h = cors.headers;
+  const h = { ...cors.headers, ...DIGITAL_PRIVATE_HEADERS };
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
@@ -76,6 +78,18 @@ serve(async (req) => {
       return jsonResponse({ error: "Ogiltig referens." }, 400, h);
     }
 
+    // Spärren gäller alla sessionsuppslag, även redan betalda ordrar, och
+    // stänger vid databasfel så ingen kan pumpa förfrågningar mot Stripe.
+    const allowed = await digitalRateLimitAllows(admin, {
+      scope: "digital-order-status-ip",
+      value: clientIp(req) || sessionId,
+      max: 30,
+      windowMinutes: 10,
+    });
+    if (!allowed) {
+      return jsonResponse({ error: "För många förfrågningar. Vänta en stund." }, 429, h);
+    }
+
     const { data: order } = await admin
       .from("digital_orders")
       .select("id, order_number, product_slug, status, currency, customer_email, amount_ore, vat_rate, refunded_at, paid_at, consent_terms_version, consent_at")
@@ -90,23 +104,15 @@ serve(async (req) => {
     let email = order.customer_email;
 
     if (status !== "paid") {
-      // Spärr mot att någon skjuter sessions-id:n i hög takt mot Stripe.
-      const { data: allowed } = await admin.rpc("digital_rate_limit", {
-        p_scope: "digital-order-status-ip",
-        p_key_hash: await hashKey(clientIp(req) || sessionId),
-        p_max: 30,
-        p_window_minutes: 10,
-      });
-      if (allowed === false) {
-        return jsonResponse({ error: "För många förfrågningar. Vänta en stund." }, 429, h);
-      }
-
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      // Sessionen måste tillhöra just den här ordern, i samma läge och valuta.
+      // Sessionen måste tillhöra just den här ordern, produkten, läget och valutan.
       const sessionOrderId = session.metadata?.digital_order_id;
+      const sessionSlug = session.metadata?.digital_product_slug;
       const mismatch = sessionOrderId !== order.id
+        || session.id !== sessionId
+        || (sessionSlug ?? order.product_slug) !== order.product_slug
         || session.mode !== "payment"
         || session.livemode !== isLiveStripeKey(stripeKey)
         || (session.currency ?? "").toLowerCase() !== String(order.currency ?? "sek").toLowerCase();
@@ -119,8 +125,8 @@ serve(async (req) => {
         const paymentIntentId = typeof session.payment_intent === "string"
           ? session.payment_intent
           : session.payment_intent?.id ?? null;
-        const verifiedEmail = session.customer_details?.email ?? session.customer_email ?? null;
-        const { data: rpc } = await admin.rpc("digital_finalize_paid_order", {
+        const verifiedEmail = normalizeEmail(session.customer_details?.email ?? session.customer_email);
+        const { data: rpc, error: rpcError } = await admin.rpc("digital_finalize_paid_order", {
           p_order_id: order.id,
           p_amount_total_ore: session.amount_total ?? 0,
           p_customer_email: verifiedEmail,
@@ -129,6 +135,12 @@ serve(async (req) => {
           p_verified_country: session.customer_details?.address?.country ?? null,
           p_livemode: session.livemode,
         });
+        if (rpcError) {
+          // Övergående databasfel: be klienten försöka igen i stället för att
+          // visa "inte betald" för en kund som faktiskt har betalat.
+          console.error("[digital-order-status] finalize failed", rpcError.message, order.id);
+          return jsonResponse({ error: GENERIC, retry: true }, 503, h);
+        }
         const result = (rpc ?? {}) as { ok?: boolean; reason?: string };
         if (result.ok) {
           status = "paid";
@@ -166,6 +178,7 @@ serve(async (req) => {
       consent_at: order.consent_at,
       paid_at: order.paid_at,
     }, product);
+    if (!receipt.ok) console.error("[digital-order-status] receipt not queued", receipt.reason, order.id);
     if (receipt.queued) await flushEmailQueue("digital-order-status");
 
     const token = await issueAccessToken(admin, order.id, "thankyou");

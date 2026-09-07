@@ -3,15 +3,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
-import { clientIp, getDigitalProduct, hashKey, SELLER, formatSek } from "../_shared/digitalProduct.ts";
-import { deliveryUrl, flushEmailQueue, issueAccessToken } from "../_shared/digitalReceipt.ts";
+import {
+  clientIp,
+  DIGITAL_PRIVATE_HEADERS,
+  digitalRateLimitAllows,
+  formatSek,
+  getDigitalProduct,
+  normalizeEmail,
+  SELLER,
+} from "../_shared/digitalProduct.ts";
+import { deliveryUrl, flushEmailQueue, issueAccessToken, FROM_DOMAIN } from "../_shared/digitalReceipt.ts";
 
 const NEUTRAL = {
   ok: true,
   message: "Om det finns ett köp kopplat till adressen skickar vi nedladdningslänken dit.",
 };
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-const FROM_DOMAIN = "notify.honsgarden.se";
 
 serve(async (req) => {
   const cors = evaluateCors(req);
@@ -22,7 +29,7 @@ serve(async (req) => {
   if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, cors.headers);
 
-  const h = cors.headers;
+  const h = { ...cors.headers, ...DIGITAL_PRIVATE_HEADERS };
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!supabaseUrl || !serviceRoleKey) return jsonResponse(NEUTRAL, 200, h);
@@ -31,31 +38,27 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    if (!email || !EMAIL_RE.test(email) || email.length > 254) {
+    const email = normalizeEmail(body.email);
+    if (!email || !EMAIL_RE.test(email)) {
       return jsonResponse({ error: "Ange en giltig e-postadress." }, 400, h);
     }
 
     // Hastighetsspärr: 3 utskick per e-post och timme, 10 per IP och timme.
+    // Fail closed: vid databasfel skickar vi inget, men svarar neutralt.
     for (const [scope, value, max] of [
       ["digital-resend-email", email, 3],
       ["digital-resend-ip", clientIp(req), 10],
     ] as const) {
       if (!value) continue;
-      const { data: allowed, error: limitError } = await admin.rpc("digital_rate_limit", {
-        p_scope: scope,
-        p_key_hash: await hashKey(value),
-        p_max: max,
-        p_window_minutes: 60,
-      });
-      if (limitError) console.error("[digital-resend-link] rate limit error", limitError.message);
-      if (allowed === false) return jsonResponse(NEUTRAL, 200, h);
+      const allowed = await digitalRateLimitAllows(admin, { scope, value, max, windowMinutes: 60 });
+      if (!allowed) return jsonResponse(NEUTRAL, 200, h);
     }
 
+    // Exakt matchning mot normaliserad adress – aldrig mönstermatchning.
     const { data: orders } = await admin
       .from("digital_orders")
       .select("id, order_number, product_slug, customer_email, amount_ore, status, refunded_at, created_at")
-      .ilike("customer_email", email)
+      .eq("customer_email", email)
       .eq("status", "paid")
       .is("refunded_at", null)
       .order("created_at", { ascending: false })

@@ -12,10 +12,18 @@ export interface DigitalProductConfig {
   /** Beständigt Stripe-pris (live). Krävs för korrekt intäktsrapportering. */
   stripePriceId: string;
   stripeProductId: string;
+  /** Beständig, inkluderande momssats i Stripe (6 % SE) för korrekt momsredovisning. */
+  stripeTaxRateId: string;
   /** Faktureringsländer vi kan momshantera automatiskt. */
   allowedBillingCountries: string[];
   bucket: string;
   objectPath: string;
+  /** Fast, formgivet smakprov i samma privata bucket (genereras inte automatiskt). */
+  samplePath: string;
+  samplePages: number;
+  totalPages: number;
+  /** Bumpas när filerna byts ut, så cachade svar inte lever vidare. */
+  assetVersion: string;
   downloadFilename: string;
   termsVersion: string;
   salesPath: string;
@@ -34,9 +42,14 @@ export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
     taxCode: "txcd_10302000",
     stripePriceId: "price_1UCsnmHzffTezY82uWuIhCXK",
     stripeProductId: "prod_VDJQaWY5fbUpKg",
+    stripeTaxRateId: "txr_1UD2ewHzffTezY82L895McGo",
     allowedBillingCountries: ["SE"],
     bucket: "digital-products",
     objectPath: "mina-forsta-hons/honsgarden-mina-forsta-hons.pdf",
+    samplePath: "samples/mina-forsta-hons-smakprov.pdf",
+    samplePages: 4,
+    totalPages: 24,
+    assetVersion: "v1-1",
     downloadFilename: "Honsgarden-Mina-forsta-hons.pdf",
     termsVersion: "2026-09-07",
     salesPath: "/guider/mina-forsta-hons",
@@ -46,7 +59,41 @@ export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
 
 export function getDigitalProduct(slug: unknown): DigitalProductConfig | null {
   if (typeof slug !== "string") return null;
-  return DIGITAL_PRODUCTS[slug] ?? null;
+  // Egen-nyckelkontroll skyddar mot prototypnycklar som "__proto__" och "constructor".
+  if (!Object.prototype.hasOwnProperty.call(DIGITAL_PRODUCTS, slug)) return null;
+  return DIGITAL_PRODUCTS[slug];
+}
+
+/** Svar med kundunika uppgifter ska aldrig cachas eller läcka referrer. */
+export const DIGITAL_PRIVATE_HEADERS: Record<string, string> = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, private",
+  "Pragma": "no-cache",
+  "Referrer-Policy": "no-referrer",
+  "X-Content-Type-Options": "nosniff",
+  "X-Robots-Tag": "noindex, nofollow",
+};
+
+/**
+ * Hastighetsspärr som stänger vid fel (fail closed). Ett databasfel får aldrig
+ * öppna en obegränsad väg mot Stripe eller mot utskick.
+ * Returnerar true endast när spärren uttryckligen tillåter försöket.
+ */
+export async function digitalRateLimitAllows(
+  admin: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }> },
+  options: { scope: string; value: string; max: number; windowMinutes: number },
+): Promise<boolean> {
+  if (!options.value) return false;
+  const { data, error } = await admin.rpc("digital_rate_limit", {
+    p_scope: options.scope,
+    p_key_hash: await hashKey(options.value),
+    p_max: options.max,
+    p_window_minutes: options.windowMinutes,
+  });
+  if (error) {
+    console.error("[digital] rate limit unavailable, failing closed", options.scope, error.message);
+    return false;
+  }
+  return data === true;
 }
 
 /** Stark opak token: 32 bytes → 64 hex-tecken. Endast hash lagras. */
@@ -73,8 +120,21 @@ export function maskEmail(email: string | null | undefined): string | null {
   return `${head}${"*".repeat(Math.max(1, local.length - 2))}@${domain}`;
 }
 
+/** Samma normalisering överallt, så orderuppslag alltid är exakta. */
+export function normalizeEmail(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  return email.length > 0 && email.length <= 254 ? email : null;
+}
+
+/** Heltalskronor utan decimaler, ojämna belopp (t.ex. moms) med exakt två. */
 export function formatSek(ore: number): string {
-  return `${(ore / 100).toLocaleString("sv-SE", { minimumFractionDigits: 0 })} kr`;
+  const kronor = ore / 100;
+  const decimals = Number.isInteger(kronor) ? 0 : 2;
+  return `${kronor.toLocaleString("sv-SE", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} kr`;
 }
 
 /** Moms inkluderad i priset (6 % för elektronisk publikation i Sverige). */
