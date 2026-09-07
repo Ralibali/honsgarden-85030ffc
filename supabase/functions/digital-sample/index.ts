@@ -44,6 +44,17 @@ serve(async (req) => {
   };
 
   try {
+    // ?info=1 ger fakta om originalfilen (sidantal) så säljsidan kan hållas sann.
+    if (url.searchParams.get("info") === "1") {
+      const original = await admin.storage.from(product.bucket).download(product.objectPath);
+      if (!original.data) throw new Error("kunde inte läsa originalet");
+      const doc = await PDFDocument.load(new Uint8Array(await original.data.arrayBuffer()));
+      return new Response(
+        JSON.stringify({ pages: doc.getPageCount(), samplePages: SAMPLE_PAGES }),
+        { headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } },
+      );
+    }
+
     const cached = await admin.storage.from(product.bucket).download(samplePath);
     if (cached.data) {
       const bytes = new Uint8Array(await cached.data.arrayBuffer());
