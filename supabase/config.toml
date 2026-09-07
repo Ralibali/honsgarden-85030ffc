@@ -75,3 +75,11 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.shop-withdrawal-request]
     verify_jwt = false
+  [functions.digital-checkout]
+    verify_jwt = false
+  [functions.digital-order-status]
+    verify_jwt = false
+  [functions.digital-download]
+    verify_jwt = false
+  [functions.digital-resend-link]
+    verify_jwt = false

@@ -290,12 +290,12 @@ export default function Premium() {
       const jws = await purchaseStoreKitPlan(plan, user.id);
       const result = await syncAppleTransactions([jws]);
       await refreshSubscription();
-      trackEvent('Premium Purchased', {
+      if (result.subscribed) trackEvent('Premium Purchased', {
         plan: 'plus',
         billing_interval: plan,
       });
       toast({
-        title: t('toasts.welcome_title'),
+        title: result.subscribed ? t('toasts.welcome_title') : t('ios.restore_none_title'),
         description: result.subscribed ? t('toasts.welcome_desc') : t('ios.restore_none_desc'),
       });
     } catch (err: any) {

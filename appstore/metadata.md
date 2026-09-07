@@ -9,7 +9,8 @@ Granskat mot koden 2026-09-07. Detta är förberett material, inte en publicerad
 | Namn | Hönsgården |
 | Underrubrik | Ägglogg, flock och dagbok |
 | Bundle ID | se.honsgarden.app |
-| Föreslagen SKU | honsgarden-ios-001, kontrollera mot befintlig app |
+| Apple ID | 6809292574 |
+| Registrerad SKU | honsgarden-ios-001 |
 | Primärt språk | Svenska |
 | Föreslagen kategori | Livsstil; sekundärt Verktyg |
 | Support | https://honsgarden.se/om-oss |

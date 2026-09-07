@@ -4,7 +4,9 @@
 
 Webbändringar är byggda för granskning. Ingen iOS-binär har signerats, laddats upp eller skickats till App Review i detta arbete.
 
-Konkreta hinder: Xcode på arbetsdatorn svarar att licensavtalen inte är godkända. Ägaren behöver öppna Xcode och läsa/godkänna villkoren. Dessutom svarar driftens verify-apple-subscription och apple-subscription-webhook med HTTP 404 (Requested function was not found) vid OPTIONS-kontroll. Dessa backendfunktioner behöver driftsättas och därefter verifieras med riktiga sandbox-köp. Apple Developer-kontots medlemskap och App Store Connect-appens status är ännu inte verifierade.
+Appen är registrerad i App Store Connect: Apple ID 6809292574, bundle se.honsgarden.app, version 1.0, SKU honsgarden-ios-001 och primärt språk svenska. Medlemskapet är aktivt och de två webbavtalen är accepterade. App-ID har In-App Purchase, Push Notifications och Sign in with Apple. Gruppen Hönsgården Plus (22364905) och månadsprodukten (6809294113) är skapade. Månadspris 39 SEK är förberett men inte sparat; uttryckligt prisgodkännande är begärt för 39 SEK/mån och 299 SEK/år. Årsprodukt, fullständig produktmetadata, skatt/bank och sandbox-köp återstår. Paid Apps Agreement står som New och Apple kräver uppdaterade juridiska säljaruppgifter innan det kan tecknas. DSA-status är inte angiven.
+
+Xcode visar fortfarande sitt separata licensavtal; godkännande är begärt. Ingen signerad binär eller TestFlight-uppladdning är verifierad. Backendändringarna beskrivs i [betalningsdriftsättning](BILLING.md); kodtest är inte ett genomfört köp.
 
 ## Förberett i koden
 
@@ -17,7 +19,7 @@ Konkreta hinder: Xcode på arbetsdatorn svarar att licensavtalen inte är godkä
 
 ## Nästa steg i ordning
 
-1. Ägaren godkänner Xcodes licens och loggar in med befintligt Apple Developer-konto. Betald medlemskapsstatus och nödvändiga Apple-avtal kontrolleras.
+1. Slutför Xcodes separata licens och inloggning. Medlemskap och de två webbavtalen är verifierade. Kontrollera separat Paid Applications Agreement och bank/skatt.
 2. Bygg webbpaketet: npm ci och npm run build. Kör npx cap sync ios. Öppna ios/App/App.xcodeproj, välj App och rätt team.
 3. Kontrollera se.honsgarden.app, Sign in with Apple, In-App Purchase och push-provisionering. Kontrollera aktuellt byggnummer mot App Store Connect.
 4. Verifiera de två prenumerationsprodukterna och servernotifikationer. Backendfunktionerna verify-apple-subscription och apple-subscription-webhook finns i repo; drift och serververifierade köp är ännu inte bekräftade här.

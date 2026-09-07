@@ -1,7 +1,8 @@
+import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stripeAccessActive } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { isAppleIapActive, readAppleIapPreference, resolveEntitlement } from "../_shared/appleIap.ts";
+import { independentPremiumExpiry, isAppleIapActive, readAppleIapPreference, resolveEntitlement } from "../_shared/appleIap.ts";
 import { hasActiveLocalPremium, shouldClearLocalPremium } from "../_shared/localPremium.ts";
 
 const corsHeaders = {
@@ -9,25 +10,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ELIGIBLE_STATUSES = new Set(["active", "trialing", "past_due"]);
 const STATUS_PRIORITY: Record<string, number> = {
   active: 4,
   trialing: 3,
   past_due: 2,
 };
-
-function getStripeEnd(subscription: Stripe.Subscription): string | null {
-  // I Stripe API 2025-08-27.basil finns current_period_end på subscription_item,
-  // inte längre direkt på subscription-objektet. Läs primärt från items och
-  // fall tillbaka till subscription-nivå för äldre svar/testklockor.
-  const itemEnd = (subscription.items?.data ?? [])
-    .map((item) => (item as any).current_period_end as number | undefined)
-    .filter((value): value is number => typeof value === "number")
-    .sort((a, b) => b - a)[0];
-  const rootEnd = (subscription as any).current_period_end as number | undefined;
-  const endTimestamp = itemEnd ?? (typeof rootEnd === "number" ? rootEnd : undefined);
-  return typeof endTimestamp === "number" ? new Date(endTimestamp * 1000).toISOString() : null;
-}
 
 function getStripeProductId(subscription: Stripe.Subscription): string | null {
   const product = subscription.items.data[0]?.price?.product;
@@ -36,14 +23,6 @@ function getStripeProductId(subscription: Stripe.Subscription): string | null {
 
 function getStripePriceId(subscription: Stripe.Subscription): string | null {
   return subscription.items.data[0]?.price?.id ?? null;
-}
-
-function isEligibleStripeSubscription(subscription: Stripe.Subscription, now: Date): boolean {
-  if (!ELIGIBLE_STATUSES.has(subscription.status)) return false;
-  if (subscription.status === "active" || subscription.status === "trialing") return true;
-
-  const stripeEnd = getStripeEnd(subscription);
-  return !!stripeEnd && new Date(stripeEnd) > now;
 }
 
 serve(async (req) => {
@@ -68,12 +47,13 @@ serve(async (req) => {
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
 
-    const { data: profile } = await supabaseClient
+    const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("subscription_status, premium_expires_at, is_lifetime_premium, stripe_customer_id, preferences")
       .eq("user_id", user.id)
       .maybeSingle();
 
+    if (profileError) throw new Error("Profile lookup unavailable");
     const now = new Date();
     const appleIap = readAppleIapPreference(profile?.preferences);
     const applePaid = isAppleIapActive(appleIap, now, (value) => {
@@ -82,12 +62,13 @@ serve(async (req) => {
       return Number.isNaN(date.getTime()) ? null : date;
     });
     const hasLifetimePremium = profile?.is_lifetime_premium === true;
-    const localTrialActive = hasActiveLocalPremium(profile?.premium_expires_at, now);
+    const localTrialEnd = independentPremiumExpiry(profile?.preferences, profile?.premium_expires_at);
+    const localTrialActive = hasActiveLocalPremium(localTrialEnd, now);
 
     const localTrialResponse = () => new Response(JSON.stringify({
       subscribed: true,
       premium_type: "trial",
-      subscription_end: profile?.premium_expires_at ?? null,
+      subscription_end: localTrialEnd,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     if (hasLifetimePremium) {
@@ -128,7 +109,7 @@ serve(async (req) => {
     const customerIds = [
       ...new Set([
         ...(profile?.stripe_customer_id ? [profile.stripe_customer_id] : []),
-        ...customers.data.map((customer) => customer.id),
+        ...customers.data.map((customer: Stripe.Customer) => customer.id),
       ]),
     ];
 
@@ -145,9 +126,9 @@ serve(async (req) => {
         );
 
         const eligibleSubscriptions = subscriptionResponses
-          .flatMap((response) => response.data)
-          .filter((subscription) => isEligibleStripeSubscription(subscription, now))
-          .sort((a, b) => {
+          .flatMap((response: Stripe.ApiList<Stripe.Subscription>) => response.data)
+          .filter((subscription: Stripe.Subscription) => isPlusSubscription(subscription, plusPriceIds(Deno.env.get("STRIPE_PRICE_MONTHLY"), Deno.env.get("STRIPE_PRICE_YEARLY"))) && stripeAccessActive(subscription, now))
+          .sort((a: Stripe.Subscription, b: Stripe.Subscription) => {
             const statusDiff = (STATUS_PRIORITY[b.status] ?? 0) - (STATUS_PRIORITY[a.status] ?? 0);
             if (statusDiff !== 0) return statusDiff;
             const endA = new Date(getStripeEnd(a) ?? 0).getTime();
@@ -171,24 +152,11 @@ serve(async (req) => {
       const productId = getStripeProductId(stripeSubscription);
       const priceId = getStripePriceId(stripeSubscription);
 
-      const desiredExpiry = hasLifetimePremium ? null : subscriptionEnd;
-      const needsUpdate =
-        profile?.stripe_customer_id !== customerId ||
-        profile?.subscription_status !== "premium" ||
-        (profile?.premium_expires_at ?? null) !== desiredExpiry;
-
-      if (needsUpdate) {
-        const { error: updateError } = await supabaseClient
-          .from("profiles")
-          .update({
-            stripe_customer_id: customerId,
-            subscription_status: "premium",
-            premium_expires_at: desiredExpiry,
-          })
-          .eq("user_id", user.id);
-
-        if (updateError) throw new Error(`Profile update error: ${updateError.message}`);
-      }
+      const { error: updateError } = await supabaseClient.rpc("apply_stripe_plus_status", {
+        _user_id: user.id, _customer_id: customerId, _active: true,
+        _period_end: subscriptionEnd, _observed_at: now.toISOString(),
+      });
+      if (updateError) throw new Error("Subscription persistence failed");
 
       return new Response(JSON.stringify({
         subscribed: true,
@@ -206,22 +174,10 @@ serve(async (req) => {
       applePaid,
       appleEnd: appleIap?.expires_at ?? null,
       localTrialActive,
-      localTrialEnd: profile?.premium_expires_at ?? null,
+      localTrialEnd,
     });
 
     if (entitlement.source === "apple") {
-      const needsAppleUpdate =
-        profile?.subscription_status !== "premium" ||
-        (profile?.premium_expires_at ?? null) !== entitlement.subscription_end;
-      if (needsAppleUpdate) {
-        await supabaseClient
-          .from("profiles")
-          .update({
-            subscription_status: "premium",
-            premium_expires_at: entitlement.subscription_end,
-          })
-          .eq("user_id", user.id);
-      }
       return applePaidResponse();
     }
 

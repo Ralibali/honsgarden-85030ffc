@@ -90,7 +90,11 @@ export async function syncAppleTransactions(jwsList: string[]): Promise<{
   const { data, error } = await supabase.functions.invoke('verify-apple-subscription', {
     body: { transactions: jwsList.map((jws) => ({ jws })) },
   });
-  if (error) throw new Error(error.message);
+  if (error) {
+    const response = 'context' in error && error.context instanceof Response ? error.context : null;
+    const details = await response?.json().catch(() => null);
+    throw new Error(details?.message || 'Köpet kunde inte bekräftas just nu. Försök återställa köpet igen.');
+  }
   if (data?.error) throw new Error(data.message || data.error);
   return {
     subscribed: !!data?.subscribed,

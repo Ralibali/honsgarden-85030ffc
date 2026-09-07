@@ -1,21 +1,14 @@
+import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stripeAccessActive } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { isAppleIapActive, readAppleIapPreference } from "../_shared/appleIap.ts";
-import { parseTimestamp } from "../_shared/localPremium.ts";
+import { getDigitalProduct } from "../_shared/digitalProduct.ts";
+import { sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "stripe-signature, content-type",
 };
-
-const PREMIUM_STRIPE_STATUSES = new Set(["active", "trialing", "past_due"]);
-const FREE_STRIPE_STATUSES = new Set(["canceled", "unpaid", "incomplete", "incomplete_expired", "paused"]);
-
-function getStripeEnd(subscription: Stripe.Subscription): string | null {
-  const periodEndTs = (subscription as any).current_period_end as number | undefined;
-  return periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -71,7 +64,11 @@ serve(async (req) => {
       return null;
     }
 
-    async function syncSubscription(sub: Stripe.Subscription) {
+    async function syncSubscription(eventSub: Stripe.Subscription) {
+      // Notifications can arrive out of order. Read the current Stripe state.
+      const observedAt = new Date().toISOString();
+      const sub = await stripe.subscriptions.retrieve(eventSub.id);
+      if (!isPlusSubscription(sub, plusPriceIds(Deno.env.get("STRIPE_PRICE_MONTHLY"), Deno.env.get("STRIPE_PRICE_YEARLY")))) return;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
       const userId =
         sub.metadata?.supabase_user_id ||
@@ -82,43 +79,93 @@ serve(async (req) => {
       }
 
       const endsAt = getStripeEnd(sub);
-      const isPremiumStatus = PREMIUM_STRIPE_STATUSES.has(sub.status);
-      const isFreeStatus = FREE_STRIPE_STATUSES.has(sub.status);
-
-      const update: Record<string, unknown> = {
-        stripe_customer_id: customerId,
-        subscription_status: isPremiumStatus ? "premium" : "free",
-      };
-
-      // Vanliga Stripe-abonnemang får aldrig sätta eller härleda lifetime.
-      if (isPremiumStatus) {
-        update.premium_expires_at = endsAt;
-      } else if (isFreeStatus) {
-        const { data: existing } = await supabase
-          .from("profiles")
-          .select("preferences")
-          .eq("user_id", userId)
-          .maybeSingle();
-        const appleIap = readAppleIapPreference(existing?.preferences);
-        if (isAppleIapActive(appleIap, new Date(), parseTimestamp)) {
-          update.subscription_status = "premium";
-          update.premium_expires_at = appleIap?.expires_at ?? null;
-        } else {
-          update.premium_expires_at = null;
-        }
-      }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(update)
-        .eq("user_id", userId);
-      if (error) console.error("[stripe-webhook] profile update error:", error.message);
-      else console.log("[stripe-webhook] synced", userId, "->", update);
+      const isPremiumStatus = stripeAccessActive(sub);
+      const { error } = await supabase.rpc("apply_stripe_plus_status", {
+        _user_id: userId, _customer_id: customerId, _active: isPremiumStatus,
+        _period_end: endsAt, _observed_at: observedAt,
+      });
+      if (error && error.code !== "P0002") throw new Error("Subscription persistence failed");
+      console.log("[stripe-webhook] subscription synchronized");
     }
 
+    // ---- Digitalt engångsköp (PDF-guide) ----
+    async function finalizeDigitalOrder(session: Stripe.Checkout.Session) {
+      const orderId = session.metadata?.digital_order_id;
+      if (!orderId) return;
+      if (session.payment_status !== "paid") {
+        console.log("[stripe-webhook] digital order not paid yet:", orderId, session.payment_status);
+        return;
+      }
+
+      const { data: order, error: fetchError } = await supabase
+        .from("digital_orders")
+        .select("id, order_number, product_slug, status, customer_email, amount_ore, vat_rate, consent_terms_version, consent_at, paid_at, refunded_at")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (fetchError) {
+        console.error("[stripe-webhook] digital order fetch error:", fetchError.message);
+        return;
+      }
+      if (!order) {
+        console.error("[stripe-webhook] digital order not found:", orderId);
+        return;
+      }
+
+      const product = getDigitalProduct(order.product_slug);
+      if (!product) {
+        console.error("[stripe-webhook] unknown digital product:", order.product_slug);
+        return;
+      }
+
+      const paymentIntentId = typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id ?? null;
+      const verifiedEmail = session.customer_details?.email ?? session.customer_email ?? null;
+
+      const { data: rpcResult, error: rpcError } = await supabase.rpc("digital_finalize_paid_order", {
+        p_order_id: order.id,
+        p_amount_total_ore: session.amount_total ?? 0,
+        p_customer_email: verifiedEmail,
+        p_payment_intent_id: paymentIntentId,
+      });
+      if (rpcError) {
+        console.error("[stripe-webhook] digital finalize error:", rpcError.message);
+        return;
+      }
+      const rpc = (rpcResult ?? {}) as { ok?: boolean; reason?: string };
+      if (!rpc.ok) {
+        console.error("[stripe-webhook] digital finalize refused:", rpc.reason, order.id);
+        return;
+      }
+
+      // Idempotent: sendDigitalReceipt skickar bara om inget kvitto redan gått ut.
+      const queued = await sendDigitalReceipt(supabase, {
+        id: order.id,
+        order_number: order.order_number,
+        customer_email: verifiedEmail ?? order.customer_email,
+        amount_ore: order.amount_ore,
+        vat_rate: Number(order.vat_rate),
+        consent_terms_version: order.consent_terms_version,
+        consent_at: order.consent_at,
+        paid_at: order.paid_at,
+      }, product);
+      console.log("[stripe-webhook] digital order finalized:", order.id, "receipt queued:", queued);
+    }
+
+
+
     switch (event.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
+
+        // Digitalt engångsköp (PDF): leverans först efter verifierad betalning.
+        if (session.mode === "payment" && session.metadata?.digital_order_id) {
+          await finalizeDigitalOrder(session);
+          break;
+        }
+
+
 
         // Webbshop: engångsbetalning för en shop-order
         if (session.mode === "payment" && session.metadata?.shop_order_id) {
@@ -216,9 +263,55 @@ serve(async (req) => {
         }
         break;
       }
+      case "checkout.session.async_payment_failed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.digital_order_id) {
+          await supabase
+            .from("digital_orders")
+            .update({ status: "failed", admin_note: "Asynkron betalning misslyckades." })
+            .eq("id", session.metadata.digital_order_id)
+            .eq("status", "pending");
+        }
+        break;
+      }
+      case "charge.refunded": {
+        const charge = event.data.object as Stripe.Charge;
+        const digitalOrderId = charge.metadata?.digital_order_id
+          ?? (typeof charge.payment_intent === "string" ? null : charge.payment_intent?.metadata?.digital_order_id ?? null);
+        const paymentIntentId = typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : charge.payment_intent?.id ?? null;
+        if (digitalOrderId || paymentIntentId) {
+          const query = supabase
+            .from("digital_orders")
+            .update({
+              refunded_at: new Date().toISOString(),
+              fulfillment_status: "refunded",
+              admin_note: "Återbetald i Stripe – åtkomst återkallad.",
+            });
+          const { data: refunded, error: refundError } = digitalOrderId
+            ? await query.eq("id", digitalOrderId).is("refunded_at", null).select("id")
+            : await query.eq("payment_intent_id", paymentIntentId!).is("refunded_at", null).select("id");
+          if (refundError) console.error("[stripe-webhook] digital refund error:", refundError.message);
+          for (const row of refunded ?? []) {
+            await supabase.from("digital_access_tokens").update({ revoked: true }).eq("order_id", row.id);
+          }
+        }
+        break;
+      }
       case "payment_intent.payment_failed": {
         const intent = event.data.object as Stripe.PaymentIntent;
         const orderId = intent.metadata?.shop_order_id;
+        if (intent.metadata?.digital_order_id) {
+          await supabase
+            .from("digital_orders")
+            .update({
+              status: "failed",
+              admin_note: `Betalning misslyckades: ${intent.last_payment_error?.message ?? "Okänt fel"}`,
+            })
+            .eq("id", intent.metadata.digital_order_id)
+            .eq("status", "pending");
+        }
         if (orderId) {
           const reason = intent.last_payment_error?.message ?? "Okänt fel";
           await supabase
