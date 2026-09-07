@@ -7,7 +7,15 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
-import { getDigitalProduct, hashAccessToken, isPlausibleToken, maskEmail } from "../_shared/digitalProduct.ts";
+import {
+  clientIp,
+  getDigitalProduct,
+  hashAccessToken,
+  hashKey,
+  isLiveStripeKey,
+  isPlausibleToken,
+  maskEmail,
+} from "../_shared/digitalProduct.ts";
 import { issueAccessToken, sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const GENERIC = "Kunde inte hämta orderstatus just nu.";
@@ -45,7 +53,7 @@ serve(async (req) => {
 
       const { data: order } = await admin
         .from("digital_orders")
-        .select("order_number, status, customer_email, amount_ore, vat_rate, paid_at, refunded_at, download_count, max_downloads, product_slug")
+        .select("order_number, status, customer_email, amount_ore, vat_rate, paid_at, refunded_at, product_slug")
         .eq("id", tokenRow.order_id)
         .maybeSingle();
       if (!order) return jsonResponse({ error: "Ordern hittades inte." }, 404, h);
@@ -58,7 +66,6 @@ serve(async (req) => {
         email: maskEmail(order.customer_email),
         amountOre: order.amount_ore,
         vatRate: Number(order.vat_rate),
-        downloadsLeft: Math.max(0, (order.max_downloads ?? 0) - (order.download_count ?? 0)),
         productSlug: order.product_slug,
       }, 200, h);
     }
@@ -71,7 +78,7 @@ serve(async (req) => {
 
     const { data: order } = await admin
       .from("digital_orders")
-      .select("id, order_number, product_slug, status, customer_email, amount_ore, vat_rate, refunded_at, paid_at, consent_terms_version, consent_at, download_count, max_downloads")
+      .select("id, order_number, product_slug, status, currency, customer_email, amount_ore, vat_rate, refunded_at, paid_at, consent_terms_version, consent_at")
       .eq("stripe_session_id", sessionId)
       .maybeSingle();
     if (!order) return jsonResponse({ error: "Ordern hittades inte." }, 404, h);
@@ -83,8 +90,31 @@ serve(async (req) => {
     let email = order.customer_email;
 
     if (status !== "paid") {
+      // Spärr mot att någon skjuter sessions-id:n i hög takt mot Stripe.
+      const { data: allowed } = await admin.rpc("digital_rate_limit", {
+        p_scope: "digital-order-status-ip",
+        p_key_hash: await hashKey(clientIp(req) || sessionId),
+        p_max: 30,
+        p_window_minutes: 10,
+      });
+      if (allowed === false) {
+        return jsonResponse({ error: "För många förfrågningar. Vänta en stund." }, 429, h);
+      }
+
       const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
       const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+      // Sessionen måste tillhöra just den här ordern, i samma läge och valuta.
+      const sessionOrderId = session.metadata?.digital_order_id;
+      const mismatch = sessionOrderId !== order.id
+        || session.mode !== "payment"
+        || session.livemode !== isLiveStripeKey(stripeKey)
+        || (session.currency ?? "").toLowerCase() !== String(order.currency ?? "sek").toLowerCase();
+      if (mismatch) {
+        console.error("[digital-order-status] session mismatch", sessionId, order.id);
+        return jsonResponse({ error: "Ogiltig referens." }, 400, h);
+      }
+
       if (session.payment_status === "paid") {
         const paymentIntentId = typeof session.payment_intent === "string"
           ? session.payment_intent
@@ -95,6 +125,9 @@ serve(async (req) => {
           p_amount_total_ore: session.amount_total ?? 0,
           p_customer_email: verifiedEmail,
           p_payment_intent_id: paymentIntentId,
+          p_currency: session.currency ?? null,
+          p_verified_country: session.customer_details?.address?.country ?? null,
+          p_livemode: session.livemode,
         });
         const result = (rpc ?? {}) as { ok?: boolean; reason?: string };
         if (result.ok) {
@@ -107,15 +140,22 @@ serve(async (req) => {
     }
 
     if (status !== "paid" || order.refunded_at) {
+      const { data: fresh } = await admin
+        .from("digital_orders")
+        .select("status, review_reason")
+        .eq("id", order.id)
+        .maybeSingle();
       return jsonResponse({
-        status,
+        status: fresh?.status ?? status,
         paid: false,
         refunded: !!order.refunded_at,
+        needsReview: fresh?.status === "review",
+        reviewReason: fresh?.review_reason ?? null,
         orderNumber: order.order_number,
       }, 200, h);
     }
 
-    // Skicka kvitto om webhooken inte redan hunnit (idempotent internt).
+    // Skicka kvitto om webhooken inte redan hunnit (atomärt och idempotent).
     await sendDigitalReceipt(admin, {
       id: order.id,
       order_number: order.order_number,
@@ -141,7 +181,6 @@ serve(async (req) => {
       token,
       deliveryPath: product.deliveryPath,
       productSlug: product.slug,
-      downloadsLeft: Math.max(0, (order.max_downloads ?? 0) - (order.download_count ?? 0)),
     }, 200, h);
   } catch (error) {
     console.error("[digital-order-status]", error instanceof Error ? error.message : String(error));

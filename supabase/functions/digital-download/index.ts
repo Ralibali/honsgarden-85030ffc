@@ -3,7 +3,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
-import { getDigitalProduct, hashAccessToken, isPlausibleToken } from "../_shared/digitalProduct.ts";
+import {
+  clientIp,
+  getDigitalProduct,
+  hashAccessToken,
+  hashKey,
+  isPlausibleToken,
+} from "../_shared/digitalProduct.ts";
 
 const SIGNED_URL_SECONDS = 300;
 
@@ -28,27 +34,33 @@ serve(async (req) => {
     if (!isPlausibleToken(body.token)) return jsonResponse({ error: "Ogiltig länk." }, 400, h);
 
     const tokenHash = await hashAccessToken(body.token);
-    const { data: tokenRow } = await admin
-      .from("digital_access_tokens")
-      .select("id, order_id, revoked")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
-    if (!tokenRow || tokenRow.revoked) return jsonResponse({ error: "Länken gäller inte längre." }, 404, h);
+    const ip = clientIp(req);
+    const ipHash = ip ? await hashKey(ip) : null;
 
-    const { data: order } = await admin
-      .from("digital_orders")
-      .select("id, product_slug, status, refunded_at, download_count, max_downloads")
-      .eq("id", tokenRow.order_id)
-      .maybeSingle();
-    if (!order) return jsonResponse({ error: "Ordern hittades inte." }, 404, h);
-    if (order.status !== "paid" || order.refunded_at) {
-      return jsonResponse({ error: "Ordern är inte betald." }, 403, h);
-    }
-    if ((order.download_count ?? 0) >= (order.max_downloads ?? 0)) {
-      return jsonResponse({ error: "Nedladdningsgränsen är nådd. Kontakta support." }, 429, h);
+    // Allt i en transaktion i databasen: kontroll, spärr per timme, logg och räknare.
+    const { data: rpc, error: rpcError } = await admin.rpc("digital_register_download", {
+      p_token_hash: tokenHash,
+      p_ip_hash: ipHash,
+      p_user_agent: req.headers.get("user-agent") ?? null,
+      p_max_per_hour: 20,
+    });
+    if (rpcError) throw new Error(`register download failed: ${rpcError.message}`);
+
+    const result = (rpc ?? {}) as { ok?: boolean; reason?: string; product_slug?: string };
+    if (!result.ok) {
+      if (result.reason === "rate_limited") {
+        return jsonResponse({
+          error: "Många nedladdningar den senaste timmen. Försök igen om en stund –"
+            + " länken slutar inte gälla.",
+        }, 429, h);
+      }
+      if (result.reason === "not_available") {
+        return jsonResponse({ error: "Ordern är inte betald." }, 403, h);
+      }
+      return jsonResponse({ error: "Länken gäller inte längre." }, 404, h);
     }
 
-    const product = getDigitalProduct(order.product_slug);
+    const product = getDigitalProduct(result.product_slug);
     if (!product) return jsonResponse({ error: "Produkten hittades inte." }, 500, h);
 
     const { data: signed, error: signError } = await admin.storage
@@ -58,17 +70,9 @@ serve(async (req) => {
       });
     if (signError || !signed?.signedUrl) throw new Error(signError?.message ?? "no signed url");
 
-    const nowIso = new Date().toISOString();
-    await admin.from("digital_orders").update({
-      download_count: (order.download_count ?? 0) + 1,
-      last_downloaded_at: nowIso,
-    }).eq("id", order.id);
-    await admin.from("digital_access_tokens").update({ last_used_at: nowIso }).eq("id", tokenRow.id);
-
     return jsonResponse({
       url: signed.signedUrl,
       expiresInSeconds: SIGNED_URL_SECONDS,
-      downloadsLeft: Math.max(0, (order.max_downloads ?? 0) - ((order.download_count ?? 0) + 1)),
     }, 200, h);
   } catch (error) {
     console.error("[digital-download]", error instanceof Error ? error.message : String(error));
