@@ -81,6 +81,14 @@ export function installDemoShim(queryClient: QueryClient): () => void {
     return log;
   });
 
+  patch('removeOneEgg', async (id: string) => {
+    const row = store.eggs.find(e => e.id === id);
+    if (!row || row.count < 1) throw new Error('Inga ägg att ta bort.');
+    if (row.count === 1) store.eggs = store.eggs.filter(e => e.id !== id);
+    else row.count -= 1;
+    invalidate('eggs');
+  });
+
   patch('deleteEggRecord', async (id: string) => {
     store.eggs = store.eggs.filter((e) => e.id !== id);
     invalidate('eggs');

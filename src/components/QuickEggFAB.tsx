@@ -4,6 +4,7 @@ import { Egg, Plus, Minus, Check, X, CalendarMinus, Bird } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { saveEggLog } from '@/lib/saveEggLog';
 import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { EggSuccessAnimation } from './EggSuccessAnimation';
@@ -55,25 +56,8 @@ export function QuickEggFAB() {
       const date = useYesterday
         ? localCalendarDate(new Date(Date.now() - 86400000))
         : todayLocal();
-      const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        const { enqueueEggLog } = await import('@/lib/offlineQueue');
-        await enqueueEggLog({ ...payload, client_id });
-        return { __offline: true, client_id, ...payload } as any;
-      }
-      try {
-        return await api.createEggRecord({ ...payload, client_id });
-      } catch (err: any) {
-        const msg = (err?.message ?? '').toLowerCase();
-        const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
-        if (isNet) {
-          const { enqueueEggLog } = await import('@/lib/offlineQueue');
-          await enqueueEggLog({ ...payload, client_id });
-          return { __offline: true, client_id, ...payload } as any;
-        }
-        throw err;
-      }
+      return saveEggLog(user?.id, payload, api.createEggRecord);
     },
     onMutate: async ({ count }) => {
       await queryClient.cancelQueries({ queryKey: ['eggs'] });

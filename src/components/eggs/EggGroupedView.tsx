@@ -85,6 +85,8 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
                       size="sm"
                       className="h-7 w-7 p-0 text-muted-foreground/35 hover:text-destructive"
                       onClick={() => onDelete(entryId)}
+                      disabled={Boolean(entry.pending)}
+                      title={entry.pending ? "Synka registreringen före radering" : undefined}
                       aria-label={`Ta bort ${entry.count} ägg från ${formatDate(date)}`}
                     >
                       <Trash2 className="h-3 w-3" />

@@ -3,6 +3,7 @@ import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
+import { getQueue, loadQueue } from '@/lib/offlineQueue';
 
 // ==================== TYPES ====================
 
@@ -132,14 +133,22 @@ export async function getHenProfile(id: string): Promise<HenProfile> {
 // ==================== EGGS ====================
 
 export async function getEggs(): Promise<EggLog[]> {
-  await getUserId();
+  const userId = await getUserId();
   const { data, error } = await supabase.from('egg_logs').select('*').order('date', { ascending: false });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  try { await loadQueue(); } catch { /* The status banner reports local storage failures. */ }
+  const remote = data ?? [];
+  const ids = new Set(remote.map(row => (row as EggLog & { client_id?: string }).client_id));
+  const pending = getQueue(userId).filter(row => !ids.has(row.client_id)).map(row => ({
+    ...row, id: `pending-${row.client_id}`, created_at: row.queued_at, hen_id: row.hen_id ?? null,
+    flock_id: row.flock_id ?? null, notes: null, weather: null, user_id: userId, pending: true,
+  } as EggLog));
+  return [...pending, ...remote].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null; client_id?: string }): Promise<EggLog> {
+export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null; client_id?: string; expected_user_id?: string }): Promise<EggLog> {
   const userId = await getUserId();
+  if (record.expected_user_id && record.expected_user_id !== userId) throw new Error('Logga in på kontot som sparade loggningen.');
   const insertData: TablesInsert<'egg_logs'> = { date: record.date, count: record.count, user_id: userId };
   if (record.notes) insertData.notes = record.notes;
   if (record.hen_id) insertData.hen_id = record.hen_id;
@@ -200,6 +209,15 @@ export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<s
 export async function deleteEggRecord(id: string): Promise<void> {
   const { error } = await supabase.from('egg_logs').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+export async function removeOneEgg(id: string): Promise<void> {
+  const userId = await getUserId();
+  const { data: row, error } = await supabase.from('egg_logs').select('count').eq('id', id).eq('user_id', userId).single();
+  if (error || !row || row.count < 1) throw new Error('Kunde inte läsa registreringen. Ladda om och försök igen.');
+  const operation = row.count === 1 ? supabase.from('egg_logs').delete() : supabase.from('egg_logs').update({ count: row.count - 1 });
+  const result = await operation.eq('id', id).eq('user_id', userId).eq('count', row.count).select('id').maybeSingle();
+  if (result.error || !result.data) throw new Error('Registreringen har ändrats. Ladda om innan du korrigerar antalet.');
 }
 
 // ==================== FEED ====================
@@ -1330,7 +1348,7 @@ export const api = {
   getHens, createHen, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
-  getEggs, createEggRecord, deleteEggRecord, fetchEggLogWeatherSnapshot,
+  getEggs, createEggRecord, deleteEggRecord, removeOneEgg, fetchEggLogWeatherSnapshot,
   getFeedRecords, createFeedRecord, deleteFeedRecord, getFeedInventory, getFeedStatistics,
   getHatchings, createHatching, updateHatching, deleteHatching, getHatchingAlerts,
   getTransactions, createTransaction, deleteTransaction,

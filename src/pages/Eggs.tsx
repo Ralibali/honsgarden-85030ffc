@@ -23,7 +23,7 @@ import EmptyState from '@/components/EmptyState';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate } from '@/lib/feedback';
 import { useAuth } from '@/hooks/useAuth';
-import { enqueueEggLog } from '@/lib/offlineQueue';
+import { saveEggLog } from '@/lib/saveEggLog';
 import { trackFirstEggIfNew } from '@/lib/analytics';
 
 function localDateOffset(days: number) {
@@ -83,23 +83,8 @@ export default function Eggs() {
 
   const createMutation = useMutation({
     mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
-      const client_id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
-        const queued = await enqueueEggLog({ ...data, client_id });
-        return { __offline: true, client_id: queued.client_id, ...data };
-      }
-      try {
-        const weather = await api.fetchEggLogWeatherSnapshot(data.date);
-        return await api.createEggRecord({ ...data, weather, client_id });
-      } catch (err) {
-        const msg = (err instanceof Error ? err.message : '').toLowerCase();
-        const isNet = msg.includes('failed to fetch') || msg.includes('network') || (typeof navigator !== 'undefined' && !navigator.onLine);
-        if (isNet) {
-          const queued = await enqueueEggLog({ ...data, client_id });
-          return { __offline: true, client_id: queued.client_id, ...data };
-        }
-        throw err;
-      }
+      const weather = navigator.onLine ? await api.fetchEggLogWeatherSnapshot(data.date).catch(() => null) : null;
+      return saveEggLog(user?.id, { ...data, weather }, api.createEggRecord);
     },
     onSuccess: (result, variables) => {
       const isOffline = '__offline' in result;
