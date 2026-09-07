@@ -10,6 +10,10 @@ import {
   contextualRegisterCtaForSlug,
   renderContextualRegisterCtaHtml,
 } from './contextualRegisterCtas';
+import {
+  renderContextualShopPlacementHtml,
+  shopPlacementForPath,
+} from './contextualShopPlacements';
 
 export const CTR_DOCUMENT_TITLES: Record<string, string> = {
   '/honsraser/orpington': 'Orpington-höna – nybörjarvänlig ras, ~180 ägg/år | Hönsgården',
@@ -61,6 +65,8 @@ export function renderBreedTopicBody(
     return item;
   }).join('');
 
+  const shopPlacement = breed.slug ? shopPlacementForPath(`/honsraser/${breed.slug}`) : undefined;
+
   return `<div class="min-h-screen bg-background">
 <main class="container mx-auto max-w-4xl px-5 pt-24 pb-16" id="main-content" tabindex="-1">
   <nav class="text-xs text-muted-foreground mb-4"><a href="/">Hem</a> / <a href="/honsraser">Hönsraser</a> / ${escapeHtml(breed.namn)}</nav>
@@ -70,6 +76,7 @@ export function renderBreedTopicBody(
     <h2 class="font-serif text-2xl text-foreground mb-4">Vanliga frågor</h2>
     <div class="space-y-5">${faqHtml}</div>
     <p class="mt-8 text-xs text-muted-foreground"><a href="/honsraser" class="underline">← Alla hönsraser</a></p>
+    ${shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''}
   </section>
 </main></div>`;
 }
@@ -104,12 +111,14 @@ export const HOME_DOCUMENT_TITLE =
   'Hönsgården – svensk app för hönsägare, ägglogg och hönskalender';
 
 export function renderHomeTopicBody(): string {
+  const shopPlacement = shopPlacementForPath('/');
   return `<div class="min-h-screen" style="background:#faf8f4;color:#22392b">
 <main class="container mx-auto max-w-6xl px-5 pt-28 pb-16" id="main-content" tabindex="-1">
   <p class="text-sm tracking-wide mb-5" style="color:#7d9b76">Svensk app för hönsägare</p>
   <h1 class="font-serif text-4xl md:text-6xl leading-tight mb-5">Lite enklare att ha höns.<br /><span style="color:#7d9b76">Lite roligare att följa dem.</span></h1>
   <p class="max-w-xl text-base leading-relaxed mb-8">Ägglogg, hönsprofiler, foderkostnad, kalender och Agdas äggbod på ett ställe. Logga vardagen, se mönstren och sälj ägg utan Excel-kaos.</p>
   <p><a href="/login?mode=register" class="inline-flex items-center justify-center rounded-full px-8 py-3 font-medium" style="background:#3a6b35;color:#f4f1e6">Kom igång gratis</a></p>
+  ${shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''}
 </main>
 </div>`;
 }

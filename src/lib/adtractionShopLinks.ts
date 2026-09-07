@@ -196,6 +196,20 @@ export function wrapShopDestination(destination: string, program: ShopProgram): 
   return `https://${program.trackingHost}/t/t?a=${program.adId}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=${urlParam}`;
 }
 
+/** Packet 1 merchants with a real owner `a=` + tracking host. Token absent — host/a= only. */
+export type PacketShopMerchant = 'outl1' | 'p-lindberg' | 'bonden';
+
+const PACKET_PROGRAM_BY_MERCHANT: Record<PacketShopMerchant, ShopProgram> = {
+  'p-lindberg': PROGRAMS.find((program) => program.adId === PLINDBERG_AD_ID)!,
+  outl1: PROGRAMS.find((program) => program.adId === OUTL1_AD_ID)!,
+  bonden: PROGRAMS.find((program) => program.adId === BONDEN_AD_ID)!,
+};
+
+/** Same wrap as existing Adtraction text links. Does not invent `a=` IDs. */
+export function buildTrackedShopHref(merchant: PacketShopMerchant, destination: string): string {
+  return wrapShopDestination(destination, PACKET_PROGRAM_BY_MERCHANT[merchant]);
+}
+
 function rewriteIfNakedShopUrl(href: string, slug: string | undefined, htmlAttribute: boolean): string {
   if (!slug) return href;
   const parsed = parseAbsoluteUrl(href);

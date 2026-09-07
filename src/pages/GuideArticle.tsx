@@ -19,6 +19,7 @@ import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { injectContextualRegisterCta } from '@/lib/contextualRegisterCtas';
+import { injectContextualShopPlacement } from '@/lib/contextualShopPlacements';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
@@ -49,6 +50,7 @@ function handleProseAffiliateClick(
   let advertiser: string | null = null;
   if (hrefLower.includes('bonden.se') || hrefLower.includes('pin.bonden')) advertiser = 'bonden';
   else if (hrefLower.includes('p-lindberg')) advertiser = 'p-lindberg';
+  else if (hrefLower.includes('outl1')) advertiser = 'outl1';
   else if (hrefLower.includes('adtraction')) advertiser = 'adtraction';
   else if (hrefLower.includes('awin')) advertiser = 'awin';
   else if (hrefLower.includes('tradedoubler')) advertiser = 'tradedoubler';
@@ -180,6 +182,7 @@ function renderContent(
   raw = rewriteNakedShopAffiliateHrefs(raw, slug);
 
   raw = injectContextualRegisterCta(raw, slug);
+  raw = injectContextualShopPlacement(raw, slug);
 
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],

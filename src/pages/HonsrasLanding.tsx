@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import { longformPages, type LongformPage } from '@/data/honsraserContent';
 import { getBreedLayingRate, DEFAULT_BREED_RATE } from '@/data/breedLayingRates';
 import { contextualRegisterCtaForSlug } from '@/lib/contextualRegisterCtas';
+import { shopPlacementForPath } from '@/lib/contextualShopPlacements';
+import ContextualShopCta from '@/components/ContextualShopCta';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -69,6 +71,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
   const breedRate = page?.breedName ? getBreedLayingRate(page.breedName) : null;
   const hasBreedRate = !!breedRate && breedRate !== DEFAULT_BREED_RATE;
   const registerCta = contextualRegisterCtaForSlug(activeSlug);
+  const shopPlacement = shopPlacementForPath(canonicalPath ?? page?.path);
 
   if (!page) {
     return (
@@ -219,6 +222,14 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
                 </tbody>
               </table>
             </div>
+          </div>
+        </section>
+      )}
+
+      {shopPlacement && (
+        <section className="pb-4 bg-background">
+          <div className="container max-w-3xl mx-auto px-5 sm:px-6">
+            <ContextualShopCta path={shopPlacement.path} placement={shopPlacement} />
           </div>
         </section>
       )}

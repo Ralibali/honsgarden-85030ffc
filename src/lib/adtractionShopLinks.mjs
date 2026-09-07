@@ -160,6 +160,16 @@ export function wrapShopDestination(destination, program) {
   return `https://${program.trackingHost}/t/t?a=${program.adId}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=${urlParam}`;
 }
 
+const PACKET_PROGRAM_BY_MERCHANT = {
+  'p-lindberg': PROGRAMS.find((program) => program.adId === PLINDBERG_AD_ID),
+  outl1: PROGRAMS.find((program) => program.adId === OUTL1_AD_ID),
+  bonden: PROGRAMS.find((program) => program.adId === BONDEN_AD_ID),
+};
+
+export function buildTrackedShopHref(merchant, destination) {
+  return wrapShopDestination(destination, PACKET_PROGRAM_BY_MERCHANT[merchant]);
+}
+
 function rewriteIfNakedShopUrl(href, slug, htmlAttribute) {
   if (!slug) return href;
   const parsed = parseAbsoluteUrl(href);
