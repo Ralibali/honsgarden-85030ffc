@@ -89,6 +89,9 @@ const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
+const MinaForstaHons = lazyWithRetry(() => import("./pages/guider/MinaForstaHons"));
+const MinaForstaHonsTack = lazyWithRetry(() => import("./pages/guider/MinaForstaHonsTack"));
+const MinaForstaHonsHamta = lazyWithRetry(() => import("./pages/guider/MinaForstaHonsHamta"));
 const ShopPublic = lazyWithRetry(() => import("./pages/shop/ShopPublic"));
 const ShopProductPage = lazyWithRetry(() => import("./pages/shop/ShopProductPage"));
 const ShopThankYou = lazyWithRetry(() => import("./pages/shop/ShopThankYou"));
@@ -204,6 +207,9 @@ const AppRoutes = () => (
         <Route path="/guider" element={<GuiderRedirect />} />
         <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />
         <Route path="/guider/salja-agg-regler" element={<RegulationGuide slug="salja-agg-regler" />} />
+        <Route path="/guider/mina-forsta-hons" element={<MinaForstaHons />} />
+        <Route path="/guider/mina-forsta-hons/tack" element={<MinaForstaHonsTack />} />
+        <Route path="/guider/mina-forsta-hons/hamta" element={<MinaForstaHonsHamta />} />
         <Route path="/guider/:slug" element={<GuiderRedirect />} />
         <Route path="/blogg" element={<Guides />} />
         <Route path="/blogg/kategori/:category" element={<BlogCategory />} />
