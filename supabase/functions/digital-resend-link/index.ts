@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
 import { clientIp, getDigitalProduct, hashKey, SELLER, formatSek } from "../_shared/digitalProduct.ts";
-import { deliveryUrl, issueAccessToken } from "../_shared/digitalReceipt.ts";
+import { deliveryUrl, flushEmailQueue, issueAccessToken } from "../_shared/digitalReceipt.ts";
 
 const NEUTRAL = {
   ok: true,
@@ -90,7 +90,11 @@ serve(async (req) => {
           queued_at: new Date().toISOString(),
         },
       });
-      if (queueError) console.error("[digital-resend-link] enqueue failed", queueError.message);
+      if (queueError) {
+        console.error("[digital-resend-link] enqueue failed", queueError.message);
+      } else {
+        await flushEmailQueue("digital-resend-link");
+      }
     }
 
     return jsonResponse(NEUTRAL, 200, h);

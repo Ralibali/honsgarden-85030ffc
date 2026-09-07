@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { getDigitalProduct } from "../_shared/digitalProduct.ts";
-import { sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
+import { flushEmailQueue, sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -159,6 +159,7 @@ serve(async (req) => {
         // Betalningen är registrerad men kvittot kom inte i kö: be Stripe försöka igen.
         throw new Error(`digital receipt failed for ${order.id}`);
       }
+      if (receipt.queued) await flushEmailQueue("stripe-webhook");
       console.log("[stripe-webhook] digital order finalized:", order.id, "receipt queued:", receipt.queued);
     }
 
