@@ -116,6 +116,72 @@ serve(async (req) => {
       else console.log("[stripe-webhook] synced", userId, "->", update);
     }
 
+    // ---- Digitalt engångsköp (PDF-guide) ----
+    async function finalizeDigitalOrder(session: Stripe.Checkout.Session) {
+      const orderId = session.metadata?.digital_order_id;
+      if (!orderId) return;
+      if (session.payment_status !== "paid") {
+        console.log("[stripe-webhook] digital order not paid yet:", orderId, session.payment_status);
+        return;
+      }
+
+      const { data: order, error: fetchError } = await supabase
+        .from("digital_orders")
+        .select("id, order_number, product_slug, status, customer_email, amount_ore, vat_rate, consent_terms_version, consent_at, paid_at, refunded_at")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (fetchError) {
+        console.error("[stripe-webhook] digital order fetch error:", fetchError.message);
+        return;
+      }
+      if (!order) {
+        console.error("[stripe-webhook] digital order not found:", orderId);
+        return;
+      }
+
+      const product = getDigitalProduct(order.product_slug);
+      if (!product) {
+        console.error("[stripe-webhook] unknown digital product:", order.product_slug);
+        return;
+      }
+
+      const paymentIntentId = typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id ?? null;
+      const verifiedEmail = session.customer_details?.email ?? session.customer_email ?? null;
+
+      const { data: rpcResult, error: rpcError } = await supabase.rpc("digital_finalize_paid_order", {
+        p_order_id: order.id,
+        p_amount_total_ore: session.amount_total ?? 0,
+        p_customer_email: verifiedEmail,
+        p_payment_intent_id: paymentIntentId,
+      });
+      if (rpcError) {
+        console.error("[stripe-webhook] digital finalize error:", rpcError.message);
+        return;
+      }
+      const rpc = (rpcResult ?? {}) as { ok?: boolean; reason?: string };
+      if (!rpc.ok) {
+        console.error("[stripe-webhook] digital finalize refused:", rpc.reason, order.id);
+        return;
+      }
+
+      // Idempotent: sendDigitalReceipt skickar bara om inget kvitto redan gått ut.
+      const queued = await sendDigitalReceipt(supabase, {
+        id: order.id,
+        order_number: order.order_number,
+        customer_email: verifiedEmail ?? order.customer_email,
+        amount_ore: order.amount_ore,
+        vat_rate: Number(order.vat_rate),
+        consent_terms_version: order.consent_terms_version,
+        consent_at: order.consent_at,
+        paid_at: order.paid_at,
+      }, product);
+      console.log("[stripe-webhook] digital order finalized:", order.id, "receipt queued:", queued);
+    }
+
+
+
     switch (event.type) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
