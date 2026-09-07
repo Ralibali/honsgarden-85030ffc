@@ -77,7 +77,7 @@ describe('Packet 1 contextual shop placements', () => {
     const foder = injectContextualShopPlacement('<p>Räkna på säcken.</p>', 'foder-till-hons-guide');
     expect(foder).toContain('pin.bonden.se/t/t?a=1960530621');
     expect(foder).toContain('do.p-lindberg.se/t/t?a=1954027467');
-    expect(foder).toContain(SHOP_DESTINATIONS.plindbergFodertraag);
+    expect(foder).toContain(encodeURIComponent(SHOP_DESTINATIONS.plindbergFodertraag));
 
     expect(injectContextualShopPlacement('<p>Orpington är en tung ras.</p>', 'orpington')).toBe(
       '<p>Orpington är en tung ras.</p>',
