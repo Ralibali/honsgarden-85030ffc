@@ -133,8 +133,8 @@ serve(async (req) => {
         .eq("id", orderId)
         .maybeSingle();
       if (fetchError) {
-        console.error("[stripe-webhook] digital order fetch error:", fetchError.message);
-        return;
+        // Databasfel är övergående: låt Stripe göra ett nytt försök.
+        throw new Error(`digital order fetch failed: ${fetchError.message}`);
       }
       if (!order) {
         console.error("[stripe-webhook] digital order not found:", orderId);
@@ -152,24 +152,30 @@ serve(async (req) => {
         : session.payment_intent?.id ?? null;
       const verifiedEmail = session.customer_details?.email ?? session.customer_email ?? null;
 
+      const verifiedCountry = session.customer_details?.address?.country ?? null;
+
       const { data: rpcResult, error: rpcError } = await supabase.rpc("digital_finalize_paid_order", {
         p_order_id: order.id,
         p_amount_total_ore: session.amount_total ?? 0,
         p_customer_email: verifiedEmail,
         p_payment_intent_id: paymentIntentId,
+        p_currency: session.currency ?? null,
+        p_verified_country: verifiedCountry,
+        p_livemode: event.livemode,
       });
       if (rpcError) {
-        console.error("[stripe-webhook] digital finalize error:", rpcError.message);
-        return;
+        throw new Error(`digital finalize failed: ${rpcError.message}`);
       }
       const rpc = (rpcResult ?? {}) as { ok?: boolean; reason?: string };
       if (!rpc.ok) {
+        // Avsiktligt avvisad (belopp, valuta, land, saknat samtycke, återbetald).
+        // Ingen leverans, ingen retry – ordern är markerad för granskning.
         console.error("[stripe-webhook] digital finalize refused:", rpc.reason, order.id);
         return;
       }
 
-      // Idempotent: sendDigitalReceipt skickar bara om inget kvitto redan gått ut.
-      const queued = await sendDigitalReceipt(supabase, {
+      // Atomärt och idempotent: länk + köat mejl + flagga i samma transaktion.
+      const receipt = await sendDigitalReceipt(supabase, {
         id: order.id,
         order_number: order.order_number,
         customer_email: verifiedEmail ?? order.customer_email,
@@ -179,7 +185,11 @@ serve(async (req) => {
         consent_at: order.consent_at,
         paid_at: order.paid_at,
       }, product);
-      console.log("[stripe-webhook] digital order finalized:", order.id, "receipt queued:", queued);
+      if (!receipt.ok && receipt.reason === "transaction_failed") {
+        // Betalningen är registrerad men kvittot kom inte i kö: be Stripe försöka igen.
+        throw new Error(`digital receipt failed for ${order.id}`);
+      }
+      console.log("[stripe-webhook] digital order finalized:", order.id, "receipt queued:", receipt.queued);
     }
 
 
@@ -311,7 +321,17 @@ serve(async (req) => {
         const paymentIntentId = typeof charge.payment_intent === "string"
           ? charge.payment_intent
           : charge.payment_intent?.id ?? null;
-        if (digitalOrderId || paymentIntentId) {
+        // Delåterbetalning ska inte dra in en levererad guide – bara full.
+        const fullyRefunded = charge.refunded === true
+          || (charge.amount_refunded ?? 0) >= (charge.amount ?? 0);
+        if ((digitalOrderId || paymentIntentId) && !fullyRefunded) {
+          const note = `Delåterbetalning ${((charge.amount_refunded ?? 0) / 100).toFixed(2)} av ${((charge.amount ?? 0) / 100).toFixed(2)} – åtkomsten behålls.`;
+          const partial = supabase.from("digital_orders").update({ admin_note: note });
+          const { error: partialError } = digitalOrderId
+            ? await partial.eq("id", digitalOrderId)
+            : await partial.eq("payment_intent_id", paymentIntentId!);
+          if (partialError) console.error("[stripe-webhook] digital partial refund note error:", partialError.message);
+        } else if (digitalOrderId || paymentIntentId) {
           const query = supabase
             .from("digital_orders")
             .update({
@@ -322,7 +342,7 @@ serve(async (req) => {
           const { data: refunded, error: refundError } = digitalOrderId
             ? await query.eq("id", digitalOrderId).is("refunded_at", null).select("id")
             : await query.eq("payment_intent_id", paymentIntentId!).is("refunded_at", null).select("id");
-          if (refundError) console.error("[stripe-webhook] digital refund error:", refundError.message);
+          if (refundError) throw new Error(`digital refund failed: ${refundError.message}`);
           for (const row of refunded ?? []) {
             await supabase.from("digital_access_tokens").update({ revoked: true }).eq("order_id", row.id);
           }
