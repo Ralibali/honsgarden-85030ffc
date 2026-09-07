@@ -4957,6 +4957,20 @@ export type Database = {
     }
     Functions: {
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
+      apply_apple_iap_entitlement: {
+        Args: { _entitlement: Json; _user_id: string }
+        Returns: Json
+      }
+      apply_stripe_plus_status: {
+        Args: {
+          _active: boolean
+          _customer_id: string
+          _observed_at: string
+          _period_end: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       build_affiliate_url: {
         Args: { p_advertiser_id: string; p_product_url: string }
         Returns: string
