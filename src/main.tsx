@@ -1,4 +1,5 @@
 import { createRoot, hydrateRoot } from "react-dom/client";
+import { isNativePlatform } from '@/lib/nativePlatform';
 import App from "./App.tsx";
 import "./index.css";
 import "./mobile.css";
@@ -60,7 +61,10 @@ installGlobalErrorHandlers();
 
 const root = document.getElementById("root")!;
 
-if (root.hasChildNodes()) {
+// Native and the interactive demo replace static marketing shells rather than
+// hydrating matching React output. The demo can also open directly in its diary.
+const isDemoPage = /^\/demo\/?$/.test(window.location.pathname);
+if (root.hasChildNodes() && !isNativePlatform() && !isDemoPage) {
   hydrateRoot(root, <App />);
 } else {
   createRoot(root).render(<App />);

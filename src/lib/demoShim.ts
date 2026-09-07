@@ -46,6 +46,8 @@ export function installDemoShim(queryClient: QueryClient): () => void {
   // ----- Läsningar -----
   patch('getEggs', async () => [...store.eggs].sort((a, b) => b.date.localeCompare(a.date)));
   patch('getHens', async () => store.hens);
+  patch('getFlocks', async () => []);
+  patch('getDiaryLogs', async () => store.healthLogs.filter((log) => log.type === 'diary'));
   patch('getHealthLogs', async () => [...store.healthLogs].sort((a, b) => b.date.localeCompare(a.date)));
   patch('getTransactions', async () => [...store.transactions].sort((a, b) => b.date.localeCompare(a.date)));
   patch('getFeedRecords', async () => store.feedRecords);
@@ -97,6 +99,14 @@ export function installDemoShim(queryClient: QueryClient): () => void {
     store.healthLogs.push(entry);
     invalidate('health-logs');
     return entry;
+  });
+
+  patch('updateHealthLog', async (id: string, updates: { description?: string | null; type?: string | null; date?: string }) => {
+    const entry = store.healthLogs.find((log) => log.id === id);
+    if (!entry) throw new Error('Inlägget finns inte i demon.');
+    Object.assign(entry, updates);
+    invalidate('health-logs');
+    return { ...entry };
   });
 
   patch('completeChore', async (choreId: string) => {

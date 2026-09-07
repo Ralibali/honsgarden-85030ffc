@@ -16,7 +16,7 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 vi.mock('@/hooks/useSeo', () => ({ useSeo: vi.fn() }));
 vi.mock('@/hooks/useTracking', () => ({ trackClick: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn() }));
+vi.mock('@/lib/analytics', async (importOriginal) => ({ ...await importOriginal<typeof import('@/lib/analytics')>(), trackEvent: vi.fn() }));
 vi.mock('@/lib/api', () => ({
   api: {
     getEggs: vi.fn().mockResolvedValue([]),

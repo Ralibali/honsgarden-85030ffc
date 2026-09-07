@@ -24,6 +24,14 @@ describe('V2 funnel event catalog (swarm U)', () => {
     expect(calls[1].props).toEqual({ feature: 'egg_log' });
   });
 
+  it('tracks diary saves without content or identifiers', () => {
+    const calls = mockPlausible();
+    trackEvent('Diary Entry Saved', { action: 'create' });
+    trackEvent('Diary Entry Saved', { action: 'edit' });
+    trackEvent('Demo Feature Used', { feature: 'diary' });
+    expect(calls.map((call) => call.props)).toEqual([{ action: 'create' }, { action: 'edit' }, { feature: 'diary' }]);
+  });
+
   it('sends activation funnel events', () => {
     const calls = mockPlausible();
     trackEvent('First Hen Added', { source: 'quick_fab' });

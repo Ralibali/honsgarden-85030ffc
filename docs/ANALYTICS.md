@@ -46,3 +46,7 @@ Besökare → Demo → Signup → Första hönan → Första ägget → Återkom
    omslutna av try/catch och no-op:ar utan Plausible.
 5. Nya events läggs till i `AnalyticsEventMap` med en test i
    `src/lib/__tests__/analyticsFunnel.test.ts`.
+
+## Dagbok och Plus (2026-09-07)
+
+`Diary Entry Saved` har endast `action: create | edit`. `Demo Feature Used` stöder `diary`. `Premium Viewed` och `Premium Checkout Started` använder validerad `source`. Dagbokens vyer och dialoger är märkta `data-private-content`; den äldre automatiska klickspårningen hoppar över hela dessa ytor innan text läses. Inlägg, datum och namn ska inte bli klicketiketter.

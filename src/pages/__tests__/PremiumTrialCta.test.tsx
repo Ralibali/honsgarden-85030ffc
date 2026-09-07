@@ -23,7 +23,7 @@ vi.mock('@/hooks/useAuth', () => ({
 }));
 vi.mock('@/hooks/useSeo', () => ({ useSeo: vi.fn() }));
 vi.mock('@/hooks/useTracking', () => ({ trackClick: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({ trackEvent: vi.fn() }));
+vi.mock('@/lib/analytics', async (importOriginal) => ({ ...await importOriginal<typeof import('@/lib/analytics')>(), trackEvent: vi.fn() }));
 vi.mock('@/lib/api', () => ({
   api: {
     getEggs: vi.fn().mockResolvedValue([]),
@@ -90,10 +90,11 @@ describe('Premium – trial vs free-trial CTA', () => {
     expect(screen.queryByText(svPremium.hero.free_trial)).not.toBeInTheDocument();
     expect(screen.getAllByText(/du har plus-trial/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/dagar kvar av din plus-trial/i)).toBeInTheDocument();
-    expect(screen.getByText(svPremium.active.manage)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: svPremium.trial.explore })).toHaveAttribute('href', '/app/statistics');
+    expect(screen.queryByText(svPremium.active.manage)).not.toBeInTheDocument();
   });
 
-  it('visar gratis-trial-CTA för användare som inte är på trial', () => {
+  it('visar tydliga betalplaner och gratisbas utan löfte om en ny provperiod', () => {
     authState.user = {
       id: 'user-1',
       premium_type: 'free',

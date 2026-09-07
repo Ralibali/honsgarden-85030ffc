@@ -92,3 +92,19 @@ jobs:
         env:
           TEST_DB_URL: ${{ secrets.TEST_DB_URL }}
         run: psql "$TEST_DB_URL" -v ON_ERROR_STOP=1 -f tests/rls/manual-rls-test.sql
+
+  billing:
+    name: Billing signatures and database permissions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - name: Check billing edge functions
+        run: deno check --node-modules-dir=none --no-config supabase/functions/verify-apple-subscription/index.ts supabase/functions/apple-subscription-webhook/index.ts supabase/functions/check-subscription/index.ts supabase/functions/create-checkout/index.ts supabase/functions/stripe-webhook/index.ts
+      - name: Reject forged Apple purchases and notifications
+        run: deno run --node-modules-dir=none --no-config --allow-env supabase/tests/apple-jws.mjs
+      - name: Test billing grants in isolated PostgreSQL
+        run: deno run --node-modules-dir=none --no-config --allow-read --allow-env supabase/tests/apple-billing.mjs

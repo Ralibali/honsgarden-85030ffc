@@ -1,6 +1,7 @@
 // Shared by iOS IAP client tests and Deno edge functions. Keep dependency-free.
 
 export const IOS_BUNDLE_ID = "se.honsgarden.app";
+export const IOS_APPLE_APP_ID = 6809292574;
 
 export const APPLE_IAP_PRODUCTS = {
   monthly: "se.honsgarden.plus.monthly",
@@ -20,6 +21,10 @@ export type AppleIapPreference = {
   expires_at: string | null;
   environment?: string;
   updated_at: string;
+  signed_at?: string;
+  transaction_id?: string;
+  revoked_at?: string | null;
+  verified?: boolean;
 };
 
 export function planFromProductId(productId: string): AppleIapPlan | null {
@@ -45,6 +50,10 @@ export function readAppleIapPreference(preferences: unknown): AppleIapPreference
     expires_at: typeof value.expires_at === "string" ? value.expires_at : null,
     environment: typeof value.environment === "string" ? value.environment : undefined,
     updated_at: typeof value.updated_at === "string" ? value.updated_at : "",
+    signed_at: typeof value.signed_at === "string" ? value.signed_at : undefined,
+    transaction_id: typeof value.transaction_id === "string" ? value.transaction_id : undefined,
+    revoked_at: typeof value.revoked_at === "string" ? value.revoked_at : null,
+    verified: value.verified === true,
   };
 }
 
@@ -54,6 +63,7 @@ export function isAppleIapActive(
   parseTimestamp: (value: string | null | undefined) => Date | null,
 ): boolean {
   if (!pref) return false;
+  if (!pref.verified || pref.revoked_at || !isKnownAppleProductId(pref.product_id)) return false;
   if (!pref.expires_at) return false;
   const date = parseTimestamp(pref.expires_at);
   return !!date && date > now;
@@ -128,13 +138,14 @@ export type AppleTransactionPayload = {
   appAccountToken?: string;
   environment?: string;
   revocationDate?: number;
+  signedDate?: number;
 };
 
 export function entitlementFromApplePayload(
   payload: AppleTransactionPayload,
   now = new Date(),
 ): AppleIapPreference {
-  if (payload.bundleId && payload.bundleId !== IOS_BUNDLE_ID) {
+  if (payload.bundleId !== IOS_BUNDLE_ID) {
     throw new Error(`Unexpected bundle id: ${payload.bundleId}`);
   }
   if (!payload.productId || !isKnownAppleProductId(payload.productId)) {
@@ -150,6 +161,7 @@ export function entitlementFromApplePayload(
   const expiresAt = typeof payload.expiresDate === "number"
     ? new Date(payload.expiresDate).toISOString()
     : null;
+  if (!expiresAt) throw new Error("Apple subscription is missing expiry");
   if (expiresAt && new Date(expiresAt) <= now) {
     throw new Error("Apple subscription is expired");
   }
@@ -160,6 +172,7 @@ export function entitlementFromApplePayload(
     expires_at: expiresAt,
     environment: payload.environment,
     updated_at: now.toISOString(),
+    verified: true,
   };
 }
 
@@ -182,4 +195,50 @@ export function isIosCheckoutBlocked(
   const header = (platformHeader ?? "").trim().toLowerCase();
   const body = typeof bodyPlatform === "string" ? bodyPlatform.trim().toLowerCase() : "";
   return header === "ios" || body === "ios";
+}
+
+export function assertAppleAccountToken(payload: AppleTransactionPayload, userId: string): void {
+  if (!payload.appAccountToken || payload.appAccountToken.toLowerCase() !== userId.toLowerCase()) {
+    throw new Error("Apple purchase belongs to another account or has no account binding");
+  }
+}
+
+/** Accept inactive states too, so refunds/expiry cannot leave Premium enabled. */
+export function appleStateFromPayload(
+  payload: AppleTransactionPayload,
+  now = new Date(),
+  notification?: { type?: string; signedDate?: number },
+): AppleIapPreference {
+  if (payload.bundleId !== IOS_BUNDLE_ID) throw new Error("Unexpected Apple bundle");
+  if (!payload.productId || !isKnownAppleProductId(payload.productId)) throw new Error("Unknown Apple product");
+  if (payload.type !== "Auto-Renewable Subscription") throw new Error("Unexpected Apple purchase type");
+  if (!payload.originalTransactionId || !payload.transactionId) throw new Error("Missing Apple transaction ID");
+  if (payload.environment !== "Production" && payload.environment !== "Sandbox") throw new Error("Invalid Apple environment");
+  const signedDate = notification?.signedDate ?? payload.signedDate;
+  if (typeof signedDate !== "number" || !Number.isFinite(signedDate) || signedDate <= 0 || signedDate > now.getTime() + 300000) {
+    throw new Error("Invalid Apple signed date");
+  }
+  if (typeof payload.expiresDate !== "number" || !Number.isFinite(payload.expiresDate) || payload.expiresDate <= 0) {
+    throw new Error("Missing Apple expiry");
+  }
+  const revoked = !!payload.revocationDate || notification?.type === "REFUND" || notification?.type === "REVOKE";
+  return {
+    original_transaction_id: payload.originalTransactionId,
+    transaction_id: payload.transactionId,
+    product_id: payload.productId,
+    environment: payload.environment,
+    expires_at: new Date(payload.expiresDate).toISOString(),
+    signed_at: new Date(signedDate).toISOString(),
+    revoked_at: revoked ? new Date(payload.revocationDate || signedDate).toISOString() : null,
+    verified: true,
+    updated_at: now.toISOString(),
+  };
+}
+
+/** Separate independent trial/gift access from the cached Apple expiry. */
+export function independentPremiumExpiry(preferences: unknown, cachedExpiry: string | null | undefined): string | null {
+  const apple = readAppleIapPreference(preferences);
+  if (!apple?.verified || !apple.expires_at || !cachedExpiry || Date.parse(cachedExpiry) !== Date.parse(apple.expires_at)) return cachedExpiry ?? null;
+  const raw = (preferences as { apple_iap: Record<string, unknown> }).apple_iap;
+  return typeof raw.previous_premium_expires_at === "string" ? raw.previous_premium_expires_at : null;
 }

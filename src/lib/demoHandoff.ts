@@ -16,6 +16,7 @@ import type { AnalyticsDemoFeature } from '@/lib/analytics';
 export function mapAppPathToDemoFeature(pathname: string): AnalyticsDemoFeature | undefined {
   const path = String(pathname).split('?')[0];
   if (!path.startsWith('/app')) return undefined;
+  if (/^\/app\/(dagbok|diary)(?:\/|$)/.test(path)) return 'diary';
   if (/^\/app\/eggs/.test(path)) return 'egg_log';
   if (/^\/app\/hens/.test(path)) return 'hens';
   if (/^\/app\/feed(?![a-z])/.test(path)) return 'feed';
