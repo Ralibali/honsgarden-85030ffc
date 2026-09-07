@@ -83,3 +83,6 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = false
   [functions.digital-resend-link]
     verify_jwt = false
+  [functions.digital-sample]
+    verify_jwt = false
+
