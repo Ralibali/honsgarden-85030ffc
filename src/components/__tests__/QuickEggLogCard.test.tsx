@@ -12,9 +12,10 @@ const mockTrack = vi.fn();
 vi.mock('@/lib/api', () => ({
   api: {
     createEggRecord: (...args: unknown[]) => mockCreate(...args),
-    deleteEggRecord: (...args: unknown[]) => mockDelete(...args),
+    removeOneEgg: (...args: unknown[]) => mockDelete(...args),
   },
 }));
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => mockToast(...args) }));
 vi.mock('@/lib/analytics', () => ({ trackFirstEggIfNew: (...args: unknown[]) => mockTrack(...args) }));
 
@@ -39,7 +40,7 @@ describe('QuickEggLogCard – äggloggning', () => {
     fireEvent.click(screen.getByLabelText('Lägg till ett ägg'));
 
     await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1));
-    expect(mockCreate).toHaveBeenCalledWith({ date: todayLocal(), count: 1 });
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ date: todayLocal(), count: 1, expected_user_id: 'owner', client_id: expect.any(String) }));
     await waitFor(() => expect(mockToast).toHaveBeenCalledWith({ title: '🥚 +1 ägg loggat' }));
     expect(mockTrack).toHaveBeenCalledWith('quick_log_card');
   });

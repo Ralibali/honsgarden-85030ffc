@@ -60,6 +60,8 @@ export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, 
               size="sm"
               className="eggbook-list__delete h-8 w-8 p-0 text-muted-foreground/40 hover:text-destructive"
               onClick={() => onDelete(entryId)}
+                      disabled={Boolean(entry.pending)}
+                      title={entry.pending ? "Synka registreringen före radering" : undefined}
               aria-label={`Ta bort registreringen från ${friendlyDate(entry.date)}`}
             >
               <Trash2 className="h-3.5 w-3.5" />

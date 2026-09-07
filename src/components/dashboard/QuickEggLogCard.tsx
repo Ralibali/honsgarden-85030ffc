@@ -9,6 +9,9 @@ import { todayLocal } from '@/lib/datetime';
 import { CountUp } from '@/components/CountUp';
 import { useState } from 'react';
 import { trackFirstEggIfNew } from '@/lib/analytics';
+import { useAuth } from '@/hooks/useAuth';
+import { saveEggLog } from '@/lib/saveEggLog';
+import type { EggLog } from '@/lib/api';
 
 interface Props {
   todayEggs: number;
@@ -17,20 +20,26 @@ interface Props {
 
 export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [busy, setBusy] = useState(false);
   const [justLogged, setJustLogged] = useState(false);
 
   const addOne = useMutation({
     mutationFn: async () => {
-      await api.createEggRecord({ date: todayLocal(), count: 1 });
+      return saveEggLog(user?.id, { date: todayLocal(), count: 1 }, api.createEggRecord);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eggs'] });
-      trackFirstEggIfNew('quick_log_card');
+    onSuccess: (result) => {
+      if ('__offline' in result) {
+        queryClient.setQueryData<EggLog[]>(['eggs'], old => [{ ...result, id: `pending-${result.client_id}`, user_id: user!.id, created_at: new Date().toISOString(), hen_id: null, flock_id: null, notes: null, weather: null, pending: true } as EggLog, ...(old ?? [])]);
+        toast({ title: 'Sparat på enheten', description: 'Ägget synkas när du får täckning.' });
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['eggs'] });
+        trackFirstEggIfNew('quick_log_card');
+        toast({ title: '🥚 +1 ägg loggat' });
+      }
       hapticSuccess();
       setJustLogged(true);
       window.setTimeout(() => setJustLogged(false), 700);
-      toast({ title: '🥚 +1 ägg loggat' });
     },
     onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
     onSettled: () => setBusy(false),
@@ -39,8 +48,9 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
   const removeOne = useMutation({
     mutationFn: async () => {
       if (todayEggRowIds.length === 0) throw new Error('Inga ägg att ta bort idag');
-      const lastId = todayEggRowIds[0];
-      await api.deleteEggRecord(lastId);
+      const lastId = todayEggRowIds.find(id => !id.startsWith('pending-') && !id.startsWith('temp-'));
+      if (!lastId || !navigator.onLine) throw new Error('Synka loggningarna innan du korrigerar antalet.');
+      await api.removeOneEgg(lastId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
@@ -62,7 +72,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
     removeOne.mutate();
   };
 
-  const disableMinus = busy || todayEggs === 0;
+  const disableMinus = busy || todayEggs === 0 || !todayEggRowIds.some(id => !id.startsWith('pending-') && !id.startsWith('temp-'));
 
   return (
     <Card className={`egg-counter-v3 overflow-hidden ${justLogged ? 'is-celebrating' : ''}`}>
