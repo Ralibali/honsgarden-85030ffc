@@ -5,6 +5,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse } from "../_shared/cors.ts";
 import {
   clientIp,
+  DIGITAL_PRIVATE_HEADERS,
   getDigitalProduct,
   hashAccessToken,
   hashKey,
@@ -22,7 +23,7 @@ serve(async (req) => {
   if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, cors.headers);
 
-  const h = cors.headers;
+  const h = { ...cors.headers, ...DIGITAL_PRIVATE_HEADERS };
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!supabaseUrl || !serviceRoleKey) return jsonResponse({ error: "Nedladdning otillgänglig." }, 500, h);

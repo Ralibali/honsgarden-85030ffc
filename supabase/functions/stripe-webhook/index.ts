@@ -2,7 +2,7 @@ import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stri
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { getDigitalProduct } from "../_shared/digitalProduct.ts";
+import { getDigitalProduct, isLiveStripeKey, normalizeEmail } from "../_shared/digitalProduct.ts";
 import { flushEmailQueue, sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
 const corsHeaders = {
@@ -99,7 +99,7 @@ serve(async (req) => {
 
       const { data: order, error: fetchError } = await supabase
         .from("digital_orders")
-        .select("id, order_number, product_slug, status, customer_email, amount_ore, vat_rate, consent_terms_version, consent_at, paid_at, refunded_at")
+        .select("id, order_number, product_slug, status, currency, customer_email, amount_ore, vat_rate, consent_terms_version, consent_at, paid_at, refunded_at, stripe_session_id")
         .eq("id", orderId)
         .maybeSingle();
       if (fetchError) {
@@ -117,10 +117,28 @@ serve(async (req) => {
         return;
       }
 
+      // Sessionen måste höra till exakt den här ordern och produkten, i samma
+      // läge och valuta, innan något levereras.
+      const sessionSlug = session.metadata?.digital_product_slug;
+      const linkageBroken = (order.stripe_session_id && order.stripe_session_id !== session.id)
+        || (sessionSlug ? sessionSlug !== order.product_slug : false)
+        || session.mode !== "payment"
+        || session.livemode !== isLiveStripeKey(stripeKey)
+        || event.livemode !== session.livemode
+        || (session.currency ?? "").toLowerCase() !== String(order.currency ?? "sek").toLowerCase();
+      if (linkageBroken) {
+        console.error("[stripe-webhook] digital session linkage mismatch:", session.id, order.id);
+        return;
+      }
+      if (order.refunded_at) {
+        console.error("[stripe-webhook] digital order already refunded, no delivery:", order.id);
+        return;
+      }
+
       const paymentIntentId = typeof session.payment_intent === "string"
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
-      const verifiedEmail = session.customer_details?.email ?? session.customer_email ?? null;
+      const verifiedEmail = normalizeEmail(session.customer_details?.email ?? session.customer_email);
 
       const verifiedCountry = session.customer_details?.address?.country ?? null;
 

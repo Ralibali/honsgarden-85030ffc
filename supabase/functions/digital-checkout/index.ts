@@ -4,7 +4,14 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { evaluateCors, jsonResponse, safeSuccessOrigin } from "../_shared/cors.ts";
-import { clientIp, getDigitalProduct, hashKey, isLiveStripeKey } from "../_shared/digitalProduct.ts";
+import {
+  clientIp,
+  DIGITAL_PRIVATE_HEADERS,
+  digitalRateLimitAllows,
+  getDigitalProduct,
+  isLiveStripeKey,
+  normalizeEmail,
+} from "../_shared/digitalProduct.ts";
 
 const GENERIC_FAILURE = "Kunde inte starta betalningen. Försök igen om en stund.";
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -18,7 +25,7 @@ serve(async (req) => {
   if (cors.blocked) return jsonResponse({ error: "Origin ej tillåten" }, 403, cors.headers);
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405, cors.headers);
 
-  const corsHeaders = cors.headers;
+  const corsHeaders = { ...cors.headers, ...DIGITAL_PRIVATE_HEADERS };
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   const stripeKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
@@ -43,9 +50,9 @@ serve(async (req) => {
       );
     }
 
-    const rawEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const email = rawEmail && EMAIL_RE.test(rawEmail) && rawEmail.length <= 254 ? rawEmail : null;
-    if (rawEmail && !email) {
+    const normalized = normalizeEmail(body.email);
+    const email = normalized && EMAIL_RE.test(normalized) ? normalized : null;
+    if (typeof body.email === "string" && body.email.trim() && !email) {
       return jsonResponse({ error: "Ange en giltig e-postadress." }, 400, corsHeaders);
     }
 
@@ -59,20 +66,15 @@ serve(async (req) => {
     }
 
     // Hastighetsspärr: max 5 kassaförsök per IP och 10 minuter, 5 per e-post.
+    // Fail closed: kan spärren inte läsas startar vi ingen betalning.
     const ip = clientIp(req);
     for (const [scope, value, max] of [
       ["digital-checkout-ip", ip, 5],
       ["digital-checkout-email", email ?? "", 5],
     ] as const) {
       if (!value) continue;
-      const { data: allowed, error: limitError } = await admin.rpc("digital_rate_limit", {
-        p_scope: scope,
-        p_key_hash: await hashKey(value),
-        p_max: max,
-        p_window_minutes: 10,
-      });
-      if (limitError) console.error("[digital-checkout] rate limit error", limitError.message);
-      if (allowed === false) {
+      const allowed = await digitalRateLimitAllows(admin, { scope, value, max, windowMinutes: 10 });
+      if (!allowed) {
         return jsonResponse(
           { error: "För många försök just nu. Vänta några minuter och prova igen." },
           429,
@@ -80,6 +82,7 @@ serve(async (req) => {
         );
       }
     }
+
 
     const now = new Date().toISOString();
     const { data: order, error: orderError } = await admin
@@ -115,8 +118,13 @@ serve(async (req) => {
       billing_address_collection: "required",
       // Endast svensk försäljning i detta första steg – ingen global momsrisk.
       payment_method_types: ["card"],
-      // Beständigt Stripe-pris (inte price_data) så att intäkter kan följas per produkt.
-      line_items: [{ quantity: 1, price: product.stripePriceId }],
+      // Beständigt Stripe-pris (inte price_data) så att intäkter kan följas per produkt,
+      // med beständig inkluderande momssats (6 % SE) så momsen redovisas i Stripe.
+      line_items: [{
+        quantity: 1,
+        price: product.stripePriceId,
+        tax_rates: [product.stripeTaxRateId],
+      }],
       metadata: {
         digital_order_id: order.id,
         digital_product_slug: product.slug,
