@@ -27,7 +27,7 @@ export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
     slug: "mina-forsta-hons",
     name: "Mina första höns – svenskt startpaket (PDF)",
     description:
-      "24-sidig ifyllbar och utskrivbar PDF: beslut före hönsköp, inköpslistor, budget, boende och säkerhet, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg.",
+      "24-sidig utskrivbar PDF med checklistor och arbetsblad: beslut före hönsköp, inköpslistor, budget, boende och säkerhet, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg.",
     amountOre: 19900,
     currency: "sek",
     vatRate: 0.06,
