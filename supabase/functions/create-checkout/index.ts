@@ -1,3 +1,4 @@
+import { isPlusSubscription, plusPriceIds } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
@@ -128,8 +129,8 @@ serve(async (req) => {
 
     if (!customerId) {
       const list = await stripe.customers.list({ email: user.email, limit: 10 });
-      const matching = list.data.find((customer) => customer.metadata?.supabase_user_id === user.id)
-        ?? list.data[0];
+      const matching = list.data.find((customer: Stripe.Customer) => customer.metadata?.supabase_user_id === user.id)
+        ?? list.data.find((customer: Stripe.Customer) => !customer.metadata?.supabase_user_id);
       customerId = matching?.id ?? null;
     }
 
@@ -158,7 +159,7 @@ serve(async (req) => {
       limit: 100,
     });
     const blocking = existing.data.find(
-      (subscription) => ["active", "trialing", "past_due", "paused"].includes(subscription.status),
+      (subscription: Stripe.Subscription) => isPlusSubscription(subscription, plusPriceIds(Deno.env.get("STRIPE_PRICE_MONTHLY"), Deno.env.get("STRIPE_PRICE_YEARLY"))) && ["active", "trialing", "past_due", "paused"].includes(subscription.status),
     );
 
     if (blocking) {

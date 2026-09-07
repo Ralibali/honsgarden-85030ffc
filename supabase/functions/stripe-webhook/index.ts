@@ -1,8 +1,7 @@
+import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stripeAccessActive } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
-import { isAppleIapActive, readAppleIapPreference } from "../_shared/appleIap.ts";
-import { parseTimestamp } from "../_shared/localPremium.ts";
 import { getDigitalProduct } from "../_shared/digitalProduct.ts";
 import { sendDigitalReceipt } from "../_shared/digitalReceipt.ts";
 
@@ -10,14 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "stripe-signature, content-type",
 };
-
-const PREMIUM_STRIPE_STATUSES = new Set(["active", "trialing", "past_due"]);
-const FREE_STRIPE_STATUSES = new Set(["canceled", "unpaid", "incomplete", "incomplete_expired", "paused"]);
-
-function getStripeEnd(subscription: Stripe.Subscription): string | null {
-  const periodEndTs = (subscription as any).current_period_end as number | undefined;
-  return periodEndTs ? new Date(periodEndTs * 1000).toISOString() : null;
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -73,7 +64,11 @@ serve(async (req) => {
       return null;
     }
 
-    async function syncSubscription(sub: Stripe.Subscription) {
+    async function syncSubscription(eventSub: Stripe.Subscription) {
+      // Notifications can arrive out of order. Read the current Stripe state.
+      const observedAt = new Date().toISOString();
+      const sub = await stripe.subscriptions.retrieve(eventSub.id);
+      if (!isPlusSubscription(sub, plusPriceIds(Deno.env.get("STRIPE_PRICE_MONTHLY"), Deno.env.get("STRIPE_PRICE_YEARLY")))) return;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
       const userId =
         sub.metadata?.supabase_user_id ||
@@ -84,38 +79,13 @@ serve(async (req) => {
       }
 
       const endsAt = getStripeEnd(sub);
-      const isPremiumStatus = PREMIUM_STRIPE_STATUSES.has(sub.status);
-      const isFreeStatus = FREE_STRIPE_STATUSES.has(sub.status);
-
-      const update: Record<string, unknown> = {
-        stripe_customer_id: customerId,
-        subscription_status: isPremiumStatus ? "premium" : "free",
-      };
-
-      // Vanliga Stripe-abonnemang får aldrig sätta eller härleda lifetime.
-      if (isPremiumStatus) {
-        update.premium_expires_at = endsAt;
-      } else if (isFreeStatus) {
-        const { data: existing } = await supabase
-          .from("profiles")
-          .select("preferences")
-          .eq("user_id", userId)
-          .maybeSingle();
-        const appleIap = readAppleIapPreference(existing?.preferences);
-        if (isAppleIapActive(appleIap, new Date(), parseTimestamp)) {
-          update.subscription_status = "premium";
-          update.premium_expires_at = appleIap?.expires_at ?? null;
-        } else {
-          update.premium_expires_at = null;
-        }
-      }
-
-      const { error } = await supabase
-        .from("profiles")
-        .update(update)
-        .eq("user_id", userId);
-      if (error) console.error("[stripe-webhook] profile update error:", error.message);
-      else console.log("[stripe-webhook] synced", userId, "->", update);
+      const isPremiumStatus = stripeAccessActive(sub);
+      const { error } = await supabase.rpc("apply_stripe_plus_status", {
+        _user_id: userId, _customer_id: customerId, _active: isPremiumStatus,
+        _period_end: endsAt, _observed_at: observedAt,
+      });
+      if (error && error.code !== "P0002") throw new Error("Subscription persistence failed");
+      console.log("[stripe-webhook] subscription synchronized");
     }
 
     // ---- Digitalt engångsköp (PDF-guide) ----

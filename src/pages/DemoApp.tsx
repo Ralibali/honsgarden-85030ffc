@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,8 @@ import {
   DEMO_DOCUMENT_TITLE,
   DEMO_PATH,
 } from '@/lib/prerenderTopicPages';
-import DashboardV2 from '@/pages/DashboardV2';
+import DashboardV3 from '@/pages/DashboardV3';
+import Diary from '@/pages/Diary';
 
 const DEMO_USER_ID = 'demo-user';
 
@@ -41,6 +43,8 @@ function suppressOneTimeOverlays() {
  * inget konto behövs.
  */
 export default function DemoApp() {
+  const [params] = useSearchParams();
+  const diary = params.get('view') === 'diary';
   useSeo({
     title: DEMO_DOCUMENT_TITLE,
     description: DEMO_DESCRIPTION,
@@ -113,9 +117,13 @@ export default function DemoApp() {
           </div>
 
           {/* Den riktiga dashboarden, precis som inloggade ser den */}
-          <div className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-24">
-            <DashboardV2 />
-          </div>
+          <main id="main-content" tabIndex={-1} className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-24">
+            <nav aria-label="Prova appen" className="max-w-2xl mx-auto flex gap-2 mb-5">
+              <Button asChild variant={diary ? 'outline' : 'default'}><Link to="/demo" aria-current={!diary ? 'page' : undefined}>Idag</Link></Button>
+              <Button asChild variant={diary ? 'default' : 'outline'}><Link to="/demo?view=diary" aria-current={diary ? 'page' : undefined}>Dagbok</Link></Button>
+            </nav>
+            {diary ? <Diary demo /> : <DashboardV3 demo />}
+          </main>
 
           {/* Fast CTA längst ner */}
           <div className="fixed bottom-0 inset-x-0 z-40 p-3 bg-background/95 backdrop-blur border-t border-border">

@@ -28,6 +28,7 @@ import {
   Sparkles,
   X,
   ArrowRight,
+  BookOpen,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
@@ -44,10 +45,10 @@ const primaryItems = [
 ];
 
 const quickItems = [
+  { title: 'Dagbok', subtitle: 'Minnen från gården', url: '/app/dagbok', icon: BookOpen },
   { title: 'Agda', subtitle: 'Fråga om flocken', url: '/app/agda', icon: Bot, premium: true },
   { title: 'Insikter', subtitle: 'Förstå värpningen', url: '/app/statistics', icon: Sparkles, premium: true },
   { title: 'Hälsa', subtitle: 'Din hälsojournal', url: '/app/halsa', icon: Stethoscope },
-  { title: 'Foder', subtitle: 'Kostnad & inköp', url: '/app/feed', icon: Package, premium: true },
 ];
 
 const moreGroups = [
@@ -55,6 +56,7 @@ const moreGroups = [
     label: 'Vardagen på gården',
     description: 'Sånt du använder när något händer.',
     items: [
+      { title: 'Foder', url: '/app/feed', icon: Package, premium: true },
       { title: 'Påminnelser', url: '/app/reminders', icon: Syringe },
       { title: 'Kalender', url: '/app/calendar', icon: CalendarDays },
       { title: 'Väder & råd', url: '/app/weather', icon: CloudSun, premium: true },

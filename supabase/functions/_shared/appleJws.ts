@@ -1,29 +1,46 @@
-import * as jose from "https://esm.sh/jose@5.9.6";
-import type { AppleTransactionPayload } from "./appleIap.ts";
+import { Buffer } from "node:buffer";
+import { Environment, SignedDataVerifier, VerificationException, VerificationStatus } from "npm:@apple/app-store-server-library@3.1.0";
+import { APPLE_ROOT_CERTIFICATES_BASE64 } from "./appleRoots.ts";
+import { IOS_APPLE_APP_ID, IOS_BUNDLE_ID, type AppleTransactionPayload } from "./appleIap.ts";
 
-function decodeSegment(segment: string): string {
-  const padded = segment.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((segment.length + 3) % 4);
-  return atob(padded);
+export class AppleConfigurationError extends Error {}
+export class AppleVerificationUnavailableError extends Error {}
+
+export function createAppleVerifiers(appAppleId: number, allowSandbox: boolean) {
+  if (!Number.isSafeInteger(appAppleId) || appAppleId <= 0) {
+    throw new AppleConfigurationError("APPLE_APP_ID must be the numeric App Store Connect app ID");
+  }
+  const roots = APPLE_ROOT_CERTIFICATES_BASE64.map((cert) => Buffer.from(cert, "base64"));
+  // Apple's library validates the entire chain against pinned Apple roots,
+  // certificate OIDs, revocation status, bundle ID and environment.
+  const verifiers = [new SignedDataVerifier(roots, true, Environment.PRODUCTION, IOS_BUNDLE_ID, appAppleId)];
+  if (allowSandbox) verifiers.push(new SignedDataVerifier(roots, true, Environment.SANDBOX, IOS_BUNDLE_ID));
+  return verifiers;
 }
 
-export function decodeAppleJwsPayload(jws: string): AppleTransactionPayload {
-  const parts = jws.split(".");
-  if (parts.length !== 3) throw new Error("Invalid Apple JWS");
-  return JSON.parse(decodeSegment(parts[1])) as AppleTransactionPayload;
-}
-
-function leafCertificatePem(jws: string): string {
-  const parts = jws.split(".");
-  if (parts.length !== 3) throw new Error("Invalid Apple JWS");
-  const header = JSON.parse(decodeSegment(parts[0])) as { x5c?: string[]; alg?: string };
-  const leaf = header.x5c?.[0];
-  if (!leaf) throw new Error("Apple JWS is missing x5c certificate");
-  return `-----BEGIN CERTIFICATE-----\n${leaf}\n-----END CERTIFICATE-----`;
+let cached: ReturnType<typeof createAppleVerifiers> | undefined;
+function configuredVerifiers() {
+  return cached ??= createAppleVerifiers(Number(Deno.env.get("APPLE_APP_ID") ?? IOS_APPLE_APP_ID), Deno.env.get("APPLE_ALLOW_SANDBOX") === "true");
 }
 
 export async function verifyAppleSignedPayload(jws: string): Promise<AppleTransactionPayload> {
-  const pem = leafCertificatePem(jws);
-  const key = await jose.importX509(pem, "ES256");
-  const { payload } = await jose.jwtVerify(jws, key, { algorithms: ["ES256"] });
-  return payload as AppleTransactionPayload;
+  if (typeof jws !== "string" || jws.length > 32000) throw new Error("Invalid Apple transaction");
+  let retryable = false;
+  for (const verifier of configuredVerifiers()) {
+    try { return await verifier.verifyAndDecodeTransaction(jws) as AppleTransactionPayload; }
+    catch (error) { retryable ||= error instanceof VerificationException && error.status === VerificationStatus.RETRYABLE_VERIFICATION_FAILURE; }
+  }
+  if (retryable) throw new AppleVerificationUnavailableError("Apple verification temporarily unavailable");
+  throw new Error("Apple transaction could not be verified");
+}
+
+export async function verifyAppleNotification(jws: string) {
+  if (typeof jws !== "string" || jws.length > 128000) throw new Error("Invalid Apple notification");
+  let retryable = false;
+  for (const verifier of configuredVerifiers()) {
+    try { return await verifier.verifyAndDecodeNotification(jws); }
+    catch (error) { retryable ||= error instanceof VerificationException && error.status === VerificationStatus.RETRYABLE_VERIFICATION_FAILURE; }
+  }
+  if (retryable) throw new AppleVerificationUnavailableError("Apple verification temporarily unavailable");
+  throw new Error("Apple notification could not be verified");
 }
