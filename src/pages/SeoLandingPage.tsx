@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import LandingNavbar from '@/components/LandingNavbar';
+import ContextualShopCta from '@/components/ContextualShopCta';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -296,6 +297,14 @@ export function SeoLandingPage({ pageKey }: { pageKey: PageKey }) {
           </div>
         </div>
       </section>
+
+      {pageKey === 'borja-med-hons' && (
+        <section className="pb-4 bg-background">
+          <div className="container max-w-3xl mx-auto px-5 sm:px-6">
+            <ContextualShopCta path="/borja-med-hons" />
+          </div>
+        </section>
+      )}
 
       <section className="py-14 sm:py-20 bg-background">
         <div className="container max-w-3xl mx-auto px-5 sm:px-6">

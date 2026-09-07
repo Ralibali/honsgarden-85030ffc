@@ -7,6 +7,7 @@ import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mj
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
+import { injectContextualShopPlacement, renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 import {
   breedTopicH1,
@@ -119,7 +120,7 @@ function renderArticle(post) {
     injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)),
     post.slug,
   );
-  const content = sanitizeHtml(injectContextualRegisterCta(rewritten, post.slug));
+  const content = sanitizeHtml(injectContextualShopPlacement(injectContextualRegisterCta(rewritten, post.slug), post.slug));
 
   return `<div class="min-h-screen bg-background">
 <header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/blogg" class="text-sm text-muted-foreground hover:text-foreground">← Blogg</a><a href="/login?mode=register&amp;source=blog_header" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
@@ -322,6 +323,10 @@ function buildStaticPage(template, page) {
   const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
   if (page.path === '/') {
     return injectTopicBody(withHead, renderHomeTopicBody());
+  }
+  const shopPlacement = shopPlacementForPath(page.path);
+  if (shopPlacement && (page.path === '/honsraser' || page.path === '/borja-med-hons')) {
+    return injectTopicBody(withHead, renderContextualShopPlacementHtml(shopPlacement));
   }
   return withHead;
 }
