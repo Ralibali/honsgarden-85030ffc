@@ -122,6 +122,7 @@ export function installDemoShim(queryClient: QueryClient): () => void {
     invalidate('daily-chores');
   });
 
+  patch('getChoreHistory', async () => []);
   patch('uncompleteChore', async (choreId: string) => {
     store.chores = store.chores.map((c) => (c.id === choreId ? { ...c, completed: false } : c));
     invalidate('daily-chores');

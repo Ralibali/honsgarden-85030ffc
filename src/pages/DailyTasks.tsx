@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
+import SharedCareHistory from '@/components/SharedCareHistory';
 import { todayLocal } from '@/lib/datetime';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ function sortByDue(a: any, b: any) {
 
 export default function DailyTasks() {
   const queryClient = useQueryClient();
+  const togglePending = useRef(false);
   const [newTitle, setNewTitle] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -66,19 +68,20 @@ export default function DailyTasks() {
   const [newReminderHours, setNewReminderHours] = useState('24');
   const [editingChore, setEditingChore] = useState<string | null>(null);
 
-  const { data: chores = [], isLoading } = useQuery({
+  const { data: chores = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['daily-chores'],
     queryFn: () => api.getDailyChores(),
+    refetchInterval: 30000,
   });
 
   const completeMutation = useMutation({
     mutationFn: (choreId: string) => api.completeChore(choreId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['daily-chores'] }),
+    onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['daily-chores'] }), queryClient.invalidateQueries({ queryKey: ['chore-history'] })]); },
   });
 
   const uncompleteMutation = useMutation({
-    mutationFn: (choreId: string) => api.uncompleteChore(choreId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['daily-chores'] }),
+    mutationFn: ({ choreId, completionId }: { choreId: string; completionId?: string }) => api.uncompleteChore(choreId, completionId),
+    onSuccess: async () => { await Promise.all([queryClient.invalidateQueries({ queryKey: ['daily-chores'] }), queryClient.invalidateQueries({ queryKey: ['chore-history'] })]); },
   });
 
   const createMutation = useMutation({
@@ -103,6 +106,7 @@ export default function DailyTasks() {
       toast({ title: 'Sysslan är uppdaterad' });
       setEditingChore(null);
     },
+    onError: (cause: Error) => toast({ title: 'Kunde inte ändra sysslan', description: cause.message, variant: 'destructive' }),
   });
 
   const deleteMutation = useMutation({
@@ -111,11 +115,19 @@ export default function DailyTasks() {
       queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
       toast({ title: 'Sysslan är borttagen' });
     },
+    onError: (cause: Error) => toast({ title: 'Kunde inte ta bort sysslan', description: cause.message, variant: 'destructive' }),
   });
 
-  const toggleChore = (chore: any) => {
-    if (chore.completed) uncompleteMutation.mutate(chore.id);
-    else completeMutation.mutate(chore.id);
+  const toggleChore = async (chore: any) => {
+    if (togglePending.current) return;
+    togglePending.current = true;
+    try {
+      if (chore.completed) await uncompleteMutation.mutateAsync({ choreId: chore.id, completionId: chore.completionId });
+      else await completeMutation.mutateAsync(chore.id);
+    } catch (cause) {
+      toast({ title: 'Sysslan kunde inte ändras', description: cause instanceof Error ? cause.message : 'Hämta senaste uppgifterna och försök igen.', variant: 'destructive' });
+      void queryClient.invalidateQueries({ queryKey: ['daily-chores'] });
+    } finally { togglePending.current = false; }
   };
 
   const addSuggested = (suggestion: (typeof SUGGESTED_CHORES)[number]) => {
@@ -167,8 +179,10 @@ export default function DailyTasks() {
     );
   }
 
+  if (isError) return <section role="alert" className="max-w-3xl mx-auto rounded-2xl border p-5 space-y-3"><h1 className="font-serif text-2xl">Delad skötsel</h1><p>Dagens sysslor kunde inte hämtas. Statusen kan inte visas förrän uppgifterna är tillgängliga.</p><Button variant="outline" onClick={() => void refetch()}>Försök igen</Button></section>;
+
   return (
-    <motion.div
+    <motion.div data-private-content
       className="yard-v4 max-w-3xl mx-auto"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -183,6 +197,7 @@ export default function DailyTasks() {
         <span className="yard-v4__header-mark" aria-hidden="true">🌿</span>
       </header>
 
+      {(completeMutation.isPending || uncompleteMutation.isPending) && <p role="status" className="text-sm">Sparar gårdens skötsel…</p>}
       <section className={`yard-v4__status ${remainingCount === 0 && chores.length > 0 ? 'is-done' : ''}`} aria-label="Dagens status">
         <div className="yard-v4__status-copy">
           <p className="yard-v4__eyebrow">Idag</p>
@@ -359,6 +374,7 @@ export default function DailyTasks() {
         </section>
       )}
 
+      <div className="mt-6"><SharedCareHistory /></div>
       <PremiumGate soft feature="automatiska påminnelser & obegränsade uppgifter" featureKey="reminders">
         <div />
       </PremiumGate>
@@ -439,6 +455,7 @@ function ChoreRow({ chore, isEditing, onToggle, onEdit, onDelete, onSave }: {
         <button type="button" className="yard-v4__chore-copy" onClick={onToggle}>
           <span className="yard-v4__chore-title">{chore.title}</span>
           {chore.description && <span className="yard-v4__chore-description">{chore.description}</span>}
+          {chore.completed && chore.completedAt && <span className="yard-v4__chore-description">Klart av {chore.completedBy || 'gårdsmedlem'} kl. {new Date(chore.completedAt).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>}
           <span className="yard-v4__meta">
             {pastDue && !chore.completed && <em className="is-overdue"><AlertTriangle className="h-3 w-3" /> Försenad</em>}
             {dueToday && !pastDue && <em><Clock className="h-3 w-3" /> Idag</em>}

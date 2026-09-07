@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import VoiceDraft from './VoiceDraft';
 import { Loader2, Check } from 'lucide-react';
 import { api, type HealthLog } from '@/lib/api';
 import { todayLocal } from '@/lib/datetime';
@@ -25,12 +26,13 @@ export default function DiaryEditor({ open, onOpenChange, entry, demo = false }:
   const [date, setDate] = useState(todayLocal);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [error, setError] = useState('');
+  const [voiceDirty, setVoiceDirty] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setDescription(entry?.description ?? '');
     setDate(entry?.date ?? todayLocal());
-    setError('');
+    setError(''); setVoiceDirty(false);
   }, [open, entry]);
 
   const save = useMutation({
@@ -51,7 +53,7 @@ export default function DiaryEditor({ open, onOpenChange, entry, demo = false }:
   function close() {
     if (save.isPending) return;
     const dirty = description !== (entry?.description ?? '') || date !== (entry?.date ?? todayLocal());
-    if (dirty) setDiscardOpen(true);
+    if (dirty || voiceDirty) setDiscardOpen(true);
     else onOpenChange(false);
   }
 
@@ -62,16 +64,17 @@ export default function DiaryEditor({ open, onOpenChange, entry, demo = false }:
           <DialogTitle className="font-serif text-2xl">{entry ? 'Redigera inlägg' : 'En stund i hönsgården'}</DialogTitle>
           <DialogDescription>Spara små minnen och sådant du vill komma ihåg om flocken.</DialogDescription>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); if (description.trim() && date && !save.isPending) { setError(''); save.mutate(); } }}>
+        <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); if (description.trim() && date && !save.isPending && !voiceDirty) { setError(''); save.mutate(); } }}>
           <div className="space-y-2"><Label htmlFor="diary-date">Datum</Label><Input id="diary-date" type="date" required value={date} onChange={(event) => setDate(event.target.value)} disabled={save.isPending} /></div>
           <div className="space-y-2">
             <Label htmlFor="diary-text">Vad hände i hönsgården?</Label>
             <Textarea id="diary-text" autoFocus required value={description} onChange={(event) => setDescription(event.target.value)} disabled={save.isPending} rows={7} className="resize-y text-base leading-relaxed" placeholder="Första ägget från en unghöna, en ny rutin eller bara en fin stund med flocken…" aria-describedby={error ? 'diary-save-error' : undefined} />
           </div>
+          {open && <VoiceDraft onDirtyChange={setVoiceDirty} disabled={save.isPending} onUse={text => setDescription(current => [current.trim(), text].filter(Boolean).join("\n\n"))} />}
           {error && <p id="diary-save-error" role="alert" className="text-sm text-destructive">{error}</p>}
           <div className="flex flex-wrap gap-2 justify-end">
             <Button type="button" variant="outline" disabled={save.isPending} onClick={close}>Avbryt</Button>
-            <Button type="submit" disabled={!description.trim() || !date || save.isPending} className="gap-2 min-h-11">
+            <Button type="submit" disabled={!description.trim() || !date || save.isPending || voiceDirty} className="gap-2 min-h-11">
               {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {save.isPending ? 'Sparar…' : demo ? 'Prova att spara' : 'Spara inlägg'}
             </Button>
