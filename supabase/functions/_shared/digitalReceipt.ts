@@ -14,6 +14,13 @@ import {
   vatBreakdown,
 } from "./digitalProduct.ts";
 
+export interface ReceiptResult {
+  /** true när kvittot köades i detta anrop eller redan var skickat. */
+  ok: boolean;
+  queued: boolean;
+  reason?: string;
+}
+
 const FROM_DOMAIN = "notify.honsgarden.se";
 const SITE = "https://honsgarden.se";
 
@@ -65,35 +72,15 @@ export async function sendDigitalReceipt(
   admin: Admin,
   order: ReceiptOrder,
   product: DigitalProductConfig,
-): Promise<boolean> {
+): Promise<ReceiptResult> {
   if (!order.customer_email) {
     console.error("[digital] receipt skipped: no verified email", order.id);
-    return false;
+    return { ok: false, queued: false, reason: "missing_email" };
   }
 
-  // Idempotensspärr: bara den första lyckade uppdateringen får skicka.
   const messageId = `digital-receipt-${order.id}`;
-  const { data: claimed, error: claimError } = await admin
-    .from("digital_orders")
-    .update({ receipt_message_id: messageId })
-    .eq("id", order.id)
-    .is("receipt_sent_at", null)
-    .is("receipt_message_id", null)
-    .select("id")
-    .maybeSingle();
-
-  if (claimError) {
-    console.error("[digital] receipt claim failed", claimError.message);
-    return false;
-  }
-  if (!claimed) return false; // redan skickat eller pågår
-
-  const token = await issueAccessToken(admin, order.id, "email");
-  if (!token) {
-    await admin.from("digital_orders").update({ receipt_message_id: null }).eq("id", order.id);
-    return false;
-  }
-
+  const token = createAccessToken();
+  const tokenHash = await hashAccessToken(token);
   const link = deliveryUrl(product, token);
   const { netOre, vatOre } = vatBreakdown(order.amount_ore, Number(order.vat_rate ?? 0.06));
   const vatPercent = Math.round(Number(order.vat_rate ?? 0.06) * 100);
@@ -128,9 +115,14 @@ export async function sendDigitalReceipt(
     `${SELLER.name}, org.nr ${SELLER.orgNumber}, ${SELLER.address}, ${SELLER.supportEmail}`,
   ].join("\n");
 
-  const { error: queueError } = await admin.rpc("enqueue_email", {
-    queue_name: "transactional_emails",
-    payload: {
+  // En transaktion i databasen: skapa länken, köa mejlet och sätt flaggan.
+  // Misslyckas något rullas allt tillbaka, så vi får aldrig en order som är
+  // markerad som "kvitto skickat" utan att mejlet ligger i kön.
+  const { data, error } = await admin.rpc("digital_issue_receipt", {
+    p_order_id: order.id,
+    p_token_hash: tokenHash,
+    p_message_id: messageId,
+    p_payload: {
       to: order.customer_email,
       from: `Hönsgården <noreply@${FROM_DOMAIN}>`,
       sender_domain: FROM_DOMAIN,
@@ -144,16 +136,15 @@ export async function sendDigitalReceipt(
     },
   });
 
-  if (queueError) {
-    console.error("[digital] receipt enqueue failed", queueError.message);
-    // Släpp spärren så att nästa webhookförsök kan skicka igen.
-    await admin.from("digital_orders").update({ receipt_message_id: null }).eq("id", order.id);
-    return false;
+  if (error) {
+    console.error("[digital] receipt transaction failed", error.message);
+    return { ok: false, queued: false, reason: "transaction_failed" };
   }
 
-  await admin
-    .from("digital_orders")
-    .update({ receipt_sent_at: new Date().toISOString() })
-    .eq("id", order.id);
-  return true;
+  const result = (data ?? {}) as { ok?: boolean; already_sent?: boolean; reason?: string };
+  if (!result.ok) {
+    console.error("[digital] receipt refused", result.reason, order.id);
+    return { ok: false, queued: false, reason: result.reason };
+  }
+  return { ok: true, queued: !result.already_sent };
 }
