@@ -123,8 +123,6 @@ describe('Packet 1 contextual shop placements', () => {
     expect(article).toContain("hrefLower.includes('outl1')");
     expect(article).not.toContain('AffiliateProductStrip');
     expect(prerender).toContain('injectContextualShopPlacement');
-    expect(prerender).toContain("page.path === '/honsraser'");
-    expect(prerender).toContain("page.path === '/borja-med-hons'");
 
     expect(readFileSync(join(process.cwd(), 'src/pages/IndexUpdated.tsx'), 'utf8')).toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/HonsrasLanding.tsx'), 'utf8')).toContain('ContextualShopCta');

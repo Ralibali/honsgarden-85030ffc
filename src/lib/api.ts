@@ -48,6 +48,9 @@ interface ProductivityAlert {
 
 export interface DailyChoreWithCompletion extends Tables<'daily_chores'> {
   completed: boolean;
+  completionId?: string;
+  completedBy?: string;
+  completedAt?: string;
 }
 
 interface HenWithEggTotal extends Hen {
@@ -398,46 +401,37 @@ export async function getUserFeedback(): Promise<Feedback[]> {
 // ==================== DAILY CHORES ====================
 
 export async function getDailyChores(): Promise<DailyChoreWithCompletion[]> {
-  await getUserId();
-  const today = format(new Date(), 'yyyy-MM-dd');
-
-  const { data: chores, error } = await supabase
-    .from('daily_chores')
-    .select('*')
-    .order('sort_order');
-  if (error) throw new Error(error.message);
-
-  const { data: completions } = await supabase
-    .from('chore_completions')
-    .select('chore_id')
-    .eq('completed_date', today);
-
-  const completedIds = new Set((completions || []).map(c => c.chore_id));
-  return (chores || []).map(c => ({ ...c, completed: completedIds.has(c.id) }));
-}
-
-export async function completeChore(choreId: string): Promise<void> {
   const userId = await getUserId();
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const { error } = await supabase.from('chore_completions').insert({ chore_id: choreId, user_id: userId, completed_date: today });
-  if (error) throw new Error(error.message);
-
-  const { data: chore } = await supabase.from('daily_chores').select('recurrence, next_due_at').eq('id', choreId).single();
-  if (chore && chore.recurrence && chore.recurrence !== 'none' && chore.next_due_at) {
-    const current = new Date(chore.next_due_at);
-    const next = new Date(current);
-    if (chore.recurrence === 'daily') next.setDate(next.getDate() + 1);
-    else if (chore.recurrence === 'weekly') next.setDate(next.getDate() + 7);
-    else if (chore.recurrence === 'monthly') next.setMonth(next.getMonth() + 1);
-    await supabase.from('daily_chores').update({ next_due_at: next.toISOString() }).eq('id', choreId);
-  }
+  const today = todayLocal();
+  const [chores, completions] = await Promise.all([
+    supabase.from('daily_chores').select('*').order('sort_order'),
+    supabase.from('chore_completions').select('id,chore_id,user_id,created_at').eq('completed_date', today),
+  ]);
+  if (chores.error) throw new Error(chores.error.message);
+  if (completions.error) throw new Error(completions.error.message);
+  const byChore = new Map((completions.data || []).map(item => [item.chore_id,item]));
+  return (chores.data || []).map(chore => {
+    const done = byChore.get(chore.id);
+    return { ...chore, completed: !!done, completionId: done?.id, completedBy: done ? (done.user_id === userId ? 'Du' : 'En gårdsmedlem') : undefined, completedAt: done?.created_at };
+  });
 }
 
-export async function uncompleteChore(choreId: string): Promise<void> {
+async function changeChoreCompletion(choreId: string, complete: boolean, completionId?: string): Promise<void> {
   await getUserId();
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const { error } = await supabase.from('chore_completions').delete().eq('chore_id', choreId).eq('completed_date', today);
+  const client = supabase as unknown as { rpc: (name: string, args: Record<string, unknown>) => PromiseLike<{ error: { message: string } | null }> };
+  const { error } = await client.rpc('set_farm_chore_completion', { p_chore_id: choreId, p_complete: complete, p_date: todayLocal(), p_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Stockholm', p_completion_id: completionId || null });
   if (error) throw new Error(error.message);
+}
+export async function completeChore(choreId: string): Promise<void> { await changeChoreCompletion(choreId,true); }
+export async function uncompleteChore(choreId: string, completionId?: string): Promise<void> { await changeChoreCompletion(choreId,false,completionId); }
+
+export interface ChoreHistoryEvent { id: string; title: string; actor_name: string; action: 'completed' | 'reopened'; care_date: string; created_at: string }
+export async function getChoreHistory(): Promise<ChoreHistoryEvent[]> {
+  await getUserId();
+  const client = supabase as unknown as { from: (name: string) => { select: (columns: string) => { order: (column: string, options: { ascending: boolean }) => { limit: (count: number) => PromiseLike<{ data: ChoreHistoryEvent[] | null; error: { message: string } | null }> } } } };
+  const { data, error } = await client.from('farm_chore_events').select('id,title,actor_name,action,care_date,created_at').order('created_at', { ascending: false }).limit(30);
+  if (error) throw new Error(error.message);
+  return data || [];
 }
 
 export async function createChore(title: string, description?: string, options?: { recurrence?: string; next_due_at?: string; reminder_enabled?: boolean; reminder_hours_before?: number }) {
@@ -1354,7 +1348,7 @@ export const api = {
   getTransactions, createTransaction, deleteTransaction,
   getHealthLogs, getDiaryLogs, createHealthLog, getHenHealthLogs, updateHealthLog, deleteHealthLog,
   submitFeedback, getUserFeedback,
-  getDailyChores, completeChore, uncompleteChore, createChore, deleteChore, updateChore,
+  getDailyChores, getChoreHistory, completeChore, uncompleteChore, createChore, deleteChore, updateChore,
   getCoopSettings, updateCoopSettings,
   getFlocks, getOrCreateDefaultFlock, createFlock, updateFlock, deleteFlock,
   getReminderSettings, updateReminderSettings,
