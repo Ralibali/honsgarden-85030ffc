@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg } from 'lucide-react';
+import { GUIDE_COVER_PATH, GUIDE_SAMPLE_URL } from '@/lib/digitalGuide';
 
 const categoryLabels: Record<string, string> = {
   guide: 'Guide',
@@ -115,6 +116,45 @@ export default function Guides() {
             Guider, recensioner och tips för dig som älskar höns, hemmet, trädgården och livet utomhus. Vi testar produkter och delar med oss av vår kunskap.
           </p>
         </div>
+
+        {/* Startpaketet: digital PDF-guide */}
+        <aside className="mb-10 overflow-hidden rounded-2xl border border-border bg-card">
+          <div className="grid gap-0 sm:grid-cols-[180px_1fr]">
+            <img
+              src={GUIDE_COVER_PATH}
+              alt="Omslaget till guiden Mina första höns"
+              width={360}
+              height={509}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+            <div className="p-5 sm:p-6">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+                Startpaket 01 · PDF
+              </p>
+              <h2 className="mt-2 font-serif text-xl text-foreground">Mina första höns</h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                24 sidor med checklistor, budget, 30-dagarsplan och arbetsblad att skriva ut.
+                Engångsköp 199 kr inkl. moms – ingen prenumeration.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Link to="/guider/mina-forsta-hons">
+                  <Button size="sm" className="rounded-xl gap-1">
+                    Läs mer om guiden <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+                <a
+                  href={GUIDE_SAMPLE_URL}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-sm font-medium text-primary underline"
+                >
+                  Gratis smakprov
+                </a>
+              </div>
+            </div>
+          </div>
+        </aside>
 
         {/* Category navigation */}
         <nav aria-label="Kategorier" className="flex flex-wrap justify-center gap-2 mb-10">

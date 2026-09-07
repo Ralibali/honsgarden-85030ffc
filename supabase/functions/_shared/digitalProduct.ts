@@ -9,6 +9,11 @@ export interface DigitalProductConfig {
   currency: string;
   vatRate: number;
   taxCode: string;
+  /** Beständigt Stripe-pris (live). Krävs för korrekt intäktsrapportering. */
+  stripePriceId: string;
+  stripeProductId: string;
+  /** Faktureringsländer vi kan momshantera automatiskt. */
+  allowedBillingCountries: string[];
   bucket: string;
   objectPath: string;
   downloadFilename: string;
@@ -22,11 +27,14 @@ export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
     slug: "mina-forsta-hons",
     name: "Mina första höns – svenskt startpaket (PDF)",
     description:
-      "24-sidig ifyllbar och utskrivbar PDF: beslut före hönsköp, inköpslistor, budget, boende och säkerhet, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg.",
+      "24-sidig utskrivbar PDF med checklistor och arbetsblad: beslut före hönsköp, inköpslistor, budget, boende och säkerhet, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg.",
     amountOre: 19900,
     currency: "sek",
     vatRate: 0.06,
     taxCode: "txcd_10302000",
+    stripePriceId: "price_1UCsnmHzffTezY82uWuIhCXK",
+    stripeProductId: "prod_VDJQaWY5fbUpKg",
+    allowedBillingCountries: ["SE"],
     bucket: "digital-products",
     objectPath: "mina-forsta-hons/honsgarden-mina-forsta-hons.pdf",
     downloadFilename: "Honsgarden-Mina-forsta-hons.pdf",
@@ -73,6 +81,24 @@ export function formatSek(ore: number): string {
 export function vatBreakdown(amountOre: number, vatRate: number) {
   const net = Math.round(amountOre / (1 + vatRate));
   return { netOre: net, vatOre: amountOre - net };
+}
+
+/** Hashar en nyckel (e-post, IP) innan den används i hastighetsspärr eller logg. */
+export async function hashKey(value: string): Promise<string> {
+  const data = new TextEncoder().encode(`honsgarden:${value.trim().toLowerCase()}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Klientens IP från proxyheader, tom sträng när den inte finns. */
+export function clientIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for") ?? "";
+  return fwd.split(",")[0].trim();
+}
+
+/** true när nyckeln är en skarp Stripe-nyckel. Loggar aldrig nyckeln. */
+export function isLiveStripeKey(key: string): boolean {
+  return key.startsWith("sk_live_") || key.startsWith("rk_live_");
 }
 
 export const SELLER = {

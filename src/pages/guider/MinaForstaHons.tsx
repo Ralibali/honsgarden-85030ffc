@@ -10,8 +10,7 @@ import {
   BookOpen, CheckCircle2, Download, FileText, Printer, ShieldCheck, Loader2, ArrowRight,
 } from 'lucide-react';
 import LandingNavbar from '@/components/LandingNavbar';
-import coverAsset from '@/assets/mina-forsta-hons-omslag.png.asset.json';
-import sampleAsset from '@/assets/mina-forsta-hons-smakprov.pdf.asset.json';
+import { GUIDE_COVER_PATH, GUIDE_COVER_URL, GUIDE_SAMPLE_URL } from '@/lib/digitalGuide';
 
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 
@@ -34,7 +33,7 @@ const CHAPTERS: Array<{ title: string; body: string }> = [
 const FACTS = [
   { icon: FileText, label: '24 sidor i A4' },
   { icon: Printer, label: 'Utskrivbar' },
-  { icon: BookOpen, label: '216 ifyllbara fält och checkrutor' },
+  { icon: BookOpen, label: 'Checklistor och arbetsblad' },
   { icon: Download, label: 'Direkt nedladdning' },
 ];
 
@@ -49,15 +48,15 @@ export default function MinaForstaHons() {
   useSeo({
     title: 'Mina första höns – svensk startguide i PDF (24 sidor) | Hönsgården',
     description:
-      'Ifyllbar och utskrivbar PDF på 24 sidor: beslut före hönsköp, inköpslistor, budget, boende, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg. 199 kr inkl. moms, engångsköp.',
+      'Utskrivbar PDF på 24 sidor: beslut före hönsköp, inköpslistor, budget, boende, första 48 timmarna, 30-dagarsplan, rutiner, hönsvaktsblad, individkort och ägglogg. 199 kr inkl. moms, engångsköp.',
     path: '/guider/mina-forsta-hons',
-    ogImage: coverAsset.url,
+    ogImage: GUIDE_COVER_PATH,
     ogImageAlt: 'Omslaget till guiden Mina första höns',
     jsonLd: [{
       '@type': 'Product',
       name: 'Mina första höns – Hönsgårdens startpaket (PDF)',
-      description: 'Svensk startguide för nya hönsägare. 24 sidor, ifyllbar och utskrivbar PDF.',
-      image: `https://honsgarden.se${coverAsset.url}`,
+      description: 'Svensk startguide för nya hönsägare. 24 sidor med checklistor och arbetsblad, gjord för utskrift.',
+      image: GUIDE_COVER_URL,
       brand: { '@type': 'Brand', name: 'Hönsgården' },
       offers: {
         '@type': 'Offer',
@@ -119,8 +118,8 @@ export default function MinaForstaHons() {
               </h1>
               <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
                 Från första funderingen till en vardag som fungerar. En svensk startguide på 24 sidor
-                som du fyller i, skriver ut och återvänder till – med budget, planer och checklistor
-                i stället för lösa tips.
+                med checklistor och arbetsblad du skriver ut och fyller i – budget och planer i
+                stället för lösa tips.
               </p>
 
               <ul className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -134,12 +133,12 @@ export default function MinaForstaHons() {
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
-                  href={sampleAsset.url}
+                  href={GUIDE_SAMPLE_URL}
                   target="_blank"
                   rel="noopener"
                   className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"
                 >
-                  Läs gratis smakprov (4 sidor)
+                  Läs gratis smakprov – 4 riktiga sidor
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </a>
                 <span className="text-sm text-muted-foreground">Ingen registrering behövs.</span>
@@ -149,10 +148,10 @@ export default function MinaForstaHons() {
             {/* Köpkort */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
               <img
-                src={coverAsset.url}
+                src={GUIDE_COVER_PATH}
                 alt="Omslaget till guiden Mina första höns – tre höns i en trädgård framför ett rött hönshus"
-                width={745}
-                height={1024}
+                width={1000}
+                height={1414}
                 className="mb-6 w-full rounded-xl border border-border object-cover"
                 loading="eager"
               />
@@ -227,8 +226,8 @@ export default function MinaForstaHons() {
         <section className="mx-auto mt-20 max-w-6xl px-4">
           <h2 className="font-serif text-3xl text-foreground">Det här finns i guiden</h2>
           <p className="mt-3 max-w-2xl text-muted-foreground">
-            Tio delar som följer din väg från fundering till fungerande rutin. Allt är gjort för att
-            fyllas i – på skärmen eller med penna efter utskrift.
+            Tio delar som följer din väg från fundering till fungerande rutin. Arbetsbladen är
+            gjorda att skrivas ut och fyllas i med penna.
           </p>
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CHAPTERS.map((c, i) => (
@@ -283,8 +282,9 @@ export default function MinaForstaHons() {
               <div>
                 <dt className="font-semibold text-foreground">Produkt och pris</dt>
                 <dd className="text-muted-foreground">
-                  Mina första höns, digital PDF på 24 sidor. 199 kr inklusive svensk moms 6 % för
-                  elektronisk publikation. Engångsköp, ingen prenumeration, ingen frakt och ingen
+                  Mina första höns, digital PDF på 24 sidor med checklistor och arbetsblad för
+                  utskrift. 199 kr inklusive svensk moms 6 % för elektronisk publikation. Vi säljer
+                  guiden till kunder med svensk faktureringsadress. Engångsköp, ingen prenumeration, ingen frakt och ingen
                   fysisk leverans. Guiden ger inte tillgång till Hönsgården Plus.
                 </dd>
               </div>
@@ -293,7 +293,8 @@ export default function MinaForstaHons() {
                 <dd className="text-muted-foreground">
                   Filen blir tillgänglig direkt när betalningen är bekräftad. Du får dessutom en
                   beständig nedladdningslänk till den e-postadress du angav i kassan. Länken kan
-                  användas flera gånger; nya länkar kan hämtas med samma e-postadress.
+                  användas flera gånger; nya länkar kan hämtas med samma e-postadress. För att
+                  skydda filen finns en spärr om ovanligt många nedladdningar sker inom en timme.
                 </dd>
               </div>
               <div>
@@ -331,7 +332,7 @@ export default function MinaForstaHons() {
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
-              href={sampleAsset.url}
+              href={GUIDE_SAMPLE_URL}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-xl border border-primary/40 px-5 py-3 text-sm font-semibold text-primary transition hover:bg-primary/5"

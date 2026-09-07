@@ -1090,6 +1090,48 @@ export type Database = {
           },
         ]
       }
+      digital_download_events: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string | null
+          order_id: string
+          token_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          order_id: string
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          order_id?: string
+          token_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_download_events_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "digital_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digital_download_events_token_id_fkey"
+            columns: ["token_id"]
+            isOneToOne: false
+            referencedRelation: "digital_access_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       digital_orders: {
         Row: {
           admin_note: string | null
@@ -1100,11 +1142,13 @@ export type Database = {
           created_at: string
           currency: string
           customer_email: string | null
+          declared_country: string | null
           download_count: number
           fulfillment_status: string
           id: string
           last_downloaded_at: string | null
-          max_downloads: number
+          livemode: boolean | null
+          max_downloads: number | null
           order_number: string
           paid_at: string | null
           payment_intent_id: string | null
@@ -1113,10 +1157,12 @@ export type Database = {
           receipt_message_id: string | null
           receipt_sent_at: string | null
           refunded_at: string | null
+          review_reason: string | null
           status: string
           stripe_session_id: string | null
           updated_at: string
           vat_rate: number
+          verified_country: string | null
         }
         Insert: {
           admin_note?: string | null
@@ -1127,11 +1173,13 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_email?: string | null
+          declared_country?: string | null
           download_count?: number
           fulfillment_status?: string
           id?: string
           last_downloaded_at?: string | null
-          max_downloads?: number
+          livemode?: boolean | null
+          max_downloads?: number | null
           order_number?: string
           paid_at?: string | null
           payment_intent_id?: string | null
@@ -1140,10 +1188,12 @@ export type Database = {
           receipt_message_id?: string | null
           receipt_sent_at?: string | null
           refunded_at?: string | null
+          review_reason?: string | null
           status?: string
           stripe_session_id?: string | null
           updated_at?: string
           vat_rate?: number
+          verified_country?: string | null
         }
         Update: {
           admin_note?: string | null
@@ -1154,11 +1204,13 @@ export type Database = {
           created_at?: string
           currency?: string
           customer_email?: string | null
+          declared_country?: string | null
           download_count?: number
           fulfillment_status?: string
           id?: string
           last_downloaded_at?: string | null
-          max_downloads?: number
+          livemode?: boolean | null
+          max_downloads?: number | null
           order_number?: string
           paid_at?: string | null
           payment_intent_id?: string | null
@@ -1167,10 +1219,33 @@ export type Database = {
           receipt_message_id?: string | null
           receipt_sent_at?: string | null
           refunded_at?: string | null
+          review_reason?: string | null
           status?: string
           stripe_session_id?: string | null
           updated_at?: string
           vat_rate?: number
+          verified_country?: string | null
+        }
+        Relationships: []
+      }
+      digital_rate_limits: {
+        Row: {
+          key_hash: string
+          request_count: number
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          key_hash: string
+          request_count?: number
+          scope: string
+          window_start: string
+        }
+        Update: {
+          key_hash?: string
+          request_count?: number
+          scope?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -4987,12 +5062,52 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
-      digital_finalize_paid_order: {
+      digital_finalize_paid_order:
+        | {
+            Args: {
+              p_amount_total_ore: number
+              p_customer_email: string
+              p_order_id: string
+              p_payment_intent_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_amount_total_ore: number
+              p_currency?: string
+              p_customer_email: string
+              p_livemode?: boolean
+              p_order_id: string
+              p_payment_intent_id: string
+              p_verified_country?: string
+            }
+            Returns: Json
+          }
+      digital_issue_receipt: {
         Args: {
-          p_amount_total_ore: number
-          p_customer_email: string
+          p_message_id: string
           p_order_id: string
-          p_payment_intent_id: string
+          p_payload: Json
+          p_token_hash: string
+        }
+        Returns: Json
+      }
+      digital_rate_limit: {
+        Args: {
+          p_key_hash: string
+          p_max: number
+          p_scope: string
+          p_window_minutes: number
+        }
+        Returns: boolean
+      }
+      digital_register_download: {
+        Args: {
+          p_ip_hash?: string
+          p_max_per_hour?: number
+          p_token_hash: string
+          p_user_agent?: string
         }
         Returns: Json
       }

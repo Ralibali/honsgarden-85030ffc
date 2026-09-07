@@ -11,7 +11,6 @@ interface StatusResponse {
   paid?: boolean;
   orderNumber?: string;
   email?: string | null;
-  downloadsLeft?: number;
   refunded?: boolean;
   error?: string;
 }
@@ -91,8 +90,8 @@ export default function MinaForstaHonsHamta() {
         {token && !checking && status?.paid && (
           <>
             <p className="mt-4 text-muted-foreground">
-              Order {status.orderNumber} är betald. Filen är klar att ladda ner
-              {typeof status.downloadsLeft === 'number' ? ` (${status.downloadsLeft} nedladdningar kvar)` : ''}.
+              Order {status.orderNumber} är betald. Filen är klar att ladda ner – länken gäller
+              tills vidare och du kan hämta guiden igen när du behöver.
             </p>
             <Button className="mt-6 w-full" size="lg" onClick={download} disabled={downloading}>
               {downloading ? (
