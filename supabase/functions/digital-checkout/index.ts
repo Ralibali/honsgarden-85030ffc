@@ -9,9 +9,12 @@ import {
   DIGITAL_PRIVATE_HEADERS,
   digitalRateLimitAllows,
   getDigitalProduct,
+  isDigitalProductReady,
   isLiveStripeKey,
   normalizeEmail,
 } from "../_shared/digitalProduct.ts";
+
+import { resolveDigitalTaxRate } from "../_shared/digitalTax.ts";
 
 const GENERIC_FAILURE = "Kunde inte starta betalningen. Försök igen om en stund.";
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -41,6 +44,7 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
     const product = getDigitalProduct(body.productSlug ?? "mina-forsta-hons");
     if (!product) return jsonResponse({ error: "Okänd produkt." }, 400, corsHeaders);
+    if (!isDigitalProductReady(product)) return jsonResponse({ error: GENERIC_FAILURE }, 503, corsHeaders);
 
     if (body.consent !== true) {
       return jsonResponse(
@@ -84,6 +88,13 @@ serve(async (req) => {
     }
 
 
+    // Check actual delivery before creating any order or payable session.
+    const slash = product.objectPath.lastIndexOf('/');
+    const filename = product.objectPath.slice(slash + 1);
+    const { data: assets, error: assetError } = await admin.storage.from(product.bucket).list(product.objectPath.slice(0, slash), { search: filename, limit: 100 });
+    if (assetError || !assets?.some(asset => asset.name === filename && Number(asset.metadata?.size) > 0)) throw new Error('Product PDF is not available');
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const taxRateId = await resolveDigitalTaxRate(stripe, product);
     const now = new Date().toISOString();
     const { data: order, error: orderError } = await admin
       .from("digital_orders")
@@ -106,7 +117,6 @@ serve(async (req) => {
     if (orderError || !order) throw new Error(`order insert failed: ${orderError?.message}`);
     orderId = order.id;
 
-    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const origin = safeSuccessOrigin(req);
 
     const session = await stripe.checkout.sessions.create({
@@ -119,11 +129,11 @@ serve(async (req) => {
       // Endast svensk försäljning i detta första steg – ingen global momsrisk.
       payment_method_types: ["card"],
       // Beständigt Stripe-pris (inte price_data) så att intäkter kan följas per produkt,
-      // med beständig inkluderande momssats (6 % SE) så momsen redovisas i Stripe.
+      // med beständig inkluderande svensk momssats så momsen redovisas i Stripe.
       line_items: [{
         quantity: 1,
         price: product.stripePriceId,
-        tax_rates: [product.stripeTaxRateId],
+        tax_rates: [taxRateId],
       }],
       metadata: {
         digital_order_id: order.id,
@@ -133,7 +143,7 @@ serve(async (req) => {
         declared_country: rawCountry,
       },
       payment_intent_data: {
-        description: `Hönsgården – Mina första höns (PDF), order ${order.order_number}`,
+        description: `Hönsgården – ${product.name}, order ${order.order_number}`,
         metadata: { digital_order_id: order.id, digital_product_slug: product.slug },
       },
       success_url: `${origin}${product.salesPath}/tack?session_id={CHECKOUT_SESSION_ID}`,

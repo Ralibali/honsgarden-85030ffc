@@ -97,6 +97,66 @@
       "destination": "/index.html"
     },
     {
+      "source": "/guider/mina-forsta-hons",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/mina-forsta-hons/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/mina-forsta-hons/hamta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/vinterklar-honsgard",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/vinterklar-honsgard/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/vinterklar-honsgard/hamta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/aggbodens-saljpaket",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/aggbodens-saljpaket/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/aggbodens-saljpaket/hamta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/fran-honsgard-till-aggbod",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/fran-honsgard-till-aggbod/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/fran-honsgard-till-aggbod/hamta",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/klackdagboken",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/klackdagboken/tack",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/guider/klackdagboken/hamta",
+      "destination": "/index.html"
+    },
+    {
       "source": "/guider/registrera-hons-jordbruksverket",
       "destination": "/index.html"
     },

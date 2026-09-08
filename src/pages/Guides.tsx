@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg } from 'lucide-react';
-import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
+import DigitalProductShelf from '@/components/blog/DigitalProductShelf';
 
 const categoryLabels: Record<string, string> = {
   guide: 'Guide',
@@ -68,7 +68,7 @@ export default function Guides() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <BlogConversionPopup />
+      <BlogConversionPopup articleSlug="blog-index" />
 
       {/* ItemList JSON-LD for blog listing */}
       {posts.length > 0 && (
@@ -117,7 +117,7 @@ export default function Guides() {
           </p>
         </div>
 
-        <DigitalGuideCard placement="blog_index" />
+        <DigitalProductShelf />
 
         {/* Category navigation */}
         <nav aria-label="Kategorier" className="flex flex-wrap justify-center gap-2 mb-10">

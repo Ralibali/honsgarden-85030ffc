@@ -6,13 +6,14 @@ export interface DigitalProductConfig {
   name: string;
   description: string;
   amountOre: number;
+  availableForSale?: boolean;
   currency: string;
   vatRate: number;
   taxCode: string;
   /** Beständigt Stripe-pris (live). Krävs för korrekt intäktsrapportering. */
   stripePriceId: string;
   stripeProductId: string;
-  /** Beständig, inkluderande momssats i Stripe (6 % SE) för korrekt momsredovisning. */
+  /** Beständig, inkluderande momssats i Stripe för korrekt momsredovisning. */
   stripeTaxRateId: string;
   /** Faktureringsländer vi kan momshantera automatiskt. */
   allowedBillingCountries: string[];
@@ -31,6 +32,108 @@ export interface DigitalProductConfig {
 }
 
 export const DIGITAL_PRODUCTS: Record<string, DigitalProductConfig> = {
+  "fran-honsgard-till-aggbod": {
+    "slug": "fran-honsgard-till-aggbod",
+    "availableForSale": false,
+    "name": "Från hönsgård till äggbod (PDF)",
+    "description": "30 sidor ifyllbar svensk handbok om småskalig äggförsäljning. Digitalt engångsköp.",
+    "amountOre": 17900,
+    "currency": "sek",
+    "vatRate": 0.06,
+    "taxCode": "txcd_10302000",
+    "stripePriceId": "price_1UDH2THzffTezY82kzzetiL2",
+    "stripeProductId": "prod_VDiTNpAUB6a4IW",
+    "stripeTaxRateId": "txr_1UD2ewHzffTezY82L895McGo",
+    "allowedBillingCountries": [
+        "SE"
+    ],
+    "bucket": "digital-products",
+    "objectPath": "fran-honsgard-till-aggbod/honsgarden-fran-honsgard-till-aggbod.pdf",
+    "samplePath": "samples/fran-honsgard-till-aggbod-smakprov.pdf",
+    "samplePages": 4,
+    "totalPages": 30,
+    "assetVersion": "v1-0",
+    "downloadFilename": "Honsgarden-fran-honsgard-till-aggbod.pdf",
+    "termsVersion": "2026-09-08",
+    "salesPath": "/guider/fran-honsgard-till-aggbod",
+    "deliveryPath": "/guider/fran-honsgard-till-aggbod/hamta"
+},
+  "vinterklar-honsgard": {
+    "slug": "vinterklar-honsgard",
+    "name": "Vinterklar hönsgård (PDF)",
+    "description": "18 sidor ifyllbar och utskrivbar PDF. Digitalt engångsköp.",
+    "amountOre": 12900,
+    "currency": "sek",
+    "vatRate": 0.06,
+    "taxCode": "txcd_10302000",
+    "stripePriceId": "price_1UDBKFHzffTezY82JGFZ66nE",
+    "stripeProductId": "prod_VDcZyFIa8V8jpr",
+    "stripeTaxRateId": "txr_1UD2ewHzffTezY82L895McGo",
+    "allowedBillingCountries": [
+        "SE"
+    ],
+    "bucket": "digital-products",
+    "objectPath": "vinterklar-honsgard/honsgarden-vinterklar-honsgard.pdf",
+    "samplePath": "samples/vinterklar-honsgard-smakprov.pdf",
+    "samplePages": 3,
+    "totalPages": 18,
+    "assetVersion": "v1-0",
+    "downloadFilename": "Honsgarden-vinterklar-honsgard.pdf",
+    "termsVersion": "2026-09-08",
+    "salesPath": "/guider/vinterklar-honsgard",
+    "deliveryPath": "/guider/vinterklar-honsgard/hamta"
+},
+  "aggbodens-saljpaket": {
+    "slug": "aggbodens-saljpaket",
+    "name": "Äggbodens säljpaket (PDF)",
+    "description": "21 sidor ifyllbar och utskrivbar PDF. Digitalt engångsköp.",
+    "amountOre": 14900,
+    "currency": "sek",
+    "vatRate": 0.25,
+    "taxCode": "",
+    "stripePriceId": "price_1UDBKHHzffTezY82TirIcO77",
+    "stripeProductId": "prod_VDcZMTxKOc5wbc",
+    "stripeTaxRateId": "",
+    "allowedBillingCountries": [
+        "SE"
+    ],
+    "bucket": "digital-products",
+    "objectPath": "aggbodens-saljpaket/honsgarden-aggbodens-saljpaket.pdf",
+    "samplePath": "samples/aggbodens-saljpaket-smakprov.pdf",
+    "samplePages": 3,
+    "totalPages": 21,
+    "assetVersion": "v1-0",
+    "downloadFilename": "Honsgarden-aggbodens-saljpaket.pdf",
+    "termsVersion": "2026-09-08",
+    "salesPath": "/guider/aggbodens-saljpaket",
+    "deliveryPath": "/guider/aggbodens-saljpaket/hamta"
+},
+  "klackdagboken": {
+    "slug": "klackdagboken",
+    "name": "Kläckdagboken (PDF)",
+    "description": "16 sidor ifyllbar och utskrivbar PDF. Digitalt engångsköp.",
+    "amountOre": 9900,
+    "currency": "sek",
+    "vatRate": 0.25,
+    "taxCode": "",
+    "stripePriceId": "price_1UDBKIHzffTezY82ru55fqmk",
+    "stripeProductId": "prod_VDcZLRHqitvrKB",
+    "stripeTaxRateId": "",
+    "allowedBillingCountries": [
+        "SE"
+    ],
+    "bucket": "digital-products",
+    "objectPath": "klackdagboken/honsgarden-klackdagboken.pdf",
+    "samplePath": "samples/klackdagboken-smakprov.pdf",
+    "samplePages": 3,
+    "totalPages": 16,
+    "assetVersion": "v1-0",
+    "downloadFilename": "Honsgarden-klackdagboken.pdf",
+    "termsVersion": "2026-09-08",
+    "salesPath": "/guider/klackdagboken",
+    "deliveryPath": "/guider/klackdagboken/hamta"
+},
+
   "mina-forsta-hons": {
     slug: "mina-forsta-hons",
     name: "Mina första höns – svenskt startpaket (PDF)",
@@ -62,6 +165,15 @@ export function getDigitalProduct(slug: unknown): DigitalProductConfig | null {
   // Egen-nyckelkontroll skyddar mot prototypnycklar som "__proto__" och "constructor".
   if (!Object.prototype.hasOwnProperty.call(DIGITAL_PRODUCTS, slug)) return null;
   return DIGITAL_PRODUCTS[slug];
+}
+
+/** Missing configuration must never start a customer charge. */
+export function isDigitalProductReady(product: DigitalProductConfig): boolean {
+  return product.availableForSale !== false && /^price_[A-Za-z0-9]+$/.test(product.stripePriceId)
+    && /^prod_[A-Za-z0-9]+$/.test(product.stripeProductId)
+    && (product.stripeTaxRateId === "" || /^txr_[A-Za-z0-9]+$/.test(product.stripeTaxRateId))
+    && [0.06, 0.25].includes(product.vatRate)
+    && product.allowedBillingCountries.length === 1 && product.allowedBillingCountries[0] === "SE";
 }
 
 /** Svar med kundunika uppgifter ska aldrig cachas eller läcka referrer. */
@@ -137,7 +249,7 @@ export function formatSek(ore: number): string {
   })} kr`;
 }
 
-/** Moms inkluderad i priset (6 % för elektronisk publikation i Sverige). */
+/** Moms inkluderad i priset, enligt produktens momssats. */
 export function vatBreakdown(amountOre: number, vatRate: number) {
   const net = Math.round(amountOre / (1 + vatRate));
   return { netOre: net, vatOre: amountOre - net };

@@ -5,8 +5,10 @@ import { useSeo } from '@/hooks/useSeo';
 import { supabase } from '@/integrations/supabase/client';
 import { CheckCircle2, Download, Loader2, Mail } from 'lucide-react';
 import { useNoReferrer } from './useNoReferrer';
+import { DIGITAL_PRODUCT_CATALOG, getPublicDigitalProduct, type DigitalProductSlug } from '@/lib/digitalProducts';
 
 interface StatusResponse {
+  productSlug?: string;
   paid?: boolean;
   status?: string;
   orderNumber?: string;
@@ -15,18 +17,20 @@ interface StatusResponse {
   error?: string;
 }
 
-export default function MinaForstaHonsTack() {
+export default function MinaForstaHonsTack({ productSlug = 'mina-forsta-hons' }: { productSlug?: DigitalProductSlug }) {
   const [params] = useSearchParams();
   const sessionId = params.get('session_id');
   const [state, setState] = useState<'loading' | 'paid' | 'pending' | 'error'>('loading');
   const [order, setOrder] = useState<StatusResponse | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const product = getPublicDigitalProduct(order?.productSlug) ?? DIGITAL_PRODUCT_CATALOG[productSlug];
+  const productPath = `/guider/${product.slug}`;
 
   useSeo({
-    title: 'Tack för ditt köp – Mina första höns | Hönsgården',
-    description: 'Din nedladdning av Mina första höns.',
-    path: '/guider/mina-forsta-hons/tack',
+    title: `Tack för ditt köp – ${product.title} | Hönsgården`,
+    description: `Din nedladdning av ${product.title}.`,
+    path: `${productPath}/tack`,
     noindex: true,
   });
   useNoReferrer();
@@ -86,7 +90,7 @@ export default function MinaForstaHonsTack() {
             <CheckCircle2 className="h-8 w-8 text-primary" aria-hidden />
             <h1 className="mt-4 font-serif text-3xl text-foreground">Tack för ditt köp!</h1>
             <p className="mt-3 text-muted-foreground">
-              Order {order?.orderNumber}. Din guide är klar att ladda ner – och vi har skickat en
+              Order {order?.orderNumber}. {product.title} är klar att ladda ner. Vi skickar även en
               beständig länk till {order?.email ?? 'din e-postadress'} så att du kan hämta filen igen
               när du vill.
             </p>
@@ -94,7 +98,7 @@ export default function MinaForstaHonsTack() {
               {downloading ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Förbereder filen…</>
               ) : (
-                <><Download className="mr-2 h-4 w-4" aria-hidden /> Ladda ner PDF:en (24 sidor)</>
+                <><Download className="mr-2 h-4 w-4" aria-hidden /> Ladda ner PDF:en ({product.pages} sidor)</>
               )}
             </Button>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -126,7 +130,7 @@ export default function MinaForstaHonsTack() {
               din e-postadress.
             </p>
             <Link
-              to="/guider/mina-forsta-hons/hamta"
+              to={`${productPath}/hamta`}
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground"
             >
               <Mail className="h-4 w-4" aria-hidden /> Hämta min länk
@@ -136,7 +140,7 @@ export default function MinaForstaHonsTack() {
 
         <p className="mt-8 text-xs text-muted-foreground">
           Frågor? Mejla <a className="underline" href="mailto:info@auroramedia.se">info@auroramedia.se</a>.{' '}
-          <Link to="/guider/mina-forsta-hons" className="underline">Tillbaka till guiden</Link>
+          <Link to={productPath} className="underline">Tillbaka till guiden</Link>
         </p>
       </div>
     </div>

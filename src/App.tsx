@@ -1,3 +1,4 @@
+import { NEW_DIGITAL_PRODUCTS } from './lib/digitalProducts';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -91,6 +92,7 @@ const MarketplaceNew = lazyWithRetry(() => import("./pages/MarketplaceNew"));
 const MarketplaceDetail = lazyWithRetry(() => import("./pages/MarketplaceDetail"));
 const MarketplaceMine = lazyWithRetry(() => import("./pages/MarketplaceMine"));
 const RegulationGuide = lazyWithRetry(() => import("./pages/RegulationGuide"));
+const DigitalProductPage = lazyWithRetry(() => import("./pages/guider/DigitalProductPage"));
 const MinaForstaHons = lazyWithRetry(() => import("./pages/guider/MinaForstaHons"));
 const MinaForstaHonsTack = lazyWithRetry(() => import("./pages/guider/MinaForstaHonsTack"));
 const MinaForstaHonsHamta = lazyWithRetry(() => import("./pages/guider/MinaForstaHonsHamta"));
@@ -210,6 +212,11 @@ const AppRoutes = () => (
         <Route path="/guider/registrera-hons-jordbruksverket" element={<RegulationGuide slug="registrera-hons-jordbruksverket" />} />
         <Route path="/guider/salja-agg-regler" element={<RegulationGuide slug="salja-agg-regler" />} />
         <Route path="/guider/mina-forsta-hons" element={<MinaForstaHons />} />
+        {NEW_DIGITAL_PRODUCTS.flatMap(product => [
+          <Route key={product.slug} path={`/guider/${product.slug}`} element={<DigitalProductPage key={product.slug} productSlug={product.slug} />} />,
+          <Route key={`${product.slug}-tack`} path={`/guider/${product.slug}/tack`} element={<MinaForstaHonsTack key={product.slug} productSlug={product.slug} />} />,
+          <Route key={`${product.slug}-hamta`} path={`/guider/${product.slug}/hamta`} element={<MinaForstaHonsHamta key={product.slug} productSlug={product.slug} />} />,
+        ])}
         <Route path="/guider/mina-forsta-hons/tack" element={<MinaForstaHonsTack />} />
         <Route path="/guider/mina-forsta-hons/hamta" element={<MinaForstaHonsHamta />} />
         <Route path="/guider/:slug" element={<GuiderRedirect />} />

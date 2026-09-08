@@ -28,7 +28,7 @@ export default function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-16 sm:bottom-6 left-2 right-2 sm:left-auto sm:right-6 z-[60] sm:max-w-sm animate-fade-in">
+    <div data-cookie-consent-banner className="fixed bottom-16 sm:bottom-6 left-2 right-2 sm:left-auto sm:right-6 z-[60] sm:max-w-sm animate-fade-in">
       <div className="bg-card border border-border rounded-xl sm:rounded-2xl shadow-xl p-3 sm:p-5">
         <div className="flex items-center sm:items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
           <Cookie className="h-4 w-4 text-primary shrink-0 sm:hidden" />

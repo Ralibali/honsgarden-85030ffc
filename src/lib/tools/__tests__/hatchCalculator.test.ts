@@ -28,42 +28,41 @@ describe('parseIsoDate', () => {
 });
 
 describe('computeHatchPlan', () => {
-  it('ger kläckdag på dag 21 räknat från startdagen som dag 1', () => {
+  it('ger kläckdag på dag 21 räknat från startdagen som dag 0', () => {
     const plan = computeHatchPlan('2026-03-01')!;
-    expect(plan.hatchDate).toBe('2026-03-21');
+    expect(plan.hatchDate).toBe('2026-03-22');
     expect(plan.incubationDays).toBe(CHICKEN_INCUBATION_DAYS);
   });
 
   it('hanterar månads- och årsskiften', () => {
-    expect(computeHatchPlan('2026-12-25')!.hatchDate).toBe('2027-01-14');
-    expect(computeHatchPlan('2024-02-20')!.hatchDate).toBe('2024-03-11'); // skottår
+    expect(computeHatchPlan('2026-12-25')!.hatchDate).toBe('2027-01-15');
+    expect(computeHatchPlan('2024-02-20')!.hatchDate).toBe('2024-03-12'); // skottår
   });
 
   it('ger rätt milstolpar för hönsägg (21 dagar)', () => {
     const plan = computeHatchPlan('2026-03-01')!;
     const byDay = new Map(plan.milestones.map((m) => [m.day, m]));
-    expect(byDay.get(1)!.label).toContain('startar');
+    expect(byDay.get(0)!.label).toContain('startar');
     expect(byDay.get(7)!.label).toContain('Första lysningen');
     expect(byDay.get(14)!.label).toContain('Andra lysningen');
-    expect(byDay.get(18)!.label).toContain('Sluta vändas');
+    expect(byDay.get(18)!.label).toContain('Förbered');
     expect(byDay.get(21)!.label).toContain('kläckdag');
-    expect(byDay.get(23)!.label).toContain('eftersläntrar');
+    expect(byDay.get(23)!.label).toContain('Följ upp');
     // Milstolparna ligger i dagsordning med stigande datum.
     const days = plan.milestones.map((m) => m.day);
     expect(days).toEqual([...days].sort((a, b) => a - b));
   });
 
-  it('skalar milstolparna efter andra ruvtider', () => {
+  it('beräknar andra ruvtider utan att skala biologiska skötselråd', () => {
     const plan = computeHatchPlan('2026-03-01', 18)!; // t.ex. vaktel
-    expect(plan.hatchDate).toBe('2026-03-18');
-    const lockdown = plan.milestones.find((m) => m.label.includes('Sluta vändas'))!;
-    expect(lockdown.day).toBe(15); // 18 - 3
+    expect(plan.hatchDate).toBe('2026-03-19');
+    expect(plan.milestones.map(m => m.day)).toEqual([0, 18]);
   });
 
   it('returnerar null för ogiltiga indata', () => {
     expect(computeHatchPlan('')).toBeNull();
     expect(computeHatchPlan('2026-02-30')).toBeNull();
-    expect(computeHatchPlan('2026-03-01', 0)).toBeNull();
+    for (const days of [0, NaN, Infinity, 2.5, 366]) expect(computeHatchPlan('2026-03-01', days)).toBeNull();
   });
 
   it('är deterministisk — samma indata ger identisk plan', () => {
@@ -75,9 +74,9 @@ describe('daysUntilHatch', () => {
   const plan = computeHatchPlan('2026-03-01')!;
 
   it('räknar hela dygn till kläckdagen', () => {
-    expect(daysUntilHatch(plan, '2026-03-01')).toBe(20);
-    expect(daysUntilHatch(plan, '2026-03-21')).toBe(0);
-    expect(daysUntilHatch(plan, '2026-03-24')).toBe(-3);
+    expect(daysUntilHatch(plan, '2026-03-01')).toBe(21);
+    expect(daysUntilHatch(plan, '2026-03-22')).toBe(0);
+    expect(daysUntilHatch(plan, '2026-03-24')).toBe(-2);
   });
 
   it('returnerar null för ogiltigt referensdatum', () => {

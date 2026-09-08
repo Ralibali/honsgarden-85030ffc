@@ -14,7 +14,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 
 import ArticleCta from '@/components/blog/ArticleCta';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
-import { REGISTER_HREF } from '@/components/blog/BlogConversionPopup';
 import { parseAnalyticsSource } from '@/lib/analytics';
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -64,12 +63,7 @@ describe('blogg-CTA:er länkar till registrering med korrekt source', () => {
   });
 });
 
-describe('BlogConversionPopup konto-CTA', () => {
-  it('använder mode=register och source=blog_popup', () => {
-    expect(REGISTER_HREF).toContain('mode=register');
-    expect(REGISTER_HREF).toContain('source=blog_popup');
-  });
-
+describe('BlogConversionPopup', () => {
   it('innehåller inga /auth-länkar längre', () => {
     const file = readFileSync(
       path.resolve(process.cwd(), 'src/components/blog/BlogConversionPopup.tsx'),

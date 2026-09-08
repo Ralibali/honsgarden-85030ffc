@@ -6,8 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Download, Loader2, Mail } from 'lucide-react';
 import { useNoReferrer } from './useNoReferrer';
+import { DIGITAL_PRODUCT_CATALOG, getPublicDigitalProduct, type DigitalProductSlug } from '@/lib/digitalProducts';
 
 interface StatusResponse {
+  productSlug?: string;
   paid?: boolean;
   orderNumber?: string;
   email?: string | null;
@@ -15,7 +17,7 @@ interface StatusResponse {
   error?: string;
 }
 
-export default function MinaForstaHonsHamta() {
+export default function MinaForstaHonsHamta({ productSlug = 'mina-forsta-hons' }: { productSlug?: DigitalProductSlug }) {
   const [params] = useSearchParams();
   const token = params.get('t');
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -24,11 +26,13 @@ export default function MinaForstaHonsHamta() {
   const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const product = getPublicDigitalProduct(status?.productSlug) ?? DIGITAL_PRODUCT_CATALOG[productSlug];
+  const productPath = `/guider/${product.slug}`;
 
   useSeo({
-    title: 'Hämta din guide – Mina första höns | Hönsgården',
+    title: `Hämta din PDF – ${product.title} | Hönsgården`,
     description: 'Nedladdning av köpt PDF.',
-    path: '/guider/mina-forsta-hons/hamta',
+    path: `${productPath}/hamta`,
     noindex: true,
   });
   useNoReferrer();
@@ -69,8 +73,11 @@ export default function MinaForstaHonsHamta() {
     if (!email.trim()) return;
     setSending(true);
     try {
-      await supabase.functions.invoke('digital-resend-link', { body: { email: email.trim() } });
+      const { error } = await supabase.functions.invoke('digital-resend-link', { body: { email: email.trim(), productSlug: product.slug } });
+      if (error) throw error;
       setSent(true);
+    } catch {
+      toast.error('Kunde inte begära länken. Försök igen om en stund.');
     } finally {
       setSending(false);
     }
@@ -79,7 +86,7 @@ export default function MinaForstaHonsHamta() {
   return (
     <div className="min-h-dvh bg-background px-4 py-16">
       <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-8">
-        <h1 className="font-serif text-3xl text-foreground">Mina första höns</h1>
+        <h1 className="font-serif text-3xl text-foreground">{product.title}</h1>
 
         {token && checking && (
           <p className="mt-4 flex items-center gap-3 text-muted-foreground">
@@ -120,6 +127,7 @@ export default function MinaForstaHonsHamta() {
           <div className="mt-6 space-y-3">
             <input
               type="email"
+              aria-label="E-postadressen från ditt köp"
               inputMode="email"
               autoComplete="email"
               value={email}
@@ -144,7 +152,7 @@ export default function MinaForstaHonsHamta() {
 
         <p className="mt-8 text-xs text-muted-foreground">
           Frågor? Mejla <a className="underline" href="mailto:info@auroramedia.se">info@auroramedia.se</a>.{' '}
-          <Link to="/guider/mina-forsta-hons" className="underline">Om guiden</Link>
+          <Link to={productPath} className="underline">Om guiden</Link>
         </p>
       </div>
     </div>

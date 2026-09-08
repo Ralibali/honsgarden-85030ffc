@@ -568,7 +568,7 @@ export default function GuideArticle() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <BlogConversionPopup />
+      <BlogConversionPopup key={post.slug} articleSlug={post.slug} category={post.category} />
       <div className="fixed inset-x-0 top-0 z-50 h-1 bg-border/40" aria-hidden="true">
         <div className="h-full bg-primary transition-[width] duration-150" style={{ width: `${readingProgress}%` }} />
       </div>

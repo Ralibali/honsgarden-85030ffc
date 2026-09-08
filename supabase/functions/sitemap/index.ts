@@ -170,6 +170,11 @@ Deno.serve(async (req) => {
     { loc: "/marknad", priority: "0.85", changefreq: "daily" },
     // Digital produktsida (PDF-guiden). Leverans-/tacksidor är noindex.
     { loc: "/guider/mina-forsta-hons", priority: "0.8", changefreq: "monthly" },
+    { loc: "/guider/vinterklar-honsgard", priority: "0.8", changefreq: "monthly" },
+    { loc: "/guider/aggbodens-saljpaket", priority: "0.8", changefreq: "monthly" },
+    { loc: "/guider/fran-honsgard-till-aggbod", priority: "0.8", changefreq: "monthly" },
+    { loc: "/guider/klackdagboken", priority: "0.8", changefreq: "monthly" },
+
     ...(shopPublicEnabled ? [{ loc: "/butik", priority: "0.85", changefreq: "weekly" }] : []),
 
   ].filter((page) => !isRobotsDisallowed(page.loc));

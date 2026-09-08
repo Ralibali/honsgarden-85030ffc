@@ -12,6 +12,7 @@ import {
   toIsoDate,
 } from '@/lib/tools/hatchCalculator';
 import { trackEvent } from '@/lib/analytics';
+import ContentSources from '@/components/content/ContentSources';
 
 function todayIso(): string {
   const now = new Date();
@@ -41,19 +42,19 @@ export default function HatchCalculator() {
   const faqs = useMemo(() => [
     {
       q: 'Hur länge ruvar en höna på äggen?',
-      a: 'Hönsägg kläcks normalt efter cirka 21 dagar. Det är ett riktvärde – något dygn tidigare eller senare är vanligt, och raser skiljer sig sällan åt nämnvärt.',
+      a: 'Hönsägg kläcks normalt efter ungefär 21 dagars ruvning. Kalkylatorn lägger 21 kalenderdagar till startdatumet: 1 april blir 22 april. Tidpunkten är ett riktvärde, ingen garanti.',
     },
     {
       q: 'När ska man lysa äggen?',
-      a: 'Första lysningen brukar göras omkring dag 7. Då syns vilka ägg som är befruktade. Många lyser en gång till runt dag 14 för att plocka bort ägg där utvecklingen stannat.',
+      a: 'Här visas dag 7 och 14 som planeringspåminnelser. Följ din metodanvisning och anteckna vad du ser. Osäker lysning är inte tillräckligt för att säkert kalla ett ägg obefruktat eller besluta att kasta det.',
     },
     {
-      q: 'Vad betyder "sluta vändas" dag 18?',
-      a: 'Under ruvningen vänds äggen flera gånger om dagen. Cirka tre dygn före kläckning slutar man vända dem och höjer luftfuktigheten, så att kycklingen kan ställa in sig mot hålet den ska pipa.',
+      q: 'Vad händer inför kläckningen?',
+      a: 'Påminnelsen på dag 18 hjälper dig kontrollera din plan. Tidpunkt för avslutad vändning och ändrade inställningar ska komma från rätt anvisning för din maskin och metod.',
     },
     {
       q: 'Fungerar kalkylatorn för andra fågelarter?',
-      a: 'Den räknar på hönsäggens 21 dagar. Andra arter har andra ruvtider – vaktel kläcks till exempel snabbare – så för dem gäller andra datum. Principerna med lysning och slutet vändande är dock desamma.',
+      a: 'Den publika kalkylatorn gäller hönsägg. Använd artspecifika anvisningar för andra fåglar; överför inte automatiskt dessa dagar eller skötselmoment.',
     },
   ], []);
 
@@ -65,7 +66,7 @@ export default function HatchCalculator() {
       path="/verktyg/klackningskalkylator"
       eyebrow="Gratis verktyg"
       h1="Kläckningskalkylator"
-      intro="Ange dagen då äggen lades i maskinen eller under hönan, så räknar vi ut hela tidplanen: lysning, sista vändningsdagen och beräknad kläckdag efter 21 dagar."
+      intro="Ange när ruvningen startade. Starten räknas som dag 0 och den ungefärliga kläckdagen ligger 21 kalenderdagar senare. Du får också påminnelser för din egen planering."
       faqs={faqs}
       related={[
         { href: '/klackningskalender', label: 'Kläckningskalender i appen', description: 'Följ kläckningen dag för dag med påminnelser.' },
@@ -139,13 +140,14 @@ export default function HatchCalculator() {
               </ol>
 
               <p className="text-xs text-muted-foreground">
-                Dagarna är riktvärden för hönsägg (cirka 21 dagar). Temperaturen i maskinen,
-                äggens ålder och förvaring före ruvning kan flytta kläckningen ett dygn eller två.
+                Kläckdagen är ungefärlig. Dag 23 är en uppföljning, ingen sista kläckdag.
+                Följ metodens anvisningar och sök kunnig hjälp om förloppet är oklart.
               </p>
             </div>
           )}
         </CardContent>
       </Card>
+      <ContentSources className="mt-6" heading="Underlag för tidsberäkningen" sources={[{ href: "https://extension.umd.edu/sites/extension.umd.edu/files/publications/HatchingEggsAtHome_FS-1114_ada.pdf", publisher: "University of Maryland Extension", label: "Hatching Eggs at Home: ungefär 21 dagars ruvning" }]} />
     </PublicToolPage>
   );
 }

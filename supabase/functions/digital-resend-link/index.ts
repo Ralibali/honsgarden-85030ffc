@@ -12,7 +12,7 @@ import {
   normalizeEmail,
   SELLER,
 } from "../_shared/digitalProduct.ts";
-import { deliveryUrl, flushEmailQueue, issueAccessToken, FROM_DOMAIN } from "../_shared/digitalReceipt.ts";
+import { deliveryUrl, flushEmailQueue, issueAccessToken, escapeHtml, FROM_DOMAIN } from "../_shared/digitalReceipt.ts";
 
 const NEUTRAL = {
   ok: true,
@@ -39,6 +39,8 @@ serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({})) as Record<string, unknown>;
     const email = normalizeEmail(body.email);
+    const requestedProduct = body.productSlug === undefined ? null : getDigitalProduct(body.productSlug);
+    if (body.productSlug !== undefined && !requestedProduct) return jsonResponse(NEUTRAL, 200, h);
     if (!email || !EMAIL_RE.test(email)) {
       return jsonResponse({ error: "Ange en giltig e-postadress." }, 400, h);
     }
@@ -55,7 +57,7 @@ serve(async (req) => {
     }
 
     // Exakt matchning mot normaliserad adress – aldrig mönstermatchning.
-    const { data: orders } = await admin
+    let query = admin
       .from("digital_orders")
       .select("id, order_number, product_slug, customer_email, amount_ore, status, refunded_at, created_at")
       .eq("customer_email", email)
@@ -63,6 +65,8 @@ serve(async (req) => {
       .is("refunded_at", null)
       .order("created_at", { ascending: false })
       .limit(3);
+    if (requestedProduct) query = query.eq("product_slug", requestedProduct.slug);
+    const { data: orders } = await query;
 
     for (const order of orders ?? []) {
       const product = getDigitalProduct(order.product_slug);
@@ -77,16 +81,16 @@ serve(async (req) => {
           to: order.customer_email,
           from: `Hönsgården <noreply@${FROM_DOMAIN}>`,
           sender_domain: FROM_DOMAIN,
-          subject: `Din nedladdningslänk – Mina första höns (${order.order_number})`,
+          subject: `Din nedladdningslänk – ${product.name} (${order.order_number})`,
           html: `<!DOCTYPE html><html lang="sv"><body style="margin:0;background:#faf8f4;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2b2b26">
   <div style="max-width:560px;margin:0 auto;padding:32px 24px">
     <p style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#3a6b35;margin:0 0 16px">Hönsgården</p>
     <h1 style="font-size:24px;margin:0 0 12px">Här är din länk igen</h1>
-    <p style="font-size:16px;line-height:1.6;margin:0 0 20px">Order ${order.order_number} – Mina första höns (${formatSek(order.amount_ore)} inkl. moms).</p>
+    <p style="font-size:16px;line-height:1.6;margin:0 0 20px">Order ${escapeHtml(order.order_number)} – ${escapeHtml(product.name)} (${formatSek(order.amount_ore)} inkl. moms).</p>
     <p style="margin:0 0 24px"><a href="${link}" style="display:inline-block;background:#3a6b35;color:#fff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:600">Ladda ner PDF:en</a></p>
     <p style="font-size:13px;color:#6b6b5f;line-height:1.6;margin:0">${SELLER.name}, org.nr ${SELLER.orgNumber} · ${SELLER.supportEmail}</p>
   </div></body></html>`,
-          text: `Din nedladdningslänk för Mina första höns (order ${order.order_number}): ${link}`,
+          text: `Din nedladdningslänk för ${product.name} (order ${order.order_number}): ${link}`,
           purpose: "transactional",
           label: "digital-resend-link",
           message_id: `digital-resend-${order.id}-${Date.now()}`,

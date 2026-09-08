@@ -109,6 +109,8 @@ export type AnalyticsOutboundPage =
  * Håll properties låga och icke-identifierande.
  */
 export type AnalyticsEventMap = {
+  'Blog Offer Shown': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant };
+  'Blog Offer Clicked': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant; action: 'product' | 'sample' | 'dismiss' };
   'Guide CTA Clicked': { placement: 'blog_index' | 'blog_article' | 'beginner_guide' | 'breed_guide'; audience: 'beginner' | 'breed'; action: 'product' | 'sample' };
   'Premium Viewed': { source?: AnalyticsSource };
   'Diary Entry Saved': { action: 'create' | 'edit' };

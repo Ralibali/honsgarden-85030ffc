@@ -25,7 +25,7 @@ export interface ReceiptResult {
 export const FROM_DOMAIN = "notify.honsgarden.se";
 const SITE = "https://honsgarden.se";
 
-function escapeHtml(value: string): string {
+export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string
   ));
@@ -83,8 +83,8 @@ export async function sendDigitalReceipt(
   const token = createAccessToken();
   const tokenHash = await hashAccessToken(token);
   const link = deliveryUrl(product, token);
-  const { netOre, vatOre } = vatBreakdown(order.amount_ore, Number(order.vat_rate ?? 0.06));
-  const vatPercent = Math.round(Number(order.vat_rate ?? 0.06) * 100);
+  const { netOre, vatOre } = vatBreakdown(order.amount_ore, Number(order.vat_rate ?? product.vatRate));
+  const vatPercent = Math.round(Number(order.vat_rate ?? product.vatRate) * 100);
   const termsVersion = order.consent_terms_version ?? product.termsVersion;
   const consentTime = order.consent_at ? new Date(order.consent_at).toLocaleString("sv-SE") : null;
   const consentLine = `Du godkände vid köpet (villkorsversion ${termsVersion}`
@@ -95,11 +95,11 @@ export async function sendDigitalReceipt(
   <div style="max-width:560px;margin:0 auto;padding:32px 24px">
     <p style="font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#3a6b35;margin:0 0 16px">Hönsgården</p>
     <h1 style="font-size:26px;line-height:1.25;margin:0 0 12px">Tack för ditt köp!</h1>
-    <p style="font-size:16px;line-height:1.6;margin:0 0 20px">Din guide <strong>Mina första höns</strong> är klar att ladda ner. Spara det här mejlet – länken fungerar även senare om du behöver hämta filen igen.</p>
+    <p style="font-size:16px;line-height:1.6;margin:0 0 20px">Din guide <strong>${escapeHtml(product.name)}</strong> är klar att ladda ner. Spara det här mejlet – länken fungerar även senare om du behöver hämta filen igen.</p>
     <p style="margin:0 0 28px"><a href="${link}" style="display:inline-block;background:#3a6b35;color:#ffffff;text-decoration:none;padding:14px 22px;border-radius:10px;font-weight:600">Ladda ner PDF:en</a></p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;background:#ffffff;border:1px solid #e6e0d4;border-radius:10px">
       <tr><td style="padding:10px 14px;color:#6b6b5f">Ordernummer</td><td style="padding:10px 14px;text-align:right">${escapeHtml(order.order_number)}</td></tr>
-      <tr><td style="padding:10px 14px;color:#6b6b5f">Produkt</td><td style="padding:10px 14px;text-align:right">Mina första höns (PDF, ${product.totalPages} sidor)</td></tr>
+      <tr><td style="padding:10px 14px;color:#6b6b5f">Produkt</td><td style="padding:10px 14px;text-align:right">${escapeHtml(product.name)} (${product.totalPages} sidor)</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Pris inkl. moms</td><td style="padding:10px 14px;text-align:right">${formatSek(order.amount_ore)}</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Varav moms (${vatPercent}%)</td><td style="padding:10px 14px;text-align:right">${formatSek(vatOre)}</td></tr>
       <tr><td style="padding:10px 14px;color:#6b6b5f">Exkl. moms</td><td style="padding:10px 14px;text-align:right">${formatSek(netOre)}</td></tr>
@@ -112,9 +112,9 @@ export async function sendDigitalReceipt(
   const text = [
     "Tack för ditt köp!",
     "",
-    `Ladda ner Mina första höns: ${link}`,
+    `Ladda ner ${product.name}: ${link}`,
     `Ordernummer: ${order.order_number}`,
-    `Produkt: Mina första höns (PDF, ${product.totalPages} sidor)`,
+    `Produkt: ${product.name} (${product.totalPages} sidor)`,
     `Pris: ${formatSek(order.amount_ore)} inkl. moms (varav moms ${vatPercent}% = ${formatSek(vatOre)}, exkl. moms ${formatSek(netOre)})`,
     "",
     consentLine,
@@ -135,7 +135,7 @@ export async function sendDigitalReceipt(
       to: order.customer_email,
       from: `Hönsgården <noreply@${FROM_DOMAIN}>`,
       sender_domain: FROM_DOMAIN,
-      subject: `Din guide Mina första höns (${order.order_number})`,
+      subject: `Din PDF ${product.name} (${order.order_number})`,
       html,
       text,
       purpose: "transactional",
