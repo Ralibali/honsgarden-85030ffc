@@ -35,6 +35,17 @@ if (/https:\/\/honsgarden\.se\/(?:login|reset-password|inbjudan|demo)(?:<|\/|\?)
   throw new Error("sitemap.xml innehåller robots-blockerad URL");
 }
 
+// Every PDF sales route must survive the final prerender sitemap overwrite.
+for (const slug of ['mina-forsta-hons', 'vinterklar-honsgard', 'aggbodens-saljpaket', 'klackdagboken', 'fran-honsgard-till-aggbod']) {
+  const path = `/guider/${slug}`;
+  const html = readFileSync(`dist${path}/index.html`, 'utf8');
+  if (!sitemap.includes(`<loc>https://honsgarden.se${path}</loc>`)) throw new Error(`Sitemap saknar PDF-produkten ${slug}`);
+  if (!html.includes(`rel="canonical" href="https://honsgarden.se${path}"`)) throw new Error(`Fel canonical för ${slug}`);
+  const headings = extractH1Texts(html);
+  if (headings.length !== 1 || headings[0] === 'Hönsgården' || !extractTitle(html).startsWith(headings[0] + ' –')) throw new Error(`Fel produkt-H1 för ${slug}`);
+  if (!html.includes('-smakprov.pdf')) throw new Error(`Smakprov saknas för ${slug}`);
+}
+
 const excluded = new Set(["kategori", "tagg", "bast-honsras-sverige", "foder-till-hons-guide"]);
 const articles = readdirSync("dist/blogg", { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && !excluded.has(entry.name));

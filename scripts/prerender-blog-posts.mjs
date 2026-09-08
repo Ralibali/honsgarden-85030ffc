@@ -1,4 +1,4 @@
-import { digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
+import { DIGITAL_GUIDE_COVER_PATH, DIGITAL_GUIDE_SAMPLE_PATH, digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
@@ -203,7 +203,16 @@ async function fetchPublishedPostsForSitemap() {
   return response.json();
 }
 
+const PRODUCT_PAGES = [
+  { slug: 'mina-forsta-hons', name: 'Mina första höns', description: 'Svenskt startpaket med checklistor, budget och arbetsblad för nya hönsägare. 24 sidor, 199 kr inklusive moms.', cover: DIGITAL_GUIDE_COVER_PATH, sample: DIGITAL_GUIDE_SAMPLE_PATH },
+  { slug: 'vinterklar-honsgard', name: 'Vinterklar hönsgård', description: 'En praktisk vinterhandbok för vuxna hobbyhöns med kontrollrundor, reservlösningar och ifyllbara arbetsblad. 18 sidor, 129 kr inklusive moms.' },
+  { slug: 'aggbodens-saljpaket', name: 'Äggbodens säljpaket', description: 'Ifyllbara skyltar, kundkort och planeringsblad för din egen äggförsäljning. 21 sidor, 149 kr inklusive moms.' },
+  { slug: 'klackdagboken', name: 'Kläckdagboken', description: 'Ifyllbar planeringsjournal för hönsägg. Samla förberedelser, observationer och resultat. 16 sidor, 99 kr inklusive moms.' },
+  { slug: 'fran-honsgard-till-aggbod', name: 'Från hönsgård till äggbod', description: 'En genomtänkt start för småskalig äggförsäljning i Sverige. 30 sidor med startplan, kalkyler och arbetsblad. Kommande produkt, planerat pris 179 kr inklusive moms.' },
+].map(p => ({ path: `/guider/${p.slug}`, route: `guider/${p.slug}`, title: `${p.name} – ifyllbar PDF | Hönsgården`, productTitle: p.name, description: p.description, ogImage: p.cover || `/images/digital-products/${p.slug}-cover.webp`, sample: p.sample || `/downloads/${p.slug}-smakprov.pdf`, priority: '0.8', changefreq: 'monthly' }));
+
 const STATIC_PAGES = [
+  ...PRODUCT_PAGES,
   { path: '/', route: '', title: 'Hönsgården – svensk app för hönsägare, ägglogg och hönskalender', description: 'Hönsgården är en svensk app för hobbyhönsägare. Logga ägg, följ flocken, räkna foderkostnad, skapa påminnelser och få koll på hönsgården i mobilen.', ogImage: '/og-image.jpg', priority: '1.0', changefreq: 'weekly' },
   { path: '/app-for-honsagare', route: 'app-for-honsagare', title: 'App för hönsägare – håll koll på ägg, flock, foder och rutiner | Hönsgården', description: 'Hönsgården är en svensk app för hobbyhönsägare. Logga ägg, följ flocken, räkna foderkostnad och skapa vardagsrutiner direkt i mobilen.', ogImage: '/blog-images/hens-garden.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/agglogg', route: 'agglogg', title: 'Ägglogg – logga ägg och följ värpningen över tid | Hönsgården', description: 'Digital ägglogg för hönsägare. Logga dagens ägg snabbt, se veckotrender, jämför perioder och förstå hur flocken värper.', ogImage: '/blog-images/hens-garden.jpg', priority: '0.9', changefreq: 'monthly' },
@@ -323,6 +332,15 @@ const CATEGORY_META = {
 function buildStaticPage(template, page) {
   const jsonLd = { '@context': 'https://schema.org', '@type': page.path === '/' ? 'WebSite' : 'WebPage', name: page.title, description: page.description, url: `${BASE_URL}${page.path}`, inLanguage: 'sv-SE' };
   const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
+  if (page.productTitle) {
+    return injectTopicBody(withHead, `<main class="container mx-auto max-w-3xl px-5 pt-24 pb-16" id="main-content">
+      <nav class="mb-5"><a href="/blogg">Hönsgårdens artiklar och PDF-produkter</a></nav>
+      <h1 class="font-serif text-4xl mb-5">${escapeHtml(page.productTitle)}</h1>
+      <p class="text-lg leading-relaxed mb-6">${escapeHtml(page.description)}</p>
+      <a class="underline text-primary" href="${escapeHtml(page.sample)}">Öppna gratis smakprov (PDF)</a>
+      <noscript><p class="mt-6">Aktivera JavaScript för fullständig produktinformation och köp när produkten är tillgänglig.</p></noscript>
+    </main>`);
+  }
   if (page.path === '/') {
     return injectTopicBody(withHead, renderHomeTopicBody());
   }
