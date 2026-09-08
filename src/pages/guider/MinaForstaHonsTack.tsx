@@ -1,3 +1,4 @@
+import { trackPaidPdfDownload } from '@/lib/paidPdfAnalytics';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -68,13 +69,14 @@ export default function MinaForstaHonsTack({ productSlug = 'mina-forsta-hons' }:
       if (error) throw error;
       const url = (data as { url?: string })?.url;
       if (!url) throw new Error('ingen länk');
+      await trackPaidPdfDownload(product.slug, 'thank_you');
       window.location.href = url;
     } catch (err) {
       console.error('[digital-download]', err);
     } finally {
       setDownloading(false);
     }
-  }, [order?.token]);
+  }, [order?.token, product.slug]);
 
   return (
     <div className="min-h-dvh bg-background px-4 py-16">

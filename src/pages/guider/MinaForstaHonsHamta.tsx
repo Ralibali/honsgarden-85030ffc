@@ -1,3 +1,4 @@
+import { trackPaidPdfDownload } from '@/lib/paidPdfAnalytics';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ export default function MinaForstaHonsHamta({ productSlug = 'mina-forsta-hons' }
       if (error) throw error;
       const url = (data as { url?: string })?.url;
       if (!url) throw new Error('ingen länk');
+      await trackPaidPdfDownload(product.slug, 'email_link');
       window.location.href = url;
     } catch (err) {
       console.error('[digital-download]', err);
@@ -67,7 +69,7 @@ export default function MinaForstaHonsHamta({ productSlug = 'mina-forsta-hons' }
     } finally {
       setDownloading(false);
     }
-  }, [token]);
+  }, [token, product.slug]);
 
   const requestLink = async () => {
     if (!email.trim()) return;

@@ -207,7 +207,7 @@ export type AnalyticsEventName = keyof AnalyticsEventMap;
 
 type PlausibleFn = (
   event: string,
-  options?: { props?: Record<string, string | number | boolean | undefined> },
+  options?: { props?: Record<string, string | number | boolean | undefined>; url?: string; callback?: () => void },
 ) => void;
 
 declare global {
