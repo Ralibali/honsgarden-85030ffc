@@ -167,12 +167,17 @@ export async function claimLegacyEntries(userId: string): Promise<number> {
   });
 }
 
-function isTransientError(error: unknown): boolean {
-  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+/**
+ * Only entries the server can never accept are discarded (deleted hen/flock,
+ * validation errors). Everything else — offline, auth, permission, server
+ * errors — keeps the entry so a later retry can succeed.
+ */
+function isPermanentRejection(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return false;
   const message = (
     error instanceof Error ? error.message : String(error ?? "")
   ).toLowerCase();
-  return /failed to fetch|network|load failed|fetcherror|timeout|timed out|too many requests|rate limit|internal server error|service unavailable|jwt|token|not authenticated|logga in|\b(429|500|502|503|504)\b/.test(
+  return /foreign key|violates|not present in table|does not exist|invalid input|invalid uuid|malformed|ogiltig|\b(400|404|422)\b/.test(
     message
   );
 }
@@ -192,6 +197,7 @@ export function syncQueue(
     let synced = 0;
     let dropped = 0;
     for (const item of getQueue(userId)) {
+      let permanentlyRejected = false;
       try {
         await createEggRecord({
           date: item.date,
@@ -202,17 +208,23 @@ export function syncQueue(
           client_id: item.client_id,
           expected_user_id: userId,
         });
-        await removeFromQueue(item.client_id, userId);
-        synced++;
       } catch (error) {
-        // Transient failures (offline, auth, server) keep the entry; client_id makes retries idempotent.
-        if (isTransientError(error)) break;
-        // Permanently invalid entries (deleted hen, validation) are discarded so
-        // the rest of the queue can keep syncing.
-        console.error("offlineQueue: dropping invalid entry", item.client_id, error);
-        await removeFromQueue(item.client_id, userId);
-        dropped++;
+        if (!isPermanentRejection(error)) break;
+        console.error(
+          "offlineQueue: dropping invalid entry",
+          item.client_id,
+          error
+        );
+        permanentlyRejected = true;
       }
+      try {
+        // Storage failures here keep the entry; client_id makes retries idempotent.
+        await removeFromQueue(item.client_id, userId);
+      } catch {
+        continue;
+      }
+      if (permanentlyRejected) dropped++;
+      else synced++;
     }
     return { synced, remaining: getQueueLength(userId), dropped };
   })().finally(() => {
