@@ -226,7 +226,7 @@ export const REGULATION_GUIDES = [
     ],
     relatedLinks: [
       { href: '/verktyg/aggregler-vagvisare', label: 'Äggregler-vägvisaren – vilka regler gäller just dig?' },
-      { href: '/salja-agg', label: 'Sälja ägg privat – kom igång' },
+      { href: '/salja-agg', label: 'Skapa gratis säljsida med Swish' },
       { href: '/karta', label: 'Äggkartan – hitta lokala säljare' },
       { href: '/guider/registrera-hons-jordbruksverket', label: 'Registrera dina höns hos Jordbruksverket' },
     ],
