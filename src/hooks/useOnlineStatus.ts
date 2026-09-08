@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { syncQueue, getQueueLength, loadQueue } from "@/lib/offlineQueue";
+import {
+  syncQueue,
+  getQueueLength,
+  loadQueue,
+  claimLegacyEntries,
+} from "@/lib/offlineQueue";
 import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -24,16 +29,20 @@ export function useOnlineStatus() {
     setSyncing(true);
     setSyncError(null);
     try {
-      const { synced, remaining } = await syncQueue(
+      const { synced, remaining, dropped } = await syncQueue(
         api.createEggRecord,
         userId
       );
-      if (synced)
+      if (synced || dropped)
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ["eggs"] }),
           queryClient.invalidateQueries({ queryKey: ["streak"] }),
         ]);
-      if (remaining)
+      if (dropped)
+        setSyncError(
+          `${dropped} loggning${dropped === 1 ? "" : "ar"} kunde inte sparas (t.ex. borttagen höna) och togs bort från enheten.`
+        );
+      else if (remaining)
         setSyncError("Alla poster kunde inte synkas. De är kvar på enheten.");
     } catch {
       setSyncError("Kunde inte läsa eller synka äggloggningarna. Försök igen.");
@@ -42,6 +51,17 @@ export function useOnlineStatus() {
       refresh();
     }
   }, [userId, queryClient, refresh]);
+  const claimLegacy = useCallback(async () => {
+    if (!userId) return;
+    try {
+      await claimLegacyEntries(userId);
+    } catch {
+      setSyncError("Kunde inte koppla de äldre loggningarna. Försök igen.");
+      return;
+    }
+    refresh();
+    await runSync();
+  }, [userId, refresh, runSync]);
   useEffect(() => {
     void loadQueue()
       .then(refresh)
@@ -70,5 +90,6 @@ export function useOnlineStatus() {
     syncing,
     syncError,
     retrySync: runSync,
+    claimLegacy,
   };
 }

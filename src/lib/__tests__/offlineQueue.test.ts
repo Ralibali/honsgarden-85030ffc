@@ -32,6 +32,7 @@ describe("durable, account-scoped egg queue", () => {
       expect(await queue.syncQueue(create, "owner")).toEqual({
         synced: 0,
         remaining: 1,
+        dropped: 0,
       });
       expect(queue.getQueue("owner")[0].client_id).toBe("one");
     }

@@ -18,18 +18,21 @@ export type Database = {
         Row: {
           achievement_id: string
           created_at: string
+          granted_days: number
           id: string
           user_id: string
         }
         Insert: {
           achievement_id: string
           created_at?: string
+          granted_days?: number
           id?: string
           user_id: string
         }
         Update: {
           achievement_id?: string
           created_at?: string
+          granted_days?: number
           id?: string
           user_id?: string
         }
@@ -5039,6 +5042,10 @@ export type Database = {
           _window_minutes?: number
         }
         Returns: boolean
+      }
+      claim_achievement_reward: {
+        Args: { _achievement_id: string; _tier: string }
+        Returns: Json
       }
       claim_due_egg_subscriptions: {
         Args: { p_limit?: number }
