@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
 import { api } from '@/lib/api';
-import { buildAchievements, TIER_PREMIUM_DAYS, MAX_ACHIEVEMENT_PREMIUM_DAYS } from '@/components/Achievements';
+import { buildAchievements } from '@/components/Achievements';
 import { emitUnlockCelebration } from '@/lib/unlockBus';
 
 /**
@@ -46,12 +46,6 @@ export function useAchievementRewards() {
 
         const alreadyRewarded = new Set((existing || []).map((r) => r.achievement_id));
 
-        let totalGranted = 0;
-        for (const id of alreadyRewarded) {
-          const a = achievements.find((x) => x.id === id);
-          if (a) totalGranted += TIER_PREMIUM_DAYS[a.tier] || 0;
-        }
-
         const fresh = unlocked.filter(
           (a) => !alreadyRewarded.has(a.id) && !rewardedRef.current.has(a.id),
         );
@@ -61,19 +55,23 @@ export function useAchievementRewards() {
         const overflow: string[] = [];
 
         for (const achievement of fresh) {
-          const days = TIER_PREMIUM_DAYS[achievement.tier] || 1;
-          const capped = totalGranted + days > MAX_ACHIEVEMENT_PREMIUM_DAYS;
-
           rewardedRef.current.add(achievement.id);
-          const { error } = await supabase
-            .from('achievement_rewards')
-            .insert({ user_id: user.id, achievement_id: achievement.id });
-          if (error) continue;
 
-          if (!capped) {
-            await supabase.rpc('grant_premium_days', { _user_id: user.id, _days: days });
-            totalGranted += days;
+          // Registrering och premiumdagar sker i databasen (SECURITY DEFINER),
+          // eftersom klienten inte får skriva i achievement_rewards.
+          const { data, error } = await supabase.rpc('claim_achievement_reward', {
+            _achievement_id: achievement.id,
+            _tier: achievement.tier,
+          });
+          if (error) {
+            rewardedRef.current.delete(achievement.id);
+            console.error('[achievements] kunde inte registrera utmärkelse', error.message);
+            continue;
           }
+
+          const result = (data ?? {}) as { inserted?: boolean; granted_days?: number };
+          if (!result.inserted) continue;
+          const days = result.granted_days ?? 0;
 
           if (celebrated < 3) {
             celebrated++;
@@ -83,7 +81,7 @@ export function useAchievementRewards() {
               title: achievement.title,
               description: achievement.description,
               tier: achievement.tier,
-              premiumDays: capped ? 0 : days,
+              premiumDays: days,
             });
           } else {
             overflow.push(achievement.title);

@@ -39,9 +39,12 @@ installFarmAtmosphereRuntime();
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault();
+  // Samma nyckel läses som en försöksräknare i lazyWithRetry – spara ett antal,
+  // inte en tidsstämpel, annars slås båda återhämtningsvägarna ut.
   const key = 'chunk_reload_attempted_v1';
-  if (!sessionStorage.getItem(key)) {
-    sessionStorage.setItem(key, Date.now().toString());
+  const attempts = Number(sessionStorage.getItem(key) ?? '0') || 0;
+  if (attempts === 0) {
+    sessionStorage.setItem(key, '1');
     if (isStandalonePwa()) {
       void recoverStalePwaShell('preload-error');
     } else {

@@ -151,19 +151,46 @@ export async function clearQueue(userId: string): Promise<void> {
     await persist((current) => current.filter((x) => x.user_id !== userId));
   });
 }
+/** Assigns ownerless legacy entries to the signed-in user after their explicit confirmation. */
+export async function claimLegacyEntries(userId: string): Promise<number> {
+  return exclusive(async () => {
+    await loadQueue();
+    let claimed = 0;
+    await persist((current) =>
+      current.map((x) => {
+        if (x.user_id) return x;
+        claimed++;
+        return { ...x, user_id: userId };
+      })
+    );
+    return claimed;
+  });
+}
+
+function isTransientError(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
+  const message = (
+    error instanceof Error ? error.message : String(error ?? "")
+  ).toLowerCase();
+  return /failed to fetch|network|load failed|fetcherror|timeout|timed out|too many requests|rate limit|internal server error|service unavailable|jwt|token|not authenticated|logga in|\b(429|500|502|503|504)\b/.test(
+    message
+  );
+}
+
 const syncInFlight = new Map<
   string,
-  Promise<{ synced: number; remaining: number }>
+  Promise<{ synced: number; remaining: number; dropped: number }>
 >();
 export function syncQueue(
   createEggRecord: CreateEggRecordFn,
   userId: string
-): Promise<{ synced: number; remaining: number }> {
+): Promise<{ synced: number; remaining: number; dropped: number }> {
   const active = syncInFlight.get(userId);
   if (active) return active;
   const result = (async () => {
     await loadQueue();
     let synced = 0;
+    let dropped = 0;
     for (const item of getQueue(userId)) {
       try {
         await createEggRecord({
@@ -177,12 +204,17 @@ export function syncQueue(
         });
         await removeFromQueue(item.client_id, userId);
         synced++;
-      } catch {
-        // Auth, server and storage errors all retain the entry. client_id makes retries idempotent.
-        break;
+      } catch (error) {
+        // Transient failures (offline, auth, server) keep the entry; client_id makes retries idempotent.
+        if (isTransientError(error)) break;
+        // Permanently invalid entries (deleted hen, validation) are discarded so
+        // the rest of the queue can keep syncing.
+        console.error("offlineQueue: dropping invalid entry", item.client_id, error);
+        await removeFromQueue(item.client_id, userId);
+        dropped++;
       }
     }
-    return { synced, remaining: getQueueLength(userId) };
+    return { synced, remaining: getQueueLength(userId), dropped };
   })().finally(() => {
     syncInFlight.delete(userId);
     notify();

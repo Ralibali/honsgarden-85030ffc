@@ -16,12 +16,22 @@ interface StatusResponse {
   email?: string | null;
   token?: string;
   error?: string;
+  needsReview?: boolean;
+  reviewReason?: string | null;
+  refunded?: boolean;
 }
+
+const REVIEW_MESSAGES: Record<string, string> = {
+  country_not_supported:
+    'Din faktureringsadress ligger utanför Sverige. Guiden säljs just nu bara med svensk faktureringsadress, så leveransen är pausad.',
+  amount_mismatch: 'Beloppet stämmer inte med ordern, så leveransen är pausad för manuell kontroll.',
+  currency_mismatch: 'Valutan stämmer inte med ordern, så leveransen är pausad för manuell kontroll.',
+};
 
 export default function MinaForstaHonsTack({ productSlug = 'mina-forsta-hons' }: { productSlug?: DigitalProductSlug }) {
   const [params] = useSearchParams();
   const sessionId = params.get('session_id');
-  const [state, setState] = useState<'loading' | 'paid' | 'pending' | 'error'>('loading');
+  const [state, setState] = useState<'loading' | 'paid' | 'pending' | 'review' | 'error'>('loading');
   const [order, setOrder] = useState<StatusResponse | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -47,7 +57,7 @@ export default function MinaForstaHonsTack({ productSlug = 'mina-forsta-hons' }:
       if (error) { setState('error'); return; }
       const res = data as StatusResponse;
       setOrder(res);
-      setState(res.paid ? 'paid' : 'pending');
+      setState(res.paid ? 'paid' : res.needsReview ? 'review' : 'pending');
     })();
     return () => { cancelled = true; };
   }, [sessionId, attempt]);
@@ -118,9 +128,34 @@ export default function MinaForstaHonsTack({ productSlug = 'mina-forsta-hons' }:
               Vi väntar på bekräftelse från betalningen. Sidan uppdaterar sig själv, och så snart
               betalningen är klar mejlar vi nedladdningslänken till dig.
             </p>
+            {attempt >= 5 && (
+              <p className="mt-3 text-sm text-muted-foreground">
+                Det tar ovanligt lång tid. Har pengarna dragits utan att du fått guiden? Mejla oss
+                order {order?.orderNumber ?? '(se ditt kvitto från betalningen)'} på{' '}
+                <a className="underline" href="mailto:info@auroramedia.se">info@auroramedia.se</a> –
+                vi levererar guiden eller betalar tillbaka.
+              </p>
+            )}
             <Button variant="outline" className="mt-6" onClick={() => setAttempt((a) => a + 1)}>
               Kontrollera igen
             </Button>
+          </>
+        )}
+
+        {state === 'review' && (
+          <>
+            <h1 className="font-serif text-2xl text-foreground">Betalningen gick igenom – leveransen behöver kontrolleras</h1>
+            <p className="mt-3 text-muted-foreground">
+              Din betalning är genomförd, men vi kan inte lämna ut filen automatiskt.{' '}
+              {REVIEW_MESSAGES[order?.reviewReason ?? ''] ??
+                'Ordern behöver en manuell kontroll innan vi kan leverera guiden.'}
+            </p>
+            <p className="mt-3 text-muted-foreground">
+              Mejla oss order {order?.orderNumber ?? '(se ditt kvitto från betalningen)'} på{' '}
+              <a className="underline" href="mailto:info@auroramedia.se">info@auroramedia.se</a>. Vi
+              levererar guiden manuellt eller betalar tillbaka hela beloppet – du blir inte utan
+              antingen filen eller pengarna.
+            </p>
           </>
         )}
 
