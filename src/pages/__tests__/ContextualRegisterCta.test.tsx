@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import ContextualRegisterCta from '@/components/ContextualRegisterCta';
 import { CONTEXTUAL_CTAS } from '@/lib/contextualRegisterCtas';
 
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ isAuthenticated: false, loading: false }) }));
 vi.mock('@/hooks/useSeo', () => ({ useSeo: vi.fn() }));
 vi.mock('@/components/LandingNavbar', () => ({ default: () => <nav>navbar</nav> }));
 vi.mock('@/components/LandingFooter', () => ({ default: () => <footer>footer</footer> }));
