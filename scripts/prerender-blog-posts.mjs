@@ -71,7 +71,7 @@ function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noind
   return `\n<title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
 <meta name="robots" content="${robots}">
-<link rel="canonical" href="${escapeHtml(url)}">
+<link rel="canonical" data-rh="true" href="${escapeHtml(url)}">
 <link rel="alternate" hreflang="sv" href="${escapeHtml(url)}">
 <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
 <meta property="og:type" content="${escapeHtml(ogType)}">
@@ -133,6 +133,7 @@ ${post.excerpt ? `<p class="text-lg text-muted-foreground leading-relaxed mb-6">
 <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" class="w-full aspect-[16/9] object-cover rounded-2xl mb-8" loading="eager" />
 ${digitalGuideAudienceForArticle(post.slug) ? renderDigitalGuidePlacement(digitalGuideAudienceForArticle(post.slug)) : ''}
 <div class="prose-custom">${content}</div>
+${post.slug === 'honsvakt-checklista-overlamning' ? '<p>AI-assisterad originalguide, skriven med ChatGPT. Arbetsmallen är ett redaktionellt förslag.</p>' : ''}
 </article></main></div>`;
 }
 
