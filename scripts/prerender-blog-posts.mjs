@@ -71,7 +71,7 @@ function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noind
   return `\n<title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
 <meta name="robots" content="${robots}">
-<link rel="canonical" data-rh="true" href="${escapeHtml(url)}">
+<link rel="canonical" href="${escapeHtml(url)}" data-rh="true">
 <link rel="alternate" hreflang="sv" href="${escapeHtml(url)}">
 <link rel="alternate" hreflang="x-default" href="${escapeHtml(url)}">
 <meta property="og:type" content="${escapeHtml(ogType)}">
