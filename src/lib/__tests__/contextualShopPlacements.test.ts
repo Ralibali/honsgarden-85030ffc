@@ -36,6 +36,9 @@ describe('Packet 1 contextual shop placements', () => {
       '/borja-med-hons',
       '/blogg/bast-honsras-sverige',
       '/blogg/foder-till-hons-guide',
+      '/salja-agg',
+      '/blogg/skaffa-hons-nyborjarguide',
+      '/blogg/hobbyhons-nyborjarguide',
     ]);
     const merchants = new Set(CONTEXTUAL_SHOP_PLACEMENTS.flatMap((placement) => placement.links.map((link) => link.merchant)));
     expect([...merchants].sort()).toEqual(['bonden', 'outl1', 'p-lindberg']);
@@ -68,7 +71,7 @@ describe('Packet 1 contextual shop placements', () => {
     }
   });
 
-  it('injects only the two blog slugs and is idempotent', () => {
+  it('injects only the registered blog slugs and is idempotent', () => {
     const ras = injectContextualShopPlacement('<p>Hedemora och Orpington är härdiga raser.</p>', 'bast-honsras-sverige');
     expect(ras).toContain('Annons');
     expect(ras).toContain('do.p-lindberg.se/t/t?a=1954027467');
@@ -79,10 +82,22 @@ describe('Packet 1 contextual shop placements', () => {
     expect(foder).toContain('do.p-lindberg.se/t/t?a=1954027467');
     expect(foder).toContain(encodeURIComponent(SHOP_DESTINATIONS.plindbergFodertraag));
 
+    const skaffa = injectContextualShopPlacement('<p>Första flocken.</p>', 'skaffa-hons-nyborjarguide');
+    expect(skaffa).toContain('do.outl1.se/t/t?a=1728546059');
+    expect(skaffa).toContain('do.p-lindberg.se/t/t?a=1954027467');
+    expect(injectContextualShopPlacement(skaffa, 'skaffa-hons-nyborjarguide')).toBe(skaffa);
+
+    const hobby = injectContextualShopPlacement('<p>Hobbyflock.</p>', 'hobbyhons-nyborjarguide');
+    expect(hobby).toContain('do.outl1.se/t/t?a=1728546059');
+    expect(hobby).toContain('do.p-lindberg.se/t/t?a=1954027467');
+    expect(hobby).toContain(encodeURIComponent(SHOP_DESTINATIONS.plindbergStartset));
+    expect(injectContextualShopPlacement(hobby, 'hobbyhons-nyborjarguide')).toBe(hobby);
+
     expect(injectContextualShopPlacement('<p>Orpington är en tung ras.</p>', 'orpington')).toBe(
       '<p>Orpington är en tung ras.</p>',
     );
     expect(injectContextualShopPlacement('<p>Ingen butik.</p>', 'bygga-honshus')).toBe('<p>Ingen butik.</p>');
+    expect(injectContextualShopPlacement('<p>Säljsida.</p>', 'salja-agg')).toBe('<p>Säljsida.</p>');
   });
 
   it('does not let the wrap helper invent shop links on the zero-commerce blog slugs', () => {
@@ -114,6 +129,13 @@ describe('Packet 1 contextual shop placements', () => {
 
     const sussex = renderBreedTopicBody({ slug: 'sussex', namn: 'Sussex', description: 'Nyfiken.', faq: [] });
     expect(sussex).not.toContain('data-shop-placement');
+
+    const salja = renderContextualShopPlacementHtml(shopPlacementForPath('/salja-agg')!);
+    expect(salja).toContain('Annons');
+    expect(salja).toContain('do.p-lindberg.se/t/t?a=1954027467');
+    expect(salja).toContain('pin.bonden.se/t/t?a=1960530621');
+    expect(salja).toContain(encodeURIComponent(SHOP_DESTINATIONS.plindbergRede));
+    expect(salja).not.toMatch(KILLED);
   });
 
   it('wires GuideArticle, prerender, and the three React surfaces', () => {
@@ -127,6 +149,8 @@ describe('Packet 1 contextual shop placements', () => {
     expect(readFileSync(join(process.cwd(), 'src/pages/IndexUpdated.tsx'), 'utf8')).toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/HonsrasLanding.tsx'), 'utf8')).toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/SeoLandingPage.tsx'), 'utf8')).toContain("path=\"/borja-med-hons\"");
+    expect(readFileSync(join(process.cwd(), 'src/pages/SaljaAgg.tsx'), 'utf8')).toContain('path="/salja-agg"');
+    expect(prerender).toContain("page.path === '/salja-agg'");
   });
 
   it('maps each target URL to the intended merchants', () => {
@@ -140,6 +164,17 @@ describe('Packet 1 contextual shop placements', () => {
       'bonden',
       'p-lindberg',
     ]);
+    expect(shopPlacementForPath('/salja-agg')?.links.map((link) => link.merchant)).toEqual(['p-lindberg', 'bonden']);
+    expect(shopPlacementForPath('/blogg/skaffa-hons-nyborjarguide')?.links.map((link) => link.merchant)).toEqual([
+      'outl1',
+      'p-lindberg',
+    ]);
+    expect(shopPlacementForPath('/blogg/hobbyhons-nyborjarguide')?.links.map((link) => link.merchant)).toEqual([
+      'outl1',
+      'p-lindberg',
+    ]);
     expect(trackedShopHref(shopPlacementForPath('/honsraser/orpington')!.links[0])).toContain('pin.bonden.se');
+    expect(trackedShopHref(shopPlacementForPath('/salja-agg')!.links[0])).toContain('do.p-lindberg.se');
+    expect(trackedShopHref(shopPlacementForPath('/salja-agg')!.links[1])).toContain('pin.bonden.se');
   });
 });
