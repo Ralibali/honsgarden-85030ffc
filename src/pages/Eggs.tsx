@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { localCalendarDate, todayLocal } from '@/lib/datetime';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Download, Egg as EggIcon, LayoutGrid, List, Plus, Sparkles } from 'lucide-react';
@@ -14,6 +15,8 @@ type PendingEggLog = EggLog & { pending?: boolean; client_id?: string };
 import { toast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EggForm } from '@/components/eggs/EggForm';
+import { EggEditDialog } from '@/components/eggs/EggEditDialog';
+import { Input } from '@/components/ui/input';
 import { EggGroupedView } from '@/components/eggs/EggGroupedView';
 import { EggListView } from '@/components/eggs/EggListView';
 import { EggSuccessAnimation } from '@/components/EggSuccessAnimation';
@@ -40,7 +43,18 @@ function formatMonthLabel(date = new Date()) {
 export default function Eggs() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [showForm, setShowForm] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [showForm, setShowForm] = useState(() => searchParams.get('log') === '1');
+  const [formDate, setFormDate] = useState(todayLocal);
+  const [formVersion, setFormVersion] = useState(0);
+  const openComposer = (date = todayLocal()) => {
+    setFormDate(date);
+    setFormVersion((version) => version + 1);
+    setShowForm(true);
+  };
+  const [editingEntry, setEditingEntry] = useState<EggLog | null>(null);
+  const [historyDate, setHistoryDate] = useState('');
+  const [visibleDays, setVisibleDays] = useState(14);
   const [viewMode, setViewMode] = useState<'grouped' | 'list'>('grouped');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
@@ -81,6 +95,12 @@ export default function Eggs() {
     if (unusedFeatures.length > 0) setShowSuggestion(true);
   }, [animCount, unusedFeatures.length]);
 
+  const refreshEggData = () => {
+    for (const key of ['eggs', 'streak', 'stats-summary', 'stats-insights', 'hens-with-eggs', 'flock-statistics']) {
+      queryClient.invalidateQueries({ queryKey: [key] });
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
       const weather = navigator.onLine ? await api.fetchEggLogWeatherSnapshot(data.date).catch(() => null) : null;
@@ -104,9 +124,10 @@ export default function Eggs() {
         });
         toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['eggs'] });
-        queryClient.invalidateQueries({ queryKey: ['streak'] });
+        refreshEggData();
       }
+
+      setHistoryDate(variables.date);
 
       setAnimCount(variables.count);
       setShowAnimation(true);
@@ -136,14 +157,35 @@ export default function Eggs() {
     }),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: ({ entry, changes }: { entry: EggLog; changes: Pick<EggLog, 'date' | 'count'> }) => api.updateEggRecord(entry, changes),
+    onSuccess: (saved) => {
+      queryClient.setQueryData<EggLog[]>(['eggs'], (old) => (old ?? []).map((entry) => entry.id === saved.id ? saved : entry).sort((a, b) => b.date.localeCompare(a.date)));
+      refreshEggData();
+      setHistoryDate(saved.date);
+      setEditingEntry(null);
+      toast({ title: 'Äggregistreringen är uppdaterad' });
+    },
+    onError: () => { refreshEggData(); },
+  });
+
+  const openEdit = (entry: EggLog) => {
+    updateMutation.reset();
+    setEditingEntry(entry);
+  };
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteEggRecord(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eggs'] });
-      queryClient.invalidateQueries({ queryKey: ['streak'] });
+      refreshEggData();
       toast({ title: 'Äggregistreringen är borttagen' });
     },
+    onError: (error: Error) => toast({ title: 'Kunde inte ta bort registreringen', description: error.message, variant: 'destructive' }),
   });
+
+  const historyDays = [...new Set(eggs.map((egg) => egg.date))].sort((a, b) => b.localeCompare(a));
+  const shownDays = new Set(historyDate ? [historyDate] : historyDays.slice(0, visibleDays));
+  const visibleEggs = eggs.filter((egg) => shownDays.has(egg.date));
 
   const henNameMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -229,10 +271,10 @@ export default function Eggs() {
           <div>
             <p className="eggbook-v10__eyebrow">Gårdens äggbok</p>
             <h1>Ägg</h1>
-            <p>En enkel dagbok över skörden från redena.</p>
+            <p>Logga ägg idag eller i efterhand. Rätta tidigare registreringar i äggboken.</p>
           </div>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="eggbook-v10__log-button gap-2 active:scale-95 transition-transform">
+        <Button disabled={createMutation.isPending} onClick={() => showForm ? setShowForm(false) : openComposer()} className="eggbook-v10__log-button gap-2 active:scale-95 transition-transform">
           <Plus className="h-4 w-4" />
           {showForm ? 'Stäng' : 'Logga ägg'}
         </Button>
@@ -243,6 +285,8 @@ export default function Eggs() {
           <EggForm
             activeHens={activeHens}
             flocks={flocks}
+            key={formVersion}
+            initialDate={formDate}
             isPending={createMutation.isPending}
             onSubmit={(data) => createMutation.mutate(data)}
             onCancel={() => setShowForm(false)}
@@ -257,7 +301,7 @@ export default function Eggs() {
             title="Första sidan är tom ännu"
             description="Logga dagens skörd så börjar äggboken fyllas. Efter några dagar kan Hönsgården hjälpa dig se flockens egen rytm."
             actionLabel="Logga dagens ägg"
-            onAction={() => setShowForm(true)}
+            onAction={() => openComposer()}
             secondaryLabel="Lägg till höna först"
             onSecondaryAction={() => window.location.assign('/app/hens')}
           />
@@ -273,7 +317,7 @@ export default function Eggs() {
               </div>
               <p id="eggbook-today-heading">{todayComparison}</p>
             </div>
-            <button type="button" className="eggbook-v10__today-action" onClick={() => setShowForm(true)}>
+            <button type="button" className="eggbook-v10__today-action" onClick={() => openComposer()}>
               <Plus className="h-5 w-5" />
               Lägg till
             </button>
@@ -313,7 +357,7 @@ export default function Eggs() {
                 <BookOpen className="h-5 w-5" aria-hidden="true" />
                 <div>
                   <p className="eggbook-v10__eyebrow">Äggboken</p>
-                  <h2 id="eggbook-history-heading">Senaste sidorna</h2>
+                  <h2 id="eggbook-history-heading">Historik</h2>
                 </div>
               </div>
               <div className="eggbook-v10__view-switch" aria-label="Välj visning">
@@ -336,25 +380,38 @@ export default function Eggs() {
               </div>
             </div>
 
+            <div className="px-4 sm:px-5 py-3 space-y-2">
+              <label htmlFor="egg-history-date" className="text-sm font-medium">Hitta en dag</label>
+              <div className="flex gap-2 flex-wrap">
+                <Input id="egg-history-date" type="date" max={todayStr} value={historyDate} onChange={(event) => setHistoryDate(event.target.value)} className="w-auto max-w-full" />
+                {historyDate && <Button variant="outline" onClick={() => setHistoryDate('')}>Visa alla dagar</Button>}
+                <Button variant="outline" disabled={createMutation.isPending} onClick={() => { openComposer(historyDate || todayLocal()); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Logga {historyDate ? 'denna dag' : 'en annan dag'}</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">Tryck på pennan vid en registrering för att ändra datum eller antal.</p>
+            </div>
             <div className="eggbook-v10__entries">
-              {viewMode === 'grouped' ? (
+              {visibleEggs.length === 0 ? <p className="p-5 text-sm text-muted-foreground">Inga ägg registrerade den här dagen. Du kan lägga till dem med ”Logga denna dag”.</p> :
+              viewMode === 'grouped' ? (
                 <EggGroupedView
-                  eggs={eggs}
+                  eggs={visibleEggs}
                   henNameMap={henNameMap}
                   flockNameMap={flockNameMap}
                   henFlockMap={henFlockMap}
                   onDelete={(id) => deleteMutation.mutate(id)}
+                  onEdit={openEdit}
                 />
               ) : (
                 <EggListView
-                  eggs={eggs}
+                  eggs={visibleEggs}
                   henNameMap={henNameMap}
                   flockNameMap={flockNameMap}
                   henFlockMap={henFlockMap}
                   onDelete={(id) => deleteMutation.mutate(id)}
+                  onEdit={openEdit}
                 />
               )}
             </div>
+            {!historyDate && historyDays.length > visibleDays && <div className="p-4 text-center"><Button variant="outline" onClick={() => setVisibleDays((days) => days + 14)}>Visa äldre dagar</Button></div>}
           </section>
 
           <details className="eggbook-v10__export">
@@ -378,6 +435,7 @@ export default function Eggs() {
         </>
       ) : null}
 
+      {editingEntry && <EggEditDialog key={editingEntry.id} entry={editingEntry} isPending={updateMutation.isPending} error={updateMutation.error?.message ?? null} onSave={(changes) => updateMutation.mutate({ entry: editingEntry, changes })} onClose={() => setEditingEntry(null)} />}
       <EggSuccessAnimation show={showAnimation} count={animCount} onDone={handleAnimationDone} />
       <PersonalRecordToast record={recordToast} onDone={() => setRecordToast(null)} />
       <FeatureSuggestionToast
