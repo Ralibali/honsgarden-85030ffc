@@ -94,15 +94,6 @@ export const CONTEXTUAL_SHOP_PLACEMENTS: readonly ShopPlacement[] = [
     ],
   },
   {
-    path: '/salja-agg',
-    slug: 'salja-agg',
-    body: 'Värpreden och foderutrustning till flocken som ska ge ägg att sälja.',
-    links: [
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergRede, label: 'Se värpreden hos P-Lindberg' },
-      { merchant: 'bonden', destination: SHOP_DESTINATIONS.bondenHome, label: 'Se foderutrustning hos Bonden' },
-    ],
-  },
-  {
     path: '/blogg/skaffa-hons-nyborjarguide',
     slug: 'skaffa-hons-nyborjarguide',
     body: 'Hus och startutrustning innan första hönorna flyttar in.',

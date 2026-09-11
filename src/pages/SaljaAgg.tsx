@@ -1,7 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import LandingNavbar from '@/components/LandingNavbar';
-import ContextualShopCta from '@/components/ContextualShopCta';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -599,12 +598,6 @@ export default function SaljaAgg() {
               <ContentSources sources={SALJAGG_SOURCES} heading="Källor och myndighetsinformation" />
               <LastReviewed date={SALJAGG_REVIEWED} />
             </div>
-          </div>
-        </section>
-
-        <section className="pb-4">
-          <div className="container max-w-3xl mx-auto px-5 sm:px-6">
-            <ContextualShopCta path="/salja-agg" />
           </div>
         </section>
 

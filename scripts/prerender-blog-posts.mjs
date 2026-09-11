@@ -350,9 +350,6 @@ function buildStaticPage(template, page) {
     const audience = page.path.startsWith('/honsraser') ? 'breed' : 'beginner';
     return injectTopicBody(withHead, renderDigitalGuidePlacement(audience) + (shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''));
   }
-  if (shopPlacement && page.path === '/salja-agg') {
-    return injectTopicBody(withHead, renderContextualShopPlacementHtml(shopPlacement));
-  }
   return withHead;
 }
 
