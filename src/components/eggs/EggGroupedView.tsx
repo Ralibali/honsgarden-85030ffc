@@ -1,20 +1,22 @@
+import type { EggLog } from '@/lib/api';
 import React, { useMemo } from 'react';
-import { Trash2, Users, Egg as EggIcon } from 'lucide-react';
+import { Pencil, Trash2, Users, Egg as EggIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { localCalendarDate, todayLocal } from '@/lib/datetime';
 
 interface EggGroupedViewProps {
-  eggs: any[];
+  eggs: (EggLog & { pending?: boolean })[];
   henNameMap: Record<string, string>;
   flockNameMap: Record<string, string>;
   henFlockMap?: Record<string, string>;
   onDelete: (id: string) => void;
+  onEdit: (entry: EggLog) => void;
 }
 
-export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, onDelete }: EggGroupedViewProps) {
+export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, onDelete, onEdit }: EggGroupedViewProps) {
   const groupedByDate = useMemo(() => {
-    const groups: Record<string, any[]> = {};
-    eggs.slice(0, 100).forEach((entry: any) => {
+    const groups: Record<string, typeof eggs> = {};
+    eggs.forEach((entry) => {
       if (!groups[entry.date]) groups[entry.date] = [];
       groups[entry.date].push(entry);
     });
@@ -47,7 +49,7 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
   return (
     <div className="eggbook-days divide-y divide-border/50">
       {groupedByDate.map(([date, entries]) => {
-        const totalForDay = entries.reduce((sum: number, entry: any) => sum + (entry.count || 0), 0);
+        const totalForDay = entries.reduce((sum, entry) => sum + (entry.count || 0), 0);
         return (
           <article key={date} className="eggbook-day px-4 sm:px-5 py-4">
             <header className="eggbook-day__header flex items-end justify-between gap-4 pb-3">
@@ -62,8 +64,9 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
             </header>
 
             <div className="eggbook-day__entries grid gap-1">
-              {entries.map((entry: any) => {
-                const entryId = entry._id || entry.id;
+              {entries.map((entry) => {
+                const entryId = entry.id;
+                const pending = Boolean(entry.pending) || /^(pending|temp)-/.test(entryId);
                 const flockName = entry.flock_id
                   ? flockNameMap[entry.flock_id]
                   : (entry.hen_id && henFlockMap[entry.hen_id] ? flockNameMap[henFlockMap[entry.hen_id]] : null);
@@ -71,26 +74,32 @@ export function EggGroupedView({ eggs, henNameMap, flockNameMap, henFlockMap = {
                 const label = [henName, flockName].filter(Boolean).join(' · ') || 'Gårdens gemensamma logg';
 
                 return (
-                  <div key={entryId} className="eggbook-day__entry grid grid-cols-[34px_minmax(0,1fr)_auto_30px] items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-secondary/25 transition-colors">
+                  <div key={entryId} className="eggbook-day__entry grid grid-cols-[34px_minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-secondary/25 transition-colors">
                     <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/[0.06] text-primary" aria-hidden="true">
                       {flockName ? <Users className="h-3.5 w-3.5" /> : henName ? <span className="text-sm">🐔</span> : <EggIcon className="h-3.5 w-3.5" />}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs sm:text-sm font-medium text-foreground truncate">{label}</p>
+                      {pending && <p className="text-[10px] text-amber-700">Väntar på synk</p>}
                       {entry.notes && <p className="mt-1 text-[10px] text-muted-foreground/75 italic truncate">“{entry.notes}”</p>}
                     </div>
                     <span className="font-serif text-lg text-foreground tabular-nums">{entry.count}</span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-muted-foreground/35 hover:text-destructive"
-                      onClick={() => onDelete(entryId)}
-                      disabled={Boolean(entry.pending)}
-                      title={entry.pending ? "Synka registreringen före radering" : undefined}
-                      aria-label={`Ta bort ${entry.count} ägg från ${formatDate(date)}`}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" className="min-h-11 min-w-11 px-2 text-primary" onClick={() => onEdit(entry)} disabled={pending} title={pending ? 'Synka registreringen före ändring' : undefined} aria-label={`Ändra registreringen från ${formatDate(date)}`}>
+                        <Pencil className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Ändra</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-11 w-11 p-0 text-muted-foreground/35 hover:text-destructive"
+                        onClick={() => onDelete(entryId)}
+                        disabled={pending}
+                        title={pending ? "Synka registreringen före radering" : undefined}
+                        aria-label={`Ta bort ${entry.count} ägg från ${formatDate(date)}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
