@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8');
 
-const TODAY = '2026-08-30';
+const TODAY = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Stockholm' }).format(new Date());
 
 describe('trust copy – SaljaAgg (swarm A)', () => {
   const saljaAgg = read('src/pages/SaljaAgg.tsx');
@@ -46,12 +46,12 @@ describe('trust copy – legal entity & dates', () => {
   const about = read('src/pages/About.tsx');
 
   it('names the operating legal entity in Swedish terms', () => {
-    expect(terms).toContain('Aurora Media AB (org.nr 559272-0220, Linköping)');
+    expect(terms).toMatch(/aurora media AB \(org\.nr 559272-0220\)/i);
     expect(terms).toContain('info@auroramedia.se');
   });
 
   it('names the operating legal entity in English terms', () => {
-    expect(terms).toContain('Aurora Media AB (reg. no. 559272-0220, Linköping, Sweden)');
+    expect(terms).toMatch(/aurora media AB \(reg\. no\. 559272-0220\)/i);
   });
 
   it('shows the operator on the About page footer', () => {

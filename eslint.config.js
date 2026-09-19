@@ -32,4 +32,10 @@ export default tseslint.config(
       "no-useless-escape": "warn",
     },
   },
+  {
+    // Lovable regenerates this preview bridge on sync. Keep its timer style
+    // advisory; all other checks and application files retain their rules.
+    files: ["src/integrations/supabase/previewAuthStorage.ts"],
+    rules: { "prefer-const": "warn" },
+  },
 );
