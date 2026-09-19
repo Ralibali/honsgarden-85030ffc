@@ -4,6 +4,7 @@ import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } fro
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 import { getQueue, loadQueue } from '@/lib/offlineQueue';
+import { eggLogValidationError } from '@/lib/eggLogValidation';
 
 // ==================== TYPES ====================
 
@@ -137,10 +138,17 @@ export async function getHenProfile(id: string): Promise<HenProfile> {
 
 export async function getEggs(): Promise<EggLog[]> {
   const userId = await getUserId();
-  const { data, error } = await supabase.from('egg_logs').select('*').order('date', { ascending: false });
-  if (error) throw new Error(error.message);
+  const remote: EggLog[] = [];
+  const pageSize = 1000;
+  // Fetch every page so older registrations remain reachable in the egg book.
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase.from('egg_logs').select('*')
+      .order('date', { ascending: false }).order('id').range(offset, offset + pageSize - 1);
+    if (error) throw new Error(error.message);
+    remote.push(...(data ?? []));
+    if (!data || data.length < pageSize) break;
+  }
   try { await loadQueue(); } catch { /* The status banner reports local storage failures. */ }
-  const remote = data ?? [];
   const ids = new Set(remote.map(row => (row as EggLog & { client_id?: string }).client_id));
   const pending = getQueue(userId).filter(row => !ids.has(row.client_id)).map(row => ({
     ...row, id: `pending-${row.client_id}`, created_at: row.queued_at, hen_id: row.hen_id ?? null,
@@ -212,6 +220,28 @@ export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<s
 export async function deleteEggRecord(id: string): Promise<void> {
   const { error } = await supabase.from('egg_logs').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+export async function updateEggRecord(
+  original: Pick<EggLog, 'id' | 'date' | 'count'>,
+  changes: Pick<EggLog, 'date' | 'count'>,
+): Promise<EggLog> {
+  const validationError = eggLogValidationError(changes.date, changes.count);
+  if (validationError) throw new Error(validationError);
+  if (!navigator.onLine || /^(pending|temp)-/.test(original.id)) {
+    throw new Error('Anslut till internet och låt registreringen synkas innan du ändrar den.');
+  }
+  await getUserId();
+  // RLS retains the existing farm editor permissions. Never rewrite ownership,
+  // hen/flock links, notes or the offline idempotency key during a correction.
+  const update: TablesUpdate<'egg_logs'> = { date: changes.date, count: changes.count };
+  if (changes.date !== original.date) update.weather = null;
+  const { data, error } = await supabase.from('egg_logs').update(update)
+    .eq('id', original.id).eq('date', original.date).eq('count', original.count)
+    .select('*').maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('Registreringen har ändrats eller kan inte redigeras. Stäng och ladda om innan du försöker igen.');
+  return data;
 }
 
 export async function removeOneEgg(id: string): Promise<void> {
@@ -1342,7 +1372,7 @@ export const api = {
   getHens, createHen, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
-  getEggs, createEggRecord, deleteEggRecord, removeOneEgg, fetchEggLogWeatherSnapshot,
+  getEggs, createEggRecord, updateEggRecord, deleteEggRecord, removeOneEgg, fetchEggLogWeatherSnapshot,
   getFeedRecords, createFeedRecord, deleteFeedRecord, getFeedInventory, getFeedStatistics,
   getHatchings, createHatching, updateHatching, deleteHatching, getHatchingAlerts,
   getTransactions, createTransaction, deleteTransaction,

@@ -115,6 +115,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
             {busy && addOne.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-7 w-7" />}
           </Button>
         </div>
+        <a href="/app/eggs?log=1" className="flex min-h-11 items-center justify-center pb-3 text-sm font-medium text-primary underline underline-offset-4">Logga en annan dag</a>
       </CardContent>
     </Card>
   );

@@ -1,13 +1,15 @@
+import type { EggLog } from '@/lib/api';
 import React from 'react';
-import { CloudOff, Egg as EggIcon, Trash2 } from 'lucide-react';
+import { CloudOff, Egg as EggIcon, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface EggListViewProps {
-  eggs: any[];
+  eggs: (EggLog & { pending?: boolean })[];
   henNameMap: Record<string, string>;
   flockNameMap: Record<string, string>;
   henFlockMap?: Record<string, string>;
   onDelete: (id: string) => void;
+  onEdit: (entry: EggLog) => void;
 }
 
 function friendlyDate(value: string) {
@@ -19,15 +21,16 @@ function friendlyDate(value: string) {
   }).format(date);
 }
 
-export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, onDelete }: EggListViewProps) {
+export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, onDelete, onEdit }: EggListViewProps) {
   if (eggs.length === 0) {
     return <div className="p-8 text-center text-muted-foreground text-sm">Inga ägg registrerade ännu</div>;
   }
 
   return (
     <div className="eggbook-list divide-y divide-border/50">
-      {eggs.slice(0, 30).map((entry: any) => {
-        const entryId = entry._id || entry.id;
+      {eggs.map((entry) => {
+        const entryId = entry.id;
+        const pending = Boolean(entry.pending) || /^(pending|temp)-/.test(entryId);
         const henName = entry.hen_id ? henNameMap[entry.hen_id] : null;
         const flockName = entry.flock_id
           ? flockNameMap[entry.flock_id]
@@ -35,14 +38,14 @@ export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, 
         const source = [henName, flockName].filter(Boolean).join(' · ');
 
         return (
-          <div key={entryId} className="eggbook-list__row grid grid-cols-[36px_minmax(0,1fr)_auto_32px] items-center gap-2.5 px-4 sm:px-5 py-3.5 hover:bg-secondary/25 transition-colors">
+          <div key={entryId} className="eggbook-list__row grid grid-cols-[36px_minmax(0,1fr)_auto_auto] items-center gap-2.5 px-4 sm:px-5 py-3.5 hover:bg-secondary/25 transition-colors">
             <div className="eggbook-list__mark grid h-9 w-9 place-items-center rounded-xl bg-primary/[0.07] text-primary" aria-hidden="true">
               <EggIcon className="h-4 w-4" />
             </div>
             <div className="eggbook-list__copy min-w-0">
               <div className="eggbook-list__date-row flex min-w-0 items-center gap-2 flex-wrap">
                 <p className="font-serif text-sm text-foreground capitalize leading-tight">{friendlyDate(entry.date)}</p>
-                {entry.pending && (
+                {pending && (
                   <span className="eggbook-list__pending inline-flex items-center gap-1 text-[9px] text-amber-700 dark:text-amber-300 font-medium">
                     <CloudOff className="h-3 w-3" /> Väntar på synk
                   </span>
@@ -55,17 +58,22 @@ export function EggListView({ eggs, henNameMap, flockNameMap, henFlockMap = {}, 
               <strong className="font-serif text-xl font-medium tabular-nums text-foreground">{entry.count}</strong>
               <span className="text-[9px] font-semibold text-muted-foreground">ägg</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="eggbook-list__delete h-8 w-8 p-0 text-muted-foreground/40 hover:text-destructive"
-              onClick={() => onDelete(entryId)}
-                      disabled={Boolean(entry.pending)}
-                      title={entry.pending ? "Synka registreringen före radering" : undefined}
-              aria-label={`Ta bort registreringen från ${friendlyDate(entry.date)}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="min-h-11 min-w-11 px-2 text-primary" onClick={() => onEdit(entry)} disabled={pending} title={pending ? 'Synka registreringen före ändring' : undefined} aria-label={`Ändra registreringen från ${friendlyDate(entry.date)}`}>
+                <Pencil className="h-3.5 w-3.5 sm:mr-1" /><span className="hidden sm:inline">Ändra</span>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="eggbook-list__delete h-11 w-11 p-0 text-muted-foreground/40 hover:text-destructive"
+                onClick={() => onDelete(entryId)}
+                disabled={pending}
+                title={pending ? "Synka registreringen före radering" : undefined}
+                aria-label={`Ta bort registreringen från ${friendlyDate(entry.date)}`}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         );
       })}

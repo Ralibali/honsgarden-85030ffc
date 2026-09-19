@@ -5,7 +5,8 @@
 // Originalen återställs alltid vid unmount.
 
 import type { QueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, type EggLog } from '@/lib/api';
+import { eggLogValidationError } from '@/lib/eggLogValidation';
 import {
   createDemoStore, DEMO_ALERTS, DEMO_COACH, DEMO_TIP_TEXT,
   type DemoStore,
@@ -79,6 +80,17 @@ export function installDemoShim(queryClient: QueryClient): () => void {
     store.eggs.push(log);
     invalidate('eggs');
     return log;
+  });
+
+  patch('updateEggRecord', async (original: Pick<EggLog, 'id' | 'date' | 'count'>, changes: Pick<EggLog, 'date' | 'count'>) => {
+    const error = eggLogValidationError(changes.date, changes.count);
+    if (error) throw new Error(error);
+    const row = store.eggs.find((entry) => entry.id === original.id && entry.date === original.date && entry.count === original.count);
+    if (!row) throw new Error('Registreringen har ändrats. Ladda om och försök igen.');
+    if (row.date !== changes.date) row.weather = null;
+    Object.assign(row, changes);
+    invalidate('eggs');
+    return { ...row };
   });
 
   patch('removeOneEgg', async (id: string) => {
