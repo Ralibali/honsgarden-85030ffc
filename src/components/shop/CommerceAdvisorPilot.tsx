@@ -3,6 +3,7 @@ import { Bot, ExternalLink, Loader2, Search, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import CommerceProfileManager from '@/components/shop/CommerceProfileManager';
 
 type Recommendation = {
   id: string;
@@ -23,6 +24,17 @@ type AdvisorResult = {
   reasons: string[];
   missing_facts: string[];
   safety_blocked: boolean;
+  flock_context?: {
+    flock_size: number;
+    estimated_feed_30d_kg: { minKg: number; maxKg: number };
+    current_month: number;
+  };
+  policy_stats?: {
+    own_allowed: number;
+    affiliate_allowed: number;
+    prompt_catalog: number;
+    total_profiles: number;
+  };
 };
 
 const examples = [
@@ -60,7 +72,8 @@ export default function CommerceAdvisorPilot() {
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.9fr)]">
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(320px,.9fr)]">
       <Card className="rounded-2xl">
         <CardHeader>
           <div className="flex items-start gap-3">
@@ -137,6 +150,13 @@ export default function CommerceAdvisorPilot() {
                   Evidens: {result.reasons.join(' · ')}
                 </p>
               ) : null}
+              {result.flock_context ? (
+                <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  Flockkontext: {result.flock_context.flock_size} aktiva höns · beräknad
+                  foderförbrukning 30 dagar {result.flock_context.estimated_feed_30d_kg.minKg}–
+                  {result.flock_context.estimated_feed_30d_kg.maxKg} kg · månad {result.flock_context.current_month}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </CardContent>
@@ -200,6 +220,9 @@ export default function CommerceAdvisorPilot() {
           )}
         </CardContent>
       </Card>
+      </div>
+
+      <CommerceProfileManager />
     </div>
   );
 }
