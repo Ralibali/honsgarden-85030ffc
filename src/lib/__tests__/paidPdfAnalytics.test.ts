@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { trackPaidPdfDownload } from '../paidPdfAnalytics';
 
-afterEach(() => { delete window.plausible; vi.useRealTimers(); window.history.replaceState({}, '', '/'); });
+afterEach(() => { delete window.analyticsEvent; vi.useRealTimers(); window.history.replaceState({}, '', '/'); });
 describe('paid PDF tracking', () => {
   it('sends the product and entry point without purchase tokens or query parameters', async () => {
     window.history.replaceState({}, '', '/guider/mina-forsta-hons/hamta?t=secret&session_id=private');
     const spy = vi.fn((_event, options) => options.callback());
-    window.plausible = spy;
+    window.analyticsEvent = spy;
     await trackPaidPdfDownload('mina-forsta-hons', 'email_link');
     expect(spy).toHaveBeenCalledOnce();
     expect(spy.mock.calls[0][0]).toBe('Paid PDF Download');
@@ -18,11 +18,11 @@ describe('paid PDF tracking', () => {
   });
   it('never blocks delivery when the tracker is unavailable or throws', async () => {
     await trackPaidPdfDownload('klackdagboken', 'thank_you');
-    window.plausible = () => { throw new Error('blocked'); };
+    window.analyticsEvent = () => { throw new Error('blocked'); };
     await trackPaidPdfDownload('klackdagboken', 'thank_you');
   });
   it('continues after a bounded timeout if the tracker never replies', async () => {
-    vi.useFakeTimers(); window.plausible = vi.fn();
+    vi.useFakeTimers(); window.analyticsEvent = vi.fn();
     const done = vi.fn();
     const pending = trackPaidPdfDownload('vinterklar-honsgard', 'thank_you').then(done);
     await vi.advanceTimersByTimeAsync(749); expect(done).not.toHaveBeenCalled();

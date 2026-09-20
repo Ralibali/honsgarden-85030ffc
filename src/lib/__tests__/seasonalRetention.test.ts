@@ -42,12 +42,12 @@ describe('trackSeasonalModeIfChanged', () => {
 
   it('skickar event bara vid faktiskt säsongsskifte', () => {
     const calls: string[] = [];
-    window.plausible = ((event: string) => { calls.push(event); }) as typeof window.plausible;
+    window.analyticsEvent = ((event: string) => { calls.push(event); }) as typeof window.analyticsEvent;
     trackSeasonalModeIfChanged('winter');
     trackSeasonalModeIfChanged('winter');
     trackSeasonalModeIfChanged('spring');
     expect(calls).toEqual(['Seasonal Mode Changed', 'Seasonal Mode Changed']);
-    delete window.plausible;
+    delete window.analyticsEvent;
   });
 });
 

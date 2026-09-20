@@ -82,13 +82,13 @@ describe('trackSignupIfNew / maybeTrackAuthSignup', () => {
     resetSignupTrackingForTests();
     localStorage.clear();
     plausible.mockReset();
-    window.plausible = plausible;
+    window.analyticsEvent = plausible;
   });
 
   afterEach(() => {
     resetSignupTrackingForTests();
     localStorage.clear();
-    delete window.plausible;
+    delete window.analyticsEvent;
   });
 
   it('fires Signup Completed once for a new email account', () => {

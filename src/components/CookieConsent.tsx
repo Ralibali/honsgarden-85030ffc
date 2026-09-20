@@ -1,8 +1,9 @@
+import { setAnalyticsConsent } from '@/lib/ga4Runtime';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Cookie } from 'lucide-react';
 
-const CONSENT_KEY = 'cookie-consent';
+const CONSENT_KEY = 'honsgarden_ga4_consent_v1';
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
@@ -17,15 +18,17 @@ export default function CookieConsent() {
 
   const accept = () => {
     localStorage.setItem(CONSENT_KEY, 'accepted');
+    setAnalyticsConsent(true);
     setVisible(false);
   };
 
   const decline = () => {
     localStorage.setItem(CONSENT_KEY, 'declined');
+    setAnalyticsConsent(false);
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!visible) return <button type="button" onClick={() => setVisible(true)} className="fixed bottom-2 left-2 z-40 rounded border bg-background px-2 py-1 text-xs">Cookieinställningar</button>;
 
   return (
     <div data-cookie-consent-banner className="fixed bottom-16 sm:bottom-6 left-2 right-2 sm:left-auto sm:right-6 z-[60] sm:max-w-sm animate-fade-in">
@@ -38,7 +41,7 @@ export default function CookieConsent() {
           <div>
             <p className="text-xs sm:text-sm font-medium text-foreground">Cookies och statistik 🍪</p>
             <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug sm:leading-relaxed mt-0.5">
-              Hönsgården fungerar med nödvändiga cookies. Om du accepterar hjälper du oss även förstå vilka funktioner som används, så appen kan bli bättre.{' '}
+              Hönsgården fungerar med nödvändiga cookies. Om du accepterar använder vi Google Analytics 4 för statistik om hur webbplatsen används.{' '}
               <a href="/integritet" className="text-primary hover:underline">Läs mer om hur vi använder cookies</a>
             </p>
           </div>

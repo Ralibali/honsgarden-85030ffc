@@ -3,14 +3,14 @@ import { trackEvent, trackFirstHenIfNew, ANALYTICS_SOURCES } from '@/lib/analyti
 
 function mockPlausible() {
   const calls: Array<{ event: string; props?: Record<string, unknown> }> = [];
-  window.plausible = ((event: string, options?: { props?: Record<string, unknown> }) => {
+  window.analyticsEvent = ((event: string, options?: { props?: Record<string, unknown> }) => {
     calls.push({ event, props: options?.props });
-  }) as typeof window.plausible;
+  }) as typeof window.analyticsEvent;
   return calls;
 }
 
 afterEach(() => {
-  delete window.plausible;
+  delete window.analyticsEvent;
   vi.unstubAllGlobals();
 });
 

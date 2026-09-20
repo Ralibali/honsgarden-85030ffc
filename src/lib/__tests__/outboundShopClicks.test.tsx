@@ -25,9 +25,9 @@ const PAGE_FIXTURES: Record<keyof typeof HQ_OUTBOUND_BLOG_PAGES, string> = {
 
 function mockPlausible() {
   const calls: Array<{ event: string; props?: Record<string, unknown> }> = [];
-  window.plausible = ((event: string, options?: { props?: Record<string, unknown> }) => {
+  window.analyticsEvent = ((event: string, options?: { props?: Record<string, unknown> }) => {
     calls.push({ event, props: options?.props });
-  }) as typeof window.plausible;
+  }) as typeof window.analyticsEvent;
   return calls;
 }
 
@@ -55,7 +55,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete window.plausible;
+  delete window.analyticsEvent;
 });
 
 describe('HQ outbound shop click mapping', () => {
