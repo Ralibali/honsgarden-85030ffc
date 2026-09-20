@@ -544,6 +544,7 @@ export default function SettingsPage() {
                       .from('profiles')
                       .update({ preferences: { ...prefs, commerce_tips_enabled: checked } })
                       .eq('user_id', user.id);
+                    queryClient.setQueryData(['commerce-tip-preference', user.id], checked);
                     toast({
                       title: checked
                         ? 'Produkttips aktiverade 🐔'
