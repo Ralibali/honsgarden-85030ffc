@@ -32,6 +32,21 @@ function isUnsafeHealthProduct(name: string, category: string | null) {
   return /läkemedel|medicin|avmask|flubenol|antibiotika|behandling/i.test(value);
 }
 
+type CatalogItem = {
+  key: string;
+  source: "own" | "affiliate";
+  id: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  price: string | null;
+  currency: string;
+  inStock: boolean | null;
+  imageUrl: string | null;
+  url: string | null;
+  specs: unknown;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -72,35 +87,72 @@ Deno.serve(async (req) => {
     });
   }
 
-  const { data: rows, error } = await admin
-    .from("affiliate_products")
-    .select(
-      "id,external_id,name,category,short_description,description,price,currency,in_stock,affiliate_url,product_url,image_url,specs,is_active",
-    )
-    .eq("is_active", true)
-    .limit(250);
+  const [ownResult, affiliateResult] = await Promise.all([
+    admin
+      .from("shop_products")
+      .select("id,name,slug,category,description,long_description,price_ore,stock,image_url,specifications,active,is_example")
+      .eq("active", true)
+      .eq("is_example", false)
+      .limit(100),
+    admin
+      .from("affiliate_products")
+      .select("id,external_id,name,category,short_description,description,price,currency,in_stock,affiliate_url,product_url,image_url,specs,is_active")
+      .eq("is_active", true)
+      .limit(250),
+  ]);
 
-  if (error) return json({ error: error.message }, 500);
+  if (ownResult.error) return json({ error: ownResult.error.message }, 500);
+  if (affiliateResult.error) return json({ error: affiliateResult.error.message }, 500);
 
-  const products = (rows ?? []).filter(
-    (product) => !isUnsafeHealthProduct(product.name ?? "", product.category ?? null),
-  );
-  if (!products.length) return json({ error: "catalog_empty" }, 409);
-
-  const catalog = products.map((product) => ({
+  const ownCatalog: CatalogItem[] = (ownResult.data ?? []).map((product) => ({
+    key: "own:" + product.id,
+    source: "own",
     id: product.id,
-    externalId: product.external_id,
     name: product.name,
     category: product.category,
-    description: product.short_description ?? product.description,
-    price: product.price,
-    currency: product.currency,
-    inStock: product.in_stock,
-    specs: product.specs,
+    description: product.description || product.long_description,
+    price: (Number(product.price_ore) / 100).toFixed(2).replace(".00", ""),
+    currency: "SEK",
+    inStock: product.stock == null ? null : product.stock > 0,
+    imageUrl: product.image_url,
+    url: "https://honsgarden.se/butik/" + encodeURIComponent(product.slug),
+    specs: product.specifications,
   }));
+
+  const affiliateCatalog: CatalogItem[] = (affiliateResult.data ?? [])
+    .filter((product) => !isUnsafeHealthProduct(product.name ?? "", product.category ?? null))
+    .map((product) => ({
+      key: "affiliate:" + product.id,
+      source: "affiliate",
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      description: product.short_description ?? product.description,
+      price: product.price,
+      currency: product.currency || "SEK",
+      inStock: product.in_stock,
+      imageUrl: product.image_url,
+      url: product.affiliate_url || product.product_url,
+      specs: product.specs,
+    }));
+
+  const catalog = [...ownCatalog, ...affiliateCatalog];
+  if (!catalog.length) return json({ error: "catalog_empty" }, 409);
 
   const apiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
   if (!apiKey) return json({ error: "ai_not_configured" }, 500);
+
+  const promptCatalog = catalog.map((product) => ({
+    key: product.key,
+    source: product.source,
+    name: product.name,
+    category: product.category,
+    description: product.description,
+    price: product.price,
+    currency: product.currency,
+    inStock: product.inStock,
+    specs: product.specs,
+  }));
 
   const prompt = [
     "Du är Hönsgårdens interna Commerce Agent-pilot.",
@@ -113,10 +165,12 @@ Deno.serve(async (req) => {
     "- Om pris saknas får du inte ange pris.",
     "- Ge inga veterinärmedicinska råd, diagnoser, doser eller behandlingsrekommendationer.",
     "- Om katalogen saknar relevant produkt, säg det.",
+    "- Egna produkter (source=own) får prioriteras när de är minst lika relevanta och köpbara, men relevans går alltid före källa.",
+    "- Returnera bara exakta key-värden från katalogen.",
     "- Returnera strikt JSON med nycklarna answer, recommendedProductIds, reasons och missingFacts.",
     "",
     "Fråga: " + question,
-    "Katalog: " + JSON.stringify(catalog),
+    "Katalog: " + JSON.stringify(promptCatalog),
   ].join("\n");
 
   try {
@@ -144,11 +198,11 @@ Deno.serve(async (req) => {
 
     const completion = await response.json();
     const parsed = extractJson(String(completion?.choices?.[0]?.message?.content ?? ""));
-    const productMap = new Map(products.map((product) => [product.id, product]));
+    const productMap = new Map(catalog.map((product) => [product.key, product]));
 
     const ids = Array.isArray(parsed.recommendedProductIds)
-      ? [...new Set(parsed.recommendedProductIds.map((id: unknown) => clean(id, 80)))]
-          .filter((id) => productMap.has(id) && productMap.get(id)?.in_stock !== false)
+      ? [...new Set(parsed.recommendedProductIds.map((id: unknown) => clean(id, 120)))]
+          .filter((id) => productMap.has(id) && productMap.get(id)?.inStock !== false)
           .slice(0, 4)
       : [];
 
@@ -156,15 +210,15 @@ Deno.serve(async (req) => {
       const product = productMap.get(id)!;
       return {
         id: product.id,
-        external_id: product.external_id,
+        source: product.source,
         name: product.name,
         category: product.category,
-        description: product.short_description ?? product.description,
+        description: product.description,
         price: product.price,
         currency: product.currency,
-        in_stock: product.in_stock,
-        image_url: product.image_url,
-        url: product.affiliate_url || product.product_url,
+        in_stock: product.inStock,
+        image_url: product.imageUrl,
+        url: product.url,
       };
     });
 
@@ -178,6 +232,10 @@ Deno.serve(async (req) => {
         ? parsed.missingFacts.map((item: unknown) => clean(item, 400)).filter(Boolean).slice(0, 6)
         : [],
       safety_blocked: false,
+      catalog_stats: {
+        own: ownCatalog.length,
+        affiliate: affiliateCatalog.length,
+      },
     });
   } catch (nextError) {
     const message = nextError instanceof Error ? nextError.message : String(nextError);
