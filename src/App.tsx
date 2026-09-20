@@ -56,6 +56,7 @@ const BlogTag = lazyWithRetry(() => import("./pages/BlogTag"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const EggCalculator = lazyWithRetry(() => import("./pages/EggCalculator"));
+const StartCostCalculator = lazyWithRetry(() => import("./pages/StartCostCalculator"));
 const AggReglerVagvisare = lazyWithRetry(() => import("./pages/AggReglerVagvisare"));
 const HatchCalculator = lazyWithRetry(() => import("./pages/HatchCalculator"));
 const AcceptInvite = lazyWithRetry(() => import("./pages/AcceptInvite"));
@@ -205,6 +206,7 @@ const AppRoutes = () => (
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/om-oss" element={<About />} />
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
+        <Route path="/verktyg/vad-kostar-hons" element={<StartCostCalculator />} />
         <Route path="/verktyg/aggregler-vagvisare" element={<AggReglerVagvisare />} />
         <Route path="/verktyg/klackningskalkylator" element={<HatchCalculator />} />
         <Route path="/inbjudan/:token" element={<AcceptInvite />} />
