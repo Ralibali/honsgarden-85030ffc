@@ -85,6 +85,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/verktyg/vad-kostar-hons",
+      "destination": "/index.html"
+    },
+    {
       "source": "/verktyg/aggregler-vagvisare",
       "destination": "/index.html"
     },
