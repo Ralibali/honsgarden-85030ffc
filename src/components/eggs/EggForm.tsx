@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { todayLocal } from '@/lib/datetime';
+import React, { useState, useMemo, useRef } from 'react';
+import { eggLogValidationError } from '@/lib/eggLogValidation';
+import { localCalendarDate, todayLocal } from '@/lib/datetime';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +15,14 @@ interface EggFormProps {
   isPending: boolean;
   onSubmit: (data: { date: string; count: number; hen_id?: string; flock_id?: string }) => void;
   onCancel: () => void;
+  initialDate?: string;
 }
 
 const QUICK_COUNTS = [1, 2, 3, 4, 5, 6, 8, 10] as const;
 
-export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: EggFormProps) {
-  const [date, setDate] = useState(todayLocal());
+export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel, initialDate }: EggFormProps) {
+  const [date, setDate] = useState(initialDate ?? todayLocal());
+  const dateRef = useRef<HTMLInputElement>(null);
   const [count, setCount] = useState(0);
   const [selectedHenId, setSelectedHenId] = useState<string>('all');
   const { data: karens = [] } = useActiveKarens();
@@ -40,26 +43,41 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
     });
   }, [karens, selectedHenId, activeHens]);
 
-  const increment = () => setCount((current) => Math.min(current + 1, 999));
-  const decrement = () => setCount((current) => Math.max(current - 1, 0));
+  const increment = () => setCount((current) => Math.min((Number.isFinite(current) ? current : 0) + 1, 999));
+  const decrement = () => setCount((current) => Math.max((Number.isFinite(current) ? current : 0) - 1, 0));
 
   const handleSubmit = () => {
-    if (count <= 0) return;
+    if (isPending || eggLogValidationError(date, count)) return;
     const isFlockSelection = selectedHenId.startsWith('flock:');
     const hen_id = !isFlockSelection && selectedHenId !== 'all' ? selectedHenId : undefined;
     const flock_id = isFlockSelection ? selectedHenId.replace('flock:', '') : undefined;
     onSubmit({ date, count, hen_id, flock_id });
-    setCount(0);
-    setSelectedHenId('all');
   };
 
   return (
     <Card className="egg-log-composer bg-card border-border animate-fade-in shadow-sm overflow-hidden">
       <CardContent className="p-4 sm:p-6 space-y-5">
         <div className="egg-log-composer__intro">
-          <p className="data-label mb-1">Dagens ägg</p>
+          <p className="data-label mb-1">Logga ägg</p>
           <h3 className="font-serif text-xl sm:text-2xl text-foreground">Hur många hittade du?</h3>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Tryck på antalet och spara. Du kan välja flock eller höna om du vill.</p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Glömt en dag? Välj datumet då äggen samlades in och ange antalet.</p>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="egg-log-date" className="data-label block">Datum</label>
+          <div className="flex gap-2 flex-wrap">
+            <Button type="button" variant={date === todayLocal() ? 'default' : 'outline'} disabled={isPending} onClick={() => setDate(todayLocal())}>Idag</Button>
+            <Button type="button" variant="outline" disabled={isPending} onClick={() => {
+              const yesterday = new Date();
+              yesterday.setDate(yesterday.getDate() - 1);
+              setDate(localCalendarDate(yesterday, Intl.DateTimeFormat().resolvedOptions().timeZone));
+            }}>Igår</Button>
+            <Button type="button" variant="outline" disabled={isPending} onClick={() => {
+              dateRef.current?.focus();
+              dateRef.current?.showPicker?.();
+            }}>Välj datum</Button>
+          </div>
+          <Input ref={dateRef} id="egg-log-date" type="date" value={date} max={todayLocal()} disabled={isPending} onChange={(e) => setDate(e.target.value)} className="h-11 rounded-xl" />
         </div>
 
         <div className="egg-counter rounded-2xl bg-primary/5 border border-primary/15 p-4 sm:p-5 text-center">
@@ -81,8 +99,10 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
                 type="number"
                 inputMode="numeric"
                 min={0}
-                value={count}
-                onChange={(e) => setCount(Math.max(0, Number(e.target.value) || 0))}
+                step={1}
+                disabled={isPending}
+                value={Number.isNaN(count) ? '' : count}
+                onChange={(e) => setCount(e.target.value === '' ? NaN : Number(e.target.value))}
                 className="egg-counter__input h-16 text-center text-4xl font-bold rounded-2xl bg-background"
                 aria-label="Antal ägg"
               />
@@ -125,14 +145,10 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
         </div>
 
         <div className="egg-log-details grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <label className="data-label mb-1.5 block">Datum</label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-11 rounded-xl" />
-          </div>
           {(activeHens.length > 0 || flocks.length > 0) && (
             <div>
               <label className="data-label mb-1.5 block">Flock / höna <span className="text-muted-foreground normal-case">(valfritt)</span></label>
-              <Select value={selectedHenId} onValueChange={setSelectedHenId}>
+              <Select disabled={isPending} value={selectedHenId} onValueChange={setSelectedHenId}>
                 <SelectTrigger className="h-11 rounded-xl">
                   <SelectValue placeholder="Alla (generellt)" />
                 </SelectTrigger>
@@ -175,12 +191,13 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel }: E
           </div>
         )}
 
+        {eggLogValidationError(date, count) && <p role="alert" className="text-sm text-destructive">{eggLogValidationError(date, count)}</p>}
         <div className="egg-log-actions flex flex-col sm:flex-row gap-2">
-          <Button onClick={handleSubmit} disabled={isPending || count <= 0} className="h-12 rounded-xl active:scale-95 transition-transform flex-1 text-sm font-semibold">
+          <Button onClick={handleSubmit} disabled={isPending || !!eggLogValidationError(date, count)} className="h-12 rounded-xl active:scale-95 transition-transform flex-1 text-sm font-semibold">
             {isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-            {count > 0 ? `Spara ${count} ${count === 1 ? 'ägg' : 'ägg'}` : 'Välj antal ägg'}
+            {`Spara ${Number.isNaN(count) ? 0 : count} ägg`}
           </Button>
-          <Button variant="outline" onClick={onCancel} className="h-12 rounded-xl">Avbryt</Button>
+          <Button variant="outline" disabled={isPending} onClick={onCancel} className="h-12 rounded-xl">Avbryt</Button>
         </div>
       </CardContent>
     </Card>

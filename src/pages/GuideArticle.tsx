@@ -25,6 +25,7 @@ import { injectContextualShopPlacement } from '@/lib/contextualShopPlacements';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
+import { allowsAutomaticProductPlacements } from '@/lib/editorialPlacementPolicy';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -333,8 +334,7 @@ export default function GuideArticle() {
     setMeta('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
 
     // Canonical + hreflang
-    document.querySelector('link[rel="canonical"]')?.remove();
-    addLink('canonical', fullUrl);
+    // SeoCanonical owns the canonical, including the adopted prerendered tag.
     addLink('alternate', fullUrl, { hreflang: 'sv' });
     addLink('alternate', fullUrl, { hreflang: 'x-default' });
 
@@ -666,21 +666,21 @@ export default function GuideArticle() {
         )}
 
         {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
-        <AffiliateProductBox
+        {allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
-        />
+        />}
 
         {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
-        <RecommendedProducts
+        {allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
           category={post.category}
           tags={post.tags}
           excerpt={post.excerpt}
-        />
+        />}
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
         <AffiliateBannerRotator slug={post.slug} />
@@ -716,7 +716,9 @@ export default function GuideArticle() {
               {post.author_name && post.author_name !== 'Hönsgården' ? post.author_name : 'Redaktionen på Hönsgården'}
             </p>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Vi skriver praktiska guider om hönsskötsel, ägg, foder och hållbart liv på landet — alltid baserat på egen erfarenhet och svenska förhållanden.
+              {post.slug === 'honsvakt-checklista-overlamning'
+                ? 'AI-assisterad originalguide, skriven med ChatGPT. Arbetsmallen är ett redaktionellt förslag.'
+                : 'Praktiska guider om hönsskötsel, ägg, foder och hållbart liv på landet.'}
             </p>
             <p className="text-[11px] text-muted-foreground/80 mt-2">
               {post.published_at && (

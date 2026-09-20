@@ -14,7 +14,8 @@ export function PrivacyContentSv() {
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">1. Personuppgiftsansvarig</h2>
     <p className="text-sm text-foreground leading-relaxed">Personuppgiftsansvarig för behandlingen av dina personuppgifter är:</p>
     <p className="text-sm text-foreground leading-relaxed">
-      Hönsgården / honsgarden.se<br />
+      aurora media AB (org.nr 559272-0220), som driver Hönsgården<br />
+      Stjärnorp Skolan 1, 585 78 Vreta kloster, Sverige<br />
       E-post: <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a><br />
       Webbplats: <a href="https://www.honsgarden.se" className="text-primary hover:underline">www.honsgarden.se</a>
     </p>
@@ -33,7 +34,7 @@ export function PrivacyContentSv() {
       <li><strong>Platsdata:</strong> Endast om du aktivt anger postort/adress för väderprognoser eller marknadsplatsannonser – vi spårar inte din realtidsposition</li>
       <li><strong>Tekniska data:</strong> IP-adress, enhetstyp, webbläsare, operativsystem och sessionsinformation</li>
       <li><strong>Användningsdata:</strong> Sidvisningar, klickhändelser och navigeringsmönster (anonymiserat)</li>
-      <li><strong>Betalningsuppgifter:</strong> Hanteras av Stripe – vi lagrar aldrig kortuppgifter</li>
+      <li><strong>Betalningsuppgifter:</strong> Webbköp hanteras av Stripe och köp i iOS-appen av Apple. Vi lagrar inte kortuppgifter. Vi behandlar köpets identifierare, produkt, abonnemangsstatus och giltighetstid, kopplade till ditt konto, för att aktivera och återställa Plus.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       Vi samlar inte in känsliga personuppgifter enligt art. 9 GDPR (t.ex. hälsodata om personer, religiös övertygelse eller politisk tillhörighet).
@@ -55,7 +56,7 @@ export function PrivacyContentSv() {
       <li>Skapa och hantera ditt konto</li>
       <li>Skicka tjänstrelaterade meddelanden (t.ex. lösenordsåterställning, veckorapporter)</li>
       <li>Skicka nyhetsbrev och erbjudanden (med ditt samtycke)</li>
-      <li>Hantera betalningar och prenumerationer via Stripe</li>
+      <li>Hantera betalningar och prenumerationer via Stripe på webben och Apple i iOS-appen</li>
       <li>Upptäcka och förhindra missbruk och säkerhetshot</li>
       <li>Analysera användningsmönster för att förbättra tjänsten (anonymiserat)</li>
     </ul>
@@ -283,7 +284,8 @@ export function PrivacyContentEn() {
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">1. Data controller</h2>
     <p className="text-sm text-foreground leading-relaxed">The controller responsible for processing your personal data is:</p>
     <p className="text-sm text-foreground leading-relaxed">
-      {brand} / honsgarden.app<br />
+      aurora media AB (registration no. 559272-0220), operator of {brand}<br />
+      Stjärnorp Skolan 1, 585 78 Vreta kloster, Sweden<br />
       Email: <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a><br />
       Website: <a href="https://honsgarden.app" className="text-primary hover:underline">honsgarden.app</a>
     </p>
@@ -302,7 +304,7 @@ export function PrivacyContentEn() {
       <li><strong>Location data:</strong> Only if you actively enter a postcode/address for weather or marketplace listings — we do not track your real-time location</li>
       <li><strong>Technical data:</strong> IP address, device type, browser, operating system and session information</li>
       <li><strong>Usage data:</strong> Page views, click events and navigation patterns (anonymized)</li>
-      <li><strong>Payment data:</strong> Handled by Stripe — we never store card details</li>
+      <li><strong>Payment data:</strong> Web purchases are handled by Stripe and purchases in the iOS app by Apple. We do not store card details. We process purchase identifiers, product, subscription status and expiry dates linked to your account to activate and restore Plus.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       We do not collect special-category personal data under art. 9 GDPR (e.g. health data about individuals, religious beliefs or political affiliation).
@@ -324,7 +326,7 @@ export function PrivacyContentEn() {
       <li>Create and manage your account</li>
       <li>Send service-related messages (e.g. password reset, weekly reports)</li>
       <li>Send newsletters and offers (with your consent)</li>
-      <li>Process payments and subscriptions via Stripe</li>
+      <li>Process payments and subscriptions through Stripe on the web and Apple in the iOS app</li>
       <li>Detect and prevent abuse and security threats</li>
       <li>Analyze usage patterns to improve the service (anonymized)</li>
     </ul>

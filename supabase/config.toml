@@ -86,3 +86,6 @@ project_id = "sikbymtrbhrofysgkqsj"
   [functions.digital-sample]
     verify_jwt = false
 
+
+  [functions.commerce-advisor]
+    verify_jwt = true

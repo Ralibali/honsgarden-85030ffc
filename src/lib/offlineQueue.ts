@@ -151,20 +151,53 @@ export async function clearQueue(userId: string): Promise<void> {
     await persist((current) => current.filter((x) => x.user_id !== userId));
   });
 }
+/** Assigns ownerless legacy entries to the signed-in user after their explicit confirmation. */
+export async function claimLegacyEntries(userId: string): Promise<number> {
+  return exclusive(async () => {
+    await loadQueue();
+    let claimed = 0;
+    await persist((current) =>
+      current.map((x) => {
+        if (x.user_id) return x;
+        claimed++;
+        return { ...x, user_id: userId };
+      })
+    );
+    return claimed;
+  });
+}
+
+/**
+ * Only entries the server can never accept are discarded (deleted hen/flock,
+ * validation errors). Everything else — offline, auth, permission, server
+ * errors — keeps the entry so a later retry can succeed.
+ */
+function isPermanentRejection(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return false;
+  const message = (
+    error instanceof Error ? error.message : String(error ?? "")
+  ).toLowerCase();
+  return /foreign key|violates|not present in table|does not exist|invalid input|invalid uuid|malformed|ogiltig|\b(400|404|422)\b/.test(
+    message
+  );
+}
+
 const syncInFlight = new Map<
   string,
-  Promise<{ synced: number; remaining: number }>
+  Promise<{ synced: number; remaining: number; dropped: number }>
 >();
 export function syncQueue(
   createEggRecord: CreateEggRecordFn,
   userId: string
-): Promise<{ synced: number; remaining: number }> {
+): Promise<{ synced: number; remaining: number; dropped: number }> {
   const active = syncInFlight.get(userId);
   if (active) return active;
   const result = (async () => {
     await loadQueue();
     let synced = 0;
+    let dropped = 0;
     for (const item of getQueue(userId)) {
+      let permanentlyRejected = false;
       try {
         await createEggRecord({
           date: item.date,
@@ -175,14 +208,25 @@ export function syncQueue(
           client_id: item.client_id,
           expected_user_id: userId,
         });
-        await removeFromQueue(item.client_id, userId);
-        synced++;
-      } catch {
-        // Auth, server and storage errors all retain the entry. client_id makes retries idempotent.
-        break;
+      } catch (error) {
+        if (!isPermanentRejection(error)) break;
+        console.error(
+          "offlineQueue: dropping invalid entry",
+          item.client_id,
+          error
+        );
+        permanentlyRejected = true;
       }
+      try {
+        // Storage failures here keep the entry; client_id makes retries idempotent.
+        await removeFromQueue(item.client_id, userId);
+      } catch {
+        continue;
+      }
+      if (permanentlyRejected) dropped++;
+      else synced++;
     }
-    return { synced, remaining: getQueueLength(userId) };
+    return { synced, remaining: getQueueLength(userId), dropped };
   })().finally(() => {
     syncInFlight.delete(userId);
     notify();

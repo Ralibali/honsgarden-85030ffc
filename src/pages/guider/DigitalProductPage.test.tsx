@@ -1,3 +1,4 @@
+import { trackPaidPdfDownload } from '@/lib/paidPdfAnalytics';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -14,6 +15,7 @@ vi.mock('@/components/LandingFooter', () => ({ default: () => null }));
 vi.mock('@/lib/nativePlatform', () => ({ isNativePlatform: () => false }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }));
+vi.mock('@/lib/paidPdfAnalytics', () => ({ trackPaidPdfDownload: vi.fn().mockResolvedValue(undefined) }));
 afterEach(cleanup);
 beforeEach(() => vi.clearAllMocks());
 
@@ -50,5 +52,25 @@ describe('digital product storefront', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'test@example.se' } });
     fireEvent.click(screen.getByRole('button', { name: 'Skicka min nedladdningslänk' }));
     await waitFor(() => expect(supabase.functions.invoke).toHaveBeenCalledWith('digital-resend-link', { body: { email: 'test@example.se', productSlug: 'aggbodens-saljpaket' } }));
+  });
+});
+
+
+describe.each(['thank_you', 'email_link'] as const)('paid PDF download from %s', source => {
+  it.each(['success', 'error', 'missing_url'])('only counts a successful issued link: %s', async outcome => {
+    vi.mocked(supabase.functions.invoke).mockImplementation(async name => {
+      if (name === 'digital-order-status') return { data: { paid: true, productSlug: 'klackdagboken', token: 'test-token' }, error: null } as never;
+      return { data: outcome === 'success' ? { url: '#download' } : {}, error: outcome === 'error' ? new Error('test failure') : null } as never;
+    });
+    render(<MemoryRouter initialEntries={['/?t=test-token&session_id=test-session']}>
+      {source === 'thank_you' ? <MinaForstaHonsTack /> : <MinaForstaHonsHamta />}
+    </MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: /Ladda ner PDF:en/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /Ladda ner PDF:en/ })).toBeEnabled());
+    if (outcome === 'success') {
+      expect(trackPaidPdfDownload).toHaveBeenCalledExactlyOnceWith('klackdagboken', source);
+    } else {
+      expect(trackPaidPdfDownload).not.toHaveBeenCalled();
+    }
   });
 });
