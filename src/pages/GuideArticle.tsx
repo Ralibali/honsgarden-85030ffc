@@ -25,6 +25,7 @@ import { injectContextualShopPlacement } from '@/lib/contextualShopPlacements';
 import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
+import { allowsAutomaticProductPlacements } from '@/lib/editorialPlacementPolicy';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -665,21 +666,21 @@ export default function GuideArticle() {
         )}
 
         {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
-        <AffiliateProductBox
+        {allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
-        />
+        />}
 
         {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
-        <RecommendedProducts
+        {allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
           category={post.category}
           tags={post.tags}
           excerpt={post.excerpt}
-        />
+        />}
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
         <AffiliateBannerRotator slug={post.slug} />
