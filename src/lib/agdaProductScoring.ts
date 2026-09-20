@@ -1,6 +1,7 @@
 import { AFFILIATE_PRODUCTS, type AffiliateProduct } from '@/data/affiliateProducts';
 import { isLayingHen, ageInWeeks, isPullet } from '@/lib/henHelpers';
 import type { FarmWeather } from '@/hooks/useFarmWeather';
+import { seasonalCommerceSignals } from '@/lib/commerceStrategy';
 
 export interface FarmContext {
   hens: any[];
@@ -30,13 +31,13 @@ interface Signal {
  * och har en mänsklig motivering.
  */
 function detectSignals(ctx: FarmContext): Signal[] {
-  const { hens, eggs, weather } = ctx;
+  const { hens, weather } = ctx;
   const signals: Signal[] = [];
 
   const layingHens = hens.filter(isLayingHen);
   const pulletCount = hens.filter(isPullet).length;
   const totalHens = hens.length;
-  const month = new Date().getMonth(); // 0-11
+  const month = new Date().getMonth() + 1; // 1-12
 
   // ── 1. Inga höns alls → startpaket / hus
   if (totalHens === 0) {
@@ -66,65 +67,20 @@ function detectSignals(ctx: FarmContext): Signal[] {
     });
   }
 
-  // ── 4. Säsong: kläckningstid mars–april
-  if (month === 2 || month === 3) {
+  // ── 4. Säsong: researchkalendern används som boost, aldrig som hårt filter.
+  for (const seasonal of seasonalCommerceSignals(month)) {
     signals.push({
-      categories: ['klackning'],
-      weight: 45,
-      reason: 'det är kläckningssäsong nu',
+      categories: seasonal.categories as AffiliateProduct['category'][],
+      weight: seasonal.weight,
+      reason: seasonal.label,
     });
   }
 
-  // ── 5. Säsong: vinter (nov–feb) som svagare backup om vädret inte gav signal
-  if ((month >= 10 || month <= 1) && !weather?.hasFrostSoon) {
-    signals.push({
-      categories: ['vaerme', 'vatten'],
-      weight: 25,
-      reason: 'det är vinterperiod',
-    });
-  }
+  // Produktionsfall används inte längre som köpsignal. Rapportens medicinska mur
+  // innebär att avvikelser i hälsa/produktion ska hanteras som rådgivning/triage,
+  // inte monetiseras automatiskt med tillskott eller andra produktförslag.
 
-  // ── 6. Produktionsfall vs baslinje (senaste 14 d vs föregående 28 d)
-  if (layingHens.length > 0) {
-    const now = Date.now();
-    const d14 = now - 14 * 86_400_000;
-    const d42 = now - 42 * 86_400_000;
-
-    const sumIn = (from: number, to: number) =>
-      eggs
-        .filter((e) => {
-          const t = new Date(e.date ?? e.created_at ?? 0).getTime();
-          return t >= from && t < to;
-        })
-        .reduce((s: number, e: any) => s + (e.count ?? e.quantity ?? 0), 0);
-
-    const recent = sumIn(d14, now);
-    const baseline = sumIn(d42, d14);
-    const perHenPerDayRecent = recent / layingHens.length / 14;
-    const perHenPerDayBaseline = baseline / layingHens.length / 28;
-
-    if (perHenPerDayBaseline > 0.15) {
-      const drop = (perHenPerDayBaseline - perHenPerDayRecent) / perHenPerDayBaseline;
-      if (drop > 0.3) {
-        signals.push({
-          categories: ['tillskott', 'foder'],
-          weight: 70,
-          reason: `produktionen har sjunkit ~${Math.round(drop * 100)}% mot dina senaste 4 veckor`,
-        });
-      }
-    }
-
-    // Generellt låg nivå (oavsett trend)
-    if (perHenPerDayRecent > 0 && perHenPerDayRecent < 0.4) {
-      signals.push({
-        categories: ['tillskott'],
-        weight: 30,
-        reason: 'snittet ligger under 0,4 ägg per höna och dag',
-      });
-    }
-  }
-
-  // ── 7. Hönsålder: snittåldern över 2 år → kanske dags för unghöns/kläckägg
+  // ── 5. Hönsålder: snittåldern över 2 år → kanske dags för unghöns/kläckägg
   const ages = layingHens
     .map((h) => ageInWeeks(h.birth_date))
     .filter((w): w is number => w != null);
@@ -139,7 +95,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     }
   }
 
-  // ── 8. Många unghöns på G → snart fler munnar att mätta
+  // ── 6. Många unghöns på G → snart fler munnar att mätta
   if (pulletCount >= 3) {
     signals.push({
       categories: ['foder', 'vatten'],
@@ -148,7 +104,7 @@ function detectSignals(ctx: FarmContext): Signal[] {
     });
   }
 
-  // ── 9. Liten basröstning så vi alltid har något att visa
+  // ── 7. Liten basröstning så vi alltid har något att visa
   signals.push({
     categories: ['vatten', 'foder', 'tillskott'],
     weight: 5,
