@@ -27,7 +27,7 @@ describe('scoreProducts', () => {
     expect(top.some((c) => c === 'vaerme' || c === 'vatten')).toBe(true);
   });
 
-  it('lyfter tillskott/foder vid kraftigt produktionsfall', () => {
+  it('monetiserar inte ett kraftigt produktionsfall', () => {
     const hens = [
       { is_active: true, hen_type: 'hen', birth_date: yearsAgo(1) },
       { is_active: true, hen_type: 'hen', birth_date: yearsAgo(1) },
@@ -35,11 +35,14 @@ describe('scoreProducts', () => {
     const eggs: any[] = [];
     for (let d = 15; d < 42; d++) eggs.push({ date: daysAgo(d), count: 2 });
     for (let d = 0; d < 14; d++) eggs.push({ date: daysAgo(d), count: 0 });
-    const scored = scoreProducts(ctx({ hens, eggs }));
-    const reasons = scored.slice(0, 6).map((s) => s.reason).join(' ');
-    const cats = scored.slice(0, 6).map((s) => s.product.category);
-    expect(cats.some((c) => c === 'tillskott' || c === 'foder')).toBe(true);
-    expect(reasons).toMatch(/sjunkit|under 0,4/i);
+
+    const withDrop = scoreProducts(ctx({ hens, eggs }));
+    const withoutEggSignal = scoreProducts(ctx({ hens, eggs: [] }));
+
+    expect(withDrop.map((item) => [item.product.id, item.reason])).toEqual(
+      withoutEggSignal.map((item) => [item.product.id, item.reason]),
+    );
+    expect(withDrop.map((item) => item.reason).join(' ')).not.toMatch(/sjunkit|under 0,4/i);
   });
 
   it('respekterar inStock=false (filtrerar bort slutsålt)', () => {
