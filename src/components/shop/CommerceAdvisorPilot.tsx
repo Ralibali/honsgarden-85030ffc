@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Recommendation = {
   id: string;
-  external_id: string | null;
+  source: 'own' | 'affiliate';
   name: string;
   category: string | null;
   description: string | null;
@@ -175,7 +175,16 @@ export default function CommerceAdvisorPilot() {
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-semibold leading-tight">{product.name}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold leading-tight">{product.name}</p>
+                        <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                          product.source === 'own'
+                            ? 'bg-primary/10 text-primary'
+                            : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {product.source === 'own' ? 'Egen butik' : 'Affiliate'}
+                        </span>
+                      </div>
                       {product.url ? <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground" /> : null}
                     </div>
                     <p className="mt-1 text-[11px] text-muted-foreground">
