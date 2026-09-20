@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ShoppingBag, Lock, Plus, Pencil, Trash2, Loader2, ShieldCheck,
-  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard, Undo2,
+  CreditCard, CheckCircle2, Sparkles, PackageOpen, Eye, EyeOff, LayoutDashboard, Undo2, Bot,
 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,6 +31,7 @@ import ShopOrders from '@/components/shop/ShopOrders';
 import ShopAdminSettings from '@/components/shop/ShopAdminSettings';
 import ShopOverview from '@/components/shop/ShopOverview';
 import ShopWithdrawalRequests from '@/components/shop/ShopWithdrawalRequests';
+import CommerceAdvisorPilot from '@/components/shop/CommerceAdvisorPilot';
 import {
   addToCart, cartCount, formatSek, loadCart, saveCart, type CartItem,
 } from '@/lib/shopCart';
@@ -366,6 +367,7 @@ export default function Shop() {
           <TabsTrigger value="produkter" className="rounded-lg gap-1.5"><PackageOpen className="h-4 w-4" /> Produkter</TabsTrigger>
           <TabsTrigger value="ordrar" className="rounded-lg gap-1.5"><CreditCard className="h-4 w-4" /> Ordrar</TabsTrigger>
           <TabsTrigger value="anger" className="rounded-lg gap-1.5"><Undo2 className="h-4 w-4" /> Ångerärenden</TabsTrigger>
+          <TabsTrigger value="ai-butik" className="rounded-lg gap-1.5"><Bot className="h-4 w-4" /> AI-butik</TabsTrigger>
           <TabsTrigger value="installningar" className="rounded-lg gap-1.5"><ShieldCheck className="h-4 w-4" /> Inställningar</TabsTrigger>
 
         </TabsList>
@@ -375,6 +377,11 @@ export default function Shop() {
           <ShopOverview orders={orders} products={products} variants={variants} loading={ordersLoading || productsLoading} onOpenOrders={() => setActiveTab("ordrar")} onOpenProducts={() => setActiveTab("produkter")} />
         </TabsContent>
 
+
+        {/* ---------------- AI-BUTIK ---------------- */}
+        <TabsContent value="ai-butik" className="space-y-4 mt-0">
+          <CommerceAdvisorPilot />
+        </TabsContent>
 
         {/* ---------------- BUTIK ---------------- */}
         <TabsContent value="butik" className="space-y-6 mt-0">
