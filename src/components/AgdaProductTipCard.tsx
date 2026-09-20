@@ -8,6 +8,7 @@ import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { scoreProducts, pickDailyFromTopN } from '@/lib/agdaProductScoring';
 import { useCatalog, priceToNumber } from '@/hooks/useAffiliateProducts';
 import { useFarmWeather } from '@/hooks/useFarmWeather';
+import { supabase } from '@/integrations/supabase/client';
 
 const SNOOZE_KEY = 'hg_agda_tip_snooze_until';
 const SNOOZE_DAYS = 7;
@@ -32,7 +33,26 @@ export default function AgdaProductTipCard() {
   const isPlus = user?.subscription_status === 'premium' || (user as any)?.is_premium;
   const [hidden, setHidden] = useState(() => isSnoozed());
 
-  const active = !isPlus && !hidden;
+  const { data: commerceTipsEnabled = true } = useQuery({
+    queryKey: ['commerce-tip-preference', user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('preferences')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      const prefs = (
+        data?.preferences && typeof data.preferences === 'object'
+          ? data.preferences
+          : {}
+      ) as Record<string, unknown>;
+      return prefs.commerce_tips_enabled !== false;
+    },
+    staleTime: 10 * 60_000,
+  });
+
+  const active = !isPlus && !hidden && commerceTipsEnabled;
 
   const { data: hens = [] } = useQuery({
     queryKey: ['hens'],
