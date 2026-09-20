@@ -13,3 +13,10 @@ export function diaryDateLabel(date: string): string {
   return new Intl.DateTimeFormat('sv-SE', { day: 'numeric', month: 'long', year: 'numeric' })
     .format(new Date(`${date}T12:00:00`));
 }
+
+export const DIARY_MILESTONES = {
+  first_egg: 'Första ägget', arrival: 'Flyttade in', brooding: 'Började ruva', hatching: 'Kläckning', other: 'Annat',
+} as const;
+export function diaryHenIds(entry: HealthLog): string[] {
+  return [...new Set([...(entry.diary_entry_hens ?? []).map(link => link.hen_id), ...(entry.hen_id ? [entry.hen_id] : [])])];
+}

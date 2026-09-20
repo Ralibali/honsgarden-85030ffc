@@ -21,7 +21,11 @@ export const CSV_BOM = "\uFEFF";
  * men värdet förblir UUID — användare korsrefererar mot Hönor-CSV:n.
  */
 export const SWEDISH_HEADER_MAPS: Record<string, Record<string, string>> = {
+  health_logs: { id: 'ID', date: 'Datum', description: 'Text', type: 'Typ', hen_id: 'Individ-ID', diary_entry_hens: 'Kopplade individer', image_paths: 'Bildreferenser', milestone: 'Milstolpe', created_at: 'Skapad', user_id: 'Ägare' },
+  brood_origins: { id: 'ID', name: 'Kullens namn', date: 'Datum', notes: 'Anteckningar', parents: 'Möjliga föräldrar och sparat ursprung', hatching_id: 'Kläcknings-ID', created_at: 'Skapad', user_id: 'Ägare' },
   hens: {
+    origin_genbank_number: 'Ursprungligt genbanksnummer', brood_origin_id: 'Kullens ursprung-ID',
+
     id: "ID",
     name: "Namn",
     breed: "Ras",
