@@ -83,6 +83,23 @@ end $$;
 revoke all on function public.save_diary_entry(uuid,boolean,date,text,uuid[],text[],text) from public, anon;
 grant execute on function public.save_diary_entry(uuid,boolean,date,text,uuid[],text[],text) to authenticated;
 
+-- Account deletion must not leave surviving farm members' entries pointing at
+-- files removed with the uploader. Only the trusted deletion worker may do this.
+-- SECURITY INVOKER preserves the caller's privileges; no client-side RLS bypass.
+create function public.detach_diary_photos_for_deleted_uploader(_user_id uuid)
+returns void language sql security invoker set search_path = '' as $$
+  update public.health_logs l
+  set image_paths = array(
+    select p from unnest(l.image_paths) with ordinality as images(p, position)
+    where split_part(p, '/', 1) <> _user_id::text order by position
+  )
+  where l.user_id <> _user_id and exists (
+    select 1 from unnest(l.image_paths) p where split_part(p, '/', 1) = _user_id::text
+  );
+$$;
+revoke all on function public.detach_diary_photos_for_deleted_uploader(uuid) from public, anon, authenticated;
+grant execute on function public.detach_diary_photos_for_deleted_uploader(uuid) to service_role;
+
 insert into storage.buckets(id, name, public, file_size_limit, allowed_mime_types)
 values ('diary-photos', 'diary-photos', false, 5242880, array['image/jpeg','image/png','image/webp']);
 create policy "Upload own diary images" on storage.objects for insert to authenticated with check (

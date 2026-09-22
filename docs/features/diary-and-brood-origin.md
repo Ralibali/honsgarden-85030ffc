@@ -10,9 +10,11 @@ Individens ursprungliga genbanksnummer är ett separat fritextfält, inte ett in
 
 ## Införande
 
+Detaljerad migrationsordning, stoppvillkor, körbara kontroller och kvarvarande Auth/Storage-flöden finns i [releaseplanen för PR #72](../releases/pr72.md). Testmiljön ska godkännas innan produktionsdatabasen ändras; en frontend-preview är inte i sig en isolerad databas.
+
 1. Kör `20260920123852_diary_and_brood_origin.sql` i avsedd testmiljö och därefter i produktionsdatabasen före frontendpublicering. Migrationen är additiv och bevarar gamla anteckningar och bekräftade föräldrar.
 2. Publicera uppdaterade `generate-backup`, `delete-account` och `admin-delete-user` med de gemensamma hjälpfilerna. De förutsätter migrationen.
-3. Publicera frontend. Gör ett inloggat kontrollflöde med ett ägarkonto och en delad medlem: skapa ett inlägg med två individer och bild, redigera från en profil, kontrollera båda profilerna; skapa en föräldragrupp och koppla en kyckling till den.
+3. Kontrollera releasekandidaten med riktiga separata testkonton före merge/publicering: skapa ett inlägg med två individer och bild, redigera från en profil, kontrollera båda profilerna; skapa en föräldragrupp och koppla en kyckling till den. Publicera frontend först efter godkänd kontroll.
 4. Kontrollera med ett separat konto att inläggets bilder och kulluppgifter inte är tillgängliga.
 
 Migrationen och funktionerna är förberedda i repot. Detta ändringsförslag i sig utför ingen produktionsmigration eller publicering.
@@ -22,6 +24,7 @@ Migrationen och funktionerna är förberedda i repot. Detta ändringsförslag i 
 - `npm test` kör gränssnitts-, återförsöks-, integritets- och raderingstester tillsammans med projektets befintliga testsvit.
 - `deno run --node-modules-dir=none --no-config --allow-read --allow-env scripts/test-diary-origin-db.mjs` kör migrationen och behörighetskontroller i en helt isolerad PostgreSQL-motor (PGlite 0.5.4). Detta test körs även i CI.
 - Databastestet använder ett minimalt tidigare schema för just de berörda tabellerna och rollerna. Det ersätter inte kontrollen av en komplett Supabase-testmiljö, Storage-servern eller ett inloggat produktionsflöde.
+- `node scripts/test-diary-storage-live.mjs` använder riktiga Auth-sessioner och Storage i en isolerad testmiljö. Konfiguration och återstående webbläsar-/backendkontroller beskrivs i releaseplanen. Testet har inte körts enbart för att filen finns i repot.
 - Webbläsarkontrollen använder appens demo och separata fiktiva profildata. Inga kunduppgifter behövs för den kontrollen.
 
 Vid frontendåterställning kan de additiva tabellerna och kolumnerna behållas. Ta inte bort dem när användare har börjat spara bilder eller kulluppgifter.

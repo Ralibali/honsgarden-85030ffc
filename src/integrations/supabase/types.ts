@@ -5033,6 +5033,10 @@ export type Database = {
       }
     }
     Functions: {
+      detach_diary_photos_for_deleted_uploader: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       save_diary_entry: {
         Args: { _id: string; _is_new: boolean; _date: string; _description: string; _hen_ids: string[]; _image_paths: string[]; _milestone: string | null }
         Returns: Database["public"]["Tables"]["health_logs"]["Row"]

@@ -13,7 +13,18 @@ async function rejects(fn, reason) { await assert.rejects(fn, reason); checks++;
 function check(actual, expected) { assert.deepEqual(actual,expected); checks++; }
 try {
   await db.exec(await readFile(new URL('tests/database/diary-origin-baseline.sql',root),'utf8'));
+  const preflight = (await db.exec(await readFile(new URL('scripts/sql/pr72-preflight.sql',root),'utf8')))[0].rows[0];
+  check(preflight.migration_recorded, false);
+  check(preflight.new_columns_present, 0);
   await db.exec(await readFile(new URL('supabase/migrations/20260920123852_diary_and_brood_origin.sql',root),'utf8'));
+  // Emulate the migration runner's history entry only inside this disposable DB.
+  await db.exec("insert into supabase_migrations.schema_migrations values('20260920123852')");
+  const postflight = (await db.exec(await readFile(new URL('scripts/sql/pr72-postflight.sql',root),'utf8')))[0].rows[0];
+  for (const [key, value] of Object.entries(postflight)) {
+    if (key.endsWith('_ok')) check(value, true);
+  }
+  check(postflight.missing_legacy_links, 0);
+  check(postflight.dangling_diary_objects, 0);
   check((await one('select count(*)::int n from diary_entry_hens')).n,1);
   await asUser(1);
   const save = (ids, text='Gemensamt minne', paths=[], target=entry, isNew=false) => db.query('select * from save_diary_entry($1,$2,$3,$4,$5::uuid[],$6::text[],$7)',[target,isNew,'2026-09-01',text,ids,paths,'arrival']);
@@ -45,6 +56,23 @@ try {
   await save([hen(2)],'Detached',[]);
   await db.query('delete from storage.objects where name=$1',[path]);
   check((await one('select count(*)::int n from storage.objects')).n,0);
+  // A member's account cleanup preserves the owner's entry, text, links and
+  // other uploaders' images, while removing the deleted member's attachments.
+  const memberPath = `${user(2)}/${entry}/${id(7,2)}.jpg`;
+  await save([hen(1)], 'Survives member deletion', [path]);
+  await asUser(2);
+  await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['diary-photos',memberPath]);
+  await save([hen(1)], 'Survives member deletion', [memberPath,path]);
+  const detach = () => db.query('select detach_diary_photos_for_deleted_uploader($1)',[user(2)]);
+  await rejects(detach, /permission denied/);
+  await db.exec("reset role; set role anon; set test.uid=''");
+  await rejects(detach, /permission denied/);
+  await db.exec('reset role; set role service_role');
+  await detach(); await detach();
+  check(await one('select description,image_paths from health_logs where id=$1',[entry]),
+    {description:'Survives member deletion',image_paths:[path]});
+  await asUser(1);
+  check((await one('select count(*)::int n from diary_entry_hens where entry_id=$1',[entry])).n,1);
   await db.query('update hens set origin_genbank_number=$1 where id=$2',['GB-123',hen(1)]);
   const parents = [{hen_id:hen(1),role:'mother',name:'Forged name'},{hen_id:hen(2),role:'mother'},{hen_id:hen(3),role:'father'}];
   await db.query('insert into brood_origins(id,user_id,hatching_id,name,date,parents) values($1,$2,$3,$4,$5,$6)',[brood,user(1),id(5,1),'Höstkullen','2026-09-01',JSON.stringify(parents)]);

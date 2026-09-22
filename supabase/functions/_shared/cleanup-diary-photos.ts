@@ -1,5 +1,6 @@
 // Narrow SDK surface keeps the ownership and pagination logic testable without credentials.
 export interface DiaryCleanupClient {
+  rpc(name: 'detach_diary_photos_for_deleted_uploader', args: { _user_id: string }): PromiseLike<{ error: unknown }>;
   from(table: string): { select(columns: string): { eq(column: string, value: string): { order(column: string): { range(from: number, to: number): PromiseLike<{ data: { image_paths?: string[] }[] | null; error: unknown }> } } } };
   storage: { from(bucket: string): {
     list(folder: string, options: { limit: number; offset: number; sortBy: { column: string; order: string } }): PromiseLike<{ data: { id?: string | null; name: string }[] | null; error: unknown }>;
@@ -29,6 +30,11 @@ export async function cleanupDiaryPhotos(client: DiaryCleanupClient, userId: str
       if (!data || data.length < 1000) break;
     }
   }
+  // Own uploads may be attached to entries that belong to another farm member.
+  // Detach those references before removing blobs so surviving entries and backups
+  // remain readable. On retry, the user's prefix still inventories every own file.
+  const { error: detachError } = await client.rpc('detach_diary_photos_for_deleted_uploader', { _user_id: userId });
+  if (detachError) throw detachError;
   const files = [...paths];
   for (let i = 0; i < files.length; i += 100) {
     const { error } = await client.storage.from('diary-photos').remove(files.slice(i, i + 100));

@@ -1,6 +1,8 @@
 -- Minimal pre-migration schema for isolated regression tests; never run on a real project.
-create role authenticated; create role anon;
+create role authenticated; create role anon; create role service_role bypassrls;
 create schema auth; create schema storage;
+create schema supabase_migrations;
+create table supabase_migrations.schema_migrations(version text primary key);
 create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.uid',true),'')::uuid $$;
 create table auth.users(id uuid primary key);
 create table public.farm_members(user_id uuid, farm_id uuid, role text);
@@ -25,8 +27,9 @@ create table storage.buckets(id text primary key, name text, public boolean, fil
 create table storage.objects(id uuid default gen_random_uuid(), bucket_id text references storage.buckets(id), name text);
 alter table storage.objects enable row level security;
 create function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name,'/') $$;
-grant usage on schema public, auth, storage to authenticated, anon;
+grant usage on schema public, auth, storage to authenticated, anon, service_role;
 grant select,insert,update,delete on all tables in schema public,storage to authenticated;
+grant select,update on public.health_logs to service_role;
 insert into auth.users values('10000000-0000-0000-0000-000000000001'),('10000000-0000-0000-0000-000000000002'),('10000000-0000-0000-0000-000000000003'),('10000000-0000-0000-0000-000000000004');
 insert into public.farm_members values
 ('10000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','owner'),
