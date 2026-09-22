@@ -56,19 +56,6 @@ export function usePushNotifications() {
     (async () => {
       try {
         const { PushNotifications } = await import('@capacitor/push-notifications');
-        const perm = await PushNotifications.checkPermissions();
-        let status = perm.receive;
-        if (status === 'prompt' || status === 'prompt-with-rationale') {
-          const req = await PushNotifications.requestPermissions();
-          status = req.receive;
-          trackEvent('Push Permission Result', { result: status === 'granted' ? 'accepted' : 'denied' });
-        }
-        if (status !== 'granted') {
-          setEnabled(false);
-          return;
-        }
-        await PushNotifications.register();
-        setEnabled(true);
         const platform = Capacitor.getPlatform() as 'ios' | 'android' | 'web';
 
         const reg = await PushNotifications.addListener('registration', async (token) => {
@@ -94,6 +81,19 @@ export function usePushNotifications() {
           trackEvent('Notification Clicked', { channel: 'push' });
         });
         removeFns = [() => reg.remove(), () => err.remove(), () => recv.remove(), () => act.remove()];
+        const perm = await PushNotifications.checkPermissions();
+        let status = perm.receive;
+        if (status === 'prompt' || status === 'prompt-with-rationale') {
+          const req = await PushNotifications.requestPermissions();
+          status = req.receive;
+          trackEvent('Push Permission Result', { result: status === 'granted' ? 'accepted' : 'denied' });
+        }
+        if (status !== 'granted') {
+          setEnabled(false);
+          return;
+        }
+        await PushNotifications.register();
+        setEnabled(true);
       } catch (e) {
         console.error('[push] native setup failed', e);
       }

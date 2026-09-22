@@ -49,6 +49,7 @@ export const STATIC_PUBLIC_ROUTES = [
   '/reset-password',
   '/om-oss',
   '/verktyg/aggkalkylator',
+  '/verktyg/vad-kostar-hons',
   '/verktyg/aggregler-vagvisare',
   '/verktyg/klackningskalkylator',
   '/guider',

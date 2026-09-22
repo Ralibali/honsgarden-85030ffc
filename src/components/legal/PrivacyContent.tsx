@@ -125,12 +125,12 @@ export function PrivacyContentSv() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Nödvändiga cookies (kräver ej samtycke):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Autentisering</strong> – Sessionshantering för inloggade användare</li>
-      <li><strong>Cookie-val</strong> – Sparar ditt val av cookieinställningar (<code>cookie-consent</code> i localStorage)</li>
+      <li><strong>Cookie-val</strong> – Sparar ditt val av cookieinställningar (<code>honsgarden_ga4_consent_v1</code> i localStorage)</li>
     </ul>
 
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Valfria cookies (kräver samtycke):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
-      <li><strong>Analys</strong> – Anonymiserad sidvisningsstatistik för att förbättra tjänsten</li>
+      <li><strong>Analys</strong> – Google Analytics 4 från Google mäter sidvisningar och produkthändelser efter ditt samtycke. Statistikcookies används för att skilja besök åt. Du kan återkalla samtycket via Cookieinställningar</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       Du kan ändra dina cookieinställningar när som helst via cookie-bannern eller i din webbläsare. Att blockera nödvändiga cookies kan påverka tjänstens funktion.
@@ -393,12 +393,12 @@ export function PrivacyContentEn() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Necessary cookies (no consent required):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Authentication</strong> — Session management for signed-in users</li>
-      <li><strong>Cookie choice</strong> — Stores your cookie preferences (<code>cookie-consent</code> in localStorage)</li>
+      <li><strong>Cookie choice</strong> — Stores your cookie preferences (<code>honsgarden_ga4_consent_v1</code> in localStorage)</li>
     </ul>
 
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Optional cookies (consent required):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
-      <li><strong>Analytics</strong> — Anonymized page-view statistics to improve the service</li>
+      <li><strong>Analytics</strong> — Google Analytics 4 by Google measures page views and product events after your consent. Analytics cookies distinguish visits. You can withdraw consent via Cookie settings</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       You can change your cookie settings at any time via the cookie banner or in your browser. Blocking necessary cookies may affect how the service works.

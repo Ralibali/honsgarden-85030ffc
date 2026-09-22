@@ -69,7 +69,7 @@ describe('Login – Signup fires only when an account is created', () => {
     login.mockReset();
     register.mockReset();
     plausible.mockReset();
-    window.plausible = plausible;
+    window.analyticsEvent = plausible;
     login.mockResolvedValue(undefined);
     register.mockResolvedValue({ user: newEmailUser(), session: null });
   });
@@ -77,7 +77,7 @@ describe('Login – Signup fires only when an account is created', () => {
   afterEach(() => {
     resetSignupTrackingForTests();
     localStorage.clear();
-    delete window.plausible;
+    delete window.analyticsEvent;
   });
 
   it('fires Signup Completed once after a successful email register', async () => {

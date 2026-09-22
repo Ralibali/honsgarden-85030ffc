@@ -1,16 +1,6 @@
-/**
- * Central, typesäker Plausible-helper.
- *
- * - Plausible-snippetten i `index.html` (`pa-*.js`) laddar och initierar
- *   trackern och auto-spårar pageviews inkl. SPA-navigering via History API.
- *   Vi lägger därför INTE till någon manuell pageview-tracking här; det skulle
- *   ge dubbla pageviews.
- * - Denna helper är den enda tillåtna vägen för att skicka events från
- *   applikationen. Håll event-namn och properties strikt typade och med låg
- *   kardinalitet. Skicka aldrig personuppgifter, fritext, e-post, namn,
- *   användar-id, hönsnamn eller andra unika identifierare.
- * - Admin- och interna personalsidor exkluderas via `exclude`-inställningen
- *   i `plausible.init(...)` i `index.html` OCH som säkerhetsnät här.
+/** Typed business events delivered through consent-gated GA4.
+ * ga4Runtime owns SPA pageviews, URL redaction and delivery callbacks.
+ * Existing exported helper names are kept for call-site compatibility.
  */
 
 /** Path-prefix som aldrig ska ge events (interna/admin-vyer). */
@@ -212,7 +202,7 @@ type PlausibleFn = (
 
 declare global {
   interface Window {
-    plausible?: PlausibleFn & { q?: unknown[]; o?: unknown };
+    analyticsEvent?: PlausibleFn & { q?: unknown[]; o?: unknown };
   }
 }
 
@@ -250,7 +240,7 @@ export function trackEvent<E extends AnalyticsEventName>(
     if (typeof window === 'undefined') return;
     const path = window.location?.pathname ?? '';
     if (isExcludedPath(path)) return;
-    const plausible = window.plausible;
+    const plausible = window.analyticsEvent;
     if (typeof plausible !== 'function') return;
     const cleanProps = sanitizeProps(props as Record<string, unknown> | undefined);
     plausible(event, cleanProps ? { props: cleanProps } : undefined);

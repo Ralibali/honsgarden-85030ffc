@@ -1,3 +1,4 @@
+import './lib/initGa4';
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { isNativePlatform } from '@/lib/nativePlatform';
 import App from "./App.tsx";

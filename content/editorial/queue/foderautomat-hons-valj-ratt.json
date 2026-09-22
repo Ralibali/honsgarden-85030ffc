@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "content_id": "editorial-20260920-foderautomat-hons-valj-ratt",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-09-20T15:50:00.000Z",
+  "not_before": "2026-09-24",
+  "sources_checked_at": "2026-09-20T15:50:00.000Z",
+  "quality_checked_at": "2026-09-20T15:50:00.000Z",
+  "site": "honsgarden",
+  "slug": "foderautomat-hons-valj-ratt",
+  "title": "Foderautomat till höns: välj storlek och typ efter flocken",
+  "description": "Så jämför du foderautomater efter flockstorlek, kapacitet, hygien, spill och råttskydd. En praktisk köpguide för hobbyhöns.",
+  "category": "guide",
+  "tags": [
+    "foderautomat",
+    "hönsfoder",
+    "utrustning",
+    "flockstorlek",
+    "råttskydd"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/foderkostnad-hons",
+  "search_intent": "Välja foderautomat till höns genom att jämföra kapacitet, flockstorlek, spill, hygien och råttskydd i stället för att bara sortera på pris.",
+  "source_urls": [
+    "https://www.granngarden.se/lantdjur/hons-fjaderfa/foderautomat-fodertrag",
+    "https://www.lantkompaniet.se/djurart/fjaederfae/foderautomater-trag.html",
+    "https://honsguiden.se/foderautomater.html"
+  ],
+  "content_html": "<p>En foderautomat är lätt att köpa för stor, för liten eller för komplicerad. För en hobbyflock är den viktigaste frågan inte vilken modell som ser mest robust ut, utan <strong>hur mycket foder flocken faktiskt använder, hur ofta du vill fylla på och vilka problem du försöker lösa</strong>.</p>\n<p>Den här guiden är en beslutsmall. Den utser ingen testvinnare och aktuella priser och lager behöver kontrolleras hos återförsäljaren före köp.</p>\n<h2>Räkna bakifrån från flockens förbrukning</h2>\n<p>Hönsgårdens commerce-underlag använder ett planeringsintervall på ungefär 100–150 gram foder per höna och dag. Det är ett intervall, inte en exakt ranson för varje individ. Foderbehov påverkas bland annat av foder, ras, ålder och årstid.</p>\n<p>För fem höns motsvarar intervallet ungefär 0,5–0,75 kg per dag. En automat med 5 kg kapacitet räcker då grovt räknat mindre än två veckor, medan en betydligt större automat kan ge längre intervall mellan påfyllningarna. Det betyder inte att större alltid är bättre: fodret ska hållas torrt, fräscht och skyddat.</p>\n<h2>Tre typer av behov</h2>\n<h3>1. Enkel vardagsautomat</h3>\n<p>För en liten flock där du ändå är i hönshuset varje dag kan en enkel hängande eller stående automat räcka. Prioritera att den är lätt att rengöra, stabil och enkel att kontrollera.</p>\n<h3>2. Större kapacitet inför frånvaro</h3>\n<p>Om du vill minska antalet påfyllningar kan större volym vara relevant. Den dagliga tillsynen av djur, vatten och utrustning försvinner däremot inte för att foderbehållaren är stor.</p>\n<h3>3. Rått- och spillskydd</h3>\n<p>Om problemet är spill eller skadedjur bör konstruktionen väga tyngre än total volym. Trampautomater och andra slutna system kan vara intressanta, men hönsen behöver lära sig använda dem och mekaniken måste fungera i den miljö där automaten står.</p>\n<h2>Jämför på fem datapunkter</h2>\n<ul><li><strong>Kapacitet:</strong> kg eller liter, inte bara yttre storlek.</li><li><strong>Flockstorlek:</strong> hur många höns som ska kunna äta utan onödig trängsel.</li><li><strong>Placering:</strong> ute, inne eller skyddat under tak.</li><li><strong>Rengöring:</strong> hur enkelt automaten kan tömmas och diskas.</li><li><strong>Spill och skadedjur:</strong> om konstruktionen faktiskt adresserar problemet du har.</li></ul>\n<p>Granngården visar exempel på olika <a href=\"https://www.granngarden.se/lantdjur/hons-fjaderfa/foderautomat-fodertrag\">foderautomater och tråg</a>, medan Lantkompaniet har en separat kategori för <a href=\"https://www.lantkompaniet.se/djurart/fjaederfae/foderautomater-trag.html\">foderautomater för fjäderfä</a>. Jämför specifikationerna, inte bara produktnamnen.</p>\n<h2>Stor säck och stor automat är inte samma sak som låg kostnad</h2>\n<p>Det kan se billigare ut att köpa största möjliga förpackning och största möjliga automat, men en liten flock behöver inte lagra mer foder än den använder inom rimlig tid. Hönsgårdens styrka är att kunna utgå från din registrerade flockstorlek och senare matcha den mot förpackningsstorlek och automatkapacitet.</p>\n<p>Vill du först räkna på din egen foderkostnad finns Hönsgårdens sida om <a href=\"/foderkostnad-hons\">foderkostnad för höns</a>. När Commerce Agentens produktprofiler är berikade med verklig kapacitet kan samma flockdata användas för att sortera bort fel storlek innan produkterna ens rankas.</p>\n<h2>En enkel köpchecklista</h2>\n<ol><li>Räkna aktiva höns i flocken.</li><li>Uppskatta hur många dagar du vill klara mellan påfyllningar.</li><li>Välj kapacitet utifrån faktisk förbrukning, inte marknadsföringsnamnet.</li><li>Bestäm om huvudproblemet är kapacitet, spill, hygien eller skadedjur.</li><li>Kontrollera mått, material och rengöring innan köp.</li></ol>\n<p><em>Redaktionellt utkast baserat på Hönsgårdens commerce-research 20 september 2026. Produktdata, källor och eventuella annonslänkar ska återkontrolleras före publicering.</em></p>",
+  "editorial_review": {
+    "reviewed_at": "2026-09-20T15:50:00.000Z",
+    "source_review": "Draft based on the 2026 commerce strategy and current category sources. No test-winner or current-price claim is made.",
+    "published_inventory_reviewed": 126,
+    "distinct_intent_confirmed": true,
+    "publication_gate": "Not before 2026-09-24 Europe/Stockholm. Recheck sources, product specs, affiliate status, editorial:check and create-only publication."
+  }
+}

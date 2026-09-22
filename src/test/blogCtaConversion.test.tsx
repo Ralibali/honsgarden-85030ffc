@@ -27,10 +27,10 @@ function hrefOf(name: RegExp): string {
 
 describe('blogg-CTA:er länkar till registrering med korrekt source', () => {
   beforeEach(() => {
-    (window as unknown as { plausible?: unknown }).plausible = vi.fn();
+    (window as unknown as { analyticsEvent?: unknown }).analyticsEvent = vi.fn();
   });
   afterEach(() => {
-    delete (window as unknown as { plausible?: unknown }).plausible;
+    delete (window as unknown as { analyticsEvent?: unknown }).analyticsEvent;
   });
 
   it('ArticleCta inline pekar på mode=register och source=blog_inline', () => {
@@ -57,7 +57,7 @@ describe('blogg-CTA:er länkar till registrering med korrekt source', () => {
   it('ArticleCta skickar CTA Register Clicked med rätt source vid klick', () => {
     renderWithRouter(<ArticleCta variant="inline" />);
     screen.getByRole('link', { name: /skapa gratis konto/i }).click();
-    expect(window.plausible).toHaveBeenCalledWith('CTA Register Clicked', {
+    expect(window.analyticsEvent).toHaveBeenCalledWith('CTA Register Clicked', {
       props: { source: 'blog_inline' },
     });
   });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,9 +8,44 @@ import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { scoreProducts, pickDailyFromTopN } from '@/lib/agdaProductScoring';
 import { useCatalog, priceToNumber } from '@/hooks/useAffiliateProducts';
 import { useFarmWeather } from '@/hooks/useFarmWeather';
+import { supabase } from '@/integrations/supabase/client';
 
 const SNOOZE_KEY = 'hg_agda_tip_snooze_until';
 const SNOOZE_DAYS = 7;
+const SEASON_EXPOSURE_PREFIX = 'hg_commerce_season_exposures_';
+const MAX_SEASON_EXPOSURES = 2;
+
+function currentCommerceSeasonKey(date = new Date()): string {
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  if (month === 1) return `${year - 1}-winter`;
+  if (month === 2 || month === 3) return `${year}-hatching`;
+  if (month === 4 || month === 5) return `${year}-spring`;
+  if (month >= 6 && month <= 8) return `${year}-summer`;
+  if (month === 9 || month === 10) return `${year}-autumn`;
+  return `${year}-winter`;
+}
+
+function seasonalExposureCount(): number {
+  try {
+    const raw = localStorage.getItem(SEASON_EXPOSURE_PREFIX + currentCommerceSeasonKey());
+    const rows = raw ? JSON.parse(raw) : [];
+    return Array.isArray(rows) ? rows.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function recordSeasonalExposure() {
+  try {
+    const key = SEASON_EXPOSURE_PREFIX + currentCommerceSeasonKey();
+    const raw = localStorage.getItem(key);
+    const rows = raw ? JSON.parse(raw) : [];
+    const history = Array.isArray(rows) ? rows.slice(-MAX_SEASON_EXPOSURES + 1) : [];
+    history.push(new Date().toISOString());
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch {}
+}
 
 function isSnoozed(): boolean {
   try {
@@ -31,8 +66,29 @@ export default function AgdaProductTipCard() {
   const { user } = useAuth();
   const isPlus = user?.subscription_status === 'premium' || (user as any)?.is_premium;
   const [hidden, setHidden] = useState(() => isSnoozed());
+  const [seasonAllowed] = useState(() => seasonalExposureCount() < MAX_SEASON_EXPOSURES);
+  const exposureRecorded = useRef(false);
 
-  const active = !isPlus && !hidden;
+  const { data: commerceTipsEnabled = true } = useQuery({
+    queryKey: ['commerce-tip-preference', user?.id],
+    enabled: Boolean(user?.id),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('preferences')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+      const prefs = (
+        data?.preferences && typeof data.preferences === 'object'
+          ? data.preferences
+          : {}
+      ) as Record<string, unknown>;
+      return prefs.commerce_tips_enabled !== false;
+    },
+    staleTime: 10 * 60_000,
+  });
+
+  const active = !isPlus && !hidden && commerceTipsEnabled && seasonAllowed;
 
   const { data: hens = [] } = useQuery({
     queryKey: ['hens'],
@@ -54,6 +110,12 @@ export default function AgdaProductTipCard() {
     const scored = scoreProducts({ hens: hens as any[], eggs: eggs as any[], weather }, catalog);
     return pickDailyFromTopN(scored, 5);
   }, [active, hens, eggs, weather, catalog]);
+
+  useEffect(() => {
+    if (!active || !pick || exposureRecorded.current) return;
+    recordSeasonalExposure();
+    exposureRecorded.current = true;
+  }, [active, pick]);
 
   if (!active || !pick) return null;
   const { product, reason } = pick;

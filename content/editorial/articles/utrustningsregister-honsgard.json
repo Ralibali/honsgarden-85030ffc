@@ -3,11 +3,11 @@
   "site": "honsgarden",
   "content_id": "editorial-20260920-utrustningsregister-honsgard",
   "author": "ChatGPT",
-  "status": "draft",
+  "status": "ready",
   "written_at": "2026-09-20T14:06:36.317515+00:00",
   "not_before": "2026-09-22",
-  "sources_checked_at": "2026-09-20T14:06:36.317515+00:00",
-  "quality_checked_at": "2026-09-20T14:06:36.317515+00:00",
+  "sources_checked_at": "2026-09-22T11:21:56.398545+00:00",
+  "quality_checked_at": "2026-09-22T11:21:56.398545+00:00",
   "slug": "utrustningsregister-honsgard",
   "title": "Samla hönsgårdens utrustning i ett enkelt register",
   "description": "Håll modelluppgifter, instruktioner och tidigare åtgärder samlade för hönsgårdens utrustning. En enkel underlagsmall inför frågor, tillsyn och överlämning.",
@@ -24,11 +24,12 @@
   ],
   "content_html": "<p>En vattenbehållare, en lucka och ett foderkärl kan ha varsin instruktion som ligger på olika ställen. När någon behöver fråga om en del eller förstå en tidigare åtgärd blir det lätt ett letande. Ett litet utrustningsregister samlar hänvisningarna utan att försöka ersätta instruktionerna.</p>\n<p>Börja med det som redan används i din hönsgård. Mallen hjälper dig att ordna information om sakerna, inte att avgöra om en produkt passar flocken eller hur en reparation ska göras. Skriv bara in uppgifter som går att koppla till rätt utrustning.</p>\n<h2>Ge varje sak en begriplig benämning</h2>\n<p>Använd ett namn som du och den som hjälper dig känner igen, exempelvis ”vattenbehållare vid östra väggen”. Om flera saker liknar varandra behöver benämningen visa vilken du menar. Ett eget kort nummer kan hjälpa, men spara också den vanliga beskrivningen.</p>\n<p>Ta en översiktsbild och notera var saken brukar finnas. Om den flyttas, uppdatera placeringen utan att ändra identiteten i listan. Då går äldre anteckningar fortfarande att förstå även om hönsgårdens inredning har ändrats sedan bilden togs.</p>\n<h2>Skilj din benämning från tillverkarens uppgifter</h2>\n<p>Skriv av synligt märke och modell när det går att göra utan ingrepp. Hänvisa till ett kvitto eller ett annat underlag som faktiskt hör till just den saken. En bild på en liknande produkt i en butik är inte en bekräftelse på att din utrustning är samma modell.</p>\n<p>Markera det som är oläsligt eller osäkert. Låt en fråga stå kvar tills du har ett besked som går att hänvisa till. Vid kontakt med tillverkare eller butik kan en tydlig bild och en beskrivning av osäkerheten vara mer användbar än ett gissat artikelnummer.</p>\n<h2>Gör ett kort för varje del av utrustningen</h2>\n<p>Samla följande fält:</p>\n<ul><li>Eget namn och nuvarande placering.</li><li>Märke och modell, med källa till uppgiften.</li><li>Bild som visar vilken sak kortet gäller.</li><li>Var den tillhörande instruktionen finns.</li><li>Inköps- eller kontaktunderlag, om det är sparat.</li><li>Datum och beskrivning av dokumenterade åtgärder.</li><li>Öppen fråga och vem som tar reda på svaret.</li></ul>\n<p>Förvara privata kvitton och kontaktuppgifter på en plats som bara rätt personer kommer åt. Det räcker ofta att kortet anger var underlaget finns. Alla som behöver hitta en instruktion behöver inte samtidigt få tillgång till hela inköpshistoriken.</p>\n<h2>Länka till den instruktion som gäller</h2>\n<p>Kontrollera att en sparad bruksanvisning avser rätt modell och version. Anteckna varifrån den hämtades och när du kontrollerade kopplingen. Behåll filnamnet eller länken så att du kan hitta tillbaka till samma underlag vid nästa fråga.</p>\n<p>Skriv inte om instruktionens tekniska råd till en egen förenklad regel om betydelsen är oklar. Be den ansvariga tillverkaren eller leverantören förklara det som behöver redas ut. Registret ska hjälpa dig att hitta rätt information, inte skapa nya användnings- eller underhållsanvisningar.</p>\n<h2>Beskriv åtgärder som händelser</h2>\n<p>Anteckna vad som faktiskt gjordes, när och vem som gjorde det. Skilj mellan en observation, en beställd åtgärd och ett bekräftat resultat. ”Fråga skickad om modelluppgift” är exempelvis ett annat steg än ”modell bekräftad av leverantören”.</p>\n<p>Om en del byts, spara hänvisningen till det underlag som beskriver bytet. Låt äldre anteckningar ligga kvar som historik. Du behöver inte dra någon teknisk slutsats av uppgiften; nästa person ska kunna se vad som finns dokumenterat och vad som fortfarande behöver kontrolleras.</p>\n<h2>Använd registret vid en praktisk överlämning</h2>\n<p>Öppna ett utrustningskort tillsammans med den som ska hjälpa dig och prova att hitta rätt sak och rätt instruktion. Förtydliga namn som går att missförstå. Koppla sedan den aktuella informationen till <a href=\"/blogg/honsvakt-checklista-overlamning\">överlämningen till hönsvakten</a>.</p>\n<p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> för att se hur flockens övriga anteckningar kan samlas. Håll utrustningsregistret som ett separat underlag där det passar ditt arbetssätt. AI-assisterad originalguide; texten utlovar ingen särskild registerfunktion i appen och ersätter inte djurens skötsel.</p>",
   "editorial_review": {
-    "reviewed_at": "2026-09-20T14:06:36.317515+00:00",
+    "reviewed_at": "2026-09-22T11:21:56.398545+00:00",
     "published_inventory_reviewed": 126,
     "distinct_intent_confirmed": true,
-    "source_review": "Owned product entry and complete published inventory reviewed on 20 September. Original documentation template; no automatic feature, measured result, veterinary or horticultural advice claimed.",
-    "live_verification": "draft_only",
-    "publication_gate": "Earliest 22 September, after a fresh previous-publication reader check, current main, inventory and source review. Assign real publication dates only at publication. Use exact create-only SQL and verify hash, status and date separately."
-  }
+    "source_review": "Owned product entry, current main and complete published inventory reviewed on 22 September 2026. Original documentation template; no automatic feature or measured outcome claimed.",
+    "live_verification": "Previous publication reader flow passed on 22 September; this new article still requires post-publication verification.",
+    "publication_gate": "Current source and inventory review completed. Use exact create-only publisher SQL and verify hash, status and publication time separately before frontend verification."
+  },
+  "published_at": "2026-09-22T11:21:56.398545+00:00"
 }
