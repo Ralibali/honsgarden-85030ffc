@@ -31,5 +31,5 @@
     "live_verification": "Previous publication reader flow passed on 22 September; this new article still requires post-publication verification.",
     "publication_gate": "Current source and inventory review completed. Use exact create-only publisher SQL and verify hash, status and publication time separately before frontend verification."
   },
-  "published_at": "2026-09-22T11:21:56.398545+00:00"
+  "published_at": "2026-09-23T00:27:49.933385+00:00"
 }
