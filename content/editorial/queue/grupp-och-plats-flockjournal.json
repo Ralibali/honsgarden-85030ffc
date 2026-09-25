@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20260925-grupp-och-plats-flockjournal",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-09-25T10:06:46.303229+00:00",
+  "not_before": "2026-09-27",
+  "sources_checked_at": "2026-09-25T10:06:46.303229+00:00",
+  "quality_checked_at": "2026-09-25T10:06:46.303229+00:00",
+  "slug": "grupp-och-plats-flockjournal",
+  "title": "Dokumentera grupp och plats i flockjournalen",
+  "description": "Ge grupp och plats tydliga namn i flockjournalen. Dokumentera daterade förändringar utan att förlora individens historik eller äldre observationers sammanhang.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Journalföring av daterad grupp- och platstillhörighet efter redan fattade skötselbeslut; skilt från rättelser och råd om att dela en flock.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>En anteckning om en höna blir svår att tolka om platsen bara kallas ”den andra gården”. Samma namn kan betyda olika saker för olika personer, särskilt när flockens indelning förändras. Med tydliga platsnamn och daterade hänvisningar kan journalen visa vilket sammanhang en observation hör till.</p>\n<p>Den här mallen gäller dokumentationen av en indelning som redan har beslutats på ansvarsfulla grunder. Den ger inga råd om vilka individer som bör hållas tillsammans eller hur en flytt ska genomföras. Syftet är att göra befintliga uppgifter begripliga även för den som läser dem senare.</p>\n<h2>Skilj individen från gruppens namn</h2>\n<p>Låt varje individ behålla sin vanliga identifiering i anteckningarna. Gruppnamnet beskriver ett sammanhang under en period; det ersätter inte individens historik. Om en höna förekommer i flera grupper över tid behöver journalen kunna hänvisa till samma individ genom hela perioden.</p>\n<p>Skriv ut vilken grupp en samlad observation gäller. ”Tre ägg i norra delen” säger något annat än en uppgift som säkert kan knytas till en viss höna. Fördela inte en gemensam observation mellan individer bara för att få individuella rader att se kompletta ut.</p>\n<h2>Ge platser namn som andra kan hitta</h2>\n<p>Välj benämningar som går att känna igen på plats. En enkel översiktsbild med markerade namn kan hjälpa den som inte använder hönsgården varje dag. Spara förklaringen tillsammans med journalens praktiska underlag och ange när den senast kontrollerades.</p>\n<p>Om benämningen ändras, anteckna det gamla och det nya namnet. På så sätt betyder inte en äldre platsangivelse plötsligt något annat. Använd inte ett tillfälligt smeknamn som enda hänvisning när flera personer ska förstå vad som avses.</p>\n<h2>Skriv en daterad förändringsrad</h2>\n<p>En förändringsrad kan innehålla följande:</p>\n<ul><li>Datum som den dokumenterade förändringen gäller.</li><li>Individer som uppgiften avser.</li><li>Tidigare grupp och plats, när de är kända.</li><li>Ny grupp och plats enligt det kontrollerade underlaget.</li><li>Vem som lämnade uppgiften och när den noterades.</li><li>Hänvisning till den anteckning där sammanhanget beskrivs.</li></ul>\n<p>Skilj händelsedatum från dagen då någon skrev in informationen. Om det exakta datumet är okänt, markera osäkerheten. En ungefärlig uppgift blir inte säkrare av att man väljer ett godtyckligt datum för att fylla i en tom ruta.</p>\n<h2>Behåll sammanhanget i äldre observationer</h2>\n<p>Gå inte tillbaka och byt gruppnamn i alla gamla anteckningar när dagens indelning förändras. En observation från förra veckan hör till det sammanhang som gällde då. Lägg i stället till en tydlig hänvisning om läsaren behöver förstå övergången mellan perioderna.</p>\n<p>Fotografier kan också behöva datum, plats och information om vilka individer som faktiskt går att identifiera. Se mallen för en <a href=\"/blogg/fotologg-hons-jamforbara-bilder\">fotologg med jämförbara bilder</a>. En bild bekräftar bara det som går att se; den fastställer inte automatiskt hur en hel grupp var sammansatt under dagen.</p>\n<h2>Prova journalen vid nästa överlämning</h2>\n<p>Be den som hjälper dig att följa en individ genom två daterade anteckningar. Kan personen förstå var observationerna gjordes och vilken grupp som avses? Förtydliga benämningarna där det behövs och koppla underlaget till <a href=\"/blogg/honsvakt-checklista-overlamning\">överlämningen till hönsvakten</a>.</p>\n<p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> för att utforska hur flockens anteckningar presenteras. Använd grupp- och platsmallen i det dokumentationsverktyg som passar dig. AI-assisterad originalguide med en redaktionell arbetsmall; texten utlovar ingen särskild funktion för grupphistorik och ersätter inte djurens skötsel.</p>",
+  "editorial_review": {
+    "reviewed_at": "2026-09-25T10:06:46.303229+00:00",
+    "published_inventory_reviewed": 128,
+    "distinct_intent_confirmed": true,
+    "source_review": "Owned product entry reviewed. Original documentation template; no medical, horticultural, pricing or automatic-feature claim.",
+    "live_verification": "draft_only",
+    "publication_gate": "Earliest 2026-09-27, and only after a fresh previous-publication reader check, current main, complete published inventory and current primary-source review. Keep unpublished until all checks pass; assign actual publication dates at release."
+  }
+}
