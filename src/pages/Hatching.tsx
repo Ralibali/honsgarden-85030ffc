@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
+import HatchingOrigin from '@/components/brood/HatchingOrigin';
 import PageHeader from '@/components/PageHeader';
 
 const milestones = [
@@ -175,6 +176,7 @@ export default function Hatching() {
                     );
                   })}
                 </div>
+                <HatchingOrigin id={batch.id} name={batch.notes || `Kläckning ${startDate}`} date={startDate} />
               </CardContent>
             </Card>
           );

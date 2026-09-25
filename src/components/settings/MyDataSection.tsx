@@ -25,6 +25,8 @@ type Category = {
 const CATEGORIES: Category[] = [
   { key: "hens", label: "Hönor", table: "hens", headerMapKey: "hens" },
   { key: "egg_logs", label: "Ägg", table: "egg_logs", headerMapKey: "egg_logs" },
+  { key: "health_logs", label: "Dagbok och anteckningar", table: "health_logs", headerMapKey: "health_logs" },
+  { key: "brood_origins", label: "Kullarnas ursprung", table: "brood_origins", headerMapKey: "brood_origins" },
   { key: "health_events", label: "Hälsohändelser", table: "health_events", headerMapKey: "health_events" },
   { key: "breeding_pairs", label: "Avelspar", table: "breeding_pairs", premiumOnly: true, headerMapKey: "breeding_pairs" },
   { key: "hatch_sessions", label: "Kläckningar", table: "hatch_sessions", premiumOnly: true, headerMapKey: "hatch_sessions" },
@@ -53,7 +55,7 @@ async function fetchAll(table: string, userId: string): Promise<any[]> {
   while (true) {
     const { data, error } = await (supabase as any)
       .from(table)
-      .select("*")
+      .select(table === "health_logs" ? "*, diary_entry_hens(hen_id)" : "*")
       .eq("user_id", userId)
       .range(from, from + pageSize - 1);
     if (error) throw error;

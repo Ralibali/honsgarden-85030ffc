@@ -26,6 +26,8 @@ import EmptyState from '@/components/EmptyState';
 import AIHealthNoteHelper from '@/components/AIHealthNoteHelper';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { PremiumGate } from '@/components/PremiumGate';
+import HenDiary from '@/components/diary/HenDiary';
+import HenOrigin from '@/components/brood/HenOrigin';
 import HenPedigree from '@/components/hen/HenPedigree';
 import HenPhotoTimeline from '@/components/hen/HenPhotoTimeline';
 import SetParentsDialog from '@/components/hen/SetParentsDialog';
@@ -308,7 +310,7 @@ export default function HenProfile() {
   }
 
   const avgPerWeek = monthEggs > 0 ? Math.round((monthEggs / 30) * 7 * 10) / 10 : 0;
-  const healthLogs = (hen.health_logs || []).slice(0, 5);
+  const healthLogs = (hen.health_logs || []).filter(log => log.type !== 'diary').slice(0, 5);
   const latestNote = hen.notes || healthLogs[0]?.description || null;
 
   const shareUrl = `${window.location.origin}/app/hens/${henId}`;
@@ -594,6 +596,9 @@ export default function HenProfile() {
               </Card>
             )}
 
+            <HenDiary henId={henId!} henName={hen.name} />
+            <HenOrigin hen={hen} />
+
             {healthLogs.length > 0 ? (
               <Card className="border-border/50 shadow-sm">
                 <CardContent className="p-5">
@@ -677,6 +682,7 @@ export default function HenProfile() {
           <TabsContent value="pedigree" className="mt-5">
             <PremiumGate feature="Stamtavla" featureKey="breeding" blur>
               <HenPedigree
+                broodOriginId={hen.brood_origin_id}
                 henId={henId!}
                 henName={hen.name}
                 henBirthDate={hen.birth_date}
@@ -771,7 +777,7 @@ export default function HenProfile() {
                   <SelectItem value="behandling">Behandling</SelectItem>
                   <SelectItem value="veterinär">Veterinärbesök</SelectItem>
                   <SelectItem value="ruggning">Ruggning</SelectItem>
-                  <SelectItem value="diary">Dagbok</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>

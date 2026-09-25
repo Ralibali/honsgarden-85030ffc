@@ -4,6 +4,8 @@ import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } fro
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 import { getQueue, loadQueue } from '@/lib/offlineQueue';
+import type { BroodOrigin, BroodOriginInput } from '@/lib/broodOrigin';
+import type { Json } from '@/integrations/supabase/types';
 import { eggLogValidationError } from '@/lib/eggLogValidation';
 
 // ==================== TYPES ====================
@@ -24,7 +26,8 @@ type HatchingUpdate = Omit<TablesUpdate<'hatchings'>, 'user_id' | 'id' | 'create
 export type Transaction = Tables<'transactions'>;
 type TransactionInsert = Omit<TablesInsert<'transactions'>, 'user_id' | 'id' | 'created_at'>;
 
-export type HealthLog = Tables<'health_logs'>;
+export type HealthLog = Tables<'health_logs'> & { diary_entry_hens?: { hen_id: string }[] };
+export interface DiaryInput { id: string; isNew: boolean; date: string; description: string; henIds: string[]; imagePaths: string[]; milestone: string | null }
 type HealthLogInsert = Omit<TablesInsert<'health_logs'>, 'user_id' | 'id' | 'created_at'>;
 
 type Feedback = Tables<'feedback'>;
@@ -92,6 +95,42 @@ async function getUserId(): Promise<string> {
   const userId = session?.user?.id;
   if (!userId) throw new Error('Not authenticated');
   return userId;
+}
+
+// Select only the caller's farm, including for administrator accounts.
+export async function getFarmHens(): Promise<Hen[]> {
+  const userId = await getUserId();
+  const { data: owners, error: farmError } = await supabase.rpc('get_farm_user_ids', { _uid: userId });
+  if (farmError) throw farmError;
+  const { data, error } = await supabase.from('hens').select('*').in('user_id', [...new Set([userId, ...(owners ?? [])])]).order('name');
+  if (error) throw error;
+  return data ?? [];
+}
+export async function saveDiaryEntry(input: DiaryInput): Promise<HealthLog> {
+  const { data, error } = await supabase.rpc('save_diary_entry', {
+    _id: input.id, _is_new: input.isNew, _date: input.date, _description: input.description,
+    _hen_ids: input.henIds, _image_paths: input.imagePaths, _milestone: input.milestone,
+  });
+  if (error) throw error;
+  return data;
+}
+export async function getBroodOrigins(): Promise<BroodOrigin[]> {
+  const { data, error } = await supabase.from('brood_origins').select('*').order('date', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as unknown as BroodOrigin[];
+}
+export async function saveBroodOrigin(input: BroodOriginInput): Promise<BroodOrigin> {
+  const values = { name: input.name.trim(), date: input.date, notes: input.notes.trim(), parents: input.parents as unknown as Json };
+  const query = input.id ? supabase.from('brood_origins').update(values).eq('id', input.id)
+    : supabase.from('brood_origins').insert({ ...values, hatching_id: input.hatching_id ?? null, user_id: await getUserId() });
+  const { data, error } = await query.select().single();
+  if (error) throw error;
+  return data as unknown as BroodOrigin;
+}
+export async function updateHenOrigin(id: string, originGenbankNumber: string, broodOriginId: string | null): Promise<Hen> {
+  const { data, error } = await supabase.from('hens').update({ origin_genbank_number: originGenbankNumber.trim() || null, brood_origin_id: broodOriginId }).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
 }
 
 // ==================== HENS ====================
@@ -376,7 +415,7 @@ export async function getDiaryLogs(): Promise<HealthLog[]> {
   const entries: HealthLog[] = [];
   const pageSize = 500;
   for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await supabase.from('health_logs').select('*')
+    const { data, error } = await supabase.from('health_logs').select('*, diary_entry_hens(hen_id)')
       .eq('type', 'diary').in('user_id', owners)
       .order('date', { ascending: false }).order('created_at', { ascending: false }).order('id')
       .range(offset, offset + pageSize - 1);
@@ -1369,6 +1408,7 @@ export async function getAgeAnalytics(): Promise<AgeAnalytics> {
 // Legacy compatibility: export as api object for existing imports
 
 export const api = {
+  getFarmHens, saveDiaryEntry, getBroodOrigins, saveBroodOrigin, updateHenOrigin,
   getHens, createHen, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,

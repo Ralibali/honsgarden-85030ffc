@@ -6,6 +6,7 @@ import { api, type HealthLog } from '@/lib/api';
 import { diaryDateLabel, diaryEntries } from '@/lib/diary';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import PageHeader from '@/components/PageHeader';
+import DiaryEntryCard from '@/components/diary/DiaryEntryCard';
 import DiaryEditor from '@/components/diary/DiaryEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ export default function Diary({ demo = false }: { demo?: boolean }) {
   const [search, setSearch] = useState('');
   const [limit, setLimit] = useState(30);
   const { data: logs = [], isPending, isError, refetch } = useQuery({ queryKey: ['health-logs', 'diary'], queryFn: () => api.getDiaryLogs() });
+  const { data: hens = [] } = useQuery({ queryKey: ['farm-hens'], queryFn: () => api.getFarmHens() });
   const entries = useMemo(() => diaryEntries(logs, search), [logs, search]);
   const total = useMemo(() => diaryEntries(logs).length, [logs]);
 
@@ -41,10 +43,7 @@ export default function Diary({ demo = false }: { demo?: boolean }) {
         <p className="text-muted-foreground text-sm mt-2 mb-5">{search ? 'Prova ett annat ord eller rensa sökningen.' : 'Det behöver inte vara märkvärdigt. Ett par rader räcker.'}</p>
         <Button variant="outline" onClick={() => { if (search) setSearch(''); else { setEditing(null); setOpen(true); } }}>{search ? 'Rensa sökningen' : 'Skriv ditt första inlägg'}</Button>
       </section> : <div className="space-y-4">
-        {entries.slice(0, limit).map((entry) => <article key={entry.id} className="rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-3 mb-3"><time dateTime={entry.date} className="text-sm font-medium text-primary">{diaryDateLabel(entry.date)}</time><Button variant="ghost" size="sm" className="gap-1.5 min-h-11" aria-label={`Redigera inlägg från ${diaryDateLabel(entry.date)}`} onClick={() => { setEditing(entry); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /><span>Redigera</span></Button></div>
-          <p className="whitespace-pre-wrap break-words leading-relaxed text-foreground/90">{entry.description || 'Tomt dagboksinlägg'}</p>
-        </article>)}
+        {entries.slice(0, limit).map(entry => <DiaryEntryCard key={entry.id} entry={entry} hens={hens} demo={demo} onEdit={() => { setEditing(entry); setOpen(true); }} />)}
         {entries.length > limit && <Button className="w-full" variant="outline" onClick={() => setLimit((value) => value + 30)}>Visa fler inlägg</Button>}
       </div>}
     </>}
