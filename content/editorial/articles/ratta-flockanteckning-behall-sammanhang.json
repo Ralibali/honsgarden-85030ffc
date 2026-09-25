@@ -3,11 +3,11 @@
   "site": "honsgarden",
   "content_id": "editorial-20260923-ratta-flockanteckning-behall-sammanhang",
   "author": "ChatGPT",
-  "status": "draft",
+  "status": "ready",
   "written_at": "2026-09-23T01:03:04.596606+00:00",
   "not_before": "2026-09-25",
-  "sources_checked_at": "2026-09-23T01:03:04.596606+00:00",
-  "quality_checked_at": "2026-09-23T01:03:04.596606+00:00",
+  "sources_checked_at": "2026-09-25T08:27:21.467864+00:00",
+  "quality_checked_at": "2026-09-25T08:27:21.467864+00:00",
   "slug": "ratta-flockanteckning-behall-sammanhang",
   "title": "Rätta en felaktig flockanteckning så att ändringen går att förstå",
   "description": "Dokumentera en rättelse i flockjournalen med hänvisning, underlag och rättelsedatum. En arbetsmall som skiljer skrivfel från osäkra observationer.",
@@ -24,11 +24,12 @@
   ],
   "content_html": "<p>Ett fel datum, en dubbel anteckning eller ett namn som hamnat på fel rad kan göra flockjournalen svår att tolka. När felet upptäcks behöver du skilja den ursprungliga observationen från den rättelse du gör nu. En enkel rättelserutin hjälper dig att förstå underlaget även när minnet av händelsen har bleknat.</p>\n<h2>Bestäm först vad du säkert vet</h2>\n<p>Börja med uppgiften som verkar fel och underlaget som visar det. Är datumet felskrivet, har samma händelse registrerats två gånger eller är du osäker på vilken höna anteckningen gäller? Det är olika frågor och de behöver inte hanteras på samma sätt.</p>\n<p>Skilj ett bekräftat skrivfel från en ny tolkning av en gammal observation. Ett foto med känt datum kan exempelvis hjälpa dig att förstå när det togs. Det bevisar inte automatiskt allt som står i anteckningen. Skriv vad underlaget faktiskt visar och behåll sådant som fortfarande är osäkert.</p>\n<h2>Ange vilken anteckning rättelsen gäller</h2>\n<p>Hänvisa till datum, individ eller plats och någon kort detalj som gör den ursprungliga noteringen lätt att hitta. En rättelse som bara säger ”fel antal” blir svår att använda om det finns flera liknande rader. Använd samma benämningar som i resten av flockjournalen.</p>\n<p>Om flera personer har skrivit anteckningar, kontrollera först om det rör sig om samma händelse. Två liknande noteringar behöver inte vara en dubblett. Fråga den som gjorde observationen när det går, och markera annars att sambandet ännu inte är bekräftat.</p>\n<h2>Använd en kort rättelsemall</h2>\n<p>Kopiera dessa fält till den anteckningsform du använder:</p>\n<ul><li>Hänvisning: vilken tidigare notering gäller rättelsen?</li><li>Ursprunglig uppgift: vad stod där?</li><li>Rättad uppgift: vad har kunnat bekräftas?</li><li>Underlag: vad bygger rättelsen på?</li><li>Rättad den: när gjordes ändringen?</li><li>Kvarvarande osäkerhet: vad vet du fortfarande inte?</li></ul>\n<p>Ett påhittat exempel är: ”Noteringen om flyttad vattenbehållare hör till tisdagen, enligt det daterade fotot. Rättat på torsdagen.” Exemplet visar skillnaden mellan händelsedag och rättelsedag. Det beskriver ingen verklig händelse eller skötselinstruktion för din flock.</p>\n<h2>Behåll skillnaden mellan observation och slutsats</h2>\n<p>En observation kan vara korrekt återgiven även om du senare får en annan förståelse av den. Skriv då en komplettering med det nya underlaget, i stället för att låta det se ut som att du visste allt redan vid första tillfället. Tidsordningen kan vara viktig för att förstå anteckningarna.</p>\n<p>Den här mallen hjälper dig att ordna information. Den avgör inte orsaken till förändringar hos ett djur och ersätter inte den bedömning eller hjälp som en aktuell situation behöver. Bevara därför vem ett senare besked kommer från och vad det faktiskt omfattar.</p>\n<h2>Se om rättelsen påverkar något annat</h2>\n<p>Kontrollera om den felaktiga uppgiften har förts vidare till en sammanställning, ett fotoalbum eller en överlämning. Markera vilka underlag som behöver uppdateras och vilka som inte påverkas. Ändra inte fler uppgifter än rättelsen ger stöd för.</p>\n<p>Om någon annan använder informationen i den dagliga skötseln behöver personen få det aktuella beskedet genom er vanliga kontakt. <a href=\"/blogg/honsvakt-checklista-overlamning\">Mallen för överlämning till hönsvakt</a> kan hjälpa till att hålla sådana praktiska uppgifter samlade. En notering som ingen berörd ser löser inte hela informationsfrågan.</p>\n<h2>Kontrollera att historiken fortfarande går att läsa</h2>\n<p>Läs den ursprungliga hänvisningen och rättelsen tillsammans. Går det att förstå vad som observerades, vad som ändrades och varför? Om svaret kräver att du minns ett muntligt samtal behöver någon rad förtydligas. Håll förklaringen kort men tillräckligt konkret för nästa läsning.</p>\n<p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> för att se hur den övriga flockinformationen presenteras. Anpassa rättelserutinen till det underlag du använder. AI-assisterad originalguide med en egen dokumentationsmall.</p>",
   "editorial_review": {
-    "reviewed_at": "2026-09-23T01:03:04.596606+00:00",
+    "reviewed_at": "2026-09-25T08:27:21.467864+00:00",
     "published_inventory_reviewed": 127,
     "distinct_intent_confirmed": true,
-    "source_review": "Owned product entry reviewed. Original documentation template; no medical, horticultural, pricing or automatic-feature claim.",
-    "live_verification": "draft_only",
-    "publication_gate": "Earliest 2026-09-25, and only after a fresh previous-publication reader check, current main, complete published inventory and current primary-source review. Keep unpublished until all checks pass; assign actual publication dates at release."
-  }
+    "source_review": "Current owned product route and complete inventory checked September 25. Original documentation template; no claimed automatic feature, invented result, medical or horticultural advice.",
+    "live_verification": "Previous article reader flow verified September 25; this new article requires post-publication checks.",
+    "publication_gate": "Use exact generated create-only SQL; separate hash/status/date readback; current main, CI, Lovable SHA and real-domain reader flow required."
+  },
+  "published_at": "2026-09-25T08:27:21.467864+00:00"
 }
