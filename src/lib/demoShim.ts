@@ -5,7 +5,7 @@
 // Originalen återställs alltid vid unmount.
 
 import type { QueryClient } from '@tanstack/react-query';
-import { api, type EggLog } from '@/lib/api';
+import { api, type EggLog, type DiaryInput } from '@/lib/api';
 import { eggLogValidationError } from '@/lib/eggLogValidation';
 import {
   createDemoStore, DEMO_ALERTS, DEMO_COACH, DEMO_TIP_TEXT,
@@ -47,6 +47,18 @@ export function installDemoShim(queryClient: QueryClient): () => void {
   // ----- Läsningar -----
   patch('getEggs', async () => [...store.eggs].sort((a, b) => b.date.localeCompare(a.date)));
   patch('getHens', async () => store.hens);
+  patch('getFarmHens', async () => store.hens);
+  patch('saveDiaryEntry', async (input: DiaryInput) => {
+    const previous = store.healthLogs.find(log => log.id === input.id);
+    if (!previous && !input.isNew) throw new Error('Inlägget finns inte längre.');
+    const entry = { id: input.id, user_id: 'demo-user', created_at: previous?.created_at ?? new Date().toISOString(),
+      date: input.date, description: input.description, type: 'diary',
+      hen_id: input.henIds.length === 1 ? input.henIds[0] : null,
+      diary_entry_hens: input.henIds.map(hen_id => ({ hen_id })), image_paths: input.imagePaths, milestone: input.milestone };
+    if (previous) Object.assign(previous, entry); else store.healthLogs.push(entry);
+    invalidate('health-logs');
+    return entry;
+  });
   patch('getFlocks', async () => []);
   patch('getDiaryLogs', async () => store.healthLogs.filter((log) => log.type === 'diary'));
   patch('getHealthLogs', async () => [...store.healthLogs].sort((a, b) => b.date.localeCompare(a.date)));

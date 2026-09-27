@@ -6,11 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, GitBranch, AlertTriangle } from 'lucide-react';
+import { api } from '@/lib/api';
+import BroodOriginSummary from '@/components/brood/BroodOriginSummary';
 import HenAvatar from '@/components/HenAvatar';
 import SetParentsDialog from './SetParentsDialog';
 
 interface Props {
   henId: string;
+  broodOriginId?: string | null;
   henName: string;
   henBirthDate: string | null;
   motherId: string | null;
@@ -34,9 +37,11 @@ interface AncestorRow {
   relation: string;
 }
 
-export default function HenPedigree({ henId, henName, henBirthDate, motherId, fatherId, motherName, fatherName }: Props) {
+export default function HenPedigree({ broodOriginId, henId, henName, henBirthDate, motherId, fatherId, motherName, fatherName }: Props) {
   const navigate = useNavigate();
   const [editOpen, setEditOpen] = useState(false);
+  const { data: origins = [], isError: originError } = useQuery({ queryKey: ['brood-origins'], queryFn: () => api.getBroodOrigins(), enabled: !!broodOriginId });
+  const origin = origins.find(item => item.id === broodOriginId);
 
   const { data: ancestors = [], isLoading } = useQuery({
     queryKey: ['hen-ancestors', henId],
@@ -79,10 +84,12 @@ export default function HenPedigree({ henId, henName, henBirthDate, motherId, fa
 
   return (
     <div className="space-y-4">
+      {origin && <BroodOriginSummary origin={origin} />}
+      {broodOriginId && originError && <p role="alert" className="text-sm">Kullens möjliga föräldrar kunde inte hämtas. Försök att ladda om sidan.</p>}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <GitBranch className="h-4 w-4 text-primary" />
-          <h3 className="font-serif text-base text-foreground">Stamtavla</h3>
+          <h3 className="font-serif text-base text-foreground">{broodOriginId ? 'Bekräftad stamtavla' : 'Stamtavla'}</h3>
         </div>
         <Button size="sm" variant="outline" className="rounded-xl h-8 text-xs gap-1.5" onClick={() => setEditOpen(true)}>
           <Plus className="h-3.5 w-3.5" /> Sätt föräldrar

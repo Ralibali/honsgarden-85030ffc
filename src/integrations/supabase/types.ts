@@ -2423,8 +2423,22 @@ export type Database = {
           },
         ]
       }
+      diary_entry_hens: {
+        Row: { entry_id: string; hen_id: string }
+        Insert: { entry_id: string; hen_id: string }
+        Update: { entry_id?: string; hen_id?: string }
+        Relationships: [{ foreignKeyName: "diary_entry_hens_entry_id_fkey"; columns: ["entry_id"]; isOneToOne: false; referencedRelation: "health_logs"; referencedColumns: ["id"] }]
+      }
+      brood_origins: {
+        Row: { id: string; user_id: string; hatching_id: string | null; name: string; date: string; notes: string; parents: Json; created_at: string }
+        Insert: { id?: string; user_id: string; hatching_id?: string | null; name: string; date: string; notes?: string; parents?: Json; created_at?: string }
+        Update: { name?: string; date?: string; notes?: string; parents?: Json }
+        Relationships: []
+      }
       health_logs: {
         Row: {
+          image_paths?: string[]
+          milestone?: string | null
           created_at: string
           date: string
           description: string | null
@@ -2434,6 +2448,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          image_paths?: string[]
+          milestone?: string | null
           created_at?: string
           date: string
           description?: string | null
@@ -2443,6 +2459,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          image_paths?: string[]
+          milestone?: string | null
           created_at?: string
           date?: string
           description?: string | null
@@ -2576,6 +2594,8 @@ export type Database = {
       }
       hens: {
         Row: {
+          origin_genbank_number?: string | null
+          brood_origin_id?: string | null
           birth_date: string | null
           bloodline: string | null
           breed: string | null
@@ -2599,6 +2619,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          origin_genbank_number?: string | null
+          brood_origin_id?: string | null
           birth_date?: string | null
           bloodline?: string | null
           breed?: string | null
@@ -2622,6 +2644,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          origin_genbank_number?: string | null
+          brood_origin_id?: string | null
           birth_date?: string | null
           bloodline?: string | null
           breed?: string | null
@@ -5009,6 +5033,14 @@ export type Database = {
       }
     }
     Functions: {
+      detach_diary_photos_for_deleted_uploader: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
+      save_diary_entry: {
+        Args: { _id: string; _is_new: boolean; _date: string; _description: string; _hen_ids: string[]; _image_paths: string[]; _milestone: string | null }
+        Returns: Database["public"]["Tables"]["health_logs"]["Row"]
+      }
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       apply_apple_iap_entitlement: {
         Args: { _entitlement: Json; _user_id: string }

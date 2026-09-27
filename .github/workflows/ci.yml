@@ -108,3 +108,17 @@ jobs:
         run: deno run --node-modules-dir=none --no-config --allow-env supabase/tests/apple-jws.mjs
       - name: Test billing grants in isolated PostgreSQL
         run: deno run --node-modules-dir=none --no-config --allow-read --allow-env supabase/tests/apple-billing.mjs
+
+  diary_origin:
+    name: Diary and brood origin permissions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - name: Check diary backup and account cleanup functions
+        run: deno check --node-modules-dir=none --no-config supabase/functions/delete-account/index.ts supabase/functions/admin-delete-user/index.ts supabase/functions/generate-backup/index.ts
+      - name: Test atomic diary saves and historical parent groups
+        run: deno run --node-modules-dir=none --no-config --allow-read --allow-env scripts/test-diary-origin-db.mjs

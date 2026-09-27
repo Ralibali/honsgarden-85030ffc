@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import JSZip from "https://esm.sh/jszip@3.10.1";
+import JSZip from "npm:jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +10,8 @@ const TABLES_BY_USER = [
   "hens",
   "egg_logs",
   "health_events",
+  "health_logs",
+  "brood_origins",
   "breeding_pairs",
   "hatch_sessions",
   "hen_photos",
@@ -109,14 +111,17 @@ Deno.serve(async (req) => {
         dataFolder.file("profil.csv", toCsv([profileRow]));
       }
 
-      // All user tables
+      // Page through every row, including older diary entries and their individual links.
       for (const table of TABLES_BY_USER) {
-        const { data, error } = await admin.from(table).select("*").eq("user_id", user.id);
-        if (error) {
-          console.error(`[generate-backup] ${table}:`, error.message);
-          continue;
+        const rows = [];
+        for (let offset = 0; ; offset += 500) {
+          const { data, error } = await admin.from(table)
+            .select(table === "health_logs" ? "*, diary_entry_hens(hen_id)" : "*")
+            .eq("user_id", user.id).order("id").range(offset, offset + 499);
+          if (error) throw error;
+          rows.push(...(data ?? []));
+          if (!data || data.length < 500) break;
         }
-        const rows = data ?? [];
         dataFolder.file(`${table}.json`, JSON.stringify(rows, null, 2));
         dataFolder.file(`${table}.csv`, toCsv(rows));
       }
@@ -132,6 +137,20 @@ Deno.serve(async (req) => {
           const filename = p.file_path.split("/").pop() ?? "photo.jpg";
           photosFolder.folder(p.hen_id)!.file(filename, buf);
         }
+      }
+
+      // Diary images are private and stored separately from profile photos.
+      const diaryPhotos = root.folder("diary-photos")!;
+      for (let offset = 0; ; offset += 500) {
+        const { data: entries, error: diaryError } = await admin.from("health_logs")
+          .select("id, image_paths").eq("user_id", user.id).order("id").range(offset, offset + 499);
+        if (diaryError) throw diaryError;
+        for (const entry of entries ?? []) for (const path of entry.image_paths ?? []) {
+          const { data: blob, error: photoError } = await admin.storage.from("diary-photos").download(path);
+          if (photoError || !blob) throw photoError ?? new Error("Dagboksbilden kunde inte säkerhetskopieras.");
+          diaryPhotos.folder(entry.id)!.file(path.split("/").pop()!, new Uint8Array(await blob.arrayBuffer()));
+        }
+        if (!entries || entries.length < 500) break;
       }
 
       // Reports
@@ -159,6 +178,7 @@ Användare: ${profileRow?.email ?? user.id}
 Innehåll:
 - data/        En .json och .csv per tabell (hönor, ägg, hälsohändelser, m.m.).
 - photos/      Originalfoton grupperade per höna ({hen_id}).
+- diary-photos/ Dagboksbilder grupperade per inlägg.
 - reports/     PDF-rapporter du har genererat.
 
 CSV-format:

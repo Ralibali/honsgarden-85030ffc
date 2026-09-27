@@ -2,11 +2,14 @@
 // then deletes the auth user. Uses a service-role client.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+import { cleanupDiaryPhotos, type DiaryCleanupClient } from "./cleanup-diary-photos.ts";
+
 // Tables keyed by user_id
 const USER_ID_TABLES = [
   "chore_completions",
   "achievement_rewards",
   "health_logs",
+  "brood_origins",
   "egg_logs",
   "feed_records",
   "transactions",
@@ -119,6 +122,15 @@ export async function deleteUserCompletely(userId: string): Promise<{ ok: boolea
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     { auth: { persistSession: false } },
   );
+
+  // Remove diary objects (including unfinished uploads) before deleting their references.
+  // Use the user's own prefix and images attached to their own entries, never another farm's files.
+  try {
+    await cleanupDiaryPhotos(supabaseAdmin as unknown as DiaryCleanupClient, userId);
+  } catch (error) {
+    console.error("[delete-user] diary cleanup failed:", error);
+    return { ok: false, error: "Dagboksbilderna kunde inte raderas. Försök igen." };
+  }
 
   // Skicka bekräftelsemejl INNAN vi raderar (vi behöver email-adressen)
   await sendGoodbyeEmail(supabaseAdmin, userId);
