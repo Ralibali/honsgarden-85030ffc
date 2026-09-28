@@ -237,6 +237,10 @@ export function appleStateFromPayload(
 
 /** Separate independent trial/gift access from the cached Apple expiry. */
 export function independentPremiumExpiry(preferences: unknown, cachedExpiry: string | null | undefined): string | null {
+  const google = (preferences as {google_play?: {verified?: boolean; expires_at?: string; previous_premium_expires_at?: string}} | null)?.google_play;
+  if (google?.verified && google.expires_at && cachedExpiry && Date.parse(google.expires_at) === Date.parse(cachedExpiry)) {
+    cachedExpiry = google.previous_premium_expires_at ?? null;
+  }
   const apple = readAppleIapPreference(preferences);
   if (!apple?.verified || !apple.expires_at || !cachedExpiry || Date.parse(cachedExpiry) !== Date.parse(apple.expires_at)) return cachedExpiry ?? null;
   const raw = (preferences as { apple_iap: Record<string, unknown> }).apple_iap;
