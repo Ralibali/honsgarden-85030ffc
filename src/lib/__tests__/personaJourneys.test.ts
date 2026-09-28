@@ -17,7 +17,7 @@ import { DEMO_UNMAPPED_ALLOWLIST, mapAppPathToDemoFeature } from '../demoHandoff
 const ROOT = join(__dirname, '..', '..');
 
 describe('demo-ytans navigeringshål (persona: Nybörjaren i demo)', () => {
-  const dashboardSrc = readFileSync(join(ROOT, 'pages', 'DashboardV2.tsx'), 'utf8');
+  const dashboardSrc = readFileSync(join(ROOT, 'pages', 'DashboardV3.tsx'), 'utf8');
   const dashComponents = readdirSync(join(ROOT, 'components', 'dashboard'))
     .filter((f) => f.endsWith('.tsx'))
     .map((f) => readFileSync(join(ROOT, 'components', 'dashboard', f), 'utf8'));
@@ -100,7 +100,7 @@ describe('persona-trattar har mätning i varje steg', () => {
 
 describe('plus-personan: entitlement-grind utan nya betalväggar', () => {
   it('premium-insikter på dashboarden grindas via hasCapability, inte PremiumGate', () => {
-    const src = readFileSync(join(ROOT, 'pages', 'DashboardV2.tsx'), 'utf8');
+    const src = readFileSync(join(ROOT, 'pages', 'DashboardV3.tsx'), 'utf8');
     expect(src).toContain("hasCapability(user?.premium_type ?? null, 'advanced_analytics')");
     expect(src).toContain('buildPremiumInsights');
     // Ingen ny betalvägg runt insiktskortet:

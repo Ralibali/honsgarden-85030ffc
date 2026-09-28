@@ -1,3 +1,4 @@
+import { enforceAiLimits } from "../_shared/aiLimits.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAi } from "../_shared/ai.ts";
@@ -114,7 +115,7 @@ async function requireAuthenticatedUser(req: Request) {
   if (error || !data.user) {
     return { error: jsonResponse({ error: "Unauthorized" }, 401) };
   }
-  return { error: null };
+  return { error: null, user: data.user, adminClient: supabase };
 }
 
 serve(async (req) => {
@@ -133,6 +134,9 @@ serve(async (req) => {
     if (ctx.noteText.length > 2000) {
       return jsonResponse({ error: "Noteringen är för lång." }, 400);
     }
+
+    const limitResponse = await enforceAiLimits(auth.adminClient, auth.user.id, "health-note-helper", corsHeaders);
+    if (limitResponse) return limitResponse;
 
     const ai = await callAi({
       model: "google/gemini-2.5-flash",

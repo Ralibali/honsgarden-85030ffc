@@ -222,18 +222,18 @@ export default function WeatherHistoryDetail() {
                   <span className="text-muted-foreground">
                     {new Date(d).toLocaleDateString('sv-SE', { weekday: 'short', day: 'numeric', month: 'short' })}
                   </span>
-                  <span className="text-xl text-center">{getIcon(daily.weathercode[i])}</span>
+                  <span className="text-xl text-center">{daily.weathercode?.[i] != null ? getIcon(daily.weathercode[i]) : '–'}</span>
                   <span className="text-xs text-muted-foreground">
-                    {daily.precipitation_sum[i] > 0 && `${daily.precipitation_sum[i].toFixed(1)} mm`}
-                    {daily.wind_speed_10m_max[i] > 8 && (
-                      <span className="ml-2">💨 {Math.round(daily.wind_speed_10m_max[i])} m/s</span>
+                    {(daily.precipitation_sum?.[i] ?? 0) > 0 && `${daily.precipitation_sum?.[i]?.toFixed(1)} mm`}
+                    {(daily.wind_speed_10m_max?.[i] ?? 0) > 8 && (
+                      <span className="ml-2">💨 {Math.round(daily.wind_speed_10m_max?.[i] ?? 0)} m/s</span>
                     )}
                   </span>
                   <span className="text-right text-muted-foreground tabular-nums">
-                    {Math.round(daily.temperature_2m_min[i])}°
+                    {daily.temperature_2m_min?.[i] != null ? Math.round(daily.temperature_2m_min[i]) : '–'}°
                   </span>
                   <span className="text-right font-medium tabular-nums">
-                    {Math.round(daily.temperature_2m_max[i])}°
+                    {daily.temperature_2m_max?.[i] != null ? Math.round(daily.temperature_2m_max[i]) : '–'}°
                   </span>
                 </div>
               ))}

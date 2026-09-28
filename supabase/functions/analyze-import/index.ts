@@ -1,3 +1,4 @@
+import { enforceAiLimits } from "../_shared/aiLimits.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { callAi } from "../_shared/ai.ts";
 
@@ -30,7 +31,29 @@ serve(async (req) => {
       });
     }
 
-    const { rows, headers } = await req.json();
+    const maxInputBytes = 200_000;
+    const tooLarge = () => new Response(JSON.stringify({ error: "Importen får vara högst 200 kB." }), {
+      status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+    if (Number(req.headers.get("content-length")) > maxInputBytes) return tooLarge();
+    const reader = req.body?.getReader();
+    const decoder = new TextDecoder();
+    let inputBytes = 0;
+    let inputText = "";
+    if (reader) {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        inputBytes += value.byteLength;
+        if (inputBytes > maxInputBytes) {
+          await reader.cancel();
+          return tooLarge();
+        }
+        inputText += decoder.decode(value, { stream: true });
+      }
+      inputText += decoder.decode();
+    }
+    const { rows, headers } = JSON.parse(inputText);
 
     const systemPrompt = `Du är en dataimport-assistent för en svensk hönsgårdsapp kallad Hönsgården. Appen har dessa tabeller:
 
@@ -53,6 +76,13 @@ Analysera kolumnrubrikerna och exempeldata. Returnera ENBART ett JSON-objekt (in
 }
 
 Var smart med kolumnnamn — "Namn" → name, "Ras" → breed, "Antal" → count, "Datum" → date, etc. Hantera svenska och engelska kolumnnamn. Om data ser ut som äggstatistik med datum och antal, sätt detected_type till "egg_logs". Om det är hönslistor med namn/ras, sätt "hens".`;
+
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } },
+    );
+    const limitResponse = await enforceAiLimits(adminClient, user.id, "analyze-import", corsHeaders);
+    if (limitResponse) return limitResponse;
 
     const ai = await callAi({
       model: "google/gemini-3-flash-preview",

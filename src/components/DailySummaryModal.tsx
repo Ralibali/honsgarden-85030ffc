@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Egg, Bird, Sun, Loader2, X } from 'lucide-react';
@@ -15,36 +15,31 @@ export function DailySummaryModal() {
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   
-  const hasChecked = useRef(false);
-
   useEffect(() => {
-    // Only check once per component mount
-    if (hasChecked.current) return;
-    hasChecked.current = true;
-
-    const lastShown = readScoped(user?.id, STORAGE_KEY);
+    if (!user?.id) return;
     const today = new Date().toDateString();
-    if (lastShown === today) return; // Already shown today
-
+    if (readScoped(user.id, STORAGE_KEY) === today) return;
+    let cancelled = false;
     const timer = setTimeout(async () => {
+      if (readScoped(user.id, STORAGE_KEY) === today) return;
+      // Reserve today's display before loading, including concurrent mounts.
+      writeScoped(user.id, STORAGE_KEY, today);
       setLoading(true);
+      setOpen(true);
       try {
         const data = await api.getYesterdaySummary();
-        setSummary(data);
+        if (!cancelled) setSummary(data);
       } catch {
-        setSummary({
+        if (!cancelled) setSummary({
           date: 'Igår',
           eggs: 0,
           tip: 'Kom ihåg att samla ägg tidigt på morgonen för bäst kvalitet!',
         });
       } finally {
-        setLoading(false);
-        setOpen(true);
-        // Mark as shown immediately when opened
-        writeScoped(user?.id, STORAGE_KEY, today);
+        if (!cancelled) setLoading(false);
       }
     }, 800);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [user?.id]);
 
   const handleClose = () => {

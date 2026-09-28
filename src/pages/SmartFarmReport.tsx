@@ -59,7 +59,7 @@ function SmartFarmReportContent() {
     queryKey: ['smart-report-listings'],
     queryFn: async () => {
       const userId = await getCurrentUserId();
-      const { data, error } = await (supabase as any).from('public_egg_sale_listings').select('*').eq('user_id', userId);
+      const { data, error } = await (supabase as any).from('public_egg_sale_listings').select('id, user_id, slug, title, description, image_url, packs_available, eggs_per_pack, price_per_pack, location, pickup_info, contact_info, swish_number, swish_name, swish_message, p6_price, p12_price, p30_price, is_active, reserved_packs, sold_out_manually, created_at, updated_at, stock_packs, stock_source, auto_publish, regular_customer_threshold, latitude, longitude, listing_kind, verified_at, expires_at, theme, sections, price_tiers, reko_enabled, reko_group_name, reko_pickup_location, reko_next_pickup_at, reko_recurring_biweekly, reko_reminder_sent_for').eq('user_id', userId);
       if (error) throw error;
       return data || [];
     },
@@ -140,7 +140,7 @@ export default function SmartFarmReport() {
 
 function Metric({ icon: Icon, label, value, sub, trend }: { icon: any; label: string; value: string | number; sub: string; trend?: number }) {
   const TrendIcon = trend === undefined ? null : trend >= 0 ? TrendingUp : TrendingDown;
-  return <Card className="shadow-sm"><CardContent className="p-4"><div className="flex items-center justify-between mb-2"><Icon className="h-4 w-4 text-primary" />{TrendIcon && <TrendIcon className={`h-4 w-4 ${trend >= 0 ? 'text-success' : 'text-destructive'}`} />}</div><p className="text-2xl font-bold text-foreground tabular-nums">{value}</p><p className="data-label text-[10px] mt-1">{label}</p><p className="text-xs text-muted-foreground mt-1">{sub}</p></CardContent></Card>;
+  return <Card className="shadow-sm"><CardContent className="p-4"><div className="flex items-center justify-between mb-2"><Icon className="h-4 w-4 text-primary" />{TrendIcon && trend !== undefined && <TrendIcon className={`h-4 w-4 ${trend >= 0 ? 'text-success' : 'text-destructive'}`} />}</div><p className="text-2xl font-bold text-foreground tabular-nums">{value}</p><p className="data-label text-[10px] mt-1">{label}</p><p className="text-xs text-muted-foreground mt-1">{sub}</p></CardContent></Card>;
 }
 
 function MiniPanel({ icon: Icon, title, value, text }: { icon: any; title: string; value: string | number; text: string }) {

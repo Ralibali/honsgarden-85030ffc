@@ -1,3 +1,4 @@
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const EMBED_URL = "https://app.trysoro.com/api/embed/bfddd713-72b8-48fc-b6ba-70a659602721";
@@ -19,14 +20,6 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function isAuthorized(req: Request, serviceRoleKey: string) {
-  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  return (
-    (!!serviceRoleKey && bearer === serviceRoleKey) ||
-    (!!cronSecret && req.headers.get("x-cron-secret") === cronSecret)
-  );
-}
 
 function cleanSlug(slug: string) {
   return slug
@@ -60,7 +53,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!supabaseUrl || !serviceKey) return jsonResponse({ error: "Missing backend configuration" }, 500);
-  if (!isAuthorized(req, serviceKey)) return jsonResponse({ error: "Unauthorized" }, 401);
+  if (!isCronAuthorized(req)) return jsonResponse({ error: "Unauthorized" }, 401);
 
   try {
     const embedResponse = await fetch(EMBED_URL, {

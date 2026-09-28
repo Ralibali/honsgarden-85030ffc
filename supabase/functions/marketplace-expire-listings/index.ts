@@ -1,3 +1,4 @@
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.2';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -30,15 +31,6 @@ function escapeHtml(value: string) {
   }[char] ?? char));
 }
 
-function isAuthorized(req: Request) {
-  const auth = req.headers.get('Authorization') ?? '';
-  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
-  const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
-  return (
-    (!!SERVICE_ROLE_KEY && bearer === SERVICE_ROLE_KEY) ||
-    (!!cronSecret && req.headers.get('x-cron-secret') === cronSecret)
-  );
-}
 
 async function sendReminderEmail(toEmail: string, toName: string | null, title: string, daysLeft: number) {
   if (!BREVO_API_KEY) return false;
@@ -81,7 +73,7 @@ async function sendReminderEmail(toEmail: string, toName: string | null, title: 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  if (!isAuthorized(req)) return json({ error: 'Unauthorized' }, 401);
+  if (!isCronAuthorized(req)) return json({ error: 'Unauthorized' }, 401);
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) return json({ error: 'Backend not configured' }, 500);
 
   try {

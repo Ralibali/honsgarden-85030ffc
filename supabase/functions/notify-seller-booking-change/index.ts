@@ -1,9 +1,11 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
 // Notifies the seller when a customer cancels (or otherwise changes) a booking
 // via the public token-based flow (e.g. /avboka/:token).
 // Called from CancelBooking.tsx after the cancellation RPC succeeds.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = PUBLIC_APP_URL;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {
@@ -12,11 +14,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function esc(s: unknown): string {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!),
-  );
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });

@@ -14,6 +14,12 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_monthly_usage: {
+        Row: { user_id: string; month_start: string; request_count: number }
+        Insert: { user_id: string; month_start: string; request_count?: number }
+        Update: { user_id?: string; month_start?: string; request_count?: number }
+        Relationships: []
+      }
       achievement_rewards: {
         Row: {
           achievement_id: string
@@ -3024,16 +3030,25 @@ export type Database = {
       }
       newsletter_subscribers: {
         Row: {
+          confirmed_at: string | null
+          confirm_token: string | null
+          confirmation_sent_at: string | null
           created_at: string
           email: string
           id: string
         }
         Insert: {
+          confirmed_at?: string | null
+          confirm_token?: string | null
+          confirmation_sent_at?: string | null
           created_at?: string
           email: string
           id?: string
         }
         Update: {
+          confirmed_at?: string | null
+          confirm_token?: string | null
+          confirmation_sent_at?: string | null
           created_at?: string
           email?: string
           id?: string
@@ -3344,6 +3359,7 @@ export type Database = {
       }
       public_egg_sale_bookings: {
         Row: {
+          seller_notified_at: string | null
           cancelled_at: string | null
           confirmed_at: string | null
           created_at: string
@@ -3372,6 +3388,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          seller_notified_at?: string | null
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
@@ -3400,6 +3417,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          seller_notified_at?: string | null
           cancelled_at?: string | null
           confirmed_at?: string | null
           created_at?: string
@@ -5009,6 +5027,20 @@ export type Database = {
       }
     }
     Functions: {
+      confirm_newsletter: {
+        Args: { p_token: string }
+        Returns: boolean
+      }
+      consume_ai_monthly_quota: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      enqueue_seller_booking_email: { Args: { p_booking_id: string; p_payload: Json }; Returns: boolean }
+      html_escape: { Args: { value: string }; Returns: string }
+      admin_grant_premium_days: { Args: { _user_id: string; _days: number }; Returns: undefined }
+      admin_set_lifetime_premium: { Args: { _user_id: string; _is_lifetime: boolean }; Returns: undefined }
+      get_my_listing_private: { Args: { p_listing_id: string }; Returns: { owner_email: string | null; contact_phone: string | null; manage_token: string | null }[] }
+
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       apply_apple_iap_entitlement: {
         Args: { _entitlement: Json; _user_id: string }

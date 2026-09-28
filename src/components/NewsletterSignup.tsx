@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Mail, CheckCircle2, Loader2 } from 'lucide-react';
@@ -15,6 +15,23 @@ export default function NewsletterSignup({ variant = 'card', title, description 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    const token = new URLSearchParams(window.location.hash.slice(1)).get('newsletter-confirm');
+    if (!token) return;
+    // Consume the fragment before starting the request (also prevents duplicate mounts).
+    window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+    void supabase.rpc('confirm_newsletter', { p_token: token }).then(({ data, error }) => {
+      if (error || !data) {
+        toast.error('Länken är ogiltig eller redan använd. Anmäl dig igen om du behöver en ny länk.');
+        return;
+      }
+      setConfirmed(true);
+      setSuccess(true);
+      toast.success('Din prenumeration är bekräftad!');
+    });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,31 +43,26 @@ export default function NewsletterSignup({ variant = 'card', title, description 
 
     setLoading(true);
     const { error } = await supabase
-      .from('newsletter_subscribers' as any)
-      .insert({ email: trimmed } as any);
+      .from('newsletter_subscribers')
+      .insert({ email: trimmed });
 
     setLoading(false);
 
     if (error) {
-      if (error.code === '23505') {
-        toast.info('Du prenumererar redan!');
-        setSuccess(true);
-      } else {
-        toast.error('Något gick fel. Försök igen.');
-      }
+      toast.error('Något gick fel. Försök igen.');
       return;
     }
 
     setSuccess(true);
-    toast.success('Tack! Du är nu prenumerant 🎉');
+    toast.success('Kontrollera din inkorg och bekräfta prenumerationen.');
   };
 
   if (success) {
     return (
       <div className={variant === 'card' ? 'rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-6 sm:p-8 text-center' : 'text-center py-4'}>
         <CheckCircle2 className="h-8 w-8 text-primary mx-auto mb-2" />
-        <p className="font-serif text-lg text-foreground">Tack för din prenumeration!</p>
-        <p className="text-sm text-muted-foreground mt-1">Du får våra bästa tips direkt i inkorgen.</p>
+        <p className="font-serif text-lg text-foreground">{confirmed ? 'Tack för din prenumeration!' : 'Bekräfta i din inkorg'}</p>
+        <p className="text-sm text-muted-foreground mt-1">{confirmed ? 'Du får våra bästa tips direkt i inkorgen.' : 'Klicka på länken i bekräftelsemejlet. Vi skickar högst en ny länk per dygn till adresser som ännu inte är bekräftade.'}</p>
       </div>
     );
   }

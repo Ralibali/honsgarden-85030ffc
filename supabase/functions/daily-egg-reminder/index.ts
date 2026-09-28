@@ -1,3 +1,6 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Daily egg-count reminder. Runs via pg_cron at 17:00 UTC (≈19:00 CEST/18:00 CET).
 // Sends a short evening nudge to users who:
 //   - have at least one active hen
@@ -6,16 +9,12 @@
 // Email is enqueued via the standard pgmq queue, same pattern as weekly-report.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app/app";
+const APP_URL = `${PUBLIC_APP_URL}/app`;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -140,7 +139,7 @@ Deno.serve(async (req) => {
   <div style="text-align:center;margin-bottom:20px;">
     <img src="${LOGO_URL}" alt="Hönsgården" width="56" height="56" style="border-radius:14px" />
   </div>
-  <h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(142,32%,28%);margin:0 0 12px;">Hej ${name}!</h1>
+  <h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(142,32%,28%);margin:0 0 12px;">Hej ${esc(name)}!</h1>
   <p style="font-size:15px;line-height:1.55;color:hsl(22,12%,30%);margin:0 0 16px;">
     Det är kväll och du har inte loggat dagens äggräkning än. Det tar 10 sekunder
     och håller din streak igång.

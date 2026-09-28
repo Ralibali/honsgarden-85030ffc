@@ -1,0 +1,54 @@
+// deno run --no-config --allow-read --allow-env tests/rls/phase7-newsletter.mjs
+import assert from 'node:assert/strict';
+import { readFile, readdir } from 'node:fs/promises';
+const { PGlite } = await import(process.env.PGLITE_MODULE || 'npm:@electric-sql/pglite@0.5.8');
+const db = new PGlite();
+await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+CREATE TABLE public.newsletter_subscribers(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),email text UNIQUE NOT NULL,created_at timestamptz DEFAULT now());
+ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY signup ON public.newsletter_subscribers FOR INSERT WITH CHECK(true);
+GRANT ALL ON public.newsletter_subscribers TO anon, authenticated, service_role;
+INSERT INTO newsletter_subscribers(email) VALUES('Legacy@Example.test');
+CREATE TABLE mail_queue(payload jsonb);
+CREATE FUNCTION public.enqueue_email(queue_name text,payload jsonb) RETURNS void LANGUAGE plpgsql AS $$ BEGIN
+IF current_setting('test.queue_down',true)='on' THEN RAISE EXCEPTION 'queue unavailable'; END IF;
+INSERT INTO mail_queue VALUES(payload); END; $$;`);
+const dir=new URL('../../supabase/migrations/',import.meta.url);
+const files=await readdir(dir);
+const phase3=await readFile(new URL(files.find(f=>f.endsWith('_phase3_safe_email_and_bookings.sql')),dir),'utf8');
+await db.exec(phase3.match(/CREATE OR REPLACE FUNCTION public\.html_escape[\s\S]*?\$\$;/i)[0]);
+const sql=await readFile(new URL(files.find(f=>f.endsWith('_phase7_newsletter_double_opt_in.sql')),dir),'utf8');
+await db.exec(sql);await db.exec(sql);
+assert.equal((await db.query('SELECT count(*)::int n FROM mail_queue')).rows[0].n,0);
+await db.exec("SET ROLE anon; INSERT INTO newsletter_subscribers(email) VALUES('NEW@Example.test'); RESET ROLE;");
+const original=(await db.query("SELECT * FROM newsletter_subscribers WHERE email='new@example.test'")).rows[0];
+assert.equal(original.confirmed_at,null); assert.ok(original.confirm_token); assert.ok(original.confirmation_sent_at);
+let mails=(await db.query('SELECT payload FROM mail_queue')).rows;
+assert.equal(mails.length,1); assert.ok(mails[0].payload.html.includes('#newsletter-confirm='+original.confirm_token));
+await db.exec("SET ROLE anon; INSERT INTO newsletter_subscribers(email) VALUES(' new@EXAMPLE.test '); RESET ROLE;");
+assert.equal((await db.query('SELECT count(*)::int n FROM mail_queue')).rows[0].n,1);
+await db.exec('SET ROLE anon');
+await assert.rejects(()=>db.query('SELECT confirm_token FROM newsletter_subscribers'),/permission denied/);
+await assert.rejects(()=>db.exec("INSERT INTO newsletter_subscribers(email,confirmed_at) VALUES('spoof@example.test',now())"),/permission denied/);
+assert.equal((await db.query('SELECT confirm_newsletter(gen_random_uuid()) ok')).rows[0].ok,false);
+assert.equal((await db.query('SELECT confirm_newsletter($1) ok',[original.confirm_token])).rows[0].ok,true);
+assert.equal((await db.query('SELECT confirm_newsletter($1) ok',[original.confirm_token])).rows[0].ok,false);
+await db.exec("INSERT INTO newsletter_subscribers(email) VALUES('new@example.test'); RESET ROLE;");
+assert.equal((await db.query('SELECT count(*)::int n FROM mail_queue')).rows[0].n,1);
+assert.ok((await db.query("SELECT confirmed_at FROM newsletter_subscribers WHERE email='new@example.test'")).rows[0].confirmed_at);
+await db.exec("SET ROLE anon; INSERT INTO newsletter_subscribers(email) VALUES('legacy@example.test'); RESET ROLE;");
+const firstLegacy=(await db.query("SELECT confirm_token FROM newsletter_subscribers WHERE email='Legacy@Example.test'")).rows[0].confirm_token;
+assert.equal((await db.query('SELECT count(*)::int n FROM newsletter_subscribers')).rows[0].n,2);
+await db.exec("UPDATE newsletter_subscribers SET confirmation_sent_at=now()-interval '25 hours' WHERE email='Legacy@Example.test'; SET ROLE anon; INSERT INTO newsletter_subscribers(email) VALUES('legacy@example.test'); RESET ROLE;");
+assert.notEqual((await db.query("SELECT confirm_token FROM newsletter_subscribers WHERE email='Legacy@Example.test'")).rows[0].confirm_token,firstLegacy);
+assert.equal((await db.query('SELECT confirm_newsletter($1) ok',[firstLegacy])).rows[0].ok,false);
+await db.exec("SET test.queue_down='on'; SET ROLE anon;");
+await assert.rejects(()=>db.exec("INSERT INTO newsletter_subscribers(email) VALUES('retry@example.test')"),/queue unavailable/);
+await db.exec("RESET ROLE; SET test.queue_down='off'; SET ROLE anon; INSERT INTO newsletter_subscribers(email) VALUES('retry@example.test'); RESET ROLE;");
+for (const role of ['anon','authenticated']) {
+ assert.equal((await db.query(`SELECT has_column_privilege('${role}','newsletter_subscribers','confirm_token','SELECT') ok`)).rows[0].ok,false);
+ assert.equal((await db.query(`SELECT has_column_privilege('${role}','newsletter_subscribers','confirmed_at','INSERT') ok`)).rows[0].ok,false);
+}
+await db.close();
+console.log('PASS phase 7: confirmation privacy, single-use token, daily normalized-email dedup, legacy resend and queue rollback');

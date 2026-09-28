@@ -1,3 +1,4 @@
+import { enforceAiLimits } from "../_shared/aiLimits.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAi } from "../_shared/ai.ts";
@@ -103,6 +104,13 @@ serve(async (req) => {
     if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
 
     const input = await req.json().catch(() => ({}));
+
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      { auth: { persistSession: false } },
+    );
+    const limitResponse = await enforceAiLimits(adminClient, user.id, "egg-sales-marketing", corsHeaders);
+    if (limitResponse) return limitResponse;
 
     const ai = await callAi({
       model: "google/gemini-2.5-flash",

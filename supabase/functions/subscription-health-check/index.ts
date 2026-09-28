@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
@@ -14,26 +16,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
-  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us.
-  const auth = req.headers.get("Authorization") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
-  let okProjectJwt = false;
-  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
-    try {
-      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
-      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
-    } catch (_) {
-      okProjectJwt = false;
-    }
-  }
-  if (!okServiceKey && !okSecret && !okProjectJwt) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -145,7 +128,7 @@ serve(async (req) => {
         items.length === 0
           ? "<p style=\"color:#888;font-size:13px;\">Inga.</p>"
           : `<ul style="font-size:13px;color:#333;line-height:1.6;">${items
-              .map((i) => `<li>${JSON.stringify(i)}</li>`)
+              .map((i) => `<li>${esc(JSON.stringify(i))}</li>`)
               .join("")}</ul>`;
 
       const html = `
@@ -194,13 +177,13 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, totalIssues, issues }), {
+    return new Response(JSON.stringify({ ok: true, totalIssues, counts: { duplicates: issues.duplicates.length, orphan_premium: issues.orphan_premium.length, out_of_sync: issues.out_of_sync.length } }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[subscription-health-check] fatal", message);
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ ok: false, totalIssues: 0, counts: {} }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

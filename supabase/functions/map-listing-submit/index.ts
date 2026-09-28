@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
 // Submit an anonymous "simple" egg listing for the public map.
 // No auth required. Sends a magic link email for verification + management.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
@@ -8,7 +10,7 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const SITE = "https://honsgarden.lovable.app";
+const SITE = PUBLIC_APP_URL;
 
 function slugify(s: string) {
   return s
@@ -156,7 +158,7 @@ Deno.serve(async (req) => {
         html: `<div style="font-family: Inter, Arial, sans-serif; max-width: 540px; padding: 30px 25px;">
           <img src="https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png" width="140" alt="Hönsgården" style="margin: 0 0 24px;" />
           <h1 style="font-family: 'Young Serif', Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Bekräfta din äggannons</h1>
-          <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">Hej! Klicka nedan för att publicera din annons <strong>${title.replace(/</g, "&lt;")}</strong> på äggkartan. Annonsen ligger uppe i 60 dagar.</p>
+          <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">Hej! Klicka nedan för att publicera din annons <strong>${esc(title)}</strong> på äggkartan. Annonsen ligger uppe i 60 dagar.</p>
           <a href="${verifyUrl}" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">Publicera annons →</a>
           <p style="font-size: 13px; color: hsl(22,12%,44%); margin: 24px 0 6px;">Spara denna länk för att redigera, pausa eller ta bort annonsen senare:</p>
           <p style="font-size: 13px; margin: 0 0 24px;"><a href="${manageUrl}" style="color: hsl(142,32%,34%);">${manageUrl}</a></p>

@@ -1,7 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingHeroV3 from '@/components/landing/LandingHeroV3';
-import ContextualShopCta from '@/components/ContextualShopCta';
 import { useSeo } from '@/hooks/useSeo';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { motion } from 'framer-motion';
@@ -299,12 +298,6 @@ export default function IndexUpdated() {
                 ))}
               </Accordion>
             </motion.div>
-          </div>
-        </section>
-
-        <section className="pb-4" style={{ background: 'var(--hg-cream)' }}>
-          <div className="container max-w-2xl mx-auto px-5 sm:px-6">
-            <ContextualShopCta path="/" />
           </div>
         </section>
 

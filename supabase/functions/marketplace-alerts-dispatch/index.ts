@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
@@ -69,29 +71,29 @@ function buildEmail(profileName: string | null, listings: Listing[], alertSummar
 
   const itemsHtml = listings
     .map((l) => {
-      const url = `${SITE_URL}/marknad/${l.slug}`;
+      const url = `${SITE_URL}/marknad/${encodeURIComponent(l.slug)}`;
       const where = l.city || l.region || '';
       return (
         `<div style="border:1px solid hsl(22,15%,90%);border-radius:14px;padding:14px 16px;margin:0 0 12px;background:#fff;">` +
-        `<a href="${url}" style="color:hsl(22,18%,12%);font-weight:600;font-size:15px;text-decoration:none;">${l.title}</a>` +
+        `<a href="${esc(url)}" style="color:hsl(22,18%,12%);font-weight:600;font-size:15px;text-decoration:none;">${esc(l.title)}</a>` +
         `<div style="margin-top:4px;color:hsl(142,32%,34%);font-weight:600;font-size:14px;">${formatPrice(l.price, l.is_giveaway)}</div>` +
         (where
-          ? `<div style="margin-top:2px;color:hsl(22,12%,44%);font-size:13px;">📍 ${where}</div>`
+          ? `<div style="margin-top:2px;color:hsl(22,12%,44%);font-size:13px;">📍 ${esc(where)}</div>`
           : '') +
-        `<div style="margin-top:10px;"><a href="${url}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Öppna annons →</a></div>` +
+        `<div style="margin-top:10px;"><a href="${esc(url)}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Öppna annons →</a></div>` +
         `</div>`
       );
     })
     .join('');
 
   const summaryHtml = alertSummaries.length
-    ? `<p style="font-size:13px;color:hsl(22,12%,44%);margin:0 0 18px;">Matchar dina bevakningar: <strong>${alertSummaries.join(' · ')}</strong></p>`
+    ? `<p style="font-size:13px;color:hsl(22,12%,44%);margin:0 0 18px;">Matchar dina bevakningar: <strong>${esc(alertSummaries.join(' · '))}</strong></p>`
     : '';
 
   const html =
     `<div style="font-family:Inter,Arial,sans-serif;max-width:560px;padding:30px 25px;background:#fff;">` +
     `<img src="https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png" width="140" alt="Hönsgården" style="margin:0 0 24px;" />` +
-    `<h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 14px;">${greeting}</h1>` +
+    `<h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 14px;">${esc(greeting)}</h1>` +
     `<p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 16px;">Vi hittade <strong>${listings.length}</strong> ny${listings.length === 1 ? '' : 'a'} annons${listings.length === 1 ? '' : 'er'} som matchar din bevakning på Marknaden.</p>` +
     summaryHtml +
     itemsHtml +
@@ -104,7 +106,7 @@ function buildEmail(profileName: string | null, listings: Listing[], alertSummar
     `Vi hittade ${listings.length} nya annonser som matchar din bevakning på Marknaden.`,
     '',
     ...listings.map(
-      (l) => `• ${l.title} – ${formatPrice(l.price, l.is_giveaway)} – ${l.city || l.region || ''}\n  ${SITE_URL}/marknad/${l.slug}`,
+      (l) => `• ${l.title} – ${formatPrice(l.price, l.is_giveaway)} – ${l.city || l.region || ''}\n  ${SITE_URL}/marknad/${encodeURIComponent(l.slug)}`,
     ),
     '',
     `Hantera bevakningar: ${SITE_URL}/app/marknad/mina`,
@@ -236,13 +238,9 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
-  // Auth: accept service-role bearer or CRON_SECRET (Bearer or x-cron-secret header)
-  const auth = req.headers.get('Authorization') ?? '';
+  // Auth: service-role bearer or x-cron-secret header
   const serviceKeyAuth = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
-  const provided = auth.replace('Bearer ', '').trim();
-  const okSecret = cronSecret && (provided === cronSecret || req.headers.get('x-cron-secret') === cronSecret);
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

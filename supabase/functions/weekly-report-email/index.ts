@@ -1,16 +1,15 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { callAi } from "../_shared/ai.ts";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
-const APP_URL = "https://honsgarden.lovable.app/app";
+const APP_URL = `${PUBLIC_APP_URL}/app`;
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -146,7 +145,7 @@ Deno.serve(async (req) => {
   <p style="font-size: 13px; color: hsl(22,12%,55%); margin: 0 0 24px;">${weekLabel}</p>
 
   <p style="font-size: 15px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 24px;">
-    Hej <strong>${displayName}</strong>! Här är en sammanfattning av din vecka på gården.
+    Hej <strong>${esc(displayName)}</strong>! Här är en sammanfattning av din vecka på gården.
   </p>
 
   <!-- Stats cards -->
@@ -189,7 +188,7 @@ Deno.serve(async (req) => {
   <!-- AI tip -->
   <div style="background: hsl(142,32%,96%); border-left: 4px solid hsl(142,32%,34%); border-radius: 0 12px 12px 0; padding: 16px 20px; margin: 0 0 24px;">
     <p style="font-size: 13px; color: hsl(142,32%,28%); margin: 0;">
-      💡 <strong>Veckans tips:</strong> ${aiInsight}
+      💡 <strong>Veckans tips:</strong> ${esc(aiInsight)}
     </p>
   </div>
   ` : ""}

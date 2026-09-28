@@ -1,15 +1,14 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 const ADMIN_EMAIL = "info@auroramedia.se";
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -79,8 +78,8 @@ Deno.serve(async (req) => {
     for (const u of newUsers) {
       const time = new Date(u.created_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
       userRows += `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,35%);">${u.display_name || "—"}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,50%);">${u.email || "—"}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,35%);">${esc(u.display_name || "—")}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,50%);">${esc(u.email || "—")}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,50%);">${time}</td>
       </tr>`;
     }
@@ -91,7 +90,7 @@ Deno.serve(async (req) => {
     for (const p of premiumEvents) {
       const time = new Date(p.created_at).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
       premiumRows += `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,35%);">${p.recipient_email}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,35%);">${esc(p.recipient_email)}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid hsl(35,32%,92%); font-size: 13px; color: hsl(22,12%,50%);">${time}</td>
       </tr>`;
     }
@@ -165,7 +164,7 @@ Deno.serve(async (req) => {
     ${premiumRows}
   </table>` : ""}
 
-  <a href="https://honsgarden.lovable.app/app/admin" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; font-weight: 600; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">
+  <a href="${PUBLIC_APP_URL}/app/admin" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; font-weight: 600; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">
     Öppna adminpanelen →
   </a>
 

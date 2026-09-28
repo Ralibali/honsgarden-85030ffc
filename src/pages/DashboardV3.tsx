@@ -18,7 +18,20 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import QuickEggLogCard from '@/components/dashboard/QuickEggLogCard';
 import HenRaceCard from '@/components/dashboard/HenRaceCard';
 import OnboardingChecklistCard from '@/components/dashboard/OnboardingChecklistCard';
-import StreakRescueCard from '@/components/dashboard/StreakRescueCard';
+import { StreakFlame } from '@/components/StreakFlame';
+import Achievements, { buildAchievements } from '@/components/Achievements';
+import AchievementNudge from '@/components/AchievementNudge';
+import EggGoalsWidget from '@/components/EggGoalsWidget';
+import { CountUp } from '@/components/CountUp';
+import { DailySummaryModal } from '@/components/DailySummaryModal';
+import PremiumInsightsCard from '@/components/dashboard/PremiumInsightsCard';
+import SmartUpsellCard from '@/components/SmartUpsellCard';
+import YearReportPromoCard from '@/components/dashboard/YearReportPromoCard';
+import InstallAppCard from '@/components/InstallAppCard';
+import { hasCapability } from '@/lib/entitlements';
+import { buildPremiumInsights } from '@/lib/premiumInsights';
+import { isNativePlatform } from '@/lib/nativePlatform';
+import { isStandalonePwa } from '@/lib/pwaUpdate';
 import TrialExpiryBanner from '@/components/TrialExpiryBanner';
 import DiaryCard from '@/components/diary/DiaryCard';
 
@@ -154,6 +167,10 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     queryKey: ['feed-records'],
     queryFn: () => api.getFeedRecords(),
   });
+  const { data: transactions = [] } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: () => api.getTransactions(),
+  });
   const { data: weather, isLoading: weatherLoading } = useQuery({
     queryKey: ['dashboard-local-weather'],
     queryFn: fetchLocalWeather,
@@ -208,7 +225,19 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const pendingChores = chores.filter((chore: any) => !chore.completed).length;
   const streak = calculateStreak(eggs, now);
   const showOnboarding = hens.length === 0 || eggs.length === 0;
-  const showStreakRescue = !showOnboarding && streak > 0 && todayEggs === 0;
+  const showStreak = !showOnboarding && streak > 0;
+  const achievements = useMemo(
+    () => buildAchievements(eggs, hens, streak, feedRecords, transactions, chores),
+    [eggs, hens, streak, feedRecords, transactions, chores],
+  );
+  const canSeeInsights = hasCapability(user?.premium_type ?? null, 'advanced_analytics');
+  const premiumInsights = useMemo(
+    () => canSeeInsights ? buildPremiumInsights(eggs, hens, feedRecords, todayKey) : [],
+    [canSeeInsights, eggs, hens, feedRecords, todayKey],
+  );
+  const isFreeUser = !!user && user.subscription_status !== 'premium' && (!user.premium_type || user.premium_type === 'free');
+  const isYearReportSeason = now.getMonth() === 0 || now.getMonth() === 11;
+  const totalEggsLogged = eggs.reduce((sum, egg) => sum + (egg.count || 0), 0);
   const weatherText = weatherSentence(weather);
   const agdaText = agdaSentence({
     activeHens,
@@ -220,7 +249,8 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
 
   return (
     <div className="today-v3 max-w-2xl mx-auto pb-8" aria-labelledby="today-heading">
-      <TrialExpiryBanner />
+      {!demo && <TrialExpiryBanner />}
+      {!demo && user?.id && !showOnboarding && <DailySummaryModal />}
 
       <section className="today-v3__hero hg-today-hero" aria-label="Min hönsgård idag">
         <div className="today-v3__hero-stars" aria-hidden="true" />
@@ -256,9 +286,9 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
         </section>
       )}
 
-      {showStreakRescue && (
+      {showStreak && (
         <section className="today-v3__adaptive" aria-label="Dagens loggserie">
-          <StreakRescueCard streak={streak} todayEggs={todayEggs} />
+          <StreakFlame streak={streak} variant="card" />
         </section>
       )}
 
@@ -270,7 +300,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
         <div className="today-v3__journal-lines">
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/eggs')}>
             <span className="today-v3__line-icon"><Egg className="h-5 w-5" /></span>
-            <span className="today-v3__line-copy"><strong>{todayEggs} ägg idag</strong><small>{yesterdayEggs === todayEggs ? 'Samma som igår hittills' : `${yesterdayEggs} loggades igår`}</small></span>
+            <span className="today-v3__line-copy"><strong><CountUp value={todayEggs} duration={700} /> ägg idag</strong><small>{yesterdayEggs === todayEggs ? 'Samma som igår hittills' : `${yesterdayEggs} loggades igår`}</small></span>
             <ChevronRight className="h-4 w-4" />
           </button>
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/hens')}>
@@ -316,6 +346,25 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
       )}
 
       <section className="today-v3__race" aria-label="Veckans värptävling"><HenRaceCard eggs={eggs} hens={hens} /></section>
+
+      <section className="today-v3__adaptive" aria-label="Äggmål"><EggGoalsWidget eggs={eggs} /></section>
+      <section className="today-v3__adaptive" aria-label="Framsteg">
+        <AchievementNudge achievements={achievements} />
+        <Achievements achievements={achievements} eggs={eggs} hens={hens} streak={streak} />
+      </section>
+      {canSeeInsights && premiumInsights.length > 0 && (
+        <section className="today-v3__adaptive" aria-label="Plus-insikter">
+          <PremiumInsightsCard insights={premiumInsights} trendDirection={weekDelta > 0 ? 'up' : weekDelta < 0 ? 'down' : null} />
+        </section>
+      )}
+      {!demo && isFreeUser && (
+        <section className="today-v3__adaptive" aria-label="Tips för din gård">
+          {isYearReportSeason ? <YearReportPromoCard /> : (
+            <SmartUpsellCard streak={streak} totalEggs={totalEggsLogged} henCount={activeHens} />
+          )}
+        </section>
+      )}
+      {!demo && !isNativePlatform() && !isStandalonePwa() && <InstallAppCard />}
 
       <footer className="today-v3__footer-note"><span aria-hidden="true">🌿</span><p>Du behöver inte hålla koll på allt. Logga det som hjälper dig – Hönsgården tar hand om resten.</p></footer>
     </div>

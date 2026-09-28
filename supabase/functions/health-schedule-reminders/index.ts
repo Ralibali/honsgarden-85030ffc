@@ -1,9 +1,12 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Dygnsjobb: skickar påminnelser för förebyggande hälsoschema OCH
 // notis när ägg-karens upphör.
 // Schemaläggs via pg_cron.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app/app/health";
+const APP_URL = `${PUBLIC_APP_URL}/app/health`;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {
@@ -15,11 +18,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const auth = req.headers.get("Authorization") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
   }
 
@@ -74,8 +73,8 @@ Deno.serve(async (req) => {
           subject,
           html: `<div style="font-family:Inter,Arial,sans-serif;max-width:540px;padding:30px 25px;">`
             + `<img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin:0 0 24px;" />`
-            + `<h1 style="font-family:Young Serif,Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 16px;">Dags för ${s.title}</h1>`
-            + `<p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Status: <strong>${status}</strong> · Gäller: <strong>${target}</strong> · Förfaller ${s.next_due_date}.</p>`
+            + `<h1 style="font-family:Young Serif,Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 16px;">Dags för ${esc(s.title)}</h1>`
+            + `<p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Status: <strong>${status}</strong> · Gäller: <strong>${esc(target)}</strong> · Förfaller ${s.next_due_date}.</p>`
             + `<a href="${APP_URL}" style="background-color:hsl(142,32%,34%);color:hsl(35,32%,97%);font-size:14px;border-radius:14px;padding:12px 24px;text-decoration:none;display:inline-block;">Öppna hälsologgen →</a>`
             + `<p style="font-size:12px;color:#999;margin:30px 0 0;">Du får detta mejl för att du har lagt upp ett återkommande hälsoschema i Hönsgården.</p>`
             + `</div>`,
@@ -142,7 +141,7 @@ Deno.serve(async (req) => {
             html: `<div style="font-family:Inter,Arial,sans-serif;max-width:540px;padding:30px 25px;">`
               + `<img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin:0 0 24px;" />`
               + `<h1 style="font-family:Young Serif,Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 16px;">Karensen är över</h1>`
-              + `<p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Karenstiden efter <strong>${ev.title}</strong> har passerat. Äggen från <strong>${target}</strong> kan nu användas och säljas som vanligt igen.</p>`
+              + `<p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Karenstiden efter <strong>${esc(ev.title)}</strong> har passerat. Äggen från <strong>${esc(target)}</strong> kan nu användas och säljas som vanligt igen.</p>`
               + `<a href="${APP_URL}" style="background-color:hsl(142,32%,34%);color:hsl(35,32%,97%);font-size:14px;border-radius:14px;padding:12px 24px;text-decoration:none;display:inline-block;">Öppna hälsologgen →</a>`
               + `</div>`,
             text: `Karenstiden efter ${ev.title} är slut. Äggen från ${target} får ätas igen.`,

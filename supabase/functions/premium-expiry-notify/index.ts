@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { dispatchAuroraNotification } from "../_shared/aurora-notify.ts";
 
@@ -5,12 +7,8 @@ const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/pub
 const APP_URL = (Deno.env.get("PUBLIC_APP_ORIGIN") ?? "https://honsgarden.se").replace(/\/$/, "");
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -59,7 +57,7 @@ Deno.serve(async (req) => {
   </h1>
 
   <p style="font-size: 15px; color: hsl(22,12%,44%); line-height: 1.7; margin: 0 0 20px;">
-    Hej <strong>${displayName}</strong>! Vi ville bara berätta att din Premium-period på Hönsgården har avslutats.
+    Hej <strong>${esc(displayName)}</strong>! Vi ville bara berätta att din Premium-period på Hönsgården har avslutats.
   </p>
 
   <p style="font-size: 15px; color: hsl(22,12%,44%); line-height: 1.7; margin: 0 0 20px;">
