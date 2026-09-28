@@ -197,6 +197,11 @@ export function isIosCheckoutBlocked(
   return header === "ios" || body === "ios";
 }
 
+export function isNativeCheckoutBlocked(platformHeader: string | null | undefined, bodyPlatform: unknown): boolean {
+  const platforms = [platformHeader, bodyPlatform].map(value => typeof value === 'string' ? value.trim().toLowerCase() : '');
+  return platforms.some(platform => platform === 'ios' || platform === 'android');
+}
+
 export function assertAppleAccountToken(payload: AppleTransactionPayload, userId: string): void {
   if (!payload.appAccountToken || payload.appAccountToken.toLowerCase() !== userId.toLowerCase()) {
     throw new Error("Apple purchase belongs to another account or has no account binding");

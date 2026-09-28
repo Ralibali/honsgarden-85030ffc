@@ -44,6 +44,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Test native push account and session binding
+        run: npm run test:native-push-db
+
       - name: Build
         run: npm run build
         env:
@@ -103,8 +106,13 @@ jobs:
         with:
           deno-version: v2.9.6
       - name: Check billing edge functions
-        run: deno check --node-modules-dir=none --no-config supabase/functions/verify-apple-subscription/index.ts supabase/functions/apple-subscription-webhook/index.ts supabase/functions/check-subscription/index.ts supabase/functions/create-checkout/index.ts supabase/functions/stripe-webhook/index.ts
+        run: deno check --node-modules-dir=none --no-config supabase/functions/verify-apple-subscription/index.ts supabase/functions/apple-subscription-webhook/index.ts supabase/functions/check-subscription/index.ts supabase/functions/create-checkout/index.ts supabase/functions/stripe-webhook/index.ts supabase/functions/verify-google-subscription/index.ts supabase/functions/google-play-notifications/index.ts
+      - name: Check remote push edge functions
+        run: deno check --node-modules-dir=none --no-config supabase/functions/send-push-notification/index.ts supabase/functions/send-push/index.ts
       - name: Reject forged Apple purchases and notifications
         run: deno run --node-modules-dir=none --no-config --allow-env supabase/tests/apple-jws.mjs
       - name: Test billing grants in isolated PostgreSQL
         run: deno run --node-modules-dir=none --no-config --allow-read --allow-env supabase/tests/apple-billing.mjs
+
+      - name: Test Google billing ownership and provider reconciliation
+        run: deno run --node-modules-dir=none --no-config --allow-read --allow-env supabase/tests/google-billing.mjs

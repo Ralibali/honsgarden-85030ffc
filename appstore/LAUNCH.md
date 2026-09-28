@@ -1,36 +1,46 @@
-# Lanseringskontroll – 2026-09-07
+# Lanseringskontroll – 2026-09-08
 
-## Nuvarande status
+## Verifierad status
 
-Webbändringar är byggda för granskning. Ingen iOS-binär har signerats, laddats upp eller skickats till App Review i detta arbete.
+**Hönsgården är inte inskickad eller publicerad i App Store.** Ett signerat utvecklingsbygge har körts på ägarens iPhone. Ägaren har bekräftat att layouten för Idag, Dagbok och Plus ser bra ut. Senare lokala ändringar för Android och native OAuth är ännu inte färdigtestade och ingår inte i den bekräftelsen.
 
-Appen är registrerad i App Store Connect: Apple ID 6809292574, bundle se.honsgarden.app, version 1.0, SKU honsgarden-ios-001 och primärt språk svenska. Medlemskapet är aktivt och de två webbavtalen är accepterade. App-ID har In-App Purchase, Push Notifications och Sign in with Apple. Gruppen Hönsgården Plus (22364905) och månadsprodukten (6809294113) är skapade. Månadspris 39 SEK är förberett men inte sparat; uttryckligt prisgodkännande är begärt för 39 SEK/mån och 299 SEK/år. Årsprodukt, fullständig produktmetadata, skatt/bank och sandbox-köp återstår. Paid Apps Agreement står som New och Apple kräver uppdaterade juridiska säljaruppgifter innan det kan tecknas. DSA-status är inte angiven.
+Appen finns i App Store Connect: Apple ID **6809292574**, bundle **se.honsgarden.app**, version **1.0**, SKU **honsgarden-ios-001** och svenska som primärt språk. Utvecklarmedlemskapet är aktivt och Xcode är konfigurerat. App-ID har In-App Purchase, Push Notifications och Sign in with Apple.
 
-Xcode visar fortfarande sitt separata licensavtal; godkännande är begärt. Ingen signerad binär eller TestFlight-uppladdning är verifierad. Backendändringarna beskrivs i [betalningsdriftsättning](BILLING.md); kodtest är inte ett genomfört köp.
+Plus-gruppen **22364905** innehåller båda prenumerationerna:
 
-## Förberett i koden
+| Produkt | Produkt-ID | Svenskt pris |
+| --- | --- | --- |
+| Månad, 6809294113 | se.honsgarden.plus.monthly | 39 SEK/månad |
+| År, 6809432659 | se.honsgarden.plus.yearly | 299 SEK/år |
 
-- Dagbok med äldre inlägg, sökning, redigering och skydd för osparad text.
-- iOS startar i /app, med korrekt inloggningskontroll, i stället för marknadsföringssidan. Webbens startsida finns kvar.
-- Delat Xcode-schema App för arkivering och separat release-entitlement för production-push. Återanvänder de relevanta filerna från befintlig PR #51; övriga delar av den PR:n är inte automatiskt införda.
-- Pris från StoreKit används i iOS. Inget svenskt webbpris visas som ersättning när Apple-produkter inte kan laddas.
-- Återställ köp, kontoradering, Apple-inloggning och backend för StoreKit finns i repot sedan tidigare. Att koden finns är inte ett genomfört enhetstest på iPhone.
-- App Store-texten har rensats från obestyrkta tidslöften, generella offlinelöften och antaganden om åldersgräns/rättigheter.
+Paid Apps Agreement står fortfarande som **New**. Säljaren visas fortfarande som ett personligt konto medan konverteringen till bolagskonto väntar på Apple. Bank- och skatteuppgifter behöver slutföras för rätt juridisk säljare. I DSA-flödet har kontaktmejl och telefon verifierats; styrkande namndokument återstår. DSA-verifieringen är därmed inte färdig.
 
-## Nästa steg i ordning
+StoreKit har ännu inte returnerat riktiga produkter i det installerade bygget. Ett genomfört köp, återställning och abonnemangets livscykel är därför **inte verifierade**. Appen visar ett tydligt meddelande och en återförsöksknapp när priser saknas.
 
-1. Slutför Xcodes separata licens och inloggning. Medlemskap och de två webbavtalen är verifierade. Kontrollera separat Paid Applications Agreement och bank/skatt.
-2. Bygg webbpaketet: npm ci och npm run build. Kör npx cap sync ios. Öppna ios/App/App.xcodeproj, välj App och rätt team.
-3. Kontrollera se.honsgarden.app, Sign in with Apple, In-App Purchase och push-provisionering. Kontrollera aktuellt byggnummer mot App Store Connect.
-4. Verifiera de två prenumerationsprodukterna och servernotifikationer. Backendfunktionerna verify-apple-subscription och apple-subscription-webhook finns i repo; drift och serververifierade köp är ännu inte bekräftade här.
-5. Arkivera Release och ladda upp till TestFlight. Prova på fysisk iPhone: registrering, inloggning, dagbok, omstart, tillfälligt nätavbrott, foto, köp, återställning, abonnemangshantering och kontoradering med avsett testkonto. Kontrollera också iPad.
-6. Ta bilder från samma binär. Fyll i integritetsfrågor och åldersfrågeformulär utifrån faktisk funktion. Kontrollera communityrapportering/blockering och att granskningskontot fungerar.
-7. Granska det kompletta inskickspaketet tillsammans med ägaren. Skicka till App Review och hantera eventuell återkoppling. Apple avgör godkännandet.
+## Förberett och bevarat
 
-Det befintliga audit:native-skriptet kontrollerar projektfiler. Även om det visar TESTFLIGHT_READY betyder det inte att signering, faktisk betalning, uppladdning eller App Review är verifierade.
+- Dagboken läser samma lagrade dagboksanteckningar som tidigare, med paginering för äldre historik. Designarbetet flyttar eller raderar inga anteckningar.
+- Appen startar i `/app`, använder inloggningskontroll och har anpassade marginaler för telefonens statusfält och nedersta meny.
+- Priser kommer från respektive appbutik i native-appen. Webbpriser används inte som ersättning när en butik inte svarar.
+- Backend för Apples signerade transaktioner och servernotifikationer har driftsatts. Driftkod och enhetstester ersätter inte ett verkligt sandbox-köp.
+- Native OAuth med extern webbläsare och PKCE är förberett lokalt. Redirect-adresser och hela inloggningsflödet måste verifieras innan nästa releasebygge.
+- Android-arbetet och dess återstående krav beskrivs i [ANDROID.md](ANDROID.md).
+- Det senaste lokala webbbygget och 859 automatiska tester passerar. Frontend och pushserver klarar typkontrollerna. Det aktuella webbpaketet är synkat till båda nativeprojekten; enhetstester och butiksbyggen återstår.
+- Fjärrnotiser för iOS och Android har förberetts lokalt. Ny sessionsbunden registrering, APNs/FCM-utskick och avregistrering är testade med testdata. Konfiguration, driftsättning och verkliga enhetstester återstår enligt [PUSH.md](PUSH.md).
 
-## Källor
+## Återstår före App Review
+
+1. Slutför Apples bolagsbyte, juridiska säljaruppgifter, Paid Apps Agreement, bank/skatt och DSA-dokumentation.
+2. Slutför och testa de lokala kodändringarna. Bygg webbpaketet, synka iOS och arkivera Release med rätt team, rätt byggnummer och produktionsentitlements.
+3. Ladda upp till TestFlight och testa registrering, inloggning, äldre dagbokshistorik, omstart, nätavbrott, foto, Plus-köp, återställning, abonnemangshantering och kontoradering med avsedda testkonton. Kontrollera stödda iPad-layouter.
+4. Ta butiksskärmbilder från samma binär. Slutför butikstext, integritetsdeklaration, åldersfrågor, communityrapportering/blockering och granskningskonto utifrån faktisk funktion.
+5. Skicka det verifierade paketet till App Review och hantera Apples eventuella återkoppling. Publiceringsmandat finns; tekniska kontroller och verkliga återstående avtalssteg måste fortfarande vara klara.
+
+Ett lokalt bygge, ett grönt test eller en TestFlight-uppladdning betyder inte att appen är publicerad. Kontrollera den faktiska statusen i App Store Connect efter varje steg.
+
+## Referenser
 
 - [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/)
 - [App Store Connect](https://appstoreconnect.apple.com/)
+- [StoreKit-produkter i sandbox](https://developer.apple.com/documentation/technotes/tn3186-troubleshooting-in-app-purchases-availability-in-the-sandbox)
 - [Apples bildspecifikationer](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)

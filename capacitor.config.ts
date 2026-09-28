@@ -8,9 +8,13 @@ const config: CapacitorConfig = {
   // För live-reload under utveckling, lägg tillbaka ett server-block tillfälligt:
   // server: { url: 'http://192.168.x.x:8080', cleartext: true },
   ios: {
-    contentInset: 'always',
+    // The app header and tab bar own safe-area padding; do not add it twice.
+    contentInset: 'never',
   },
   plugins: {
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'banner', 'list'],
+    },
     SplashScreen: {
       launchShowDuration: 1500,
       launchAutoHide: true,

@@ -7,6 +7,7 @@ import {
   entitlementFromApplePayload,
   isAppleIapActive,
   isIosCheckoutBlocked,
+  isNativeCheckoutBlocked,
   isKnownAppleProductId,
   mergeAppleIapPreference,
   pickLatestAppleEntitlement,
@@ -158,5 +159,17 @@ describe('verified Apple billing states', () => {
     const gift = new Date(now.getTime() + 60000).toISOString();
     expect(independentPremiumExpiry({apple_iap: {...state, previous_premium_expires_at: gift}}, state.expires_at)).toBe(gift);
     expect(independentPremiumExpiry({apple_iap: state}, gift)).toBe(gift);
+  });
+});
+
+
+describe('native store checkout policy', () => {
+  it.each(['ios', 'android', ' Android '])('blocks web checkout for %s', platform => {
+    expect(isNativeCheckoutBlocked(platform, null)).toBe(true);
+    expect(isNativeCheckoutBlocked('web', platform)).toBe(true);
+  });
+  it('keeps browser checkout available', () => {
+    expect(isNativeCheckoutBlocked('web', { platform: 'android' })).toBe(false);
+    expect(isNativeCheckoutBlocked(null, undefined)).toBe(false);
   });
 });

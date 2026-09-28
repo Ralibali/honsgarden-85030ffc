@@ -1,3 +1,5 @@
+import { isNativePlatform } from '@/lib/nativePlatform';
+import { NATIVE_RECOVERY_REDIRECT } from '@/lib/nativeAuth';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -175,7 +177,7 @@ export default function Login() {
     setLoading(true);
     try {
       await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: isNativePlatform() ? NATIVE_RECOVERY_REDIRECT : `${window.location.origin}/reset-password`,
       });
       toast({ title: 'E-post skickad!', description: 'Kolla din inkorg för att återställa lösenordet.' });
     } catch (err) {

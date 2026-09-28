@@ -15,7 +15,8 @@ Deno.serve(async (req) => {
   const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
   const rawSubject = Deno.env.get("VAPID_SUBJECT") ?? "";
   const vapidSubject = /^(mailto:|https?:\/\/)/i.test(rawSubject) ? rawSubject : "mailto:info@auroramedia.se";
-  if (!serviceKey || !vapidPublic || !vapidPrivate) {
+  const webConfigured = !!vapidPublic && !!vapidPrivate;
+  if (!serviceKey) {
     return new Response(JSON.stringify({ error: "config" }), { status: 500, headers: corsHeaders });
   }
 
@@ -23,12 +24,13 @@ Deno.serve(async (req) => {
 
   // Publik endpoint: returnera VAPID public key (behövs av klienten för subscribe)
   if (body.get_public_key) {
+    if (!vapidPublic) return new Response(JSON.stringify({ error: 'Web push unavailable' }), { status: 503, headers: corsHeaders });
     return new Response(JSON.stringify({ public_key: vapidPublic }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+  if (webConfigured) webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
   const auth = req.headers.get("Authorization") ?? "";
@@ -56,6 +58,7 @@ Deno.serve(async (req) => {
     }
   }
   if (targetUserIds.length === 0) return new Response(JSON.stringify({ sent: 0 }), { headers: corsHeaders });
+  if (!isService && !webConfigured) return new Response(JSON.stringify({ error: 'Web push unavailable' }), { status: 503, headers: corsHeaders });
 
   const { data: subs, error } = await admin
     .from("push_subscriptions").select("id, endpoint, p256dh, auth").in("user_id", targetUserIds);
@@ -64,7 +67,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify({ title, body: message, url: clickUrl, tag: body.tag ?? "honsgarden" });
   let sent = 0;
   const dead: string[] = [];
-  await Promise.all((subs ?? []).map(async (s: any) => {
+  await Promise.all((webConfigured ? subs ?? [] : []).map(async (s: any) => {
     try {
       await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
       sent++;
@@ -73,7 +76,23 @@ Deno.serve(async (req) => {
     }
   }));
   if (dead.length) await admin.from("push_subscriptions").delete().in("endpoint", dead);
-  return new Response(JSON.stringify({ sent, pruned: dead.length }), {
+  let nativeSent = 0;
+  let nativeFailed = 0;
+  // Scheduled reminders use the same delivery path as the native device test.
+  // A browser's own test stays in the browser.
+  if (isService) {
+    for (let offset = 0; offset < targetUserIds.length; offset += 200) {
+      const { data, error: nativeError } = await admin.functions.invoke('send-push-notification', {
+        body: { user_ids: targetUserIds.slice(offset, offset + 200), title, body: message, data: { url: clickUrl } },
+      });
+      if (nativeError || data?.error) nativeFailed++;
+      else {
+        nativeSent += typeof data?.sent === 'number' ? data.sent : 0;
+        nativeFailed += Array.isArray(data?.failed) ? data.failed.length : 0;
+      }
+    }
+  }
+  return new Response(JSON.stringify({ sent: sent + nativeSent, web_sent: sent, native_sent: nativeSent, native_failed: nativeFailed, pruned: dead.length }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 });

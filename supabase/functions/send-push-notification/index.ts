@@ -1,10 +1,13 @@
-// Skickar native push till iOS-enheter via APNs (HTTP/2 JWT).
+// Native remote push through APNs and FCM HTTP v1.
 // Kräver secrets: APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, APNS_PRIVATE_KEY (P8-innehållet).
 // Optional: APNS_ENV = "production" | "sandbox" (default: production)
+import { googleAccessToken } from '../_shared/googleServiceAccount.ts';
+import { deliverApns } from '../_shared/apnsDelivery.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 interface PushPayload {
+  device_token?: string;
   user_id?: string;
   user_ids?: string[];
   title: string;
@@ -12,6 +15,14 @@ interface PushPayload {
   data?: Record<string, unknown>;
   badge?: number;
   sound?: string;
+}
+
+interface RegisteredDevice {
+  token: string;
+  platform: 'ios' | 'android';
+  user_id: string;
+  updated_at: string;
+  device_info: Record<string, unknown> | null;
 }
 
 function base64UrlEncode(input: ArrayBuffer | string): string {
@@ -79,11 +90,12 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+    const isService = authHeader === `Bearer ${serviceKey}`;
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userRes } = await userClient.auth.getUser();
-    if (!userRes.user) {
+    const { data: userRes } = isService ? { data: { user: null } } : await userClient.auth.getUser();
+    if (!isService && !userRes.user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -91,7 +103,7 @@ Deno.serve(async (req) => {
     }
 
     const payload = (await req.json()) as PushPayload;
-    if (!payload?.title || !payload?.body) {
+    if (typeof payload?.title !== 'string' || typeof payload?.body !== 'string' || !payload.title || !payload.body || payload.title.length > 200 || payload.body.length > 2000) {
       return new Response(JSON.stringify({ error: 'title and body required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -102,24 +114,25 @@ Deno.serve(async (req) => {
 
     // SECURITY: Never trust client-supplied user_id/user_ids. Only admins may
     // target other users; regular callers can only push to their own devices.
-    const { data: isAdmin } = await admin.rpc('has_role', {
-      _user_id: userRes.user.id,
+    const { data: isAdmin } = isService ? { data: true } : await admin.rpc('has_role', {
+      _user_id: userRes.user!.id,
       _role: 'admin',
     });
 
     const requested = payload.user_ids ?? (payload.user_id ? [payload.user_id] : null);
     const targetIds = isAdmin && requested && requested.length > 0
-      ? requested
-      : [userRes.user.id];
+      ? requested.slice(0, 200)
+      : userRes.user ? [userRes.user.id] : [];
+    if (!targetIds.length) return new Response(JSON.stringify({ sent: 0 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-    const { data: tokens, error: tokErr } = await admin
-      .from('device_tokens')
-      .select('token, platform')
-      .in('user_id', targetIds)
-      .eq('platform', 'ios');
+    // Revoked/expired sessions and legacy unbound registrations receive nothing.
+    const { data: tokens, error: tokErr } = await admin.rpc('active_native_push_tokens', {
+      p_user_ids: targetIds,
+      p_token: typeof payload.device_token === 'string' ? payload.device_token : null,
+    });
     if (tokErr) throw tokErr;
     if (!tokens || tokens.length === 0) {
-      return new Response(JSON.stringify({ sent: 0, note: 'no iOS tokens' }), {
+      return new Response(JSON.stringify({ sent: 0, note: 'no registered devices' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -129,20 +142,6 @@ Deno.serve(async (req) => {
     const bundleId = Deno.env.get('APNS_BUNDLE_ID');
     const privateKey = Deno.env.get('APNS_PRIVATE_KEY');
     const env = Deno.env.get('APNS_ENV') ?? 'production';
-    if (!keyId || !teamId || !bundleId || !privateKey) {
-      return new Response(
-        JSON.stringify({
-          error:
-            'APNS-secrets saknas (APNS_KEY_ID, APNS_TEAM_ID, APNS_BUNDLE_ID, APNS_PRIVATE_KEY)',
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    const jwt = await getApnsJwt(keyId, teamId, privateKey);
-    const host =
-      env === 'sandbox' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com';
-
     const apnsPayload = JSON.stringify({
       aps: {
         alert: { title: payload.title, body: payload.body },
@@ -150,29 +149,54 @@ Deno.serve(async (req) => {
         badge: payload.badge,
       },
       data: payload.data ?? {},
+      url: typeof payload.data?.url === 'string' ? payload.data.url : '/app',
     });
 
+    let fcmAuthorization: ReturnType<typeof googleAccessToken> | undefined;
+    let apnsAuthorization: Promise<string> | undefined;
     const results = await Promise.allSettled(
-      tokens.map(async (t) => {
-        const res = await fetch(`https://${host}/3/device/${t.token}`, {
-          method: 'POST',
-          headers: {
-            authorization: `bearer ${jwt}`,
-            'apns-topic': bundleId,
-            'apns-push-type': 'alert',
-            'content-type': 'application/json',
-          },
-          body: apnsPayload,
-        });
-        if (!res.ok) {
-          const txt = await res.text();
-          // Ogiltiga tokens (410 / BadDeviceToken) städas bort
-          if (res.status === 410 || txt.includes('BadDeviceToken')) {
-            await admin.from('device_tokens').delete().eq('token', t.token);
+      tokens.map(async (t: RegisteredDevice) => {
+        if (t.platform === 'android') {
+          const credentials = Deno.env.get('FCM_SERVICE_ACCOUNT_JSON');
+          if (!credentials) throw new Error('FCM server configuration missing');
+          fcmAuthorization ??= googleAccessToken(credentials, 'https://www.googleapis.com/auth/firebase.messaging');
+          const access = await fcmAuthorization;
+          const response = await fetch(`https://fcm.googleapis.com/v1/projects/${access.projectId}/messages:send`, {
+            method: 'POST', signal: AbortSignal.timeout(15_000),
+            headers: { Authorization: `Bearer ${access.token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: { token: t.token,
+              notification: { title: payload.title, body: payload.body },
+              data: { url: typeof payload.data?.url === 'string' ? payload.data.url : '/app' },
+              android: { priority: 'high', notification: { channel_id: 'honsgarden', sound: 'default' } },
+            } }),
+          });
+          if (!response.ok) {
+            const result = await response.json().catch(() => null);
+            if (result?.error?.details?.some((detail: { errorCode?: string }) => detail.errorCode === 'UNREGISTERED')) {
+              await admin.from('device_tokens').delete().eq('token', t.token).eq('user_id', t.user_id).eq('updated_at', t.updated_at);
+            }
+            throw new Error(`FCM delivery failed (${response.status})`);
           }
-          throw new Error(`APNs ${res.status}: ${txt}`);
+          return true;
         }
-        return t.token;
+        if (t.platform !== 'ios') throw new Error('Unsupported push platform');
+        if (!keyId || !teamId || !bundleId || !privateKey) throw new Error('APNs server configuration missing');
+        apnsAuthorization ??= getApnsJwt(keyId, teamId, privateKey);
+        const jwt = await apnsAuthorization;
+        const environment = t.device_info?.apns_environment ?? env;
+        if (environment !== 'sandbox' && environment !== 'production') throw new Error('APNs environment invalid');
+        const delivery = await deliverApns({ token: t.token, jwt, bundleId, payload: apnsPayload, environment });
+        if (!delivery.accepted) {
+          if (delivery.expired) {
+            await admin.from('device_tokens').delete().eq('token', t.token).eq('user_id', t.user_id).eq('updated_at', t.updated_at);
+          }
+          throw new Error(`APNs delivery failed (${delivery.status})`);
+        }
+        if (t.device_info?.apns_environment !== delivery.environment) {
+          await admin.from('device_tokens').update({ device_info: { ...t.device_info, apns_environment: delivery.environment } })
+            .eq('token', t.token).eq('user_id', t.user_id).eq('updated_at', t.updated_at);
+        }
+        return true;
       }),
     );
 

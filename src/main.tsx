@@ -23,10 +23,18 @@ import "./honsgarden-egg-v8.css";
 import "./honsgarden-flock-v9.css";
 import "./honsgarden-eggbook-v10.css";
 import "./honsgarden-home-v3.css";
+import "./honsgarden-app-polish.css";
+import "./app-fonts.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
+
+document.documentElement.classList.toggle('native-app', isNativePlatform());
+if (isNativePlatform()) {
+  void import('@/lib/nativeAuth').then(({ initializeNativeAuth }) => initializeNativeAuth())
+    .catch(() => console.warn('Native authentication could not initialize'));
+}
 
 // Restore theme preference before render to avoid flash
 const savedTheme = localStorage.getItem('theme');

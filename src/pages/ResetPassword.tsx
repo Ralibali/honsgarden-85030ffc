@@ -1,3 +1,4 @@
+import { hasNativeRecoverySession, clearNativeRecoverySession } from '@/lib/nativeAuth';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,7 +31,7 @@ export default function ResetPassword() {
   });
 
   useEffect(() => {
-    const status = getRecoveryLinkStatus();
+    const status = hasNativeRecoverySession() ? 'present' : getRecoveryLinkStatus();
     if (status === 'missing') {
       setLinkIssue('missing');
       return;
@@ -79,6 +80,7 @@ export default function ResetPassword() {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
+      clearNativeRecoverySession();
       setSuccess(true);
       toast({ title: 'Lösenord uppdaterat!', description: 'Du kan nu logga in med ditt nya lösenord.' });
       setTimeout(() => navigate('/login?mode=login', { replace: true }), 2500);

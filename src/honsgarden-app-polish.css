@@ -1,0 +1,192 @@
+/* Shared application chrome and semantic page styles. No marketing selectors. */
+/* Standalone login/legal screens also need clearance with native insets disabled. */
+.native-app body:not(:has(.honsgarden-app-shell)) {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.honsgarden-view,
+.honsgarden-app-shell {
+  --background: 42 38% 97%;
+  --foreground: 148 27% 16%;
+  --card: 45 50% 99%;
+  --card-foreground: 148 27% 16%;
+  --popover: 45 50% 99%;
+  --popover-foreground: 148 27% 16%;
+  --primary: 142 36% 25%;
+  --primary-foreground: 45 60% 97%;
+  --muted: 39 30% 92%;
+  --border: 40 18% 86%;
+  --input: 40 18% 86%;
+  --ring: 142 36% 25%;
+  --muted-foreground: 110 6% 41%;
+  background: #f8f7f2;
+}
+.dark.honsgarden-view,
+.dark .honsgarden-app-shell {
+  --background: 145 20% 9%;
+  --foreground: 43 35% 92%;
+  --card: 145 17% 13%;
+  --card-foreground: 43 35% 92%;
+  --popover: 145 17% 13%;
+  --popover-foreground: 43 35% 92%;
+  --primary: 93 30% 60%;
+  --primary-foreground: 145 28% 10%;
+  --muted: 145 14% 16%;
+  --border: 145 12% 25%;
+  --input: 145 12% 25%;
+  --ring: 93 30% 60%;
+  --muted-foreground: 43 12% 70%;
+  background: #111c16;
+}
+.honsgarden-app-shell.noise-bg::before { display: none; }
+.honsgarden-view body, .honsgarden-app-shell { font-family: 'HG Inter', Inter, system-ui, sans-serif; }
+.honsgarden-app-shell :is(h1, h2, h3, .font-serif),
+.honsgarden-view [role='dialog'] :is(h1, h2, h3, .font-serif) { font-family: 'HG Young Serif', 'Young Serif', Georgia, serif !important; }
+.honsgarden-app-shell > div.flex-1 > .app-mobile-header {
+  min-height: calc(60px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 16px 0;
+  background: hsl(var(--background) / .97);
+  border-bottom: 1px solid hsl(var(--border) / .7);
+  box-shadow: none;
+}
+.app-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 2px;
+  border-radius: 10px;
+  color: hsl(var(--primary));
+  background: hsl(var(--primary) / .09);
+}
+.app-header-action { width: 44px; height: 44px; display: grid; place-items: center; }
+.honsgarden-app-shell main.app-main { padding-top: 20px; }
+.honsgarden-app-shell[data-app-section] .app-page-header {
+  gap: 18px; padding: 0; border: 0; border-radius: 0;
+  background: transparent !important; box-shadow: none; overflow: visible;
+}
+.honsgarden-app-shell .app-page-header::after { display: none; }
+.honsgarden-app-shell .app-page-header__emoji {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: hsl(var(--primary) / .07); border: 0; box-shadow: none;
+}
+.honsgarden-app-shell .app-page-header__title { font-size: 1.85rem !important; line-height: 1.2; }
+.honsgarden-app-shell .app-page-header__subtitle { font-size: 14px !important; line-height: 1.55; }
+.honsgarden-app-shell :is(button, a, input, textarea):focus-visible,
+.hg-mobile-menu :is(button, a):focus-visible {
+  outline: 2px solid hsl(var(--primary)); outline-offset: 3px;
+}
+
+/* A stable, readable tab bar; the diary is always one tap away. */
+.hg-bottom-nav { box-shadow: none; background: hsl(var(--background) / .98); }
+.hg-bottom-nav__item { height: 60px; font-size: 11px; font-weight: 600; gap: 4px; }
+.hg-bottom-nav__icon { width: 44px; height: 28px; border-radius: 10px; }
+.hg-bottom-nav__item.is-active .hg-bottom-nav__icon { background: hsl(var(--primary) / .11); }
+.hg-mobile-menu[role='dialog'] {
+  position: fixed; z-index: 80;
+  left: max(10px, env(safe-area-inset-left, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  width: auto !important;
+  max-width: none !important;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+  overflow-y: auto; border-radius: 24px !important;
+  padding-bottom: 12px;
+}
+.hg-mobile-menu .hg-more-sheet__header { padding: 22px 20px 18px; }
+.hg-mobile-menu .hg-more-sheet__close { width: 44px; height: 44px; flex-shrink: 0; }
+.hg-mobile-menu .hg-more-row { min-height: 52px; }
+.hg-mobile-menu .hg-more-group__heading p { display: none; }
+.hg-mobile-menu .hg-more-quick__item { position: relative; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; }
+.hg-mobile-menu .hg-more-quick__item > span:nth-child(2) { width: 100%; }
+.hg-mobile-menu .hg-more-quick__item strong { font-family: 'HG Inter', Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.4; }
+.hg-mobile-menu .hg-more-quick__item small { font-size: 12px; line-height: 1.5; }
+.hg-mobile-menu .hg-more-quick__item .hg-more-plus { position: absolute; top: 14px; right: 12px; }
+.honsgarden-view [role='dialog'] { color: hsl(var(--foreground)); }
+.honsgarden-view input[type='date'] { color-scheme: light; }
+.dark.honsgarden-view input[type='date'] { color-scheme: dark; }
+/* Keep compact controls shaped correctly while retaining a generous hit area. */
+.honsgarden-view button[role='checkbox'] { position: relative; min-height: 20px; height: 20px; width: 20px; border-radius: 5px; }
+.honsgarden-view button[role='switch'] { position: relative; min-height: 24px; height: 24px; }
+.honsgarden-view button:is([role='checkbox'], [role='switch'])::after { content: ''; position: absolute; inset: -12px -6px; }
+.honsgarden-app-shell[data-app-section='flock'] #main-content [role='combobox'] {
+  background: hsl(var(--background)) !important; color: hsl(var(--foreground)); border-color: hsl(var(--border)) !important;
+}
+
+/* One calm farm image, with enough room for names and large text. */
+.honsgarden-app-shell .today-v3 .today-v3__hero.hg-today-hero {
+  min-height: 196px !important;
+  padding: 24px !important;
+  border-radius: 22px !important;
+  box-shadow: none !important;
+  align-items: flex-start;
+  text-align: left;
+}
+.honsgarden-app-shell .today-v3__hero-copy { width: 100%; max-width: none; }
+.honsgarden-app-shell .today-v3 .today-v3__hero h1 {
+  font-family: 'HG Young Serif', 'Young Serif', Georgia, serif !important;
+  font-size: clamp(1.9rem, 7.5vw, 2.65rem) !important;
+  line-height: 1.08 !important;
+  text-wrap: pretty !important;
+}
+.honsgarden-app-shell .today-v3__hero-status { font-size: 13px; line-height: 1.5; max-width: none; }
+.honsgarden-app-shell .today-v3__hero-stars,
+.honsgarden-app-shell .today-v3__hero-meteor { display: none; }
+.honsgarden-app-shell .egg-counter-v3 {
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 22px !important;
+  background: hsl(var(--card)) !important;
+  box-shadow: 0 4px 18px rgb(30 50 35 / .035) !important;
+}
+.honsgarden-app-shell .egg-counter-v3::after { display: none; }
+.honsgarden-app-shell .egg-counter-v3 .egg-counter-v3__button { box-shadow: none; border-radius: 16px; }
+.honsgarden-app-shell .today-v3__journal-lines { border-bottom: 1px solid hsl(var(--border)); }
+.honsgarden-app-shell .today-v3__line-copy small { font-size: 13px; line-height: 1.45; }
+
+/* Plus: offer and price come before secondary account actions. */
+.premium-page { color: hsl(var(--foreground)); }
+.premium-intro { padding: 8px 2px 4px; }
+.premium-intro__badge { display: inline-flex; align-items: center; gap: 8px; color: hsl(var(--primary)); font-size: 13px; font-weight: 600; }
+.premium-page .premium-intro h1 {
+  margin: 14px 0 12px; max-width: 560px;
+  font-size: clamp(1.9rem, 7.5vw, 2.65rem); line-height: 1.16;
+  letter-spacing: -.025em;
+}
+.premium-intro__description { max-width: 520px; font-size: 15px; line-height: 1.6; color: hsl(var(--muted-foreground)); }
+.premium-intro__free { display: flex; align-items: center; gap: 8px; margin-top: 18px; font-size: 12px; line-height: 1.5; color: hsl(var(--muted-foreground)); }
+.premium-plan { display: flex; flex-direction: column; border-radius: 20px; box-shadow: none; }
+.premium-plan--recommended { border-width: 2px; }
+.premium-plan__badge {
+  padding: 9px 20px; background: hsl(var(--primary) / .08); color: hsl(var(--primary));
+  border-bottom: 1px solid hsl(var(--primary) / .12); font-size: 12px; font-weight: 600;
+}
+.premium-plan__content { display: flex; flex-direction: column; flex: 1; }
+.premium-plan__content h2 { font-size: 1.4rem; }
+.premium-plan__content > button { min-height: 48px; }
+.premium-plan__content > p { line-height: 1.65; }
+.premium-plan .text-4xl { font-family: 'HG Inter', Inter, system-ui, sans-serif; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.premium-account-actions { padding-top: 0; }
+.premium-account-actions button { font-size: 12px; min-height: 44px; }
+.premium-benefits { border-radius: 20px; box-shadow: none; }
+.premium-benefits h2 { font-size: 1.5rem; line-height: 1.25; }
+.premium-benefits .grid > div { background: transparent; border-color: hsl(var(--border) / .6); border-radius: 12px; }
+
+/* Journal entries have consistent typography and a quiet date divider. */
+.diary-intro { border: 0; background: hsl(var(--primary) / .055); }
+.diary-entry { border-radius: 20px; box-shadow: none; }
+.diary-entry > div:first-child { padding-bottom: 12px; border-bottom: 1px solid hsl(var(--border) / .7); }
+.diary-entry > p { font-size: 15px; line-height: 1.8; }
+.diary-entry time { font-size: 13px; }
+.diary-entry button { font-size: 12px; }
+
+@media (max-width: 767px) {
+  .honsgarden-app-shell main.app-main { padding-inline: 16px !important; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important; }
+  .honsgarden-app-shell .app-page-header__actions { width: 100%; }
+  .honsgarden-app-shell .app-page-header__actions > button:only-child { width: 100%; min-height: 48px; }
+  .honsgarden-app-shell[data-app-section='flock'] .app-page-header__actions { display: flex !important; }
+  .honsgarden-app-shell[data-app-section='flock'] .app-page-header__actions > div { width: 100%; }
+  .honsgarden-app-shell[data-app-section='flock'] .app-page-header__actions button { flex: 1; min-width: 0; min-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .honsgarden-app-shell *, .hg-mobile-menu { animation: none !important; transition: none !important; }
+}

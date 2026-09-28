@@ -26,9 +26,9 @@ export default function Diary({ demo = false }: { demo?: boolean }) {
     if (!next && params.has('write')) { const nextParams = new URLSearchParams(params); nextParams.delete('write'); setParams(nextParams, { replace: true }); }
   }
 
-  return <div data-private-content className="max-w-2xl mx-auto space-y-6 pb-8">
+  return <div data-private-content className="diary-page max-w-2xl mx-auto space-y-6 pb-8">
     <PageHeader title="Dagbok" emoji="📖" subtitle="Små minnen. Stora händelser. Din flock, med dina ord." actions={<Button className="gap-2 min-h-11 rounded-xl" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="h-4 w-4" />Skriv i dagboken</Button>} />
-    <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3">
+    <div className="diary-intro rounded-2xl border border-primary/15 bg-primary/5 p-4 flex gap-3">
       <BookOpen className="h-5 w-5 text-primary shrink-0 mt-0.5" />
       <div><p className="text-sm font-medium">Din berättelse om hönsgården</p><p className="text-sm text-muted-foreground mt-1">Dagboken ingår gratis. Här finns även dina tidigare dagboksinlägg samlade.</p></div>
     </div>
@@ -40,8 +40,8 @@ export default function Diary({ demo = false }: { demo?: boolean }) {
         <h2 className="font-serif text-2xl">{search ? 'Inga inlägg matchade sökningen' : 'Vad vill du minnas från idag?'}</h2>
         <p className="text-muted-foreground text-sm mt-2 mb-5">{search ? 'Prova ett annat ord eller rensa sökningen.' : 'Det behöver inte vara märkvärdigt. Ett par rader räcker.'}</p>
         <Button variant="outline" onClick={() => { if (search) setSearch(''); else { setEditing(null); setOpen(true); } }}>{search ? 'Rensa sökningen' : 'Skriv ditt första inlägg'}</Button>
-      </section> : <div className="space-y-4">
-        {entries.slice(0, limit).map((entry) => <article key={entry.id} className="rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
+      </section> : <div className="diary-entries space-y-4">
+        {entries.slice(0, limit).map((entry) => <article key={entry.id} className="diary-entry rounded-2xl border bg-card p-5 sm:p-6 shadow-sm">
           <div className="flex items-center justify-between gap-3 mb-3"><time dateTime={entry.date} className="text-sm font-medium text-primary">{diaryDateLabel(entry.date)}</time><Button variant="ghost" size="sm" className="gap-1.5 min-h-11" aria-label={`Redigera inlägg från ${diaryDateLabel(entry.date)}`} onClick={() => { setEditing(entry); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /><span>Redigera</span></Button></div>
           <p className="whitespace-pre-wrap break-words leading-relaxed text-foreground/90">{entry.description || 'Tomt dagboksinlägg'}</p>
         </article>)}

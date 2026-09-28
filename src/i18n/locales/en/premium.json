@@ -5,8 +5,9 @@
     "og_image_alt": "Honsgarden Plus – AI and finance for backyard flocks"
   },
   "hero": {
-    "badge": "Premium with AI, insights and finance",
-    "title": "Turn Honsgarden into your smart flock assistant",
+    "badge": "Honsgarden Plus",
+    "title": "A little more help with your flock",
+    "description": "Get to know your flock with Agda, useful insights and tools that make everyday care easier.",
     "free_trial": "Egg logging and your diary are always free",
     "trial_status": "You have a Plus trial",
     "trial_status_days": "You have a Plus trial · {{count}} days left",
@@ -87,7 +88,10 @@
   "ios": {
     "restore": "Restore purchases",
     "manage_appstore": "Manage in App Store",
-    "products_unavailable": "Plus in the iOS app is sold through the App Store. Existing web Plus still unlocks here. Use Restore purchases after changing devices.",
+    "products_unavailable": "Some App Store prices couldn't be loaded right now. Please try again in a moment.",
+    "loading_price": "Loading price from the App Store…",
+    "price_unavailable": "Price is currently unavailable",
+    "retry_prices": "Try loading prices again",
     "trust_appstore": "Payment via the App Store",
     "restore_none_title": "No App Store purchase found",
     "restore_none_desc": "If you already have Plus on the web, tap Sync premium status.",
@@ -96,5 +100,20 @@
   },
   "free_reassurance": "Keep logging eggs and writing your diary for free. Your entries remain available without Plus.",
   "terms_link": "Terms",
-  "privacy_link": "Privacy"
+  "privacy_link": "Privacy",
+  "android": {
+    "restore": "Restore purchases",
+    "manage_appstore": "Manage in Google Play",
+    "products_unavailable": "Some Google Play prices couldn't be loaded right now. Please try again in a moment.",
+    "loading_price": "Loading price from the Google Play…",
+    "price_unavailable": "Price is currently unavailable",
+    "retry_prices": "Try loading prices again",
+    "trust_appstore": "Payment via the Google Play",
+    "restore_none_title": "No Google Play purchase found",
+    "restore_none_desc": "If you already have Plus on the web, tap Sync premium status.",
+    "restore_fail_title": "Could not restore purchases",
+    "restore_fail_desc": "Please try again in a moment.",
+    "pending_title": "Payment awaiting confirmation",
+    "pending_desc": "Plus activates after Google Play confirms payment. You do not need to buy again."
+  }
 }

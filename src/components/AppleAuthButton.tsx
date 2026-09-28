@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { lovable } from '@/integrations/lovable/index';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { isNativeIos } from '@/lib/nativePlatform';
+import { isNativeIos, isNativeAndroid } from '@/lib/nativePlatform';
 
 /** Apples logotyp enligt deras riktlinjer (ärver textfärg). */
 function AppleLogo() {
@@ -45,13 +45,15 @@ export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps
       trackEvent('OAuth Started', { provider: 'apple', mode });
 
       if (isNativeIos()) {
-        try {
-          await signInWithNativeApple();
-          window.location.href = '/app';
-          return;
-        } catch (nativeError) {
-          console.warn('[AppleAuth] native Sign in with Apple failed, falling back', nativeError);
-        }
+        await signInWithNativeApple();
+        window.location.href = '/app';
+        return;
+      }
+
+      if (isNativeAndroid()) {
+        const { signInWithNativeOAuth } = await import('@/lib/nativeAuth');
+        await signInWithNativeOAuth('apple');
+        return;
       }
 
       const result = await lovable.auth.signInWithOAuth('apple', {
@@ -65,12 +67,17 @@ export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps
 
       window.location.href = '/app';
     } catch (err) {
-      setLoading(false);
+      // Cancelling Apple's sheet must leave the user here, without starting web OAuth.
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'SIGN_IN_CANCELED') {
+        return;
+      }
       toast({
         title: 'Apple-inloggning misslyckades',
         description: err instanceof Error ? err.message : 'Försök igen eller använd e-post.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
