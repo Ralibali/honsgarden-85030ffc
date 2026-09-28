@@ -26,7 +26,7 @@ export default function AgdaAdminPanel() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('public_egg_sale_listings')
-        .select('*')
+        .select('id, user_id, slug, title, description, image_url, packs_available, eggs_per_pack, price_per_pack, location, pickup_info, contact_info, swish_number, swish_name, swish_message, p6_price, p12_price, p30_price, is_active, reserved_packs, sold_out_manually, created_at, updated_at, stock_packs, stock_source, auto_publish, regular_customer_threshold, latitude, longitude, listing_kind, verified_at, expires_at, theme, sections, price_tiers, reko_enabled, reko_group_name, reko_pickup_location, reko_next_pickup_at, reko_recurring_biweekly, reko_reminder_sent_for')
         .order('updated_at', { ascending: false })
         .limit(1000);
       if (error) throw error;
@@ -571,7 +571,7 @@ export default function AgdaAdminPanel() {
             active.forEach((b) => {
               const key = String(b.customer_phone || '').replace(/\s+/g, '') || String(b.customer_name || '').toLowerCase();
               if (!key) return;
-              const row = customerMap.get(key) || { name: b.customer_name || 'Kund', phone: b.customer_phone || '', email: b.customer_email || '', bookings: [], amount: 0, packs: 0 };
+              const row = customerMap.get(key) || { name: b.customer_name || 'Kund', phone: b.customer_phone || '', email: b.customer_email || '', bookings: [] as typeof active, amount: 0, packs: 0 };
               row.bookings.push(b);
               row.packs += Number(b.packs || 0);
               row.amount += Number(listingById[b.listing_id]?.price_per_pack || 0) * Number(b.packs || 0);

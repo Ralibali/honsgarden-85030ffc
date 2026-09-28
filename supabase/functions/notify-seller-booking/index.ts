@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
 // Notifies the seller when someone books eggs via Agdas bod.
 // Called from the public booking page right after a booking row is inserted.
 // SECURITY: All customer/pickup data used in the email is read from the stored
@@ -5,7 +7,7 @@
 // placed into the email, so this endpoint cannot be used to spoof/spam sellers.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = PUBLIC_APP_URL;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {
@@ -14,11 +16,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-function esc(s: string): string {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!),
-  );
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -49,7 +46,7 @@ Deno.serve(async (req) => {
     const { data: booking, error: bookingErr } = await supabase
       .from("public_egg_sale_bookings")
       .select(
-        "id, listing_id, seller_user_id, customer_name, customer_phone, customer_email, customer_message, packs, pickup_slot_id, pickup_person_name, pickup_person_phone",
+        "id, listing_id, seller_user_id, customer_name, customer_phone, customer_email, customer_message, packs, pickup_slot_id, pickup_person_name, pickup_person_phone, seller_notified_at",
       )
       .eq("id", booking_id)
       .maybeSingle();
@@ -65,6 +62,12 @@ Deno.serve(async (req) => {
     if (!booking) {
       return new Response(JSON.stringify({ error: "booking_not_found" }), {
         status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (booking.seller_notified_at) {
+      return new Response(JSON.stringify({ ok: true, skipped: "already_notified" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -188,9 +191,9 @@ Deno.serve(async (req) => {
       (customer_message ? `\nMeddelande: ${customer_message}\n` : "") +
       `\nÖppna: ${dashLink}`;
 
-    const { error: enqErr } = await supabase.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
+    const { error: enqErr } = await supabase.rpc("enqueue_seller_booking_email", {
+      p_booking_id: booking.id,
+      p_payload: {
         run_id: crypto.randomUUID(),
         to: seller.email,
         from: "Hönsgården <noreply@notify.honsgarden.se>",

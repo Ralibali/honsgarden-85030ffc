@@ -107,8 +107,8 @@ export default function CohortAnalysisCard() {
                       fontSize: 12,
                     }}
                     labelFormatter={(w) => `Vecka ${w}`}
-                    formatter={(v: number | null, name: string) => {
-                      if (v == null) return ['', ''];
+                    formatter={(v, name) => {
+                      if (typeof v !== 'number') return ['', ''];
                       const cohort = cohorts.find((c) => c.key === name);
                       return [`${nf.format(v)} ägg/höna`, cohort?.label ?? name];
                     }}

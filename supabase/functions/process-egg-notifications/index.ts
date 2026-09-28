@@ -1,3 +1,6 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Worker som behandlar egg_sale_notification_queue
 // - Claim:ar pending-poster (radlåsning via RPC)
 // - Bygger e-post och köar via befintlig enqueue_email/pgmq
@@ -6,18 +9,14 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
-const APP_BASE = 'https://honsgarden.lovable.app';
+const APP_BASE = PUBLIC_APP_URL;
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  // Auth: accept service-role bearer or CRON_SECRET (Bearer or x-cron-secret header)
-  const auth = req.headers.get('Authorization') ?? '';
+  // Auth: service-role bearer or x-cron-secret header
   const serviceKeyAuth = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-  const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
-  const provided = auth.replace('Bearer ', '').trim();
-  const okSecret = cronSecret && (provided === cronSecret || req.headers.get('x-cron-secret') === cronSecret);
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -85,7 +84,7 @@ async function waitlistOffer(supabase: Sb, n: Notif): Promise<boolean> {
     .maybeSingle();
 
   const title = (listing as any)?.title ?? 'säljaren';
-  const offerLink = `${APP_BASE}/vantelista/${offerToken}`;
+  const offerLink = `${APP_BASE}/vantelista/${encodeURIComponent(offerToken)}`;
   const expiresFmt = expiresAt
     ? new Date(expiresAt).toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm', dateStyle: 'short', timeStyle: 'short' })
     : 'snart';
@@ -93,8 +92,8 @@ async function waitlistOffer(supabase: Sb, n: Notif): Promise<boolean> {
   const subject = `Det finns ägg igen hos ${title} 🥚`;
   const html = `<div style="font-family:Inter,Arial,sans-serif;max-width:540px;padding:30px 25px;">
     <h1 style="font-family:Young Serif,Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 16px;">Din tur i kön!</h1>
-    <p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Du stod först på väntelistan hos <strong>${title}</strong> och har nu fått ett erbjudande att boka ägg. Erbjudandet gäller till <strong>${expiresFmt}</strong> – var snabb!</p>
-    <a href="${offerLink}" style="background:hsl(142,32%,34%);color:hsl(35,32%,97%);font-size:14px;border-radius:14px;padding:12px 24px;text-decoration:none;display:inline-block;">Bekräfta din plats →</a>
+    <p style="font-size:14px;color:hsl(22,12%,44%);line-height:1.6;margin:0 0 18px;">Du stod först på väntelistan hos <strong>${esc(title)}</strong> och har nu fått ett erbjudande att boka ägg. Erbjudandet gäller till <strong>${expiresFmt}</strong> – var snabb!</p>
+    <a href="${esc(offerLink)}" style="background:hsl(142,32%,34%);color:hsl(35,32%,97%);font-size:14px;border-radius:14px;padding:12px 24px;text-decoration:none;display:inline-block;">Bekräfta din plats →</a>
     <p style="font-size:12px;color:#999;margin:30px 0 0;">Du får detta mejl för att du anmälde intresse via väntelistan på Hönsgården.</p>
   </div>`;
   const text = `Du står först i kön hos ${title}! Bekräfta din plats senast ${expiresFmt}: ${offerLink}`;

@@ -204,6 +204,7 @@ export default function GuideArticle() {
   const { data: post, isLoading, isError } = useQuery({
     queryKey: ['blog-post', slug],
     queryFn: async () => {
+      if (!slug) throw new Error('Artikelns adress saknas');
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')

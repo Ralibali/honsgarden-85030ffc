@@ -126,8 +126,8 @@ export default function ProductionControlChart() {
                       borderRadius: 12,
                       fontSize: 12,
                     }}
-                    formatter={(v: number | null, name: string) => {
-                      if (v == null) return ['', ''];
+                    formatter={(v, name) => {
+                      if (typeof v !== 'number') return ['', ''];
                       return [nf.format(v as number), name];
                     }}
                   />

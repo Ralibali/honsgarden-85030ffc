@@ -115,6 +115,7 @@ export default function Login() {
     try {
       const acceptedAt = new Date().toISOString();
       const meta = {
+        referral_code: normalizeReferralCode(referralCode.trim()) || null,
         country_code: countryDefaults.code,
         language_code: countryDefaults.language,
         locale: countryDefaults.locale,
@@ -135,19 +136,6 @@ export default function Login() {
       // Existing-email anti-enumeration responses have empty identities and are ignored.
       const { trackSignupIfNew } = await import('@/lib/analytics');
       trackSignupIfNew(data?.user, { source: signupSource });
-      if (referralCode.trim() && data?.user?.id) {
-        try {
-          await supabase.rpc('process_referral', {
-            _referral_code: normalizeReferralCode(referralCode.trim()),
-            _new_user_id: data.user.id,
-          });
-          // Värvnings-attribution lyckades — mät konverteringen (Swarm M).
-          const { trackEvent } = await import('@/lib/analytics');
-          trackEvent('Referral Signup');
-        } catch {
-          // Referral is a bonus and may be retried after first login.
-        }
-      }
 
       if (normalizedPostalCode) {
         try { localStorage.setItem('pending_postal_code', normalizedPostalCode); } catch { /* ignore */ }

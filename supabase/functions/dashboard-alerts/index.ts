@@ -1,3 +1,4 @@
+import { enforceAiLimits } from "../_shared/aiLimits.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAi } from "../_shared/ai.ts";
@@ -32,7 +33,7 @@ async function requireAuthenticatedUser(req: Request) {
     return { error: jsonResponse({ error: "Unauthorized" }, 401) };
   }
 
-  return { error: null };
+  return { error: null, user: data.user, adminClient: supabase };
 }
 
 type Signal = {
@@ -149,6 +150,9 @@ serve(async (req) => {
     if (!Array.isArray(ctx.signals) || ctx.signals.length === 0) {
       return jsonResponse({ intro: null, alerts: [] });
     }
+
+    const limitResponse = await enforceAiLimits(auth.adminClient, auth.user.id, "dashboard-alerts", corsHeaders);
+    if (limitResponse) return limitResponse;
 
     const ai = await callAi({
       model: "google/gemini-2.5-flash",

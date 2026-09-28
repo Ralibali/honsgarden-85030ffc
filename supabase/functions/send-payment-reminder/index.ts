@@ -1,3 +1,6 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Skickar betalpåminnelser till kunder som hämtat ägg men inte betalat.
 // Två lägen:
 //  - cron (POST {"mode":"cron"} eller GET): hittar alla obetalda hämtningar äldre än 2 dagar,
@@ -5,7 +8,7 @@
 //  - manual (POST {"booking_id":"..."} med inloggad säljare): skickar EN påminnelse direkt.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = PUBLIC_APP_URL;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const MIN_DAYS_AFTER_PICKUP = 2;
@@ -43,24 +46,24 @@ function buildEmail(opts: {
     : `Påminnelse ${reminderNumber}: betala dina ägg från ${listingTitle}`;
 
   const intro = isFirst
-    ? `Hoppas äggen smakar gott! Vi noterade att du hämtade ${packs} förpackning${packs > 1 ? "ar" : ""} hos <strong>${listingTitle}</strong> den ${pickupDate}, men ingen betalning har registrerats än.`
-    : `Det här är en vänlig påminnelse om dina ${packs} förpackning${packs > 1 ? "ar" : ""} ägg som du hämtade hos <strong>${listingTitle}</strong> den ${pickupDate}.`;
+    ? `Hoppas äggen smakar gott! Vi noterade att du hämtade ${packs} förpackning${packs > 1 ? "ar" : ""} hos <strong>${esc(listingTitle)}</strong> den ${pickupDate}, men ingen betalning har registrerats än.`
+    : `Det här är en vänlig påminnelse om dina ${packs} förpackning${packs > 1 ? "ar" : ""} ägg som du hämtade hos <strong>${esc(listingTitle)}</strong> den ${pickupDate}.`;
 
   const html = `<div style="font-family: Inter, Arial, sans-serif; max-width: 540px; padding: 30px 25px;">`
     + `<img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin:0 0 24px;" />`
-    + `<h1 style="font-family: Young Serif, Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Hej ${customerName}!</h1>`
+    + `<h1 style="font-family: Young Serif, Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Hej ${esc(customerName)}!</h1>`
     + `<p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">${intro}</p>`
     + `<div style="background: hsl(35,32%,97%); border: 1px solid hsl(22,15%,90%); border-radius: 14px; padding: 18px 20px; margin: 0 0 20px;">`
     + `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Att betala</p>`
     + `<p style="margin:0 0 14px;font-size:22px;color:hsl(22,18%,12%);font-weight:700;">${Math.round(amount)} kr</p>`
     + (swishNumber
       ? `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Swisha till</p>`
-        + `<p style="margin:0;font-size:16px;color:hsl(22,18%,12%);font-weight:600;">${swishNumber}${swishName ? ` (${swishName})` : ""}</p>`
+        + `<p style="margin:0;font-size:16px;color:hsl(22,18%,12%);font-weight:600;">${esc(swishNumber)}${swishName ? ` (${esc(swishName)})` : ""}</p>`
       : `<p style="margin:0;font-size:13px;color:hsl(22,12%,44%);">Kontakta säljaren för betalningsuppgifter.</p>`)
     + `</div>`
     + (orderUrl
       ? `<p style="font-size:13px;color:hsl(22,12%,44%);margin:0 0 8px;">Se din bokning:</p>`
-        + `<a href="${orderUrl}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Öppna orderlänken →</a>`
+        + `<a href="${esc(orderUrl)}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Öppna orderlänken →</a>`
       : "")
     + `<p style="font-size: 13px; color: hsl(22,12%,44%); margin: 24px 0 0; line-height:1.6;">Har du redan swishat? Tack! Bortse i så fall från detta mejl – säljaren registrerar betalningen så snart den syns.</p>`
     + `<p style="font-size: 12px; color: #999; margin: 24px 0 0;">Skickat via Agdas bod på Hönsgården.</p>`
@@ -201,10 +204,7 @@ Deno.serve(async (req) => {
 
   // ---- Cron: auth via service-role bearer eller CRON_SECRET ----
   const auth = req.headers.get("Authorization") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 

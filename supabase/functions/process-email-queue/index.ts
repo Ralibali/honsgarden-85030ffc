@@ -1,3 +1,4 @@
+import { confirmedNewsletterEmails, requiresNewsletterConfirmation } from '../_shared/newsletter.ts'
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -136,6 +137,7 @@ Deno.serve(async (req) => {
   let totalProcessed = 0
 
   // 2. Process auth_emails first (priority), then transactional_emails
+  let confirmedEmails: Set<string> | undefined
   for (const queue of ['auth_emails', 'transactional_emails']) {
     const dlq = `${queue}_dlq`
     const { data: messages, error: readError } = await supabase.rpc('read_email_batch', {
@@ -275,6 +277,14 @@ Deno.serve(async (req) => {
       }
 
       try {
+        if (requiresNewsletterConfirmation(payload)) {
+          confirmedEmails ??= await confirmedNewsletterEmails(supabase)
+          if (typeof payload.to !== 'string' || !confirmedEmails.has(payload.to.trim().toLowerCase())) {
+            const { error } = await supabase.rpc('delete_email', { queue_name: queue, message_id: msg.msg_id })
+            if (error) throw error
+            continue
+          }
+        }
         // Auth emails use Lovable's built-in email API (requires valid run_id
         // from webhook). Transactional emails use Resend API directly since
         // DB triggers cannot produce a valid Lovable run_id.

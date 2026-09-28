@@ -106,13 +106,15 @@ export default function WeatherImpactCard({ daily, latitude, longitude }: Props)
         const dailyArr = snap?.daily;
         // försök plocka ut dagens värden från snapshot
         const idx = dailyArr?.time?.indexOf?.(row.cache_date);
-        if (idx != null && idx >= 0) {
+        const tMax = idx != null && idx >= 0 ? dailyArr?.temperature_2m_max?.[idx] : undefined;
+        const tMin = idx != null && idx >= 0 ? dailyArr?.temperature_2m_min?.[idx] : undefined;
+        if (idx != null && idx >= 0 && tMax != null && tMin != null) {
           weatherByDay[row.cache_date] = {
-            tMax: dailyArr.temperature_2m_max[idx],
-            tMin: dailyArr.temperature_2m_min[idx],
-            precip: dailyArr.precipitation_sum[idx] ?? 0,
-            wind: dailyArr.wind_speed_10m_max[idx] ?? 0,
-            code: dailyArr.weathercode[idx] ?? 0,
+            tMax,
+            tMin,
+            precip: dailyArr?.precipitation_sum?.[idx] ?? 0,
+            wind: dailyArr?.wind_speed_10m_max?.[idx] ?? 0,
+            code: dailyArr?.weathercode?.[idx] ?? 0,
           };
         } else if (cur.temperature_2m != null) {
           weatherByDay[row.cache_date] = {

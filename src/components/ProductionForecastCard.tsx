@@ -138,8 +138,8 @@ export default function ProductionForecastCard() {
                   borderRadius: 12,
                   fontSize: 12,
                 }}
-                formatter={(v: number | null, name: string) =>
-                  v == null ? ['', ''] : [`${v} ägg`, name]
+                formatter={(v, name) =>
+                  typeof v !== 'number' ? ['', ''] : [`${v} ägg`, name]
                 }
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
               />

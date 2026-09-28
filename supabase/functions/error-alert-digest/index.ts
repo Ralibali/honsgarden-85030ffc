@@ -1,3 +1,4 @@
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
@@ -18,14 +19,6 @@ function json(body: unknown, status = 200) {
   });
 }
 
-function isAuthorized(req: Request, serviceRoleKey: string) {
-  const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  return (
-    (!!serviceRoleKey && bearer === serviceRoleKey) ||
-    (!!cronSecret && req.headers.get("x-cron-secret") === cronSecret)
-  );
-}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -34,7 +27,7 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (!supabaseUrl || !serviceRoleKey) return json({ error: "Backend not configured" }, 500);
-  if (!isAuthorized(req, serviceRoleKey)) return json({ error: "Unauthorized" }, 401);
+  if (!isCronAuthorized(req)) return json({ error: "Unauthorized" }, 401);
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },

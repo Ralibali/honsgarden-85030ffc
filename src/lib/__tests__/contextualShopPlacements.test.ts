@@ -29,7 +29,6 @@ function hrefsIn(html: string): string[] {
 describe('Packet 1 contextual shop placements', () => {
   it('covers the zero-commerce public URLs and only the three curl-PASS merchants', () => {
     expect(CONTEXTUAL_SHOP_PLACEMENTS.map((placement) => placement.path)).toEqual([
-      '/',
       '/honsraser',
       '/honsraser/brahma',
       '/honsraser/orpington',
@@ -111,11 +110,11 @@ describe('Packet 1 contextual shop placements', () => {
     expect(Object.values(SHOP_DESTINATIONS).join(' ')).not.toMatch(KILLED);
   });
 
-  it('adds first-byte Annons wraps on home and the two breed prerender bodies', () => {
+  it('keeps home ad-free and preserves breed prerender ads', () => {
     const home = renderHomeTopicBody();
-    expect(home).toContain('Annons');
-    expect(home).toContain('do.outl1.se/t/t?a=1728546059');
-    expect(home).toContain('do.p-lindberg.se/t/t?a=1954027467');
+    expect(home).not.toContain('Annons');
+    expect(home).not.toContain('do.outl1.se');
+    expect(home).not.toContain('do.p-lindberg.se');
     expect(home).not.toMatch(KILLED);
 
     const brahma = renderBreedTopicBody({ slug: 'brahma', namn: 'Brahma', description: 'Lugn jätte.', faq: [] });
@@ -138,7 +137,7 @@ describe('Packet 1 contextual shop placements', () => {
     expect(article).not.toContain('AffiliateProductStrip');
     expect(prerender).toContain('injectContextualShopPlacement');
 
-    expect(readFileSync(join(process.cwd(), 'src/pages/IndexUpdated.tsx'), 'utf8')).toContain('ContextualShopCta');
+    expect(readFileSync(join(process.cwd(), 'src/pages/IndexUpdated.tsx'), 'utf8')).not.toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/HonsrasLanding.tsx'), 'utf8')).toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/SeoLandingPage.tsx'), 'utf8')).toContain("path=\"/borja-med-hons\"");
     expect(readFileSync(join(process.cwd(), 'src/pages/SaljaAgg.tsx'), 'utf8')).not.toContain('ContextualShopCta');
@@ -146,8 +145,8 @@ describe('Packet 1 contextual shop placements', () => {
   });
 
   it('maps each target URL to the intended merchants', () => {
-    expect(shopPlacementForPath('/')?.links.map((link) => link.merchant)).toEqual(['outl1', 'p-lindberg']);
-    expect(shopPlacementForPath('/honsraser')?.links.map((link) => link.merchant)).toEqual(['p-lindberg']);
+    expect(shopPlacementForPath('/')).toBeUndefined();
+    expect(shopPlacementForPath('/honsraser')?.links.map((link) => link.merchant)).toEqual(['outl1', 'p-lindberg']);
     expect(shopPlacementForPath('/honsraser/brahma')?.links.map((link) => link.merchant)).toEqual(['p-lindberg']);
     expect(shopPlacementForPath('/honsraser/orpington')?.links.map((link) => link.merchant)).toEqual(['bonden']);
     expect(shopPlacementForPath('/borja-med-hons')?.links.map((link) => link.merchant)).toEqual(['outl1', 'p-lindberg']);

@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
@@ -126,7 +127,7 @@ Deno.serve(async (req) => {
       const inviterName = escapeHtml(inviterProfile?.display_name || user.email || "Någon");
       const roleNameSv = roleLabel(requestedRole);
       // Lägg rollen i URL:en som query-param så accept-invite kan läsa den
-      const inviteUrl = `https://honsgarden.lovable.app/inbjudan/${encodeURIComponent(invitation.token)}?role=${requestedRole}`;
+      const inviteUrl = `${PUBLIC_APP_URL}/inbjudan/${encodeURIComponent(invitation.token)}?role=${requestedRole}`;
 
       await supabaseAdmin.rpc("enqueue_email", {
         queue_name: "transactional_emails",
@@ -289,7 +290,7 @@ Deno.serve(async (req) => {
                 <img src="https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png" width="140" alt="Hönsgården" style="margin: 0 0 24px;" />
                 <h1 style="font-family: 'Young Serif', Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 20px;">Hej ${ownerName}!</h1>
                 <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;"><strong>${accepterName}</strong> har accepterat din inbjudan till <strong>${farmName}</strong> och är nu med som <strong>${roleNameSv}</strong>.</p>
-                <a href="https://honsgarden.lovable.app/app/settings" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">Hantera medlemmar →</a>
+                <a href="${PUBLIC_APP_URL}/app/settings" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">Hantera medlemmar →</a>
                 <p style="font-size: 12px; color: #999; margin: 30px 0 0;">Du får detta mejl för att du bjöd in en familjemedlem till din gård.</p>
               </div>`,
               text: `${accepterName} har gått med i ${farmName} som ${roleNameSv}.`,

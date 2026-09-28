@@ -101,8 +101,8 @@ export default function Feed() {
   const totalCost = Number(feedStats?.total_cost || feedRecords.reduce((sum: number, record: any) => sum + (record.cost || 0), 0));
   const totalKg = Number(feedStats?.total_kg || feedRecords.reduce((sum: number, record: any) => sum + (record.amount_kg || 0), 0));
   const costPerEgg = Number(feedStats?.cost_per_egg || 0);
-  const totalEggs = Number(feedStats?.total_eggs || 0);
-  const daysRemaining = Number(feedInventory?.days_remaining || 0);
+  const totalEggs = Number(feedStats && 'total_eggs' in feedStats ? feedStats.total_eggs : 0);
+  const daysRemaining = Number(feedInventory && 'days_remaining' in feedInventory ? feedInventory.days_remaining : 0);
 
   if (isLoading) {
     return (

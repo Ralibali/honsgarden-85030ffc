@@ -47,6 +47,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Hönsgården använder din plats för lokalt väder och frostvarningar.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Hönsgården använder kameran för att du ska kunna fotografera dina hönor och din gård.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

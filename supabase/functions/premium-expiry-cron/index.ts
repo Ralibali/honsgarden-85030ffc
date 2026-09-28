@@ -1,3 +1,4 @@
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 
@@ -11,27 +12,7 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
-  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us with the
-  // anon key. verify_jwt is disabled at the platform level, so we validate here.
-  const auth = req.headers.get("Authorization") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
-  let okProjectJwt = false;
-  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
-    try {
-      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
-      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
-    } catch (_) {
-      okProjectJwt = false;
-    }
-  }
-  if (!okServiceKey && !okSecret && !okProjectJwt) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -51,7 +32,7 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
     const { data: expiredProfiles, error: fetchError } = await supabase
       .from("profiles")
-      .select("user_id, email, subscription_status, premium_expires_at")
+      .select("user_id, email, stripe_customer_id, preferences, subscription_status, premium_expires_at")
       .eq("subscription_status", "premium")
       .not("premium_expires_at", "is", null)
       .lt("premium_expires_at", now);
@@ -71,44 +52,55 @@ Deno.serve(async (req) => {
 
     for (const profile of expiredProfiles) {
       try {
-        // Check if user has active Stripe subscription
-        if (profile.email) {
-          const customers = await stripe.customers.list({ email: profile.email, limit: 1 });
-          if (customers.data.length > 0) {
-            const subs = await stripe.subscriptions.list({
-              customer: customers.data[0].id,
-              status: "active",
-              limit: 1,
-            });
-            if (subs.data.length > 0) {
-              // Active Stripe sub – extend premium to match Stripe period.
-              // Stripe API 2025-08-27.basil flyttade current_period_end till
-              // subscription.items.data[i]. Läs primärt därifrån, fall
-              // tillbaka till root för äldre svar/testklockor.
-              const sub = subs.data[0];
-              const itemEnd = (sub.items?.data ?? [])
-                .map((it: any) => it.current_period_end as number | undefined)
-                .filter((v): v is number => typeof v === "number")
-                .sort((a, b) => b - a)[0];
-              const rootEnd = (sub as any).current_period_end as number | undefined;
-              const endTimestamp = itemEnd ?? (typeof rootEnd === "number" ? rootEnd : undefined);
-              if (typeof endTimestamp === "number") {
-                const newEnd = new Date(endTimestamp * 1000).toISOString();
-                await supabase
-                  .from("profiles")
-                  .update({ premium_expires_at: newEnd })
-                  .eq("user_id", profile.user_id);
-                console.log(`Skipped ${profile.email}: active Stripe sub, extended to ${newEnd}`);
-              } else {
-                console.warn(`Active Stripe sub for ${profile.email} but no current_period_end found; leaving premium untouched.`);
-              }
-              skipped++;
-              continue;
-            }
+        // Apple renewal notifications may arrive after the local expiry timestamp.
+        const expiresAt = Date.parse(profile.premium_expires_at);
+        if (profile.preferences?.apple_iap && Date.now() < expiresAt + 48 * 60 * 60 * 1000) {
+          skipped++;
+          continue;
+        }
+
+        const customerIds: string[] = [];
+        if (profile.stripe_customer_id) {
+          try {
+            const customer = await stripe.customers.retrieve(profile.stripe_customer_id);
+            if (!customer.deleted) customerIds.push(customer.id);
+          } catch (error) {
+            // Only a missing/deleted customer permits an email fallback. Other API errors fail closed.
+            if ((error as { code?: string }).code !== "resource_missing") throw error;
+          }
+        }
+        if (customerIds.length === 0 && profile.email) {
+          for await (const customer of stripe.customers.list({ email: profile.email, limit: 100 })) {
+            customerIds.push(customer.id);
           }
         }
 
-        // No active Stripe subscription – downgrade
+        let paying = false;
+        let endTimestamp: number | undefined;
+        for (const customerId of customerIds) {
+          for await (const sub of stripe.subscriptions.list({ customer: customerId, status: "all", limit: 100 })) {
+            if (!["active", "trialing", "past_due"].includes(sub.status)) continue;
+            paying = true;
+            // Basil stores the billing period on items; retain compatibility with older responses.
+            const itemEnds = (sub.items?.data ?? []).map(item => item.current_period_end);
+            const rootEnd = (sub as any).current_period_end as number | undefined;
+            for (const end of [...itemEnds, rootEnd]) {
+              if (typeof end === "number" && Number.isFinite(end)) endTimestamp = Math.max(endTimestamp ?? 0, end);
+            }
+          }
+        }
+        if (paying) {
+          if (typeof endTimestamp === "number") {
+            const { error: updateError } = await supabase.from("profiles")
+              .update({ premium_expires_at: new Date(endTimestamp * 1000).toISOString() })
+              .eq("user_id", profile.user_id);
+            if (updateError) throw updateError;
+          }
+          skipped++;
+          continue;
+        }
+
+        // No paying Stripe subscription and outside Apple grace – downgrade
         await supabase
           .from("profiles")
           .update({ subscription_status: "free", premium_expires_at: null })

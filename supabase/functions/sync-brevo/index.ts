@@ -1,3 +1,4 @@
+import { confirmedNewsletterEmails } from "../_shared/newsletter.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
@@ -51,18 +52,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 1. Fetch all profiles
+    const confirmedEmails = await confirmedNewsletterEmails(supabase);
+    if (confirmedEmails.size === 0) {
+      return new Response(JSON.stringify({ synced: 0, message: "Inga bekräftade prenumeranter" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 1. Fetch profile metadata for confirmed subscribers
     const { data: profiles, error: profilesErr } = await supabase
       .from("profiles")
       .select("user_id, email, display_name, created_at, subscription_status, premium_expires_at");
 
     if (profilesErr) throw new Error(`Profiles fetch failed: ${profilesErr.message}`);
-    if (!profiles || profiles.length === 0) {
-      return new Response(JSON.stringify({ synced: 0, message: "No profiles found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     // 2. Fetch latest activity per user (last egg log date)
     const { data: lastEggs } = await supabase
       .from("egg_logs")
@@ -113,9 +115,10 @@ Deno.serve(async (req) => {
 
     // 6. Build Brevo contacts for import
     const now = new Date();
-    const contacts = profiles
-      .filter((p) => p.email)
-      .map((p) => {
+    const profileByEmail = new Map((profiles ?? []).filter(p => p.email)
+      .map(p => [p.email!.trim().toLowerCase(), p]));
+    const contacts = [...confirmedEmails].map((email) => {
+        const p = profileByEmail.get(email) ?? { user_id: "", email, display_name: "", created_at: "", subscription_status: "free", premium_expires_at: null };
         const lastEgg = lastEggMap.get(p.user_id);
         const lastChore = lastChoreMap.get(p.user_id);
         // Pick the most recent activity
@@ -138,7 +141,7 @@ Deno.serve(async (req) => {
         const trialEndDate = p.premium_expires_at || null;
 
         return {
-          email: p.email,
+          email,
           attributes: {
             DISPLAY_NAME: p.display_name || "",
             SIGNUP_DATE: p.created_at?.split("T")[0] || "",

@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Dispatch new-egg-seller notifications to verified public_egg_alerts subscribers.
 // Cron: every hour. Auth: CRON_SECRET (x-cron-secret) or service role Bearer.
 // - Finds listings that became active since last run
@@ -14,11 +16,6 @@ const CURSOR_KEY = "dispatch_egg_alerts_last_run";
 const DEFAULT_LOOKBACK_HOURS = 2;
 const DAILY_QUOTA_HOURS = 24;
 
-function esc(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!),
-  );
-}
 
 function slugify(s: string) {
   return s
@@ -82,12 +79,8 @@ async function sendBrevo(params: {
 
 Deno.serve(async (req) => {
   // Auth: CRON_SECRET header or service-role bearer
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

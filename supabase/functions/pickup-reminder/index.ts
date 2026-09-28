@@ -1,9 +1,12 @@
+import { esc } from '../_shared/html.ts';
+import { PUBLIC_APP_URL } from '../_shared/appUrl.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Daily reminder for buyers picking up eggs tomorrow.
 // Runs via pg_cron at 15:00 UTC (≈ 16:00/17:00 Europe/Stockholm depending on DST).
 // Idempotent: marks each booking with pickup_reminder_sent_at after enqueueing.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = PUBLIC_APP_URL;
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 // Returns YYYY-MM-DD in Europe/Stockholm for now() + addDays
@@ -32,12 +35,8 @@ function fmtDate(iso: string): string {
 
 Deno.serve(async (req) => {
   // Auth — same pattern as daily-egg-reminder
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKeyAuth && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -130,7 +129,7 @@ Deno.serve(async (req) => {
         continue;
       }
       const token = tokenByBooking.get(b.id);
-      const cancelLink = token ? `${APP_URL}/avboka/${token}` : null;
+      const cancelLink = token ? `${APP_URL}/avboka/${encodeURIComponent(token)}` : null;
 
       const title = listing.title ?? "säljaren";
       const datePart = fmtDate(slot.starts_at);
@@ -146,25 +145,25 @@ Deno.serve(async (req) => {
 
       const html = `<div style="font-family: Inter, Arial, sans-serif; max-width: 540px; padding: 30px 25px;">`
         + `<img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin:0 0 24px;" />`
-        + `<h1 style="font-family: Young Serif, Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Hej ${b.customer_name}! 🥚</h1>`
-        + `<p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">En liten påminnelse – <strong>imorgon</strong> hämtar du dina <strong>${b.packs} förpackning${b.packs > 1 ? "ar" : ""}</strong> hos <strong>${title}</strong>.</p>`
+        + `<h1 style="font-family: Young Serif, Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 16px;">Hej ${esc(b.customer_name)}! 🥚</h1>`
+        + `<p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">En liten påminnelse – <strong>imorgon</strong> hämtar du dina <strong>${b.packs} förpackning${b.packs > 1 ? "ar" : ""}</strong> hos <strong>${esc(title)}</strong>.</p>`
         + `<div style="background: hsl(35,32%,97%); border: 1px solid hsl(22,15%,90%); border-radius: 14px; padding: 18px 20px; margin: 0 0 20px;">`
         + `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Hämtningstid</p>`
         + `<p style="margin:0 0 14px;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">${slotText}</p>`
         + (listing.pickup_info
           ? `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Hämtning</p>`
-            + `<p style="margin:0 0 14px;font-size:14px;color:hsl(22,18%,12%);">${listing.pickup_info}</p>`
+            + `<p style="margin:0 0 14px;font-size:14px;color:hsl(22,18%,12%);">${esc(listing.pickup_info)}</p>`
           : "")
         + (showSwish
           ? `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Att betala</p>`
             + `<p style="margin:0 0 14px;font-size:18px;color:hsl(22,18%,12%);font-weight:700;">${Math.round(amount)} kr</p>`
             + `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Swisha till</p>`
-            + `<p style="margin:0;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">${listing.swish_number}${listing.swish_name ? ` (${listing.swish_name})` : ""}</p>`
+            + `<p style="margin:0;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">${esc(listing.swish_number)}${listing.swish_name ? ` (${esc(listing.swish_name)})` : ""}</p>`
           : "")
         + `</div>`
         + (cancelLink
           ? `<p style="font-size:13px;color:hsl(22,12%,44%);margin:0 0 8px;">Behöver du avboka?</p>`
-            + `<a href="${cancelLink}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Avboka din bokning →</a>`
+            + `<a href="${esc(cancelLink)}" style="color:hsl(142,32%,34%);font-size:13px;text-decoration:underline;">Avboka din bokning →</a>`
           : "")
         + `<p style="font-size: 12px; color: #999; margin: 30px 0 0;">Du får detta mejl för att du gjort en bokning via Agdas bod på Hönsgården.</p>`
         + `</div>`;

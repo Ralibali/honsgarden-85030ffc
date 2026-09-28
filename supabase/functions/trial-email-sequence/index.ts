@@ -1,3 +1,6 @@
+import { confirmedNewsletterEmails } from "../_shared/newsletter.ts";
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Trial lifecycle email sequence. Runs daily via pg_cron at 08:00 UTC (~09:00/10:00 CET/CEST).
 // Three keys, max one per user ever:
 //   trial_day5  — 2 days before premium_expires_at
@@ -29,7 +32,7 @@ function shell(title: string, intro: string, bodyHtml: string, ctaLabel: string,
   <div style="text-align:center;margin-bottom:20px;">
     <img src="${LOGO_URL}" alt="Hönsgården" width="56" height="56" style="border-radius:14px" />
   </div>
-  <h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(142,32%,28%);margin:0 0 12px;">${title}</h1>
+  <h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(142,32%,28%);margin:0 0 12px;">${esc(title)}</h1>
   <p style="font-size:15px;line-height:1.55;color:hsl(22,12%,30%);margin:0 0 16px;">${intro}</p>
   ${bodyHtml}
   <div style="text-align:center;margin:28px 0;">
@@ -41,17 +44,13 @@ function shell(title: string, intro: string, bodyHtml: string, ctaLabel: string,
 
 function statCard(items: { label: string; value: string }[]): string {
   return `<div style="background:#fff;border:1px solid hsl(22,15%,90%);border-radius:14px;padding:18px 20px;margin:0 0 16px;">
-    ${items.map(i => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:hsl(22,18%,12%);"><span style="color:hsl(22,12%,44%);">${i.label}</span><strong>${i.value}</strong></div>`).join("")}
+    ${items.map(i => `<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:hsl(22,18%,12%);"><span style="color:hsl(22,12%,44%);">${esc(i.label)}</span><strong>${esc(i.value)}</strong></div>`).join("")}
   </div>`;
 }
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
@@ -78,8 +77,15 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 
+  let confirmedEmails: Set<string>;
+  try {
+    confirmedEmails = await confirmedNewsletterEmails(supabase);
+  } catch {
+    return new Response(JSON.stringify({ error: "Kunde inte kontrollera nyhetsbrevssamtycke" }), { status: 503 });
+  }
+
   for (const p of profiles ?? []) {
-    if (!p.email || !p.premium_expires_at) continue;
+    if (!p.email || !p.premium_expires_at || !confirmedEmails.has(p.email.trim().toLowerCase())) continue;
 
     // Skip suppressed (unsubscribed/bounced)
     const { data: suppressed } = await supabase

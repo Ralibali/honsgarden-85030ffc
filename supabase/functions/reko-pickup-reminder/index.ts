@@ -1,3 +1,5 @@
+import { esc } from '../_shared/html.ts';
+import { isCronAuthorized } from '../_shared/cronAuth.ts';
 // Daily cron: notify sellers 2 days before their next REKO pickup date.
 // Idempotent via public_egg_sale_listings.reko_reminder_sent_for (timestamptz).
 // Auto-rolls reko_next_pickup_at forward +14 days after pickup date has passed
@@ -17,12 +19,8 @@ function stockholmDateStr(d: Date): string {
 }
 
 Deno.serve(async (req) => {
-  const auth = req.headers.get("Authorization") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const okSecret = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  if (provided !== serviceKey && !okSecret) {
+  if (!isCronAuthorized(req)) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -88,7 +86,7 @@ Deno.serve(async (req) => {
         `<div style="font-family:Inter,Arial,sans-serif;max-width:540px;padding:28px 22px;">` +
         `<img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin:0 0 20px;" />` +
         `<h1 style="font-family:'Young Serif',Georgia,serif;font-size:22px;color:hsl(22,18%,12%);margin:0 0 12px;">REKO-utlämning om 2 dagar 📦</h1>` +
-        `<p style="font-size:14px;line-height:1.6;color:hsl(22,12%,44%);margin:0 0 16px;">Hej! Din annons <strong>${l.title ?? "Färska ägg"}</strong> har utlämning i <strong>${l.reko_group_name ?? "REKO-ringen"}</strong> den <strong>${dateSv} kl ${timeSv}</strong>${l.reko_pickup_location ? ` (${l.reko_pickup_location})` : ""}.</p>` +
+        `<p style="font-size:14px;line-height:1.6;color:hsl(22,12%,44%);margin:0 0 16px;">Hej! Din annons <strong>${esc(l.title ?? "Färska ägg")}</strong> har utlämning i <strong>${esc(l.reko_group_name ?? "REKO-ringen")}</strong> den <strong>${dateSv} kl ${timeSv}</strong>${l.reko_pickup_location ? ` (${esc(l.reko_pickup_location)})` : ""}.</p>` +
         `<div style="background:hsl(35,32%,97%);border:1px solid hsl(22,15%,90%);border-radius:14px;padding:16px 18px;margin:0 0 20px;">` +
         `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Nuvarande lagersaldo</p>` +
         `<p style="margin:0 0 12px;font-size:18px;font-weight:700;color:hsl(22,18%,12%);">${stock} kartor</p>` +

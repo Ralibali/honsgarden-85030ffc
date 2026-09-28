@@ -117,8 +117,8 @@ export default function SeasonDecompositionCard() {
                       borderRadius: 12,
                       fontSize: 12,
                     }}
-                    formatter={(v: number | null, name: string) =>
-                      v == null ? ['', ''] : [nf.format(v), name]
+                    formatter={(v, name) =>
+                      typeof v !== 'number' ? ['', ''] : [nf.format(v), name]
                     }
                   />
                   <Line
@@ -257,8 +257,8 @@ export default function SeasonDecompositionCard() {
                       borderRadius: 12,
                       fontSize: 12,
                     }}
-                    formatter={(v: number | null) =>
-                      v == null ? ['', ''] : [`${v > 0 ? '+' : ''}${nf.format(v)}`, 'Brus']
+                    formatter={(v) =>
+                      typeof v !== 'number' ? ['', ''] : [`${v > 0 ? '+' : ''}${nf.format(v)}`, 'Brus']
                     }
                   />
                   <ReferenceLine y={0} stroke="hsl(var(--border))" />

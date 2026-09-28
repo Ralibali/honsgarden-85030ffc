@@ -369,7 +369,8 @@ serve(async (req) => {
       }
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
-        const subId = (invoice as any).subscription as string | null;
+        const subscription = invoice.parent?.subscription_details?.subscription ?? (invoice as any).subscription;
+        const subId = typeof subscription === "string" ? subscription : subscription?.id;
         if (subId) {
           const sub = await stripe.subscriptions.retrieve(subId);
           await syncSubscription(sub);

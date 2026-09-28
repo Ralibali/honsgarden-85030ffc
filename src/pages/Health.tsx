@@ -271,6 +271,7 @@ export default function Health() {
   const markDoneMutation = useMutation({
     mutationFn: async (s: HealthScheduleForm) => {
       if (!user?.id) return;
+      if (!s.id) throw new Error('Schemat saknar id');
       const next = addDays(todayISO(), s.interval_days);
       // 1. Create health_event with karens calc
       const { error: e1 } = await supabase.from('health_events').insert({

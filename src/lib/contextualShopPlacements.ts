@@ -36,18 +36,11 @@ export const SHOP_DESTINATIONS = {
 
 export const CONTEXTUAL_SHOP_PLACEMENTS: readonly ShopPlacement[] = [
   {
-    path: '/',
-    body: 'Hönshus och startutrustning till nya flockar — samma butiker som i våra köpguider.',
-    links: [
-      { merchant: 'outl1', destination: SHOP_DESTINATIONS.outl1Honshus, label: 'Se hönshus hos Outl1' },
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergStartset, label: 'Se startset hos P-Lindberg' },
-    ],
-  },
-  {
     path: '/honsraser',
     slug: 'honsraser',
     body: 'När rasen är vald behövs hus, reden och foderutrustning.',
     links: [
+      { merchant: 'outl1', destination: SHOP_DESTINATIONS.outl1Honshus, label: 'Se hönshus hos Outl1' },
       { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergHome, label: 'Jämför hönsutrustning hos P-Lindberg' },
     ],
   },
