@@ -51,12 +51,15 @@ export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps
       await signInWithNativeApple();
       window.location.href = '/app';
     } catch (err) {
-      setLoading(false);
+      // Closing Apple's sheet is recoverable and must not open another login flow.
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'SIGN_IN_CANCELED') return;
       toast({
         title: 'Apple-inloggning misslyckades',
         description: err instanceof Error ? err.message : 'Försök igen eller använd e-post.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 

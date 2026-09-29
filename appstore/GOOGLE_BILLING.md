@@ -1,12 +1,12 @@
 # Google Play billing rollout
 
-Status 28 September 2026: implementation prepared and locally tested. Not deployed, not connected to live Play credentials, and no real purchase/restore has been verified. Do not publish Android production before completing the rollout below.
+Status 29 September 2026: migration and three billing handlers with six shared helpers deployed through Lovable to the actual backend. Ledger RLS/client denial and server-only RPC grants verified. Unauthenticated verifier and status requests return 401; notifications return 503 while unconfigured. The three Google credentials remain absent. No real purchase/restore has been verified. Do not publish Android production before completing the rollout below.
 
-Package `se.honsgarden.app`; subscription `honsgarden_plus`; base plans `monthly` and `yearly`. The existing Android release client uses SHA-256 of `honsgarden:` plus the lowercase Supabase user UUID as the obfuscated account ID. The server enforces that exact binding.
+Android package `se.auroramedia.honsgarden`; subscription `honsgarden_plus`; base plans `monthly` and `yearly`. The old Android package belongs to another developer; the user's Play draft has not yet received a package. iOS keeps `se.honsgarden.app` and its existing Apple products. The Android release client uses SHA-256 of `honsgarden:` plus the lowercase Supabase user UUID as the obfuscated account ID. The server enforces that exact binding.
 
 ## Rollout order
 
-1. Review and apply `20260928072522_google_play_billing.sql` in Hönsgården's actual backend `sikbymtrbhrofysgkqsj`, then run security advisors. This project is in Lovable Cloud and is not exposed by the currently connected Supabase account. The migration adds a server-only purchase ledger and protects the Google entitlement metadata in profiles; do not deploy the new check-subscription function before the migration.
+1. Completed on 29 September: `20260928072522_google_play_billing.sql` applied in Hönsgården's actual Lovable Cloud backend `sikbymtrbhrofysgkqsj`, followed by the three handlers and six shared helpers. Ledger RLS is enabled, client grants are zero and billing RPCs are server-only. Do not rerun this one-time migration. Inspect real production billing guards/functions before any future replacement and keep security-advisor checks current.
 2. Privately configure `GOOGLE_PLAY_SERVICE_ACCOUNT`, using a service account restricted in Play Console to this app and the permissions required to read and acknowledge subscriptions. It must have Android Publisher API access. Never put this credential in Git, client code, screenshots or review notes.
 3. Set `GOOGLE_PLAY_ALLOW_TEST=true` only for the deliberate licensed-tester workflow; default is false. This does not accept forged receipts: Google still verifies each purchase.
 4. Deploy `verify-google-subscription` with JWT verification enabled, and `check-subscription`, including their shared dependencies. The verifier additionally resolves the user through Supabase Auth before accepting purchase tokens.
@@ -14,6 +14,8 @@ Package `se.honsgarden.app`; subscription `honsgarden_plus`; base plans `monthly
 6. The existing local Android client/release work is integrated with main on this branch. Rebuild and sign an initial AAB, upload it privately, and configure the two base plans and license testers. An initial private AAB is needed before Google subscription setup; it is not production publication.
 7. On the installed internal release, test actual purchase, acknowledgement, restoration, account switching, renewal, cancellation, grace period, hold, expiry and refund. Verify the real notification flow and the resulting profile access. Run a Google/Apple/Stripe overlap scenario. Check login redirects and native auth providers.
 8. Complete native device verification, screenshots, Data safety, review credentials, content declarations and the production release. Nothing here declares that these steps have been completed.
+
+Backend source can be deployed before Google credentials: the new ledger is empty, so existing Apple/Stripe checks continue; missing credentials make Google verification fail with generic 503 before any grant. Missing notification configuration also returns 503. The three entrypoints depend on `_shared/googlePlay.ts`, `googlePlaySync.ts`, `googleServiceAccount.ts`, `appleIap.ts`, `localPremium.ts` and `stripeBilling.ts`. Google verification and acknowledgment both pin the new Android package.
 
 ## Behavior
 
@@ -25,7 +27,8 @@ Apple and Stripe state calculations exclude the Google overlay, and the profile 
 
 ## Validation
 
-- Full local Vitest suite: 113 files, 983 tests passed, including Google billing, Apple billing, native OAuth and push.
+- 29 September full local Vitest suite: 117 files, 1002 tests passed, including Google billing, Apple billing, native OAuth, push, registration and native Apple cancellation recovery. One additional Android dependency-path regression test was then added and its complete seven-test identity suite passed.
+- Both native sync outputs verified: Android `se.auroramedia.honsgarden`, iOS `se.honsgarden.app`. Platform-specific OAuth/recovery and rejecting the other platform's scheme passed; ambiguous sync and mismatched platform environment are rejected.
 - TypeScript project check passed. ESLint completed with zero errors and 682 warnings (existing and inherited native work); warnings remain to review.
 - Isolated PostgreSQL/PGlite integration tests: account ownership, denied client reads/writes/RPC, forged preferences, out-of-order replay, refunds, Apple/Stripe overlap, equal expiries, independent gift, lifetime and preference preservation.
 - Production web build, SEO and route checks passed.

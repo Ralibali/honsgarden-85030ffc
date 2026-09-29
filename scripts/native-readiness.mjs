@@ -47,7 +47,7 @@ function collectFacts() {
 
   return {
     capacitor: {
-      appId: (capSrc.match(/appId:\s*'([^']+)'/) || [])[1],
+      appId: (pbxproj.match(/PRODUCT_BUNDLE_IDENTIFIER = ([^;]+);/) || [])[1],
       appName: (capSrc.match(/appName:\s*'([^']+)'/) || [])[1],
       webDir: (capSrc.match(/webDir:\s*'([^']+)'/) || [])[1],
       hasServerUrl: serverBlock && activeServerUrl,

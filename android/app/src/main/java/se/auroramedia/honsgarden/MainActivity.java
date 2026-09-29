@@ -1,4 +1,4 @@
-package se.honsgarden.app;
+package se.auroramedia.honsgarden;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,10 +1,20 @@
 apply plugin: 'com.android.application'
 
+def uploadSigning = new Properties()
+def signingProperties = rootProject.file('keystore.properties')
+if (signingProperties.exists()) signingProperties.withInputStream { uploadSigning.load(it) }
+def uploadValue = { propertyName, envName -> uploadSigning.getProperty(propertyName) ?: System.getenv(envName) }
+def uploadStore = uploadValue('storeFile', 'HONSGARDEN_UPLOAD_STORE_FILE')
+def uploadStorePassword = uploadValue('storePassword', 'HONSGARDEN_UPLOAD_STORE_PASSWORD')
+def uploadAlias = uploadValue('keyAlias', 'HONSGARDEN_UPLOAD_KEY_ALIAS')
+def uploadKeyPassword = uploadValue('keyPassword', 'HONSGARDEN_UPLOAD_KEY_PASSWORD')
+def hasUploadSigning = uploadStore && uploadStorePassword && uploadAlias && uploadKeyPassword && rootProject.file(uploadStore).exists()
+
 android {
-    namespace = "se.honsgarden.app"
+    namespace = "se.auroramedia.honsgarden"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "se.honsgarden.app"
+        applicationId "se.auroramedia.honsgarden"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -16,8 +26,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasUploadSigning) {
+            upload {
+                storeFile rootProject.file(uploadStore)
+                storePassword uploadStorePassword
+                keyAlias uploadAlias
+                keyPassword uploadKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasUploadSigning) signingConfig signingConfigs.upload
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -44,11 +65,28 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
+def servicesJSON = file('google-services.json')
+def hasMatchingFirebase = false
+if (servicesJSON.exists()) {
+    try {
+        def services = new groovy.json.JsonSlurper().parse(servicesJSON)
+        hasMatchingFirebase = services.client?.any { it.client_info?.android_client_info?.package_name == android.defaultConfig.applicationId } ?: false
+    } catch (Exception ignored) {
+        throw new GradleException('Invalid private Firebase configuration. Replace android/app/google-services.json.')
     }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+if (hasMatchingFirebase) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn('Firebase configuration for this Android package is missing. Debug push is unavailable; release is blocked.')
+}
+
+def verifyReleaseInputs = tasks.register('verifyReleaseInputs') {
+    doLast {
+        if (!hasUploadSigning) throw new GradleException('Release requires private upload signing in android/keystore.properties or HONSGARDEN_UPLOAD_* environment variables.')
+        if (!hasMatchingFirebase) throw new GradleException('Release requires Firebase configuration registered for this Android package.')
+    }
+}
+tasks.configureEach { task ->
+    if (task.name == 'preReleaseBuild') task.dependsOn(verifyReleaseInputs)
 }

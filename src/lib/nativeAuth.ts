@@ -1,8 +1,11 @@
-import { isNativePlatform } from '@/lib/nativePlatform';
+import { isNativeAndroid, isNativePlatform } from '@/lib/nativePlatform';
+import { ANDROID_APPLICATION_ID, IOS_APPLICATION_ID } from '@/lib/nativeAppIds';
 import { supabase } from '@/integrations/supabase/client';
 
-export const NATIVE_AUTH_REDIRECT = 'se.honsgarden.app://auth/callback';
-export const NATIVE_RECOVERY_REDIRECT = 'se.honsgarden.app://auth/recovery';
+export function getNativeAuthRedirect(recovery = false): string {
+  const appId = isNativeAndroid() ? ANDROID_APPLICATION_ID : IOS_APPLICATION_ID;
+  return `${appId}://auth/${recovery ? 'recovery' : 'callback'}`;
+}
 const RECOVERY_MARKER = 'honsgarden_native_recovery';
 let initialization: Promise<void> | undefined;
 let exchanging = false;
@@ -10,7 +13,8 @@ let exchanging = false;
 export function parseNativeAuthCallback(raw: string): { code: string; recovery: boolean } | null {
   try {
     const url = new URL(raw);
-    if (url.protocol !== 'se.honsgarden.app:' || url.hostname !== 'auth' || url.username || url.password
+    const appId = isNativeAndroid() ? ANDROID_APPLICATION_ID : IOS_APPLICATION_ID;
+    if (url.protocol !== `${appId}:` || url.hostname !== 'auth' || url.username || url.password
       || url.port || !['/callback', '/recovery'].includes(url.pathname)) return null;
     if (url.searchParams.has('error')) throw new Error('Inloggningen avbröts eller kunde inte slutföras.');
     const codes = url.searchParams.getAll('code');
@@ -64,7 +68,7 @@ export function initializeNativeAuth(): Promise<void> {
 export async function signInWithNativeOAuth(provider: 'google' | 'apple'): Promise<void> {
   await initializeNativeAuth();
   const { data, error } = await supabase.auth.signInWithOAuth({ provider,
-    options: { redirectTo: NATIVE_AUTH_REDIRECT, skipBrowserRedirect: true },
+    options: { redirectTo: getNativeAuthRedirect(), skipBrowserRedirect: true },
   });
   if (error || !data.url) throw new Error('Inloggningen kunde inte öppnas. Försök igen.');
   const { Browser } = await import('@capacitor/browser');
