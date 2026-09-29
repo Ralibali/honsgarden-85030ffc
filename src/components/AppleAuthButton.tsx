@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { lovable } from '@/integrations/lovable/index';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { isNativeIos } from '@/lib/nativePlatform';
@@ -34,9 +33,14 @@ async function signInWithNativeApple() {
   if (error) throw error;
 }
 
-/** "Fortsätt med Apple" – native Sign in with Apple on iOS, Lovable OAuth on web. */
+/** Native Apple sign-in. Web OAuth is not configured on honsgarden.se. */
 export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
+
+  // The Lovable /~oauth route is unavailable on our production web host, and
+  // Supabase has no Apple web OAuth secret. Do not offer a path that ends in 404.
+  // Native iOS uses an identity token and does not need that web OAuth route.
+  if (!isNativeIos()) return null;
 
   const handleClick = async () => {
     setLoading(true);
@@ -44,25 +48,7 @@ export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps
       const { trackEvent } = await import('@/lib/analytics');
       trackEvent('OAuth Started', { provider: 'apple', mode });
 
-      if (isNativeIos()) {
-        try {
-          await signInWithNativeApple();
-          window.location.href = '/app';
-          return;
-        } catch (nativeError) {
-          console.warn('[AppleAuth] native Sign in with Apple failed, falling back', nativeError);
-        }
-      }
-
-      const result = await lovable.auth.signInWithOAuth('apple', {
-        redirect_uri: `${window.location.origin}/app`,
-      });
-
-      if (result.error) {
-        throw result.error instanceof Error ? result.error : new Error(String(result.error));
-      }
-      if (result.redirected) return;
-
+      await signInWithNativeApple();
       window.location.href = '/app';
     } catch (err) {
       setLoading(false);
