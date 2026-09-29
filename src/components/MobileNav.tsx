@@ -2,7 +2,6 @@ import {
   Home,
   Egg,
   Bird,
-  BarChart3,
   MoreHorizontal,
   Package,
   Syringe,
@@ -32,6 +31,8 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,13 +40,13 @@ import { supabase } from '@/integrations/supabase/client';
 const primaryItems = [
   { title: 'Idag', url: '/app', icon: Home },
   { title: 'Ägg', url: '/app/eggs', icon: Egg },
+  { title: 'Dagbok', url: '/app/dagbok', icon: BookOpen },
   { title: 'Flock', url: '/app/hens', icon: Bird },
-  { title: 'Gården', url: '/app/tasks', icon: ClipboardCheck },
   { title: 'Mer', url: '#more', icon: MoreHorizontal },
 ];
 
 const quickItems = [
-  { title: 'Dagbok', subtitle: 'Minnen från gården', url: '/app/dagbok', icon: BookOpen },
+  { title: 'Gården', subtitle: 'Sysslor och rutiner', url: '/app/tasks', icon: ClipboardCheck },
   { title: 'Agda', subtitle: 'Fråga om flocken', url: '/app/agda', icon: Bot, premium: true },
   { title: 'Insikter', subtitle: 'Förstå värpningen', url: '/app/statistics', icon: Sparkles, premium: true },
   { title: 'Hälsa', subtitle: 'Din hälsojournal', url: '/app/halsa', icon: Stethoscope },
@@ -95,6 +96,8 @@ const moreGroups = [
 
 export function MobileNav() {
   const [showMore, setShowMore] = useState(false);
+  const { pathname } = useLocation();
+  const moreActive = !primaryItems.some((item) => item.url === '/app' ? pathname === '/app' : pathname.startsWith(item.url));
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -107,14 +110,7 @@ export function MobileNav() {
     });
   }, [user?.id]);
 
-  useEffect(() => {
-    if (!showMore) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [showMore]);
+  useEffect(() => { setShowMore(false); }, [pathname]);
 
   const groups = isAdmin
     ? [...moreGroups, {
@@ -128,20 +124,16 @@ export function MobileNav() {
     : moreGroups;
 
   return (
-    <>
-      {showMore && (
-        <div className="hg-more-overlay fixed inset-0 z-[70] md:hidden" onClick={() => setShowMore(false)}>
-          <div className="hg-more-overlay__backdrop absolute inset-0" />
-          <section
-            className="hg-more-sheet absolute left-2 right-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-5.5rem)] overflow-y-auto"
-            onClick={(event) => event.stopPropagation()}
-            aria-label="Mer i Hönsgården"
-          >
+    <Dialog.Root open={showMore} onOpenChange={setShowMore}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="hg-more-overlay__backdrop fixed inset-0 z-[70] md:hidden" />
+        <Dialog.Content className="hg-more-sheet hg-mobile-menu md:hidden">
+
             <header className="hg-more-sheet__header">
               <div>
                 <p className="hg-more-sheet__eyebrow">Din digitala hönsgård</p>
-                <h2 className="font-serif text-2xl text-foreground leading-tight mt-1">Vad vill du göra?</h2>
-                <p className="text-xs text-muted-foreground mt-1">Allt finns kvar – bara lite lugnare organiserat.</p>
+                <Dialog.Title className="font-serif text-2xl text-foreground leading-tight mt-1">Mer i Hönsgården</Dialog.Title>
+                <Dialog.Description className="text-sm text-muted-foreground mt-1">Verktyg, insikter och ditt konto.</Dialog.Description>
               </div>
               <button
                 type="button"
@@ -167,7 +159,7 @@ export function MobileNav() {
                     <strong>{item.title}</strong>
                     <small>{item.subtitle}</small>
                   </span>
-                  {(item as any).premium && !isPremium && <span className="hg-more-plus">Plus</span>}
+                  {'premium' in item && item.premium && !isPremium && <span className="hg-more-plus">Plus</span>}
                 </NavLink>
               ))}
             </div>
@@ -192,7 +184,7 @@ export function MobileNav() {
                       >
                         <span className="hg-more-row__icon"><item.icon className="h-4 w-4" /></span>
                         <span className="flex-1 min-w-0 text-sm font-medium text-foreground">{item.title}</span>
-                        {(item as any).premium && !isPremium && <span className="hg-more-plus">Plus</span>}
+                        {'premium' in item && item.premium && !isPremium && <span className="hg-more-plus">Plus</span>}
                         <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/55" />
                       </NavLink>
                     ))}
@@ -216,24 +208,21 @@ export function MobileNav() {
                 </span>
               </button>
             </div>
-          </section>
-        </div>
-      )}
+        </Dialog.Content>
+      </Dialog.Portal>
 
       <nav className="hg-bottom-nav fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe-bottom" aria-label="Huvudmeny">
         <div className="flex items-center justify-around h-16 px-1">
           {primaryItems.map((item) => (
             item.url === '#more' ? (
-              <button
-                key="more"
-                onClick={() => setShowMore(!showMore)}
-                className={`hg-bottom-nav__item ${showMore ? 'is-active' : ''}`}
-                aria-expanded={showMore}
+              <Dialog.Trigger asChild key="more"><button
+                type="button"
+                className={`hg-bottom-nav__item ${showMore || moreActive ? 'is-active' : ''}`}
                 aria-label="Visa fler delar av Hönsgården"
               >
                 <span className="hg-bottom-nav__icon"><item.icon className="h-5 w-5" /></span>
                 <span>{item.title}</span>
-              </button>
+              </button></Dialog.Trigger>
             ) : (
               <NavLink
                 key={item.url}
@@ -250,6 +239,6 @@ export function MobileNav() {
           ))}
         </div>
       </nav>
-    </>
+    </Dialog.Root>
   );
 }

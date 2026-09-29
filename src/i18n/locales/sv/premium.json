@@ -5,8 +5,9 @@
     "og_image_alt": "Hönsgården Plus – mer hjälp i vardagen med höns"
   },
   "hero": {
-    "badge": "Lite mer hjälp i vardagen",
-    "title": "Mer hjälp när din hönsgård börjar leva i appen",
+    "badge": "Hönsgården Plus",
+    "title": "Lite mer hjälp med din hönsgård",
+    "description": "Lär känna flocken bättre med Agda, insikter och verktyg som förenklar vardagen.",
     "free_trial": "Ägglogg och dagbok ingår alltid gratis",
     "trial_status": "Du har Plus-trial",
     "trial_status_days": "Du har Plus-trial · {{count}} dagar kvar",
@@ -87,7 +88,10 @@
   "ios": {
     "restore": "Återställ köp",
     "manage_appstore": "Hantera i App Store",
-    "products_unavailable": "Plus i iOS-appen köps via App Store. Har du redan Plus på webben synkas det automatiskt. Återställ köp om du bytt telefon.",
+    "products_unavailable": "Alla priser från App Store kunde inte hämtas just nu. Försök igen om en stund.",
+    "loading_price": "Hämtar pris från App Store…",
+    "price_unavailable": "Priset är inte tillgängligt just nu",
+    "retry_prices": "Försök hämta priser igen",
     "trust_appstore": "Betalning via App Store",
     "restore_none_title": "Inget App Store-köp hittades",
     "restore_none_desc": "Om du har Plus via webben synkas det med knappen Kontrollera Plus-status.",
@@ -96,5 +100,20 @@
   },
   "free_reassurance": "Du kan fortsätta gratis med ägglogg och dagbok. Dina inlägg finns kvar även utan Plus.",
   "terms_link": "Villkor",
-  "privacy_link": "Integritet"
+  "privacy_link": "Integritet",
+  "android": {
+    "restore": "Återställ köp",
+    "manage_appstore": "Hantera i Google Play",
+    "products_unavailable": "Alla priser från Google Play kunde inte hämtas just nu. Försök igen om en stund.",
+    "loading_price": "Hämtar pris från Google Play…",
+    "price_unavailable": "Priset är inte tillgängligt just nu",
+    "retry_prices": "Försök hämta priser igen",
+    "trust_appstore": "Betalning via Google Play",
+    "restore_none_title": "Inget Google Play-köp hittades",
+    "restore_none_desc": "Om du har Plus via webben synkas det med knappen Kontrollera Plus-status.",
+    "restore_fail_title": "Kunde inte återställa köp",
+    "restore_fail_desc": "Försök igen om en stund.",
+    "pending_title": "Betalningen väntar på bekräftelse",
+    "pending_desc": "Plus aktiveras när Google Play har bekräftat betalningen. Du behöver inte köpa igen."
+  }
 }

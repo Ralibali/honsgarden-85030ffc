@@ -59,7 +59,10 @@ export async function pickImagesNative(limit = 8): Promise<File[] | null> {
       files.push(new File([blob], `photo-${Date.now()}-${files.length}.${ext}`, { type }));
     }
     return files;
-  } catch {
+  } catch (error) {
+    const message = error instanceof Error ? error.message
+      : error && typeof error === 'object' && 'message' in error ? String(error.message) : '';
+    if (/cancel/i.test(message)) return [];
     const single = await pickImageNative('photos');
     return single ? [single] : [];
   }

@@ -120,7 +120,7 @@ function agdaSentence({
   }
   if (todayEggs === 0) {
     return pendingChores > 0
-      ? `Inga ägg är loggade ännu idag. Du har också ${pendingChores} syssla${pendingChores === 1 ? '' : 'r'} kvar på gården.`
+      ? `Inga ägg är loggade ännu idag. Du har också ${pendingChores} ${pendingChores === 1 ? 'syssla' : 'sysslor'} kvar på gården.`
       : 'Inga ägg är loggade ännu idag. Det kan vara en helt vanlig lugn morgon i redena.';
   }
   if (previousWeekEggs > 0 && weekEggs > previousWeekEggs) {
@@ -280,7 +280,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
           </button>
           <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/tasks')}>
             <span className="today-v3__line-icon"><CalendarCheck className="h-5 w-5" /></span>
-            <span className="today-v3__line-copy"><strong>{pendingChores === 0 ? 'Inga måsten just nu' : `${pendingChores} syssla${pendingChores === 1 ? '' : 'r'} kvar`}</strong><small>{pendingChores === 0 ? 'Gården ser lugn ut' : 'Bocka av när du är färdig'}</small></span>
+            <span className="today-v3__line-copy"><strong>{pendingChores === 0 ? 'Inga måsten just nu' : `${pendingChores} ${pendingChores === 1 ? 'syssla' : 'sysslor'} kvar`}</strong><small>{pendingChores === 0 ? 'Gården ser lugn ut' : 'Bocka av när du är färdig'}</small></span>
             <ChevronRight className="h-4 w-4" />
           </button>
           {(weatherText || weatherLoading) && (

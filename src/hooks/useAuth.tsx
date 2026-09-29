@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DEMO_USER_PROFILE } from '@/lib/demoData';
 import { resolvePremiumType, type PremiumType } from '@/lib/premiumStatus';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { isNativePlatform } from '@/lib/nativePlatform';
 
 interface UserProfile {
   id: string;
@@ -305,6 +306,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = async (mode: 'login' | 'register' = 'login') => {
     const { trackEvent } = await import('@/lib/analytics');
     trackEvent('OAuth Started', { provider: 'google', mode });
+    if (isNativePlatform()) {
+      const { signInWithNativeOAuth } = await import('@/lib/nativeAuth');
+      await signInWithNativeOAuth('google');
+      return;
+    }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -346,6 +352,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     stopPeriodicSync();
+    if (isNativePlatform() && user?.id) {
+      try {
+        const { detachNativePush } = await import('@/lib/nativePushCleanup');
+        await withTimeout(detachNativePush(user.id), 6_000);
+      } catch {
+        // Sign-out must remain available if a device is offline.
+        console.warn('[push] Device cleanup needs retry');
+      }
+    }
     try {
       await supabase.auth.signOut();
     } finally {

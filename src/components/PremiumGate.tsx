@@ -5,6 +5,7 @@ import { Crown, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getGateCopy } from '@/components/premium/gateCopy';
 import { trackClick } from '@/hooks/useTracking';
+import { isNativeIos, isNativeAndroid } from '@/lib/nativePlatform';
 
 interface PremiumGateProps {
   children: React.ReactNode;
@@ -87,6 +88,7 @@ export function PremiumGate({ children, feature, featureKey, blur = true, soft =
 function PremiumUpsellCard({ feature, featureKey }: { feature?: string; featureKey?: string }) {
   const navigate = useNavigate();
   const copy = getGateCopy(featureKey);
+  const nativeStore = isNativeIos() || isNativeAndroid();
   const title = copy?.title ?? (feature ? `${feature} kräver Premium` : 'Premium-funktion');
   const body = copy?.body ?? 'Lås upp alla funktioner med Premium.';
 
@@ -104,14 +106,14 @@ function PremiumUpsellCard({ feature, featureKey }: { feature?: string; featureK
         <div>
           <h3 className="font-serif text-lg text-foreground mb-1">{title}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">{body}</p>
-          <p className="text-xs text-muted-foreground mt-2">Prova sju dagar gratis – sedan 39 kr/mån eller 299 kr/år</p>
+          <p className="text-xs text-muted-foreground mt-2">{nativeStore ? 'Se abonnemang och aktuella priser i Plus.' : 'Prova sju dagar gratis – sedan 39 kr/mån eller 299 kr/år'}</p>
         </div>
         <Button
           className="w-full h-11 gap-2 text-sm font-semibold rounded-xl shadow-[0_4px_14px_0_hsl(var(--primary)/0.25)]"
           onClick={handleClick}
         >
           <Sparkles className="h-4 w-4" />
-          Prova Premium gratis
+          {nativeStore ? 'Utforska Hönsgården Plus' : 'Prova Premium gratis'}
           <ArrowRight className="h-4 w-4" />
         </Button>
         <p className="text-[10px] text-muted-foreground">Ingen bindningstid · Avbryt när du vill</p>
@@ -124,6 +126,7 @@ function PremiumUpsellCard({ feature, featureKey }: { feature?: string; featureK
 function PremiumBannerInline({ feature, featureKey }: { feature?: string; featureKey?: string }) {
   const navigate = useNavigate();
   const copy = getGateCopy(featureKey);
+  const nativeStore = isNativeIos() || isNativeAndroid();
   const label = copy?.title ?? (feature ? `Lås upp ${feature.toLowerCase()} med Premium` : 'Uppgradera till Premium');
 
   return (
@@ -139,7 +142,7 @@ function PremiumBannerInline({ feature, featureKey }: { feature?: string; featur
       </div>
       <div className="flex-1 text-left">
         <p className="text-xs font-semibold text-foreground">{label}</p>
-        <p className="text-[10px] text-muted-foreground">Sju dagar gratis – sedan 39 kr/mån eller 299 kr/år</p>
+        <p className="text-[10px] text-muted-foreground">{nativeStore ? 'Se vad som ingår i Hönsgården Plus' : 'Sju dagar gratis – sedan 39 kr/mån eller 299 kr/år'}</p>
       </div>
       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
     </button>
@@ -148,6 +151,7 @@ function PremiumBannerInline({ feature, featureKey }: { feature?: string; featur
 
 /** Dashboard-style premium nudge card */
 export function PremiumNudge() {
+  const nativeStore = isNativeIos() || isNativeAndroid();
   const { user } = useAuth();
   const navigate = useNavigate();
   const isPremium = user?.subscription_status === 'premium';
@@ -177,13 +181,13 @@ export function PremiumNudge() {
               <span className="text-[9px] font-bold uppercase tracking-wider text-warning bg-warning/12 px-2 py-0.5 rounded-full">Nytt</span>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-              Statistik, prognoser, kläckning, foderspårning och mycket mer. Prova sju dagar helt gratis!
+              Statistik, prognoser, kläckning, foderspårning och mycket mer.{!nativeStore && ' Prova sju dagar helt gratis!'}
             </p>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-primary group-hover:text-primary/80 transition-colors">
-                Prova gratis →
+                {nativeStore ? 'Utforska Plus →' : 'Prova gratis →'}
               </span>
-              <span className="text-[10px] text-muted-foreground">39 kr/mån eller 299 kr/år</span>
+              <span className="text-[10px] text-muted-foreground">{nativeStore ? (isNativeIos() ? 'Abonnemang via App Store' : 'Abonnemang via Google Play') : '39 kr/mån eller 299 kr/år'}</span>
             </div>
           </div>
         </div>

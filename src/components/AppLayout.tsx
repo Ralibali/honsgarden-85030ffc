@@ -8,16 +8,19 @@ import { QuickEggFAB } from './QuickEggFAB';
 import CommandPalette from './CommandPalette';
 import AppComingSoonDialog from './AppComingSoonDialog';
 import { SuspenseFallback } from './SuspenseFallback';
-import { Menu, Search } from 'lucide-react';
+import { Menu, Search, Feather } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { usePwaInstallTracking } from '@/hooks/usePwaInstallTracking';
 import { useAchievementRewards } from '@/hooks/useAchievementRewards';
 import AchievementUnlockOverlay from '@/components/AchievementUnlockOverlay';
 import OfflineBanner from './OfflineBanner';
+import { PushNotificationsProvider } from '@/hooks/usePushNotifications';
+import { isNativePlatform } from '@/lib/nativePlatform';
 
 function getAppContext(pathname: string): { section: string; label: string; emoji: string } {
   if (pathname === '/app') return { section: 'today', label: 'Idag', emoji: '🏡' };
   if (pathname.startsWith('/app/eggs')) return { section: 'eggs', label: 'Ägg', emoji: '🥚' };
+  if (pathname.startsWith('/app/dagbok')) return { section: 'diary', label: 'Dagbok', emoji: '📖' };
   if (pathname.startsWith('/app/hens/')) return { section: 'hen-profile', label: 'Hönsprofil', emoji: '🐔' };
   if (pathname.startsWith('/app/hens')) return { section: 'flock', label: 'Flocken', emoji: '🐔' };
   if (pathname.startsWith('/app/tasks')) return { section: 'yard', label: 'Gården', emoji: '🌿' };
@@ -34,7 +37,7 @@ function getAppContext(pathname: string): { section: string; label: string; emoj
   return { section: 'more', label: 'Hönsgården', emoji: '🌱' };
 }
 
-export default function AppLayout() {
+function AppLayoutContent() {
   usePwaInstallTracking();
   useAchievementRewards();
   const location = useLocation();
@@ -49,6 +52,15 @@ export default function AppLayout() {
     }
     meta.content = 'noindex, nofollow';
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.add('honsgarden-view');
+    return () => document.documentElement.classList.remove('honsgarden-view');
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [location.pathname]);
 
   return (
     <SidebarProvider>
@@ -82,18 +94,18 @@ export default function AppLayout() {
             </div>
           </header>
 
-          <header className="flex md:hidden items-center justify-between border-b border-border/30 px-4 bg-background/55 backdrop-blur-xl sticky top-0 z-30 pt-safe-top min-h-12 py-1.5">
+          <header className="app-mobile-header flex md:hidden items-center justify-between sticky top-0 z-30">
             <div className="flex items-center gap-2 min-w-0" aria-label="Hönsgården">
-              <span className="text-lg leading-none" aria-hidden="true">🐔</span>
+              <span className="app-brand-mark" aria-hidden="true"><Feather className="h-4 w-4" /></span>
               <strong className="font-serif text-[17px] font-medium tracking-[-0.02em] text-foreground truncate">Hönsgården</strong>
             </div>
             <div className="flex items-center gap-0.5">
               <button
                 onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-                className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/40"
+                className="app-header-action text-muted-foreground hover:text-foreground rounded-full hover:bg-muted/40"
                 aria-label="Sök"
               >
-                <Search className="h-4.5 w-4.5" />
+                <Search className="h-5 w-5" />
               </button>
               <NotificationBell />
             </div>
@@ -103,7 +115,7 @@ export default function AppLayout() {
 
           <main
             id="main-content"
-            className="flex-1 px-4 md:px-6 lg:px-8 pt-[calc(0.5rem+env(safe-area-inset-top))] pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-8 relative z-10"
+            className="app-main flex-1 px-4 md:px-6 lg:px-8 pt-5 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pt-6 md:pb-8 relative z-10"
           >
             <Suspense fallback={<SuspenseFallback />}>
               <PullToRefresh>
@@ -114,11 +126,16 @@ export default function AppLayout() {
         </div>
 
         <MobileNav />
-        <QuickEggFAB />
+        <QuickEggFAB desktopOnly />
         <CommandPalette />
-        <AppComingSoonDialog />
+        {!isNativePlatform() && <AppComingSoonDialog />}
         <AchievementUnlockOverlay />
       </div>
     </SidebarProvider>
   );
+}
+
+
+export default function AppLayout() {
+  return <PushNotificationsProvider><AppLayoutContent /></PushNotificationsProvider>;
 }

@@ -27,6 +27,7 @@ import { isInternationalDomain } from '@/lib/brand';
 import { checkForPwaUpdate, isStandalonePwa } from '@/lib/pwaUpdate';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import PageHeader from '@/components/PageHeader';
+import { isNativePlatform } from '@/lib/nativePlatform';
 
 function PushNotificationsRow() {
   const { supported, enabled, busy, enable, disable, sendTest } = usePushNotifications();
@@ -36,8 +37,9 @@ function PushNotificationsRow() {
       <div className="py-2">
         <p className="text-sm font-medium text-foreground">Push-notiser på den här enheten</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Push stöds inte i den här webbläsaren. På iPhone: öppna appen, tryck Dela →
-          Lägg till på hemskärmen, och slå sedan på push därifrån.
+          {isNativePlatform()
+            ? 'Push-notiser är inte tillgängliga i den här versionen av appen.'
+            : 'Push stöds inte i den här webbläsaren. På iPhone: öppna appen, tryck Dela → Lägg till på hemskärmen, och slå sedan på push därifrån.'}
         </p>
       </div>
     );
@@ -52,13 +54,15 @@ function PushNotificationsRow() {
         </div>
         <Switch
           checked={enabled}
+          aria-label="Push-notiser på den här enheten"
           disabled={busy}
           onCheckedChange={async (checked) => {
             if (checked) {
               const ok = await enable();
               if (!ok) toast({ title: 'Push aktiverades inte', description: 'Behörighet nekades eller är inte tillgänglig.' });
             } else {
-              await disable();
+              try { await disable(); }
+              catch { toast({ title: 'Kunde inte stänga av notiser', description: 'Försök igen när enheten har internetanslutning.', variant: 'destructive' }); }
             }
           }}
         />
@@ -70,8 +74,12 @@ function PushNotificationsRow() {
           className="rounded-xl"
           disabled={busy}
           onClick={async () => {
-            await sendTest();
-            toast({ title: 'Testnotis skickad 📲' });
+            try {
+              await sendTest();
+              toast({ title: 'Testnotis överlämnad', description: 'Kontrollera att den faktiskt visas på enheten.' });
+            } catch (error) {
+              toast({ title: 'Testnotisen kunde inte skickas', description: error instanceof Error ? error.message : 'Försök igen.', variant: 'destructive' });
+            }
           }}
         >
           Skicka testnotis
@@ -639,7 +647,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* App / Installation – göm för användare som redan installerat PWA:n */}
-      {!isStandalonePwa() && (
+      {!isNativePlatform() && !isStandalonePwa() && (
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
             <CardTitle className="font-serif text-lg flex items-center gap-2">
@@ -668,8 +676,8 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      {/* App-version / Uppdatering */}
-      <Card className="border-border/50 shadow-sm">
+      {/* Browser update controls apply to the PWA only. */}
+      {!isNativePlatform() && <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <CardTitle className="font-serif text-lg flex items-center gap-2">
             <RefreshCw className="h-5 w-5 text-primary" />
@@ -690,7 +698,7 @@ export default function SettingsPage() {
             {checkingUpdate ? 'Söker…' : 'Kontrollera efter uppdatering'}
           </Button>
         </CardContent>
-      </Card>
+      </Card>}
 
       <Card className="border-border/50 shadow-sm">
         <CardHeader>

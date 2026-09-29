@@ -14,7 +14,7 @@ import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent, parseAnalyticsSource } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
-import { isNativeIos } from '@/lib/nativePlatform';
+import { isNativeIos, isNativeAndroid } from '@/lib/nativePlatform';
 import {
   isIosBillingAvailable,
   loadStoreKitProducts,
@@ -24,9 +24,11 @@ import {
   syncAppleTransactions,
   type StoreKitProduct,
 } from '@/lib/appleIapClient';
+import { isGoogleBillingAvailable, loadGooglePlayProducts, openGooglePlaySubscriptions, purchaseGooglePlayPlan, restoreGooglePlayTransactions, syncGooglePlayTransactions, GooglePurchasePending } from '@/lib/googlePlayClient';
 import PremiumValueStats from '@/components/premium/PremiumValueStats';
 
 type BillingPlan = 'monthly' | 'yearly';
+const NATIVE_PRODUCTS_TIMEOUT_MS = 20_000;
 
 // Ikoner för Plus-funktionerna (i samma ordning som i locale-filerna)
 const FEATURE_ICONS = [Bot, FileText, Coins, BellRing, CalendarDays, BarChart3];
@@ -38,9 +40,12 @@ export default function Premium() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [restoring, setRestoring] = useState(false);
-  const [iosProducts, setIosProducts] = useState<StoreKitProduct[]>([]);
-  const [iosProductsReady, setIosProductsReady] = useState(!isNativeIos());
+  const [storeProducts, setStoreProducts] = useState<StoreKitProduct[]>([]);
+  const [storeProductsReady, setStoreProductsReady] = useState(!(isNativeIos() || isNativeAndroid()));
+  const [storeProductsAttempt, setStoreProductsAttempt] = useState(0);
   const nativeIos = isNativeIos();
+  const nativeBilling = nativeIos || isNativeAndroid();
+  const storeCopy = nativeIos ? 'ios' : 'android';
   const [searchParams] = useSearchParams();
   const entrySource = parseAnalyticsSource(searchParams.get('source'), 'premium_page');
   const premiumType = user?.premium_type;
@@ -139,24 +144,39 @@ export default function Premium() {
   }, [entrySource]);
 
   useEffect(() => {
-    if (!nativeIos) return;
+    if (!nativeBilling) return;
     let cancelled = false;
+    setStoreProductsReady(false);
+    setStoreProducts([]);
+    // A stalled native request must not leave the customer waiting indefinitely.
+    const timeout = window.setTimeout(() => {
+      cancelled = true;
+      setStoreProductsReady(true);
+      console.warn('[Premium] Native store product request timed out');
+    }, NATIVE_PRODUCTS_TIMEOUT_MS);
     (async () => {
       try {
-        const supported = await isIosBillingAvailable();
-        const products = supported ? await loadStoreKitProducts() : [];
-        if (!cancelled) setIosProducts(products);
+        const supported = await (nativeIos ? isIosBillingAvailable() : isGoogleBillingAvailable());
+        if (cancelled) return;
+        const products = supported ? await (nativeIos ? loadStoreKitProducts() : loadGooglePlayProducts()) : [];
+        if (!cancelled) {
+          const pricedProducts = products.filter((product) => product.priceString?.trim());
+          setStoreProducts(pricedProducts);
+          if (pricedProducts.length < 2) console.warn('[Premium] Native store did not return all Plus prices');
+        }
       } catch (err) {
-        console.warn('[Premium] StoreKit products unavailable', err);
-        if (!cancelled) setIosProducts([]);
+        console.warn('[Premium] Native store products unavailable', err);
+        if (!cancelled) setStoreProducts([]);
       } finally {
-        if (!cancelled) setIosProductsReady(true);
+        window.clearTimeout(timeout);
+        if (!cancelled) setStoreProductsReady(true);
       }
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
-  }, [nativeIos]);
+  }, [nativeBilling, nativeIos, storeProductsAttempt]);
 
   useEffect(() => {
     if (searchParams.get('success') !== 'true') return;
@@ -226,8 +246,8 @@ export default function Premium() {
   const handleManageSubscription = async () => {
     setLoadingPortal(true);
     try {
-      if (nativeIos) {
-        await openAppStoreSubscriptions();
+      if (nativeBilling) {
+        await (nativeIos ? openAppStoreSubscriptions() : openGooglePlaySubscriptions());
         return;
       }
       const { data, error } = await supabase.functions.invoke('customer-portal');
@@ -246,28 +266,28 @@ export default function Premium() {
   };
 
   const handleRestorePurchases = async () => {
-    if (!nativeIos) return;
+    if (!nativeBilling) return;
     setRestoring(true);
     try {
-      const jwsList = await restoreStoreKitTransactions();
+      const jwsList = await (nativeIos ? restoreStoreKitTransactions() : restoreGooglePlayTransactions());
       if (jwsList.length === 0) {
         await refreshSubscription();
         toast({
-          title: t('ios.restore_none_title'),
-          description: t('ios.restore_none_desc'),
+          title: t(`${storeCopy}.restore_none_title`),
+          description: t(`${storeCopy}.restore_none_desc`),
         });
         return;
       }
-      const result = await syncAppleTransactions(jwsList);
+      const result = await (nativeIos ? syncAppleTransactions(jwsList) : syncGooglePlayTransactions(jwsList));
       await refreshSubscription();
       toast({
-        title: result.subscribed ? t('toasts.welcome_title') : t('ios.restore_none_title'),
-        description: result.subscribed ? t('toasts.welcome_desc') : t('ios.restore_none_desc'),
+        title: result.subscribed ? t('toasts.welcome_title') : t(`${storeCopy}.restore_none_title`),
+        description: result.subscribed ? t('toasts.welcome_desc') : t(`${storeCopy}.restore_none_desc`),
       });
     } catch (err: any) {
       toast({
-        title: t('ios.restore_fail_title'),
-        description: err.message || t('ios.restore_fail_desc'),
+        title: t(`${storeCopy}.restore_fail_title`),
+        description: err.message || t(`${storeCopy}.restore_fail_desc`),
         variant: 'destructive',
       });
     } finally {
@@ -275,7 +295,7 @@ export default function Premium() {
     }
   };
 
-  const handleIosPurchase = async (plan: BillingPlan) => {
+  const handleNativePurchase = async (plan: BillingPlan) => {
     if (!user) {
       toast({
         title: t('toasts.login_required_title'),
@@ -284,21 +304,25 @@ export default function Premium() {
       });
       return;
     }
-    trackClick('checkout_start', { metadata: { plan, source: 'storekit' } });
+    trackClick('checkout_start', { metadata: { plan, source: nativeIos ? 'storekit' : 'google_play' } });
     setLoadingPlan(plan);
     try {
-      const jws = await purchaseStoreKitPlan(plan, user.id);
-      const result = await syncAppleTransactions([jws]);
+      const jws = await (nativeIos ? purchaseStoreKitPlan(plan, user.id) : purchaseGooglePlayPlan(plan, user.id));
+      const result = await (nativeIos ? syncAppleTransactions([jws]) : syncGooglePlayTransactions([jws]));
       await refreshSubscription();
       if (result.subscribed) trackEvent('Premium Purchased', {
         plan: 'plus',
         billing_interval: plan,
       });
       toast({
-        title: result.subscribed ? t('toasts.welcome_title') : t('ios.restore_none_title'),
-        description: result.subscribed ? t('toasts.welcome_desc') : t('ios.restore_none_desc'),
+        title: result.subscribed ? t('toasts.welcome_title') : t(`${storeCopy}.restore_none_title`),
+        description: result.subscribed ? t('toasts.welcome_desc') : t(`${storeCopy}.restore_none_desc`),
       });
     } catch (err: any) {
+      if (err instanceof GooglePurchasePending) {
+        toast({ title: t('android.pending_title'), description: t('android.pending_desc') });
+        return;
+      }
       const message = String(err?.message || '');
       if (/cancel|user cancelled|paymentcancelled/i.test(message)) return;
       toast({
@@ -312,8 +336,8 @@ export default function Premium() {
   };
 
   const handleCheckout = async (plan: BillingPlan) => {
-    if (nativeIos) {
-      await handleIosPurchase(plan);
+    if (nativeBilling) {
+      await handleNativePurchase(plan);
       return;
     }
 
@@ -373,71 +397,13 @@ export default function Premium() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-7 animate-fade-in pb-8">
-      <section className="relative overflow-hidden rounded-3xl border border-primary/25 p-6 sm:p-12 text-center bg-gradient-to-br from-primary/15 via-card to-accent/10 shadow-[0_24px_60px_-24px_hsl(var(--primary)/0.4)]">
-        {/* Levande glöd bakom innehållet */}
-        <motion.div
-          className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-primary/20 blur-3xl"
-          animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-accent/25 blur-3xl"
-          animate={{ scale: [1.1, 1, 1.1], opacity: [0.6, 0.4, 0.6] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <div className="relative">
-          {/* Krona med pulserande glöd */}
-          <motion.div
-            initial={{ scale: 0, rotate: -20 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center"
-          >
-            <motion.div
-              className="absolute inset-0 rounded-3xl bg-primary/30"
-              animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut' }}
-            />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-primary to-primary/75 shadow-lg shadow-primary/30">
-              <Crown className="h-8 w-8 text-primary-foreground" />
-            </div>
-          </motion.div>
-
-          <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
-            <Sparkles className="h-4 w-4" />
-            {t('hero.badge')}
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-serif text-foreground mb-5 leading-tight">
-            {t('hero.title', { brand })}
-          </h1>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-            {showFreeTrialCta && (
-              <div className="inline-flex items-center gap-2 bg-success/15 text-success-foreground border border-success/25 px-4 py-2 rounded-full text-sm font-medium">
-                {t('hero.free_trial')}
-              </div>
-            )}
-            {showTrialStatus && (
-              <div className="inline-flex items-center gap-2 bg-primary/15 text-primary border border-primary/25 px-4 py-2 rounded-full text-sm font-medium">
-                {trialDaysLeft === null
-                  ? t('hero.trial_status')
-                  : t('hero.trial_status_days', { count: trialDaysLeft })}
-              </div>
-            )}
-            <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={handleSyncPremium} disabled={syncing}>
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
-              {t('hero.sync_status')}
-            </Button>
-            {nativeIos && (
-              <Button variant="outline" size="sm" className="rounded-xl gap-2" onClick={handleRestorePurchases} disabled={restoring}>
-                {restoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-                {t('ios.restore')}
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="premium-page max-w-3xl mx-auto space-y-6 pb-8">
+      <section className="premium-intro">
+        <div className="premium-intro__badge"><Crown className="h-4 w-4" aria-hidden="true" />{t('hero.badge')}</div>
+        <h1 className="font-serif">{t('hero.title', { brand })}</h1>
+        <p className="premium-intro__description">{t('hero.description')}</p>
+        {showFreeTrialCta && <p className="premium-intro__free"><ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />{t('hero.free_trial')}</p>}
+        {showTrialStatus && <p className="premium-intro__free">{trialDaysLeft === null ? t('hero.trial_status') : t('hero.trial_status_days', { count: trialDaysLeft })}</p>}
       </section>
 
       {showManageSubscription && (
@@ -457,14 +423,11 @@ export default function Premium() {
             </div>
             {isTrialing ? <Button asChild className="rounded-xl"><Link to="/app/statistics">{t('trial.explore')}</Link></Button> : <Button onClick={handleManageSubscription} disabled={loadingPortal} className="rounded-xl">
               {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {nativeIos ? t('ios.manage_appstore') : t('active.manage')}
+              {nativeBilling ? t(`${storeCopy}.manage_appstore`) : t('active.manage')}
             </Button>}
           </CardContent>
         </Card>
       )}
-
-      {/* Personligt värdebevis: användarens egen uppbyggda data */}
-      {allowPaidCheckout && user && <PremiumValueStats />}
 
       {showFreeTrialCta && !intl && (
         <p className="text-center text-xs text-muted-foreground -mb-2">
@@ -472,78 +435,90 @@ export default function Premium() {
         </p>
       )}
 
-      {nativeIos && iosProductsReady && iosProducts.length === 0 && (
-        <p className="text-center text-sm text-muted-foreground">
-          {t('ios.products_unavailable')}
-        </p>
+      {nativeBilling && storeProductsReady && plans.some((plan) => !storeProducts.some((product) => product.plan === plan.id)) && (
+        <div className="rounded-2xl border border-border bg-muted/40 p-4 text-center space-y-3">
+          <p role="status" className="text-sm text-muted-foreground">{t(`${storeCopy}.products_unavailable`)}</p>
+          <Button variant="outline" onClick={() => setStoreProductsAttempt((attempt) => attempt + 1)} disabled={loadingPlan !== null}>
+            <RefreshCcw className="mr-2 h-4 w-4" />
+            {t(`${storeCopy}.retry_prices`)}
+          </Button>
+        </div>
       )}
 
-      <section className="grid md:grid-cols-2 gap-4 items-stretch">
-        {plans.map((plan, i) => (
+      <section className="premium-plans grid sm:grid-cols-2 gap-4 items-stretch">
+        {plans.map((plan, i) => {
+          const price = nativeBilling ? storeProducts.find((product) => product.plan === plan.id)?.priceString : plan.price;
+          return (
           <motion.div
             key={plan.id}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 + i * 0.12 }}
-            whileHover={{ y: -4 }}
-            className="h-full"
+                        className="h-full"
           >
           <Card
-            className={`relative h-full overflow-hidden shadow-sm transition-shadow hover:shadow-xl ${
+            className={`premium-plan relative h-full overflow-hidden shadow-sm ${
               plan.highlighted
-                ? 'border-2 border-primary shadow-[0_8px_30px_-10px_hsl(var(--primary)/0.35)] md:scale-[1.02] bg-primary/[0.03]'
-                : 'border-primary/20 opacity-95'
+                ? 'premium-plan--recommended border-primary bg-primary/[0.03]'
+                : 'border-border'
             }`}
           >
-            {plan.highlighted && (
-              <motion.div
-                className="pointer-events-none absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                animate={{ x: ['-120%', '260%'] }}
-                transition={{ duration: 2.6, repeat: Infinity, repeatDelay: 4.5, ease: 'easeInOut' }}
-              />
-            )}
             {plan.badge && (
-              <div className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-primary to-primary/80 px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
+              <div className="premium-plan__badge">
                 {plan.badge}
               </div>
             )}
-            <CardContent className="p-6 space-y-5">
+            <CardContent className="premium-plan__content p-5 sm:p-6 space-y-4">
               <div>
                 <div className="flex items-center gap-2 text-primary mb-2">
-                  <Crown className="h-5 w-5" />
                   <h2 className="font-serif text-2xl text-foreground">{plan.name}</h2>
                 </div>
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
               </div>
 
               <div>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-foreground">{nativeIos ? (iosProducts.find((p) => p.plan === plan.id)?.priceString ?? '—') : plan.price}</span>
-                  <span className="pb-1 text-muted-foreground">{plan.period}</span>
+                <div className="flex min-h-11 items-end gap-1" aria-live="polite" aria-busy={nativeBilling && !storeProductsReady}>
+                  {price ? <>
+                    <span className="text-4xl font-bold text-foreground">{price}</span>
+                    <span className="pb-1 text-muted-foreground">{plan.period}</span>
+                  </> : <span className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {!storeProductsReady && <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />}
+                    {t(`${storeCopy}.${storeProductsReady ? 'price_unavailable' : 'loading_price'}`)}
+                  </span>}
                 </div>
-                {plan.subPrice && !nativeIos && (
+                {plan.subPrice && !nativeBilling && (
                   <p className="text-xs text-muted-foreground mt-1">{plan.subPrice}</p>
                 )}
               </div>
 
               <p className="text-xs text-muted-foreground leading-relaxed">{t(plan.id === 'yearly' ? 'plans.yearly.billing' : 'plans.monthly.billing')}</p>
 
-              {!(nativeIos && iosProductsReady && iosProducts.length === 0) && (
               <Button
                 className="w-full rounded-xl"
                 variant={plan.highlighted ? 'default' : 'outline'}
                 onClick={() => handleCheckout(plan.id)}
-                disabled={loadingPlan !== null || !allowPaidCheckout || (nativeIos && !iosProducts.some((p) => p.plan === plan.id))}
+                disabled={loadingPlan !== null || !allowPaidCheckout || !price}
               >
                 {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {!allowPaidCheckout ? t('plans.active_label') : (plan.id === 'monthly' ? t('plans.monthly.cta') : t('plans.yearly.cta'))}
               </Button>
-              )}
             </CardContent>
           </Card>
           </motion.div>
-        ))}
+          );
+        })}
       </section>
+
+      <div className="premium-account-actions flex flex-wrap justify-center gap-2">
+        <Button variant="ghost" size="sm" className="gap-2" onClick={handleSyncPremium} disabled={syncing}>
+          {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+          {t('hero.sync_status')}
+        </Button>
+        {nativeBilling && <Button variant="ghost" size="sm" className="gap-2" onClick={handleRestorePurchases} disabled={restoring}>
+          {restoring ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+          {t(`${storeCopy}.restore`)}
+        </Button>}
+      </div>
 
       {/* Förtroenderad – tar bort sista riskkänslan före köp */}
       {showFreeTrialCta && (
@@ -553,7 +528,7 @@ export default function Premium() {
           transition={{ delay: 0.5 }}
           className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
         >
-          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />{nativeIos ? t('ios.trust_appstore') : t('trust.stripe')}</span>
+          <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-primary" />{nativeBilling ? t(`${storeCopy}.trust_appstore`) : t('trust.stripe')}</span>
           <span className="flex items-center gap-1.5"><RefreshCcw className="h-3.5 w-3.5 text-primary" />{t('trust.cancel')}</span>
           <span className="flex items-center gap-1.5"><MessageCircle className="h-3.5 w-3.5 text-primary" />{t('trust.support')}</span>
         </motion.div>
@@ -566,8 +541,8 @@ export default function Premium() {
         </p>
       )}
 
-      <Card>
-        <CardContent className="p-6">
+      <Card className="premium-benefits">
+        <CardContent className="p-5 sm:p-6">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-11 h-11 rounded-2xl bg-primary/10 flex items-center justify-center">
               <Bot className="h-5 w-5 text-primary" />
@@ -604,14 +579,16 @@ export default function Premium() {
         </CardContent>
       </Card>
 
+      {allowPaidCheckout && user && <PremiumValueStats />}
+
       <div className="text-center text-sm text-muted-foreground space-y-2">
         <p>{t('free_reassurance')}</p>
         <p className="flex justify-center gap-5"><Link to="/terms" className="underline min-h-11 inline-flex items-center">{t('terms_link')}</Link><Link to="/integritet" className="underline min-h-11 inline-flex items-center">{t('privacy_link')}</Link></p>
       </div>
 
-      {showFreeTrialCta && (!nativeIos || iosProducts.some((product) => product.plan === 'yearly')) && (
+      {showFreeTrialCta && (!nativeBilling || storeProducts.some((product) => product.plan === 'yearly')) && (
         <StickyMobileUpgradeCTA
-          label={nativeIos ? `${t('plans.yearly.cta')} · ${iosProducts.find((p) => p.plan === 'yearly')?.priceString ?? ''} ${t('plans.yearly.period')}` : t('sticky_cta')}
+          label={nativeBilling ? `${t('plans.yearly.cta')} · ${storeProducts.find((p) => p.plan === 'yearly')?.priceString ?? ''} ${t('plans.yearly.period')}` : t('sticky_cta')}
           onClick={() => handleCheckout('yearly')}
           loading={loadingPlan !== null}
         />

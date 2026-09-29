@@ -5141,6 +5141,10 @@ export type Database = {
       }
     }
     Functions: {
+      register_native_push: {
+        Args: { p_token: string; p_platform: string; p_registration_id: string }
+        Returns: boolean
+      }
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       apply_apple_iap_entitlement: {
         Args: { _entitlement: Json; _user_id: string }

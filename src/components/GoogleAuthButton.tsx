@@ -29,7 +29,6 @@ export default function GoogleAuthButton({ mode = 'login' }: GoogleAuthButtonPro
     setLoading(true);
     try {
       await loginWithGoogle(mode);
-      // Redirect till Google sker automatiskt – loading stannar tills sidan byts.
     } catch (err) {
       setLoading(false);
       toast({
@@ -37,6 +36,8 @@ export default function GoogleAuthButton({ mode = 'login' }: GoogleAuthButtonPro
         description: err instanceof Error ? err.message : 'Försök igen eller använd e-post.',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -1,0 +1,97 @@
+apply plugin: 'com.android.application'
+
+def uploadSigning = new Properties()
+def signingProperties = rootProject.file('keystore.properties')
+if (signingProperties.exists()) signingProperties.withInputStream { uploadSigning.load(it) }
+def uploadValue = { propertyName, envName -> uploadSigning.getProperty(propertyName) ?: System.getenv(envName) }
+def uploadStore = uploadValue('storeFile', 'HONSGARDEN_UPLOAD_STORE_FILE')
+def uploadStorePassword = uploadValue('storePassword', 'HONSGARDEN_UPLOAD_STORE_PASSWORD')
+def uploadAlias = uploadValue('keyAlias', 'HONSGARDEN_UPLOAD_KEY_ALIAS')
+def uploadKeyPassword = uploadValue('keyPassword', 'HONSGARDEN_UPLOAD_KEY_PASSWORD')
+def hasUploadSigning = uploadStore && uploadStorePassword && uploadAlias && uploadKeyPassword && rootProject.file(uploadStore).exists()
+
+android {
+    namespace = "se.auroramedia.honsgarden"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "se.auroramedia.honsgarden"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (hasUploadSigning) {
+            upload {
+                storeFile rootProject.file(uploadStore)
+                storePassword uploadStorePassword
+                keyAlias uploadAlias
+                keyPassword uploadKeyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (hasUploadSigning) signingConfig signingConfigs.upload
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+    constraints {
+        implementation('androidx.datastore:datastore-preferences:1.2.1') {
+            because 'Firebase transitively selects 1.1.7; its native counter RELRO is incompatible with 16 KB pages.'
+        }
+    }
+}
+
+apply from: 'capacitor.build.gradle'
+
+def servicesJSON = file('google-services.json')
+def hasMatchingFirebase = false
+if (servicesJSON.exists()) {
+    try {
+        def services = new groovy.json.JsonSlurper().parse(servicesJSON)
+        hasMatchingFirebase = services.client?.any { it.client_info?.android_client_info?.package_name == android.defaultConfig.applicationId } ?: false
+    } catch (Exception ignored) {
+        throw new GradleException('Invalid private Firebase configuration. Replace android/app/google-services.json.')
+    }
+}
+if (hasMatchingFirebase) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn('Firebase configuration for this Android package is missing. Debug push is unavailable; release is blocked.')
+}
+
+def verifyReleaseInputs = tasks.register('verifyReleaseInputs') {
+    doLast {
+        if (!hasUploadSigning) throw new GradleException('Release requires private upload signing in android/keystore.properties or HONSGARDEN_UPLOAD_* environment variables.')
+        if (!hasMatchingFirebase) throw new GradleException('Release requires Firebase configuration registered for this Android package.')
+    }
+}
+tasks.configureEach { task ->
+    if (task.name == 'preReleaseBuild') task.dependsOn(verifyReleaseInputs)
+}

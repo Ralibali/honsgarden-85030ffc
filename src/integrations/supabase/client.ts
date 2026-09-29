@@ -2,6 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
+import { isNativePlatform } from '@/lib/nativePlatform';
+import { Capacitor } from '@capacitor/core';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -10,9 +12,13 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: isNativePlatform() ? { headers: { 'x-supabase-client-platform': Capacitor.getPlatform() } } : undefined,
   auth: {
     storage: brokeredPreviewStorage(),
     persistSession: true,
     autoRefreshToken: true,
+    // Native OAuth returns through a verified code exchange in the app.
+    flowType: isNativePlatform() ? 'pkce' : 'implicit',
+    detectSessionInUrl: !isNativePlatform(),
   }
 });

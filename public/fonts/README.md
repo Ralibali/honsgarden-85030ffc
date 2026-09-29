@@ -1,0 +1,1 @@
+Inter and Young Serif are bundled unchanged from Google Fonts for consistent offline iOS rendering. Each family is licensed under SIL OFL 1.1; license texts are included alongside the fonts. CSS source: https://fonts.googleapis.com/css2?family=Young+Serif&family=Inter:wght@400;500;600;700&display=swap
