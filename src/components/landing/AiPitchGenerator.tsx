@@ -227,7 +227,7 @@ export default function AiPitchGenerator() {
                     className="w-full h-14 text-base gap-2 shadow-[0_10px_40px_hsl(var(--primary)/0.35)] hover:shadow-[0_14px_50px_hsl(var(--primary)/0.45)] transition-shadow"
                   >
                     <a
-                      href={`/login?mode=register&utm_source=ai_pitch&utm_medium=landing&utm_campaign=salja_agg&pitch=${encodeURIComponent(
+                      href={`/login?mode=register&source=ai_pitch&pitch=${encodeURIComponent(
                         pitch.slice(0, 1500),
                       )}&price=${encodeURIComponent(price)}&packs=${encodeURIComponent(packs)}&location=${encodeURIComponent(location)}`}
                     >

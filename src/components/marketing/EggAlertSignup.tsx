@@ -41,12 +41,11 @@ export default function EggAlertSignup({
       ? 'Skaffa egna höns – börja med vår kostnadsfria nybörjarguide. Vi mejlar också när det finns fler ägg att köpa i din närhet.'
       : 'Vi mejlar dig när nya säljare lägger upp färska ägg i ditt område. Ingen spam – bara en notis när det finns ägg att hämta.';
 
-  const utm = new URLSearchParams({
-    utm_source: 'honsgarden',
-    utm_medium: source,
-    utm_campaign: utmCampaign,
+  const context = new URLSearchParams({
+    source,
+    campaign_context: utmCampaign,
   }).toString();
-  const guideHref = `/borja-med-hons?${utm}`;
+  const guideHref = `/borja-med-hons?${context}`;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -63,15 +63,11 @@ describe('Apple sign-in recovery', () => {
     expect(button).toBeEnabled();
   });
 
-  it('still uses the existing web login outside iOS', async () => {
+  it('keeps unavailable Apple web login hidden outside iOS', () => {
     mocks.native.mockReturnValue(false);
-    mocks.oauth.mockResolvedValue({ redirected: true });
-    render(<AppleAuthButton />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Fortsätt med Apple' }));
-    await waitFor(() => expect(mocks.oauth).toHaveBeenCalledWith('apple', {
-      redirect_uri: `${window.location.origin}/app`,
-    }));
+    const { container } = render(<AppleAuthButton />);
+    expect(container).toBeEmptyDOMElement();
+    expect(mocks.oauth).not.toHaveBeenCalled();
     expect(mocks.apple).not.toHaveBeenCalled();
   });
 });

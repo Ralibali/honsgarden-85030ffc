@@ -18,6 +18,7 @@ import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 import PremiumStatusCard from '@/components/PremiumStatusCard';
 import ReferralCard from '@/components/ReferralCard';
 import { MyDataSection } from '@/components/settings/MyDataSection';
@@ -161,6 +162,22 @@ export default function SettingsPage() {
   useEffect(() => {
     setDarkMode(theme === 'dark');
   }, [theme]);
+
+  // Merges one key into profiles.preferences. Returns false (and tells the user)
+  // when nothing was saved, so the caller can roll back its optimistic switch.
+  const savePreference = async (key: string, value: boolean): Promise<boolean> => {
+    if (!user?.id) return false;
+    const { data: current, error: readError } = await supabase.from('profiles').select('preferences').eq('user_id', user.id).maybeSingle();
+    const prefs = (current?.preferences && typeof current.preferences === 'object' ? current.preferences : {}) as Record<string, Json>;
+    const { data: saved, error } = readError
+      ? { data: null, error: readError }
+      : await supabase.from('profiles').update({ preferences: { ...prefs, [key]: value } }).eq('user_id', user.id).select('user_id');
+    if (error || !saved?.length) {
+      toast({ title: 'Kunde inte spara inställningen', description: 'Kontrollera anslutningen och försök igen.', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
 
   const toggleDarkMode = (enabled: boolean) => {
     setDarkMode(enabled);
@@ -491,10 +508,7 @@ export default function SettingsPage() {
                 disabled={!isPremium}
                 onCheckedChange={async (checked) => {
                   setWeeklyReportEmail(checked);
-                  if (!user?.id) return;
-                  const { data: current } = await supabase.from('profiles').select('preferences').eq('user_id', user.id).maybeSingle();
-                  const prefs = (current?.preferences && typeof current.preferences === 'object' ? current.preferences : {}) as Record<string, unknown>;
-                  await supabase.from('profiles').update({ preferences: { ...prefs, weekly_report_email: checked } }).eq('user_id', user.id);
+                  if (!await savePreference('weekly_report_email', checked)) { setWeeklyReportEmail(!checked); return; }
                   toast({ title: checked ? 'Veckorapport aktiverad 📬' : 'Veckorapport avstängd' });
                 }}
               />
@@ -513,10 +527,7 @@ export default function SettingsPage() {
                   checked={showHenRace}
                   onCheckedChange={async (checked) => {
                     setShowHenRace(checked);
-                    if (!user?.id) return;
-                    const { data: current } = await supabase.from('profiles').select('preferences').eq('user_id', user.id).maybeSingle();
-                    const prefs = (current?.preferences && typeof current.preferences === 'object' ? current.preferences : {}) as Record<string, unknown>;
-                    await supabase.from('profiles').update({ preferences: { ...prefs, hide_weekly_hen_race: !checked } }).eq('user_id', user.id);
+                    if (!await savePreference('hide_weekly_hen_race', !checked)) { setShowHenRace(!checked); return; }
                     toast({ title: checked ? 'Värptävlingen visas igen 🏆' : 'Värptävlingen dold' });
                   }}
                 />
@@ -537,22 +548,8 @@ export default function SettingsPage() {
                   checked={commerceTipsEnabled}
                   onCheckedChange={async (checked) => {
                     setCommerceTipsEnabled(checked);
-                    if (!user?.id) return;
-                    const { data: current } = await supabase
-                      .from('profiles')
-                      .select('preferences')
-                      .eq('user_id', user.id)
-                      .maybeSingle();
-                    const prefs = (
-                      current?.preferences && typeof current.preferences === 'object'
-                        ? current.preferences
-                        : {}
-                    ) as Record<string, unknown>;
-                    await supabase
-                      .from('profiles')
-                      .update({ preferences: { ...prefs, commerce_tips_enabled: checked } })
-                      .eq('user_id', user.id);
-                    queryClient.setQueryData(['commerce-tip-preference', user.id], checked);
+                    if (!await savePreference('commerce_tips_enabled', checked)) { setCommerceTipsEnabled(!checked); return; }
+                    if (user?.id) queryClient.setQueryData(['commerce-tip-preference', user.id], checked);
                     toast({
                       title: checked
                         ? 'Produkttips aktiverade 🐔'

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 import { resetSignupTrackingForTests } from '@/lib/analytics';
 
 const login = vi.fn();
@@ -51,7 +52,10 @@ function newEmailUser() {
 function renderLogin(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
-      <Login />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/app" element={<p>Din hönsgård</p>} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -69,6 +73,7 @@ describe('Login – Signup fires only when an account is created', () => {
     login.mockReset();
     register.mockReset();
     plausible.mockReset();
+    vi.mocked(toast).mockClear();
     window.analyticsEvent = plausible;
     login.mockResolvedValue(undefined);
     register.mockResolvedValue({ user: newEmailUser(), session: null });
@@ -112,6 +117,33 @@ describe('Login – Signup fires only when an account is created', () => {
       expect(login).toHaveBeenCalledTimes(1);
     });
     expect(signupCalls(plausible)).toHaveLength(0);
+  });
+
+  it('takes an auto-confirmed new member directly into the app', async () => {
+    register.mockResolvedValue({ user: newEmailUser(), session: { access_token: 'test-session' } });
+    renderLogin('/login?mode=register');
+    fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByLabelText(/Jag godkänner/));
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+    expect(await screen.findByText('Din hönsgård')).toBeInTheDocument();
+    expect(signupCalls(plausible)).toHaveLength(1);
+  });
+
+  it.each(['confirmation', 'existing account'])('explains the next step without claiming success for %s without a session', async (kind) => {
+    const user = newEmailUser();
+    register.mockResolvedValue({ user: kind === 'confirmation' ? user : { ...user, identities: [] }, session: null });
+    renderLogin('/login?mode=register');
+    fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByLabelText(/Jag godkänner/));
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Kontrollera din inkorg');
+    expect(screen.getByLabelText('Lösenord')).toHaveValue('');
+    expect(toast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Konto skapat!' }));
+    expect(signupCalls(plausible)).toHaveLength(kind === 'confirmation' ? 1 : 0);
   });
 
   it('does not fire Signup Completed when register fails or no account was created', async () => {

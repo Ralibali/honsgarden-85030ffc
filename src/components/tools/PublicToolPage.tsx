@@ -185,7 +185,7 @@ export default function PublicToolPage({
                 Hönsgårdens kläckningskalender håller koll på datum, påminner om lysning och loggar resultatet – gratis.
               </p>
               <Button asChild size="lg" className="rounded-xl gap-2">
-                <Link to={`/login?mode=register&utm_source=tool&utm_content=${tool}`}>
+                <Link to={`/login?mode=register&source=tool&tool=${tool}`}>
                   Skapa ett konto <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

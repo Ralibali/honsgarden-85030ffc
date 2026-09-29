@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { trackEvent, trackFirstHenIfNew, ANALYTICS_SOURCES } from '@/lib/analytics';
+import { trackEvent, trackFirstHenIfNew, parseAnalyticsSource, ANALYTICS_SOURCES } from '@/lib/analytics';
 
 function mockPlausible() {
   const calls: Array<{ event: string; props?: Record<string, unknown> }> = [];
@@ -122,5 +122,12 @@ describe('aktiveringskedjan signup → första hönan (swarm G)', () => {
   it('onboarding och hens_page är giltiga source-värden i runtime-listan', () => {
     expect(ANALYTICS_SOURCES).toContain('onboarding');
     expect(ANALYTICS_SOURCES).toContain('hens_page');
+  });
+  it('retains known internal signup placements and rejects arbitrary query content', () => {
+    for (const source of ['tool', 'ai_pitch', 'ort_page', 'ort_page_cta']) {
+      expect(parseAnalyticsSource(source)).toBe(source);
+    }
+    expect(parseAnalyticsSource('private@example.test')).toBe('signup_form');
+    expect(parseAnalyticsSource('untrusted free text')).toBe('signup_form');
   });
 });

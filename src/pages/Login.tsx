@@ -53,6 +53,7 @@ export default function Login() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [registrationNotice, setRegistrationNotice] = useState('');
 
   const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
   const normalizedPostalCode = useMemo(() => {
@@ -137,6 +138,14 @@ export default function Login() {
       // Existing-email anti-enumeration responses have empty identities and are ignored.
       const { trackSignupIfNew } = await import('@/lib/analytics');
       trackSignupIfNew(data?.user, { source: signupSource });
+      // A successful request is not necessarily a signed-in new account:
+      // confirmation-required and anti-enumeration responses have no session.
+      if (!data?.session) {
+        setPassword('');
+        setRegistrationNotice('Kontrollera din inkorg. Om en bekräftelse behövs får du ett mejl med nästa steg. Har du redan ett konto kan du logga in eller välja ”Glömt lösenord?”.');
+        setAuthMode('login');
+        return;
+      }
       if (referralCode.trim() && data?.user?.id) {
         try {
           await supabase.rpc('process_referral', {
@@ -161,7 +170,7 @@ export default function Login() {
           ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
           : 'Du har fått sju dagars gratis Premium! 🎉',
       });
-      setAuthMode('login');
+      navigate('/app', { replace: true });
     } catch (err) {
       toast({ title: 'Registrering misslyckades', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
     } finally {
@@ -311,6 +320,7 @@ export default function Login() {
               <GoogleAuthButton mode="login" />
               <AppleAuthButton mode="login" />
               <AuthDivider />
+              {registrationNotice && <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">{registrationNotice}</p>}
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="email" className="text-muted-foreground">E-post</Label>

@@ -34,7 +34,11 @@ export type AnalyticsSource =
   | 'blog_popup'
   | 'orpington'
   | 'sussex'
-  | 'bast-honsras';
+  | 'bast-honsras'
+  | 'tool'
+  | 'ai_pitch'
+  | 'ort_page'
+  | 'ort_page_cta';
 
 /** Tillåtna OAuth-leverantörer (låg kardinalitet). */
 export type AnalyticsOAuthProvider = 'google' | 'apple';
@@ -440,6 +444,10 @@ export const ANALYTICS_SOURCES = [
   'orpington',
   'sussex',
   'bast-honsras',
+  'tool',
+  'ai_pitch',
+  'ort_page',
+  'ort_page_cta',
 ] as const satisfies readonly AnalyticsSource[];
 
 /**

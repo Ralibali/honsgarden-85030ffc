@@ -47,7 +47,7 @@ const formatSek = (value: number) =>
   Math.round(value).toLocaleString('sv-SE') + ' kr';
 
 export default function StartCostCalculator() {
-  const [preset, setPreset] = useState<PresetKey>('budget');
+  const [preset, setPreset] = useState<PresetKey | 'custom'>('budget');
   const [input, setInput] = useState<StartCostInput>(PRESETS.budget);
   const [monthlyFeed, setMonthlyFeed] = useState(250);
   const [monthlyBedding, setMonthlyBedding] = useState(50);
@@ -79,7 +79,7 @@ export default function StartCostCalculator() {
   };
 
   const update = (key: keyof StartCostInput, value: number) => {
-    setPreset('bas');
+    setPreset('custom');
     setInput((current) => ({ ...current, [key]: Math.max(0, value || 0) }));
   };
 
@@ -121,7 +121,7 @@ export default function StartCostCalculator() {
                 Hönsgårdens commerce-underlag placerar en typisk total startkostnad för fyra höns
                 ungefär mellan {formatSek(START_COST_REFERENCE.startMinSek)} och{' '}
                 {formatSek(START_COST_REFERENCE.startMaxSek)}, med ungefär{' '}
-                {formatSek(START_COST_REFERENCE.annualMinSek)}–{formatSek(START_COST_REFERENCE.annualMaxSek)}
+                {formatSek(START_COST_REFERENCE.annualMinSek)}–{formatSek(START_COST_REFERENCE.annualMaxSek)}{' '}
                 i årlig drift. Priser varierar kraftigt beroende på hus, byggsätt och utrustning.
               </p>
             </div>

@@ -4,6 +4,7 @@ import type { AffiliateProduct } from '@/data/affiliateProducts';
 import { AFFILIATE_ENABLED } from '@/lib/featureFlags';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { trackClick } from '@/hooks/useTracking';
+import { useCommerceTipsEnabled } from '@/hooks/useCommerceTipsEnabled';
 
 type Category = AffiliateProduct['category'];
 
@@ -19,9 +20,11 @@ const ADVERTISER_LABEL: Record<string, string> = {
 };
 
 export default function AffiliateProductStrip({ category, title, limit = 3 }: Props) {
-  const { data, isLoading } = useAffiliateProducts(AFFILIATE_ENABLED);
+  const tipsEnabled = useCommerceTipsEnabled();
+  const active = AFFILIATE_ENABLED && tipsEnabled;
+  const { data, isLoading } = useAffiliateProducts(active);
 
-  if (!AFFILIATE_ENABLED || isLoading) return null;
+  if (!active || isLoading) return null;
 
   const products = (data ?? [])
     .filter((p) => p.category === category)

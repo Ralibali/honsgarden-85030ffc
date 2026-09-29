@@ -1,6 +1,5 @@
 import './lib/initGa4';
-import { createRoot, hydrateRoot } from "react-dom/client";
-import { isNativePlatform } from '@/lib/nativePlatform';
+import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import "./mobile.css";
@@ -29,6 +28,7 @@ import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
+import { isNativePlatform } from "@/lib/nativePlatform";
 
 document.documentElement.classList.toggle('native-app', isNativePlatform());
 if (isNativePlatform()) {
@@ -37,10 +37,11 @@ if (isNativePlatform()) {
 }
 
 // Restore theme preference before render to avoid flash
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme === 'dark') {
-  document.documentElement.classList.add('dark');
-}
+try {
+  if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.classList.add('dark');
+  }
+} catch { /* Blocked browser storage must not prevent registration from loading. */ }
 
 // Keep day/night presentation tied to the visitor's real local wall clock.
 // This also protects the dashboard from showing a morning greeting after midnight.
@@ -73,11 +74,7 @@ installGlobalErrorHandlers();
 
 const root = document.getElementById("root")!;
 
-// Native and the interactive demo replace static marketing shells rather than
-// hydrating matching React output. The demo can also open directly in its diary.
-const isDemoPage = /^\/demo\/?$/.test(window.location.pathname);
-if (root.hasChildNodes() && !isNativePlatform() && !isDemoPage) {
-  hydrateRoot(root, <App />);
-} else {
-  createRoot(root).render(<App />);
-}
+// The prerender script writes standalone SEO HTML, not server-rendered <App />.
+// Keep that content until React commits, then replace it. Hydration would attach
+// App to a different tree (also on /login's fallback shell), causing #418/#423.
+createRoot(root).render(<App />);

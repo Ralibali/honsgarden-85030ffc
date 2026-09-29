@@ -46,8 +46,12 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel, ini
   const increment = () => setCount((current) => Math.min((Number.isFinite(current) ? current : 0) + 1, 999));
   const decrement = () => setCount((current) => Math.max((Number.isFinite(current) ? current : 0) - 1, 0));
 
+  const validationError = eggLogValidationError(date, count);
+  // A new registration needs at least one egg; corrections may still set 0.
+  const canSave = !isPending && !validationError && count > 0;
+
   const handleSubmit = () => {
-    if (isPending || eggLogValidationError(date, count)) return;
+    if (!canSave) return;
     const isFlockSelection = selectedHenId.startsWith('flock:');
     const hen_id = !isFlockSelection && selectedHenId !== 'all' ? selectedHenId : undefined;
     const flock_id = isFlockSelection ? selectedHenId.replace('flock:', '') : undefined;
@@ -191,11 +195,11 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel, ini
           </div>
         )}
 
-        {eggLogValidationError(date, count) && <p role="alert" className="text-sm text-destructive">{eggLogValidationError(date, count)}</p>}
+        {validationError && <p role="alert" className="text-sm text-destructive">{validationError}</p>}
         <div className="egg-log-actions flex flex-col sm:flex-row gap-2">
-          <Button onClick={handleSubmit} disabled={isPending || !!eggLogValidationError(date, count)} className="h-12 rounded-xl active:scale-95 transition-transform flex-1 text-sm font-semibold">
+          <Button onClick={handleSubmit} disabled={!canSave} className="h-12 rounded-xl active:scale-95 transition-transform flex-1 text-sm font-semibold">
             {isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-            {`Spara ${Number.isNaN(count) ? 0 : count} ägg`}
+            {count > 0 ? `Spara ${count} ägg` : 'Välj antal ägg'}
           </Button>
           <Button variant="outline" disabled={isPending} onClick={onCancel} className="h-12 rounded-xl">Avbryt</Button>
         </div>
