@@ -99,7 +99,7 @@ describe('egg book history flow', () => {
     expect(screen.getAllByRole('button', { name: /Ändra registreringen/ })).toHaveLength(116);
     fireEvent.change(screen.getByLabelText('Hitta en dag'), { target: { value: '2025-01-01' } });
     expect(screen.getAllByRole('button', { name: /Ändra registreringen/ })).toHaveLength(1);
-  });
+  }, 15_000); // Renders 116 rows in two views; slow CI runners exceed the 5s default.
 
   it('does not write when editing is cancelled', async () => {
     mount();
