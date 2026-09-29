@@ -1,37 +1,38 @@
-# Mina första höns (PDF, 199 kr) – inspektionsrapport och förslag
+# Google Play billing: pre-deployment comparison (read-only, nothing changed)
 
-Inget har ändrats, deployats eller publicerats. Nedan är vad som finns idag och vad som blockerar en PDF-försäljning.
+Backend: sikbymtrbhrofysgkqsj is the active backend and is reachable. The archive has 10 files, including a 15 618-byte migration.
 
-## Vad som redan fungerar
+## Current state
+- Migration 20260928072522_google_play_billing: NOT applied.
+- Functions verify-google-subscription and google-play-notifications: NOT deployed (both return 404).
+- Secrets GOOGLE_PLAY_SERVICE_ACCOUNT, GOOGLE_PLAY_RTDN_AUDIENCE and GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL: none are set.
+- Native redirect allowlist for Android/iOS: UNAVAILABLE. Site URL and Additional Redirect URLs aren't readable here, so check them manually.
+- google_play_purchases table, merge_google_play_access, apply_google_play_purchase and billing_without_google_expiry: all absent. No name collisions.
 
-- **Stripe:** kopplat till kontot "aurora media AB" (samma konto som Plus-prenumerationerna). Nycklar finns som hemligheter: betalnyckel och webhook-hemlighet. Läge (test/live) syns inte i koden – det avgörs av nyckeln som ligger i hemligheten, så det behöver bekräftas separat innan lansering.
-- **Kassa för engångsköp:** finns redan och stöder gäster utan konto (`supabase/functions/shop-checkout/index.ts`, läge `payment`, svensk valuta, rabattkoder).
-- **Webhook:** `supabase/functions/stripe-webhook/index.ts` hanterar butiksordrar, kontrollerar att beloppet stämmer exakt och slutför ordern via databasfunktionen `shop_finalize_paid_order`.
-- **Orderkvitto:** `supabase/functions/shop-order-receipt/index.ts` + sidan `/butik/tack` visar kvittot via en hemlig ordertoken (fungerar för gäster).
-- **Butiksuppgifter (verifierad säljare):** företagsnamn "aurora media AB", organisationsnummer 559272-0220, postadress "Stjärnorp skolan 1, 58578 Vreta Kloster", supportadress info@auroramedia.se, villkor granskade 2026-08-06. Returadress är dock **tom**.
-- **Villkor/ångerrätt:** sidorna `/butik/villkor` och `/butik/angerratt` finns, plus funktionen `shop-withdrawal-request`.
+## profiles columns (all present, all compatible)
+- user_id uuid NOT NULL UNIQUE, FK to auth.users with cascade delete
+- preferences jsonb NOT NULL, default '{}'
+- premium_expires_at timestamptz, nullable
+- is_lifetime_premium boolean NOT NULL, default false
+- subscription_status text NOT NULL, default 'free'
+- stripe_customer_id text, nullable
+- No check constraint limits subscription_status values.
 
-## Blockerare för PDF-produkten
+## Existing billing functions compared with the migration
+- protect_apple_iap_preferences: SECURITY INVOKER, search_path=public. Live code strips only apple_iap and stripe_plus for non-service callers. The migration adds google_play and is otherwise identical. The trigger is recreated with the same definition (BEFORE INSERT OR UPDATE).
+- apply_apple_iap_entitlement and apply_stripe_plus_status: SECURITY INVOKER, search_path=public, same signatures. EXECUTE is limited to postgres, service_role and the sandbox read role; anon and authenticated have none. The migration keeps the signatures and grants. Its only logic change is stripping the Google expiry first, via billing_without_google_expiry.
+- guard_premium_expires_at, which has two duplicate BEFORE UPDATE triggers: forces lifetime to premium with a NULL expiry, and keeps the old expiry on partial premium updates. No conflict.
+- protect_subscription_fields (SECURITY DEFINER, BEFORE UPDATE): non-service, non-admin callers get subscription_status, is_lifetime_premium, premium_expires_at, stripe_customer_id and referral_code reverted to OLD. No conflict: merge_google_play_access runs after it and uses only data the server protects.
+- grant_premium_days and set_lifetime_premium (SECURITY DEFINER) still work. merge_google_play_access treats a changed expiry as independent access, so gifts and trials are kept. Lifetime still forces a NULL expiry.
 
-1. **Ingen digital produkt-modell.** Tabellen `shop_products` har bara fysiska fält (lager, fraktdagar, moms-sats). Inget fält för fil, filtyp eller "digital".
-2. **Ingen privat fillagring för PDF.** Befintliga lagringsutrymmen: blog-images, email-assets, hen-images, egg-sale-images, community-images, reports, backups, hen-photos. Inget för butiksfiler – ett nytt privat utrymme behövs.
-3. **Ingen nedladdningslogik.** Det finns ingen tabell för nedladdningar och ingen funktion som skapar tidsbegränsade nedladdningslänkar eller räknar antal hämtningar.
-4. **Inget ordermejl skickas.** Webhooken skriver bara i databasen; ingen bekräftelse mejlas. Resend och Brevo finns som hemligheter, så mejl kan skickas – men flödet saknas. Utan mejl finns ingen "återhämtning" av nedladdningen.
-5. **Frakt och adress tvingas på alla köp.** Kassan kräver svensk leveransadress och lägger på 59 kr frakt under 499 kr. För en PDF måste både frakt och adress hoppas över.
-6. **Butiken är stängd:** `shop_public_enabled` = false. Inga digitala produkter finns; nuvarande produkter är t‑shirt, mugg, äggkartong och en testprodukt. Noll ordrar har lagts (0 rader).
-7. **Ångerrätt för digitalt** kräver ett uttryckligt medgivande i kassan att ångerrätten upphör vid nedladdning – finns inte idag.
-8. **Moms:** priset 199 kr inkl. moms fungerar (25 % för e‑böcker/PDF i Sverige är 6 % – behöver bekräftas hur du vill redovisa), men kassan sätter idag ingen momssats per rad mot Stripe.
+## Trigger order on profiles (BEFORE, alphabetical)
+guard_premium_expires_at_trigger, protect_apple_iap_preferences, protect_subscription_fields_trigger, set_referral_code, trg_guard_premium_expires_at, update_profiles_updated_at, then the new zz_merge_google_play_access runs last, as intended.
 
-## Föreslagen ordning när din PDF och bilder kommer
+## Compatibility result
+No incompatible security rule or billing structure was found. Minor notes that don't block deployment:
+1. EXECUTE on the existing trigger functions is open to PUBLIC, anon and authenticated. They can't be called directly, so this isn't a risk. CREATE OR REPLACE keeps those grants.
+2. CREATE TABLE and CREATE TRIGGER zz_merge_google_play_access don't use IF NOT EXISTS. That's safe now because neither exists, but the migration can't be run twice.
+3. Only billing_without_google_expiry and apply_google_play_purchase get a service_role grant. merge_google_play_access is a trigger function, so it needs none.
 
-1. Nytt privat lagringsutrymme för butiksfiler + fält på produkten (`is_digital`, filsökväg, filstorlek).
-2. Kassan: hoppa över frakt/adress när alla varor är digitala; tvinga e‑post; spara medgivande om ångerrätt.
-3. Nedladdning: tabell för nedladdningsrättigheter kopplad till ordern + funktion som ger en kort signerad länk, med tak på antal hämtningar och möjlighet att begära ny länk via e‑post.
-4. Ordermejl med kvitto och nedladdningslänk (Resend), plus återhämtning: "skicka min länk igen".
-5. Lägg in produkten "Mina första höns" 199 kr, testköp i testläge, sedan öppna butiken.
-
-## Vad jag behöver av dig
-
-- Bekräfta om Stripe-nyckeln som ligger inne är test eller live (och om du vill testa i testläge först).
-- Returadress för butiken (saknas idag).
-- Momssats du vill använda för PDF:en.
+## Next step, after approval
+Apply the exact migration in one transaction. Then deploy the attached handlers and helpers unchanged: check-subscription, verify-google-subscription, google-play-notifications and _shared/*. Add the three secrets in Project Settings → Secrets, and check the redirect allowlist manually.
