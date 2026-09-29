@@ -1,0 +1,62 @@
+name: Android build and 16 KB verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install dependencies
+        run: npm ci --registry=https://registry.npmjs.org/ --replace-registry-host=always
+      - name: Build bundled web app
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://sikbymtrbhrofysgkqsj.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpa2J5bXRyYmhyb2Z5c2drcXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjQ0MjAsImV4cCI6MjA4ODI0MDQyMH0.SlgJoYwkD5GWeZ2mK-GihDvEWpt8noKWE8xulzSOqaU
+          VITE_SUPABASE_PROJECT_ID: sikbymtrbhrofysgkqsj
+      - name: Sync Android dependencies
+        run: npm run native:sync:android
+      - name: Install target SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+      - name: Compile debug package without private release credentials
+        working-directory: android
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug --no-daemon --max-workers=2 | tee ../android-build.log
+      - name: Verify actual ELF, RELRO and APK alignment
+        run: |
+          python3 scripts/verify-android-16kb.py android/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -c -P 16 4 android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Save compiler log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-debug-compiler-log
+          path: android-build.log
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Report release gate
+        run: |
+          echo 'Debug package compiled and static 16 KB checks passed. Production signing, matching Firebase configuration, real-device flows and Play testing remain required.' >> "$GITHUB_STEP_SUMMARY"

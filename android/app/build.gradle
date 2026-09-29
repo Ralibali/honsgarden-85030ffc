@@ -61,6 +61,11 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    constraints {
+        implementation('androidx.datastore:datastore-preferences:1.2.1') {
+            because 'Firebase transitively selects 1.1.7; its native counter RELRO is incompatible with 16 KB pages.'
+        }
+    }
 }
 
 apply from: 'capacitor.build.gradle'

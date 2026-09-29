@@ -27,7 +27,7 @@ Apple and Stripe state calculations exclude the Google overlay, and the profile 
 
 ## Validation
 
-- 29 September full local Vitest suite: 117 files, 1002 tests passed, including Google billing, Apple billing, native OAuth, push, registration and native Apple cancellation recovery. One additional Android dependency-path regression test was then added and its complete seven-test identity suite passed.
+- 29 September full local Vitest suite after integrating the deployed main branch and camera change: 118 files, 1007 tests passed, including Google/Apple billing, native OAuth/recovery, push, registration, Apple cancellation, portable Android dependency paths, and native photo cancellation/fallback.
 - Both native sync outputs verified: Android `se.auroramedia.honsgarden`, iOS `se.honsgarden.app`. Platform-specific OAuth/recovery and rejecting the other platform's scheme passed; ambiguous sync and mismatched platform environment are rejected.
 - TypeScript project check passed. ESLint completed with zero errors and 682 warnings (existing and inherited native work); warnings remain to review.
 - Isolated PostgreSQL/PGlite integration tests: account ownership, denied client reads/writes/RPC, forged preferences, out-of-order replay, refunds, Apple/Stripe overlap, equal expiries, independent gift, lifetime and preference preservation.
