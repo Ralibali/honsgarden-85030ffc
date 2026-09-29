@@ -1,5 +1,5 @@
 // Server-only Google Play verification. Purchase tokens must never enter logs or profiles.
-export const GOOGLE_PACKAGE = "se.honsgarden.app";
+export const GOOGLE_PACKAGE = "se.auroramedia.honsgarden";
 export const GOOGLE_PRODUCT = "honsgarden_plus";
 export class InvalidGooglePurchase extends Error {}
 export class GoogleUnavailable extends Error {}

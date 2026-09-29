@@ -145,7 +145,7 @@ describe("Google Play server verification", () => {
     );
     await fetchGooglePurchase("token/?#", "oauth", f);
     expect(f.mock.calls[0][0]).toContain(
-      "/applications/se.honsgarden.app/purchases/subscriptionsv2/tokens/token%2F%3F%23",
+      "/applications/se.auroramedia.honsgarden/purchases/subscriptionsv2/tokens/token%2F%3F%23",
     );
   });
   it("distinguishes invalid tokens from unavailable Google service", async () => {
