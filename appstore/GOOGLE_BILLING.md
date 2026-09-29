@@ -1,13 +1,13 @@
 # Google Play billing rollout
 
-Status 29 September 2026: migration and three billing handlers with six shared helpers deployed through Lovable to the actual backend. Ledger RLS/client denial and server-only RPC grants verified. Unauthenticated verifier and status requests return 401; notifications return 503 while unconfigured. The three Google credentials remain absent. No real purchase/restore has been verified. Do not publish Android production before completing the rollout below.
+Status 29 September 2026: migration and three billing handlers with six shared helpers deployed through Lovable to the actual backend. Ledger RLS/client denial and server-only RPC grants verified. Unauthenticated verifier and status requests return 401; notifications return 503 while unconfigured. The private verifier credential, Android Publisher API and app-scoped Play access are configured, with zero account-wide permissions. OAuth returned 200; the new package probe returned expected applicationNotFound before its first AAB. Authenticated RTDN remains incomplete. No real purchase/restore has been verified. Do not publish Android production before completing the rollout below.
 
 Android package `se.auroramedia.honsgarden`; subscription `honsgarden_plus`; base plans `monthly` and `yearly`. The old Android package belongs to another developer; the user's Play draft has not yet received a package. iOS keeps `se.honsgarden.app` and its existing Apple products. The Android release client uses SHA-256 of `honsgarden:` plus the lowercase Supabase user UUID as the obfuscated account ID. The server enforces that exact binding.
 
 ## Rollout order
 
 1. Completed on 29 September: `20260928072522_google_play_billing.sql` applied in Hönsgården's actual Lovable Cloud backend `sikbymtrbhrofysgkqsj`, followed by the three handlers and six shared helpers. Ledger RLS is enabled, client grants are zero and billing RPCs are server-only. Do not rerun this one-time migration. Inspect real production billing guards/functions before any future replacement and keep security-advisor checks current.
-2. Privately configure `GOOGLE_PLAY_SERVICE_ACCOUNT`, using a service account restricted in Play Console to this app and the permissions required to read and acknowledge subscriptions. It must have Android Publisher API access. Never put this credential in Git, client code, screenshots or review notes.
+2. Completed private verifier setup: `GOOGLE_PLAY_SERVICE_ACCOUNT` configured; Android Publisher API enabled; billing identity limited in Play Console to this app, with subscription-read/acknowledgement permissions and zero account-wide permissions. The store groups broader order operations with acknowledgement; their app-scoped grant was explicitly approved. The app only verifies and acknowledges subscriptions. Never put this credential in Git, client code, screenshots or review notes.
 3. Set `GOOGLE_PLAY_ALLOW_TEST=true` only for the deliberate licensed-tester workflow; default is false. This does not accept forged receipts: Google still verifies each purchase.
 4. Deploy `verify-google-subscription` with JWT verification enabled, and `check-subscription`, including their shared dependencies. The verifier additionally resolves the user through Supabase Auth before accepting purchase tokens.
 5. Deploy `google-play-notifications` with platform JWT verification disabled only because the handler validates Google's signed OIDC JWT instead. Set `GOOGLE_PLAY_RTDN_AUDIENCE` to the exact endpoint URL and `GOOGLE_PLAY_RTDN_SERVICE_ACCOUNT_EMAIL` to the exact authorized Pub/Sub push identity. Configure authenticated Pub/Sub push and Play real-time developer notifications for this app. Verify a signed test notification and reject wrong issuer, audience and email.
@@ -31,7 +31,7 @@ Apple and Stripe state calculations exclude the Google overlay, and the profile 
 - Both native sync outputs verified: Android `se.auroramedia.honsgarden`, iOS `se.honsgarden.app`. Platform-specific OAuth/recovery and rejecting the other platform's scheme passed; ambiguous sync and mismatched platform environment are rejected.
 - TypeScript project check passed. ESLint completed with zero errors and 682 warnings (existing and inherited native work); warnings remain to review.
 - Isolated PostgreSQL/PGlite integration tests: account ownership, denied client reads/writes/RPC, forged preferences, out-of-order replay, refunds, Apple/Stripe overlap, equal expiries, independent gift, lifetime and preference preservation.
-- Production web build, SEO and route checks passed.
+- Production web build, SEO and route checks passed. All `498004c` GitHub quality, billing security, actual Android 16 KB package and unsigned iPhone Release checks passed. Native device runtime and store submission remain separate gates.
 - Native push database isolation tests passed.
 - Deno typecheck of verification, notification, check-subscription and push entrypoints passed.
 - No production schema changes, credential creation, payments or store submission performed by these tests.
@@ -41,3 +41,6 @@ Apple and Stripe state calculations exclude the Google overlay, and the profile 
 - [Google SubscriptionPurchaseV2 API](https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2)
 - [Google subscription lifecycle](https://developer.android.com/google/play/billing/lifecycle/subscriptions)
 - [Supabase function authentication](https://supabase.com/docs/guides/functions/auth)
+
+- [Android 16 KB ELF/RELRO requirements](https://developer.android.com/guide/practices/page-sizes#check-the-relro-security-flag)
+- [Stable DataStore 1.2.1](https://developer.android.com/jetpack/androidx/releases/datastore#1.2.1)
