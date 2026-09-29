@@ -3168,6 +3168,102 @@ export type Database = {
         }
         Relationships: []
       }
+      product_commerce_profiles: {
+        Row: {
+          biocide_registration_verified: boolean
+          capacity_hens_max: number | null
+          capacity_hens_min: number | null
+          capacity_liters: number | null
+          commission_rate: number | null
+          control_modes: string[]
+          created_at: string
+          evidence_source: string | null
+          floor_area_m2: number | null
+          frost_resistant: boolean | null
+          id: string
+          last_verified_at: string | null
+          life_stages: string[]
+          margin_tier: string | null
+          material: string | null
+          metadata: Json
+          package_size_kg: number | null
+          power_source: string | null
+          predator_protection_level: string | null
+          product_id: string
+          recommendation_priority: number
+          regulatory_note: string | null
+          risk_class: string
+          season_months: number[]
+          source_type: string
+          test_status: string
+          updated_at: string
+          use_cases: string[]
+          winter_rated: boolean | null
+        }
+        Insert: {
+          biocide_registration_verified?: boolean
+          capacity_hens_max?: number | null
+          capacity_hens_min?: number | null
+          capacity_liters?: number | null
+          commission_rate?: number | null
+          control_modes?: string[]
+          created_at?: string
+          evidence_source?: string | null
+          floor_area_m2?: number | null
+          frost_resistant?: boolean | null
+          id?: string
+          last_verified_at?: string | null
+          life_stages?: string[]
+          margin_tier?: string | null
+          material?: string | null
+          metadata?: Json
+          package_size_kg?: number | null
+          power_source?: string | null
+          predator_protection_level?: string | null
+          product_id: string
+          recommendation_priority?: number
+          regulatory_note?: string | null
+          risk_class?: string
+          season_months?: number[]
+          source_type: string
+          test_status?: string
+          updated_at?: string
+          use_cases?: string[]
+          winter_rated?: boolean | null
+        }
+        Update: {
+          biocide_registration_verified?: boolean
+          capacity_hens_max?: number | null
+          capacity_hens_min?: number | null
+          capacity_liters?: number | null
+          commission_rate?: number | null
+          control_modes?: string[]
+          created_at?: string
+          evidence_source?: string | null
+          floor_area_m2?: number | null
+          frost_resistant?: boolean | null
+          id?: string
+          last_verified_at?: string | null
+          life_stages?: string[]
+          margin_tier?: string | null
+          material?: string | null
+          metadata?: Json
+          package_size_kg?: number | null
+          power_source?: string | null
+          predator_protection_level?: string | null
+          product_id?: string
+          recommendation_priority?: number
+          regulatory_note?: string | null
+          risk_class?: string
+          season_months?: number[]
+          source_type?: string
+          test_status?: string
+          updated_at?: string
+          use_cases?: string[]
+          winter_rated?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
