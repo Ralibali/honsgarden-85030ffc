@@ -55,8 +55,29 @@ describe('GA4 transport', () => {
   it('maps names, filters personal data and preserves allowed funnel properties', () => {
     runtime.setAnalyticsConsent(true);
     runtime.sendAnalyticsEvent('Paid PDF Download', { props: { product: 'mina-forsta-hons', source: 'thank_you', email: 'a@b.se', note: 'a@b.se' } });
-    expect(events().at(-1)).toEqual(['event', 'paid_pdf_download', expect.objectContaining({ product: 'mina-forsta-hons', source: 'thank_you', send_to: 'G-TEST123456' })]);
+    expect(events().at(-1)).toEqual(['event', 'paid_pdf_download', expect.objectContaining({ product: 'mina-forsta-hons', interaction_source: 'thank_you', send_to: 'G-TEST123456' })]);
     expect(JSON.stringify(events())).not.toContain('a@b.se');
+  });
+  it('keeps internal placement out of traffic attribution and preserves landing UTMs', () => {
+    history.replaceState({}, '', '/?utm_source=newsletter&utm_medium=email&utm_campaign=autumn');
+    runtime.setAnalyticsConsent(true);
+    runtime.sendAnalyticsEvent('Signup Started', { props: {
+      source: 'premium_page', medium: 'button', campaign: 'signup_form',
+      campaign_source: 'homepage_hero', campaign_name: 'internal_offer',
+    } });
+    expect(commands().find(row => row[0] === 'config')?.[2]).toMatchObject({
+      campaign_source: 'newsletter', campaign_medium: 'email', campaign_name: 'autumn',
+      send_page_view: false,
+    });
+    const payload = events().at(-1)?.[2] as Record<string, unknown>;
+    expect(payload).toMatchObject({
+      interaction_source: 'premium_page', interaction_medium: 'button',
+      interaction_campaign: 'signup_form', interaction_campaign_source: 'homepage_hero',
+      interaction_campaign_name: 'internal_offer',
+    });
+    for (const key of ['source', 'medium', 'campaign', 'campaign_source', 'campaign_name']) {
+      expect(payload).not.toHaveProperty(key);
+    }
   });
   it('resolves delivery callbacks even when analytics is refused', () => {
     const done = vi.fn();

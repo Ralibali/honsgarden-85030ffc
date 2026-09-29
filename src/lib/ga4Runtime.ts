@@ -51,6 +51,13 @@ function command(...args: unknown[]): void {
   w.gtag(...args);
 }
 
+// UI placement is event context, never an acquisition-source override.
+function interactionKey(key: string): string {
+  return /^(source|medium|campaign(?:_source|_medium|_name|_id|_content|_term)?)$/.test(key)
+    ? `interaction_${key}`
+    : key;
+}
+
 function campaignParameters(): Record<string, string> {
   const params = new URLSearchParams(window.location.search);
   const output: Record<string, string> = {};
@@ -77,8 +84,8 @@ export function sendAnalyticsEvent(name: string, options: EventOptions = {}): vo
     const props: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(options.props || {}).slice(0, 20)) {
       if (!/^[a-z][a-z0-9_]{0,39}$/.test(key) || /email|phone|token|password|user_id|customer|message|free_text/i.test(key)) continue;
-      if (typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) props[key] = value;
-      if (typeof value === 'string' && value.length <= 80 && !/@|https?:|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(value)) props[key] = value;
+      if (typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) props[interactionKey(key)] = value;
+      if (typeof value === 'string' && value.length <= 80 && !/@|https?:|[0-9a-f]{8}-[0-9a-f-]{27,}/i.test(value)) props[interactionKey(key)] = value;
     }
     let completed = false;
     const done = () => { if (!completed) { completed = true; finish(); } };
