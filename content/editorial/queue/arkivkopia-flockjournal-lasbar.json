@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20260927-arkivkopia-flockjournal-lasbar",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-09-27T09:59:39.112836+00:00",
+  "not_before": "2026-09-29",
+  "sources_checked_at": "2026-09-27T09:59:39.112836+00:00",
+  "quality_checked_at": "2026-09-27T09:59:39.112836+00:00",
+  "slug": "arkivkopia-flockjournal-lasbar",
+  "title": "Gör en läsbar arkivkopia av flockjournalen",
+  "description": "Gör en läsbar arkivkopia av flockjournalen med datum, tydlig avgränsning och sammanhang. Kontrollera att anteckningarna går att förstå i efterhand.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Avgränsad läsbar arkivkopia av flockanteckningar med sammanhang och kontroll, skilt från automatiserad export och dokumentation av gruppbyten.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>En flockjournal kan innehålla anteckningar som du vill kunna förstå även om arbetssättet eller verktyget ändras senare. En arkivkopia är ett avgränsat underlag med ett tydligt datum. Den hjälper dig att spara sammanhanget kring uppgifterna, men ersätter inte den journal som används i det dagliga arbetet.</p>\n<p>Börja med en liten period och några anteckningar som hör ihop. Kontrollera hur just ditt verktyg låter dig läsa, skriva ut eller kopiera egna uppgifter. Den här mallen utlovar ingen särskild exportfunktion och anger inte vilka handlingar som kan behövas för någon myndighetsrapportering.</p>\n<h2>Bestäm vad kopian ska omfatta</h2>\n<p>Skriv vilken flock, vilka individer och vilken tidsperiod du vill bevara i kopian. Ange också varför kopian görs, exempelvis för att avsluta en egen årsöversikt. En tydlig avgränsning gör det lättare att upptäcka om något saknas när du går igenom materialet.</p>\n<p>Skilj en sammanfattning från en kopia av de ursprungliga anteckningarna. En kort översikt kan vara användbar, men den behöver hänvisa till underlaget om du vill kunna följa en uppgift tillbaka. Låt inte sammanfattningens förenklingar se ut som ordagranna observationer.</p>\n<h2>Behåll datum och identifieringar tillsammans</h2>\n<p>Kontrollera att varje anteckning går att koppla till rätt individ eller grupp. Namn, datum och förklaringar behöver följa med texten. Om en uppgift bara står i en kolumnrubrik i det vanliga verktyget kan den behöva skrivas ut tydligare i den läsbara kopian.</p>\n<p>Använd <a href=\"/blogg/grupp-och-plats-flockjournal\">dokumentationen av grupp och plats</a> för att förklara vilket sammanhang en äldre observation gäller. Ändra inte gamla gruppnamn till dagens indelning när du sammanställer arkivet. Kopian ska bevara den dokumenterade historiken, inte skriva om den.</p>\n<h2>Gör en enkel innehållslista</h2>\n<p>Sätt en kort förstasida eller notering framför materialet med följande uppgifter:</p>\n<ul><li>Vad arkivkopian omfattar och vilken period den gäller.</li><li>Datum då kopian sammanställdes.</li><li>Varifrån uppgifterna hämtades.</li><li>Vilka filer och bilder som ingår.</li><li>Förklaringar till egna namn och förkortningar.</li><li>Kända luckor eller delar som inte följde med.</li><li>Var den fortsatta, aktuella journalen finns.</li></ul>\n<p>En lista över luckorna är en del av ett användbart arkiv. Skriv exempelvis att fotografier sparats separat eller att en period saknar anteckningar. Försök inte fylla i händelser i efterhand bara för att kopian ska se komplett ut.</p>\n<h2>Prova att läsa materialet fristående</h2>\n<p>Öppna den sparade kopian på det sätt du tänker använda senare. Går texten att läsa, syns alla datum och går bilderna att hitta? Om du har sparat en utskrift behöver du kontrollera att kolumner eller långa anteckningar inte har klippts bort.</p>\n<p>Välj en uppgift och försök följa den utan att samtidigt titta i originalverktyget. Behövs en muntlig förklaring kan den skrivas till innehållslistan. Om du upptäcker ett faktiskt skrivfel i originalet, använd en tydlig <a href=\"/blogg/ratta-flockanteckning-behall-sammanhang\">rättelse i flockjournalen</a> och håll rättelsens datum synligt.</p>\n<h2>Skilj arkivet från det fortsatta arbetet</h2>\n<p>Ge kopian ett filnamn som visar period och sammanställningsdatum. Förvara den enligt dina vanliga rutiner för egna dokument och se till att de som behöver materialet vet var det finns. Begränsa delningen när kopian innehåller privata kontaktuppgifter eller andra personliga anteckningar.</p>\n<p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> för att se hur flockens löpande uppgifter kan presenteras. AI-assisterad originalguide med en dokumentationsmall. Kontrollera tillgängliga funktioner i det verktyg du använder; artikeln utlovar ingen automatisk export, säkerhetskopiering eller återställning.</p>",
+  "editorial_review": {
+    "reviewed_at": "2026-09-27T09:59:39.112836+00:00",
+    "published_inventory_reviewed": 128,
+    "distinct_intent_confirmed": true,
+    "source_review": "Owned product entry reviewed. Original documentation template; no medical, horticultural, pricing or automatic-feature claim.",
+    "live_verification": "draft_only",
+    "publication_gate": "Earliest 2026-09-29, and only after a fresh previous-publication reader check, current main, complete published inventory and current primary-source review. Keep unpublished until all checks pass; assign actual publication dates at release."
+  }
+}
