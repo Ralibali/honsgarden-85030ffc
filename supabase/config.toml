@@ -89,3 +89,8 @@ project_id = "sikbymtrbhrofysgkqsj"
 
   [functions.commerce-advisor]
     verify_jwt = true
+
+  [functions.verify-google-subscription]
+    verify_jwt = true
+  [functions.google-play-notifications]
+    verify_jwt = false
