@@ -216,7 +216,7 @@ export default function SaljaAggOrt() {
                     size="lg"
                     className="h-13 px-8 text-base gap-2 rounded-2xl shadow-[0_10px_30px_-8px_hsl(var(--primary)/0.35)] hover:shadow-[0_14px_36px_-8px_hsl(var(--primary)/0.45)] transition-shadow"
                   >
-                    <Link to={`/login?mode=register&utm_source=ort_page&utm_campaign=salja_agg&utm_content=${ort.slug}`}>
+                    <Link to={`/login?mode=register&source=ort_page&ort=${ort.slug}`}>
                       Skapa min säljsida gratis <ArrowRight className="h-5 w-5" />
                     </Link>
                   </Button>
@@ -626,7 +626,7 @@ export default function SaljaAggOrt() {
               veckas leverans.
             </p>
             <Button asChild size="lg" className="h-12 px-8 text-base gap-2 shadow-[0_8px_30px_hsl(var(--primary)/0.3)]">
-              <Link to="/login?mode=register&utm_source=ort_page_cta&utm_campaign=salja_agg">
+              <Link to="/login?mode=register&source=ort_page_cta">
                 Kom igång gratis <ArrowRight className="h-5 w-5" />
               </Link>
             </Button>
