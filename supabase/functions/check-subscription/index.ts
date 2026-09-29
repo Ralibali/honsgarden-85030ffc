@@ -1,3 +1,4 @@
+import { refreshKnownGooglePurchases } from '../_shared/googlePlaySync.ts';
 import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stripeAccessActive } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
@@ -58,6 +59,8 @@ serve(async (req) => {
       });
     }
 
+    await refreshKnownGooglePurchases(supabaseClient, user.id);
+
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")
       .select("subscription_status, premium_expires_at, is_lifetime_premium, stripe_customer_id, preferences")
@@ -66,6 +69,12 @@ serve(async (req) => {
 
     if (profileError) throw new Error("Profile lookup unavailable");
     const now = new Date();
+    const google = (profile?.preferences as {google_play?: {verified?: boolean; expires_at?: string}} | null)?.google_play;
+    if (google?.verified && google.expires_at && Date.parse(google.expires_at) > now.getTime()) {
+      return new Response(JSON.stringify({subscribed:true,premium_type:profile?.is_lifetime_premium?'lifetime':'paid',
+        subscription_end:profile?.is_lifetime_premium?null:google.expires_at,source:'google',product_id:'honsgarden_plus'}),
+        {headers:{...corsHeaders,'Content-Type':'application/json'}});
+    }
     const appleIap = readAppleIapPreference(profile?.preferences);
     const applePaid = isAppleIapActive(appleIap, now, (value) => {
       if (!value) return null;

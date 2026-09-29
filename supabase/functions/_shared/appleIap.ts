@@ -197,6 +197,11 @@ export function isIosCheckoutBlocked(
   return header === "ios" || body === "ios";
 }
 
+export function isNativeCheckoutBlocked(platformHeader: string | null | undefined, bodyPlatform: unknown): boolean {
+  const platforms = [platformHeader, bodyPlatform].map(value => typeof value === 'string' ? value.trim().toLowerCase() : '');
+  return platforms.some(platform => platform === 'ios' || platform === 'android');
+}
+
 export function assertAppleAccountToken(payload: AppleTransactionPayload, userId: string): void {
   if (!payload.appAccountToken || payload.appAccountToken.toLowerCase() !== userId.toLowerCase()) {
     throw new Error("Apple purchase belongs to another account or has no account binding");
@@ -237,6 +242,10 @@ export function appleStateFromPayload(
 
 /** Separate independent trial/gift access from the cached Apple expiry. */
 export function independentPremiumExpiry(preferences: unknown, cachedExpiry: string | null | undefined): string | null {
+  const google = (preferences as {google_play?: {verified?: boolean; expires_at?: string; previous_premium_expires_at?: string}} | null)?.google_play;
+  if (google?.verified && google.expires_at && cachedExpiry && Date.parse(google.expires_at) === Date.parse(cachedExpiry)) {
+    cachedExpiry = google.previous_premium_expires_at ?? null;
+  }
   const apple = readAppleIapPreference(preferences);
   if (!apple?.verified || !apple.expires_at || !cachedExpiry || Date.parse(cachedExpiry) !== Date.parse(apple.expires_at)) return cachedExpiry ?? null;
   const raw = (preferences as { apple_iap: Record<string, unknown> }).apple_iap;

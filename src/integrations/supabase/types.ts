@@ -2222,6 +2222,42 @@ export type Database = {
           },
         ]
       }
+      google_play_purchases: {
+        Row: {
+          active: boolean
+          base_plan_id: string
+          expires_at: string
+          observed_at: string
+          product_id: string
+          purchase_token: string
+          subscription_state: string
+          test_purchase: boolean
+          user_id: string
+        }
+        Insert: {
+          active: boolean
+          base_plan_id: string
+          expires_at: string
+          observed_at: string
+          product_id: string
+          purchase_token: string
+          subscription_state: string
+          test_purchase?: boolean
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          base_plan_id?: string
+          expires_at?: string
+          observed_at?: string
+          product_id?: string
+          purchase_token?: string
+          subscription_state?: string
+          test_purchase?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       hatch_sessions: {
         Row: {
           actual_hatch_date: string | null
@@ -5110,6 +5146,10 @@ export type Database = {
         Args: { _entitlement: Json; _user_id: string }
         Returns: Json
       }
+      apply_google_play_purchase: {
+        Args: { _purchase_token: string; _state: Json; _user_id: string }
+        Returns: Json
+      }
       apply_stripe_plus_status: {
         Args: {
           _active: boolean
@@ -5119,6 +5159,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      billing_without_google_expiry: {
+        Args: { cached: string; prefs: Json }
+        Returns: string
       }
       build_affiliate_url: {
         Args: { p_advertiser_id: string; p_product_url: string }
