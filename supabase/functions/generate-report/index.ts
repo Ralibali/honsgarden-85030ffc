@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import { parseAndValidate, type ReportPeriodInputType } from "../_shared/reportPeriod.ts";
+import { selectAll } from "../_shared/selectAll.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -164,34 +165,49 @@ Deno.serve(async (req) => {
       { data: pairs },
       { data: deaths },
     ] = await Promise.all([
-      admin
-        .from("egg_logs")
-        .select("date, count, hen_id")
-        .in("user_id", userIds)
-        .gte("date", periodStart)
-        .lte("date", periodEnd),
-      admin
-        .from("feed_records")
-        .select("date, amount_kg, cost, feed_type")
-        .in("user_id", userIds)
-        .gte("date", periodStart)
-        .lte("date", periodEnd),
-      admin
-        .from("transactions")
-        .select("date, type, amount, category, description")
-        .in("user_id", userIds)
-        .gte("date", periodStart)
-        .lte("date", periodEnd),
-      admin
-        .from("health_events")
-        .select("event_date, event_type, title, hen_id, resolved")
-        .in("user_id", userIds)
-        .gte("event_date", periodStart)
-        .lte("event_date", periodEnd),
-      admin
-        .from("hens")
-        .select("id, name, breed, death_date, death_cause")
-        .in("user_id", userIds),
+      selectAll(() =>
+        admin
+          .from("egg_logs")
+          .select("date, count, hen_id")
+          .in("user_id", userIds)
+          .gte("date", periodStart)
+          .lte("date", periodEnd)
+          .order("id"),
+      ),
+      selectAll(() =>
+        admin
+          .from("feed_records")
+          .select("date, amount_kg, cost, feed_type")
+          .in("user_id", userIds)
+          .gte("date", periodStart)
+          .lte("date", periodEnd)
+          .order("id"),
+      ),
+      selectAll(() =>
+        admin
+          .from("transactions")
+          .select("date, type, amount, category, description")
+          .in("user_id", userIds)
+          .gte("date", periodStart)
+          .lte("date", periodEnd)
+          .order("id"),
+      ),
+      selectAll(() =>
+        admin
+          .from("health_events")
+          .select("event_date, event_type, title, hen_id, resolved")
+          .in("user_id", userIds)
+          .gte("event_date", periodStart)
+          .lte("event_date", periodEnd)
+          .order("id"),
+      ),
+      selectAll(() =>
+        admin
+          .from("hens")
+          .select("id, name, breed, death_date, death_cause")
+          .in("user_id", userIds)
+          .order("id"),
+      ),
       admin
         .from("hatch_sessions")
         .select(
@@ -204,12 +220,15 @@ Deno.serve(async (req) => {
         .from("breeding_pairs")
         .select("id, name, start_date, end_date, hen_ids, rooster_id")
         .in("user_id", userIds),
-      admin
-        .from("hens")
-        .select("id, name, death_date, death_cause")
-        .in("user_id", userIds)
-        .gte("death_date", periodStart)
-        .lte("death_date", periodEnd),
+      selectAll(() =>
+        admin
+          .from("hens")
+          .select("id, name, death_date, death_cause")
+          .in("user_id", userIds)
+          .gte("death_date", periodStart)
+          .lte("death_date", periodEnd)
+          .order("id"),
+      ),
     ]);
 
     const pdfBytes = await buildPdf({

@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Cloud, Droplets, Wind, Thermometer, CalendarDays, Lightbulb, Sparkles, TrendingUp, Egg, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { selectAll } from '@/lib/selectAll';
 import { useAuth } from '@/hooks/useAuth';
 
 const WEATHER_ICONS: Record<string, string> = {
@@ -73,11 +74,12 @@ export default function WeatherHistoryDetail() {
       setRow(data as unknown as CacheRow);
 
       // Hämta äggproduktion samma dag (egg_logs har user_id – inget farm-id behövs)
-      const { data: eggs } = await supabase
+      const { data: eggs } = await selectAll(() => supabase
         .from('egg_logs')
         .select('count')
         .eq('user_id', user.id)
-        .eq('date', date);
+        .eq('date', date)
+        .order('id'));
       setEggsThatDay((eggs ?? []).reduce((s, e) => s + (e.count ?? 0), 0));
       setLoading(false);
     })();

@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import { callAi } from "../_shared/ai.ts";
+import { selectAll } from "../_shared/selectAll.ts";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 const APP_URL = "https://honsgarden.lovable.app/app";
@@ -55,29 +56,41 @@ Deno.serve(async (req) => {
       if (prefs.weekly_report_email === false) continue;
       // 2. Fetch egg data for this & last week
       const [eggsThisWeek, eggsLastWeek, hens, choresCompleted] = await Promise.all([
-        supabase
-          .from("egg_logs")
-          .select("count, date")
-          .eq("user_id", user.user_id)
-          .gte("date", weekAgoStr)
-          .lte("date", todayStr),
-        supabase
-          .from("egg_logs")
-          .select("count")
-          .eq("user_id", user.user_id)
-          .gte("date", twoWeeksAgoStr)
-          .lt("date", weekAgoStr),
-        supabase
-          .from("hens")
-          .select("id")
-          .eq("user_id", user.user_id)
-          .eq("is_active", true),
-        supabase
-          .from("chore_completions")
-          .select("id")
-          .eq("user_id", user.user_id)
-          .gte("completed_date", weekAgoStr)
-          .lte("completed_date", todayStr),
+        selectAll(() =>
+          supabase
+            .from("egg_logs")
+            .select("count, date")
+            .eq("user_id", user.user_id)
+            .gte("date", weekAgoStr)
+            .lte("date", todayStr)
+            .order("id"),
+        ),
+        selectAll(() =>
+          supabase
+            .from("egg_logs")
+            .select("count")
+            .eq("user_id", user.user_id)
+            .gte("date", twoWeeksAgoStr)
+            .lt("date", weekAgoStr)
+            .order("id"),
+        ),
+        selectAll(() =>
+          supabase
+            .from("hens")
+            .select("id")
+            .eq("user_id", user.user_id)
+            .eq("is_active", true)
+            .order("id"),
+        ),
+        selectAll(() =>
+          supabase
+            .from("chore_completions")
+            .select("id")
+            .eq("user_id", user.user_id)
+            .gte("completed_date", weekAgoStr)
+            .lte("completed_date", todayStr)
+            .order("id"),
+        ),
       ]);
 
       const totalEggs = (eggsThisWeek.data || []).reduce(

@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Bird, Loader2, Trash2, ChevronRight, Feather, FolderPlus, Sparkles } from 'lucide-react';
+import { Plus, Bird, Loader2, Trash2, ChevronRight, Feather, FolderPlus, Sparkles, Search } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -21,6 +21,10 @@ import PageHeader from '@/components/PageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { readActiveFlockId, resolveFlockIdForHenCreate, writeActiveFlockId } from '@/lib/flockSelection';
 import { trackFirstHenIfNew } from '@/lib/analytics';
+import { batchHenNames, MAX_HEN_BATCH } from '@/lib/henBatch';
+
+// Large flocks render in steps so hundreds of cards do not block the page.
+const HEN_PAGE_SIZE = 60;
 
 export default function Hens() {
   const navigate = useNavigate();
@@ -30,10 +34,13 @@ export default function Hens() {
   const [showInactive, setShowInactive] = useState(false);
   const [tab, setTab] = useState('alla');
   const [selectedFlock, setSelectedFlock] = useState<string | null>(null);
+  const [henSearch, setHenSearch] = useState('');
+  const [visibleHenCount, setVisibleHenCount] = useState(HEN_PAGE_SIZE);
 
   // Hen dialog
   const [henDialogOpen, setHenDialogOpen] = useState(false);
   const [henForm, setHenForm] = useState({ name: '', breed: '', color: '', birth_date: '', notes: '', hen_type: 'hen', flock_id: '' });
+  const [henQuantity, setHenQuantity] = useState('1');
 
   // Flock dialog
   const [flockDialogOpen, setFlockDialogOpen] = useState(false);
@@ -80,16 +87,21 @@ export default function Hens() {
   }, [henDialogOpen, preferredFlockId]);
 
   const createHenMutation = useMutation({
-    mutationFn: async (data: Parameters<typeof api.createHen>[0]) => {
+    mutationFn: async ({ data, names }: { data: Parameters<typeof api.createHen>[0]; names: string[] }) => {
       if (!data.flock_id) {
         const defaultFlock = await api.getOrCreateDefaultFlock(
           selectedFlock || readActiveFlockId(user?.id),
         );
         data.flock_id = defaultFlock.id;
       }
-      return api.createHen(data);
+      if (names.length > 1) {
+        const { name: _name, ...shared } = data;
+        return api.createHens(shared, names);
+      }
+      await api.createHen(data);
+      return 1;
     },
-    onSuccess: async () => {
+    onSuccess: async (created) => {
       queryClient.invalidateQueries({ queryKey: ['hens'] });
       queryClient.invalidateQueries({ queryKey: ['flocks'] });
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
@@ -103,8 +115,10 @@ export default function Hens() {
         console.warn('[Hens] Kunde inte synka antal hönor till coop_settings efter create:', err);
       }
       const labelMap: Record<string, string> = { hen: 'Höna tillagd! 🐔', rooster: 'Tupp tillagd! 🐓', pullet: 'Unghöna tillagd! 🐣' };
-      toast({ title: labelMap[henForm.hen_type] ?? 'Tillagd!' });
+      const pluralMap: Record<string, string> = { hen: 'höns', rooster: 'tuppar', pullet: 'unghöns' };
+      toast({ title: created > 1 ? `${created} ${pluralMap[henForm.hen_type] ?? 'djur'} tillagda! 🐔` : labelMap[henForm.hen_type] ?? 'Tillagd!' });
       setHenDialogOpen(false);
+      setHenQuantity('1');
       setHenForm({
         name: '',
         breed: '',
@@ -168,18 +182,23 @@ export default function Hens() {
     },
   });
 
+  const batchQuantity = Math.min(MAX_HEN_BATCH, Math.max(1, Math.trunc(Number(henQuantity)) || 1));
+  const batchPreview = batchQuantity > 1 ? batchHenNames(henForm.name, batchQuantity, hens.map((h) => h.name)) : [];
+
   const handleCreateHen = (e: React.FormEvent) => {
     e.preventDefault();
     if (!henForm.name) return;
-    createHenMutation.mutate({
-      name: henForm.name,
+    const names = batchQuantity > 1 ? batchHenNames(henForm.name, batchQuantity, hens.map((h) => h.name)) : [henForm.name];
+    if (names.length === 0) return;
+    createHenMutation.mutate({ names, data: {
+      name: names[0],
       breed: henForm.breed || null,
       color: henForm.color || null,
       birth_date: henForm.birth_date || null,
       notes: henForm.notes || null,
       hen_type: henForm.hen_type,
       flock_id: henForm.flock_id || null,
-    });
+    } });
   };
 
   const handleCreateFlock = (e: React.FormEvent) => {
@@ -208,6 +227,11 @@ export default function Hens() {
   };
 
   const displayHens = getDisplayHens();
+  const henSearchTerm = henSearch.trim().toLocaleLowerCase('sv-SE');
+  const matchingHens = henSearchTerm
+    ? displayHens.filter((h) => [h.name, h.breed, h.color].some((v) => v?.toLocaleLowerCase('sv-SE').includes(henSearchTerm)))
+    : displayHens;
+  const shownHens = matchingHens.slice(0, visibleHenCount);
   const roosters = filteredHens.filter(isRooster);
   const pullets = filteredHens.filter(isPullet);
   const layingHens = filteredHens.filter((h) => !isRooster(h) && !isPullet(h));
@@ -321,10 +345,23 @@ export default function Hens() {
                   </p>
                 )}
 
-                <div>
-                  <Label>Namn *</Label>
-                  <Input className="mt-1.5 rounded-xl" value={henForm.name} onChange={(e) => setHenForm({ ...henForm, name: e.target.value })} placeholder={henForm.hen_type === 'rooster' ? 'T.ex. Gustav' : 'T.ex. Greta'} required />
+                <div className="grid grid-cols-[1fr_6rem] gap-3">
+                  <div>
+                    <Label htmlFor="hen-name">{batchQuantity > 1 ? 'Namn (numreras) *' : 'Namn *'}</Label>
+                    <Input id="hen-name" className="mt-1.5 rounded-xl" value={henForm.name} onChange={(e) => setHenForm({ ...henForm, name: e.target.value })} placeholder={batchQuantity > 1 ? 'T.ex. Höna' : henForm.hen_type === 'rooster' ? 'T.ex. Gustav' : 'T.ex. Greta'} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="hen-quantity">Antal</Label>
+                    <Input id="hen-quantity" className="mt-1.5 rounded-xl" type="number" inputMode="numeric" min={1} max={MAX_HEN_BATCH} step={1} value={henQuantity} onChange={(e) => setHenQuantity(e.target.value)} />
+                  </div>
                 </div>
+                {batchQuantity > 1 && (
+                  <p className="text-[11px] text-muted-foreground/80 -mt-2 leading-relaxed">
+                    {batchPreview.length > 0
+                      ? `Skapar ${batchQuantity} st: ${batchPreview[0]} … ${batchPreview[batchPreview.length - 1]}. Ras, färg, flock och födelsedatum gäller alla. Du kan byta namn på enskilda senare.`
+                      : `Skriv ett namn så numreras de ${batchQuantity} djuren automatiskt.`}
+                  </p>
+                )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -365,7 +402,7 @@ export default function Hens() {
 
                 <Button type="submit" className="w-full rounded-xl h-10" disabled={createHenMutation.isPending}>
                   {createHenMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                  Lägg till {henTypeLabel(henForm.hen_type).toLowerCase()}
+                  {batchQuantity > 1 ? `Lägg till ${batchQuantity} st` : `Lägg till ${henTypeLabel(henForm.hen_type).toLowerCase()}`}
                 </Button>
               </form>
             </DialogContent>
@@ -474,9 +511,7 @@ export default function Hens() {
               className="rounded-xl text-xs text-destructive/70 hover:text-destructive hover:bg-destructive/8 ml-auto"
               onClick={() => {
                 if (confirm('Ta bort denna flock? Hönorna och tupparna behålls.')) {
-                  displayHens.forEach((h) => {
-                    updateHenMutation.mutate({ id: h.id, data: { flock_id: null } });
-                  });
+                  // hens.flock_id is ON DELETE SET NULL, so members (also inactive ones) are unassigned by the database.
                   deleteFlockMutation.mutate(selectedFlock);
                 }
               }}
@@ -535,9 +570,16 @@ export default function Hens() {
         </>
       )}
 
+      {(hens.length > 12 || henSearch) && (
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input type="search" value={henSearch} onChange={(e) => { setHenSearch(e.target.value); setVisibleHenCount(HEN_PAGE_SIZE); }} placeholder="Sök på namn, ras eller färg" aria-label="Sök bland hönorna" className="rounded-xl pl-9" />
+        </div>
+      )}
+
       {/* Hen/Rooster cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 stagger-children">
-        {displayHens.map((hen) => {
+        {shownHens.map((hen) => {
           const henFlock = (flocks).find((f) => f.id === hen.flock_id);
           return (
             <Card key={hen.id} className={`border-border/50 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer ${!hen.is_active ? 'opacity-50' : ''}`} onClick={() => navigate(`/app/hens/${hen.id}`)}>
@@ -653,8 +695,21 @@ export default function Hens() {
         })}
       </div>
 
+      {matchingHens.length > shownHens.length && (
+        <div className="flex flex-col items-center gap-1">
+          <Button variant="outline" className="rounded-xl" onClick={() => setVisibleHenCount((n) => n + HEN_PAGE_SIZE)}>
+            Visa fler ({matchingHens.length - shownHens.length} kvar)
+          </Button>
+          <p className="text-[11px] text-muted-foreground">Visar {shownHens.length} av {matchingHens.length}</p>
+        </div>
+      )}
+
+      {henSearchTerm && matchingHens.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground">Ingen höna matchar ”{henSearch.trim()}”.</p>
+      )}
+
       {/* Empty state */}
-      {displayHens.length === 0 && (
+      {displayHens.length === 0 && !henSearchTerm && (
         <Card className="border-border/50 shadow-sm">
           <CardContent className="p-10 text-center">
             <div className="w-14 h-14 rounded-2xl bg-muted/40 flex items-center justify-center mx-auto mb-3">

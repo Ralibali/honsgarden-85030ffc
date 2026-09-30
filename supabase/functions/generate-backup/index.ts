@@ -111,12 +111,19 @@ Deno.serve(async (req) => {
 
       // All user tables
       for (const table of TABLES_BY_USER) {
-        const { data, error } = await admin.from(table).select("*").eq("user_id", user.id);
+        // PostgREST caps each response at 1000 rows; page so large farms get a complete backup.
+        const rows: any[] = [];
+        let error: { message: string } | null = null;
+        for (let from = 0; ; from += 1000) {
+          const page = await admin.from(table).select("*").eq("user_id", user.id).order("id").range(from, from + 999);
+          if (page.error) { error = page.error; break; }
+          rows.push(...(page.data ?? []));
+          if (!page.data || page.data.length < 1000) break;
+        }
         if (error) {
           console.error(`[generate-backup] ${table}:`, error.message);
           continue;
         }
-        const rows = data ?? [];
         dataFolder.file(`${table}.json`, JSON.stringify(rows, null, 2));
         dataFolder.file(`${table}.csv`, toCsv(rows));
       }

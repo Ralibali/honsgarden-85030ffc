@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiStream } from "../_shared/ai.ts";
+import { selectAll } from "../_shared/selectAll.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -139,6 +140,10 @@ function sumEggsInWindow(eggs: any[], keys: Set<string>): { total: number; dates
   return { total, dates };
 }
 
+const MAX_LISTED_HENS_IN_INSIGHTS = 5;
+// Hönslistan i prompten kapas; antal och statistik räknas alltid på hela flocken.
+const MAX_LISTED_HENS_IN_PROMPT = 40;
+
 function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string {
   const insights: string[] = [];
   const todayStr = dayKeyOffset(0);
@@ -151,6 +156,7 @@ function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string
       }
     });
 
+    const silent: string[] = [];
     hens.forEach((hen: any) => {
       if (!hen.is_active || hen.hen_type === "rooster") return;
       const lastEgg = henEggDates[hen.id];
@@ -158,9 +164,14 @@ function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string
       // Kalenderdagar via datumnycklar – undviker tidszons- och klockslagsfallgropar
       const days = Math.round((Date.parse(todayStr) - Date.parse(lastEgg)) / 86_400_000);
       if (days >= 5) {
-        insights.push(`⚠️ ${hen.name} har inte registrerat ägg på ${days} dagar (senast ${lastEgg})`);
+        silent.push(`⚠️ ${hen.name} har inte registrerat ägg på ${days} dagar (senast ${lastEgg})`);
       }
     });
+    // Stora gårdar: nämn några hönor och sammanfatta resten så prompten inte sväller.
+    insights.push(...silent.slice(0, MAX_LISTED_HENS_IN_INSIGHTS));
+    if (silent.length > MAX_LISTED_HENS_IN_INSIGHTS) {
+      insights.push(`⚠️ Ytterligare ${silent.length - MAX_LISTED_HENS_IN_INSIGHTS} hönor har inte registrerat ägg på minst 5 dagar`);
+    }
   }
 
   // Produktionsfall: jämför KOMPLETTA dygn (igår och 6 bakåt vs 7 innan) och kräv
@@ -272,8 +283,10 @@ serve(async (req) => {
     const history = normalizeHistory(requestBody?.history);
 
     const [hensRes, eggsRes, healthRes, feedRes, coopRes, weatherRes] = await Promise.all([
-      supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").limit(30),
-      supabase.from("egg_logs").select("date, count, hen_id").order("date", { ascending: false }).limit(90),
+      selectAll(() => supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").order("id")),
+      // 90 kalenderdagar, inte 90 rader: gårdar som loggar per höna har många rader per dag.
+      selectAll(() => supabase.from("egg_logs").select("date, count, hen_id").gte("date", dayKeyOffset(89))
+        .order("date", { ascending: false }).order("id")),
       supabase.from("health_logs").select("date, type, description, hen_id").order("date", { ascending: false }).limit(30),
       supabase.from("feed_records").select("date, feed_type, amount_kg, cost").order("date", { ascending: false }).limit(30),
       // Valfria kontextkällor – fel här ska aldrig stoppa svaret
@@ -354,7 +367,7 @@ serve(async (req) => {
         feed_records: feed.length,
         history_messages_sent: history.length,
       },
-      hens: hens.map((hen: any) => ({
+      hens: hens.slice(0, MAX_LISTED_HENS_IN_PROMPT).map((hen: any) => ({
         id: hen.id,
         name: hen.name,
         breed: hen.breed,
@@ -383,7 +396,7 @@ SÄKERHET:
 
 ANVÄNDARENS DATA:
 - ${activeHens} aktiva hönor av ${hens.length} totalt.
-- Hönor: ${hens.map((hen: any) => `${hen.name} (${hen.breed || "okänd ras"}${hen.is_active ? "" : ", inaktiv"})`).join("; ") || "Inga registrerade"}.
+- Hönor: ${hens.slice(0, MAX_LISTED_HENS_IN_PROMPT).map((hen: any) => `${hen.name} (${hen.breed || "okänd ras"}${hen.is_active ? "" : ", inaktiv"})`).join("; ") || "Inga registrerade"}${hens.length > MAX_LISTED_HENS_IN_PROMPT ? ` … och ${hens.length - MAX_LISTED_HENS_IN_PROMPT} till` : ""}.
 - Ägg per höna senaste 7 dygnen: ${perHenText || "Inga ägg registrerade per höna"}.
 - Veckojämförelse: ${eggs7} ägg senaste 7 dygnen (inkl. pågående idag) mot ${eggsPrev7} föregående 7 dygn${weekDelta !== null ? ` (${weekDelta >= 0 ? "+" : ""}${weekDelta} %)` : ""}.
 - Snitt: ${eggsAvgPerDay} ägg per kalenderdag (sedan första loggen, max 90 dagar).

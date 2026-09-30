@@ -43,7 +43,7 @@ export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel, ini
     });
   }, [karens, selectedHenId, activeHens]);
 
-  const increment = () => setCount((current) => Math.min((Number.isFinite(current) ? current : 0) + 1, 999));
+  const increment = () => setCount((current) => Math.min((Number.isFinite(current) ? current : 0) + 1, 99_999));
   const decrement = () => setCount((current) => Math.max((Number.isFinite(current) ? current : 0) - 1, 0));
 
   const validationError = eggLogValidationError(date, count);

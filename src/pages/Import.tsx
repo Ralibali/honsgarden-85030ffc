@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { selectAll } from "@/lib/selectAll";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,9 +289,9 @@ export default function Import() {
     setExporting(true);
     try {
       const [hensRes, eggsRes, flocksRes] = await Promise.all([
-        supabase.from("hens").select("*"),
-        supabase.from("egg_logs").select("*"),
-        supabase.from("flocks").select("*"),
+        selectAll(() => supabase.from("hens").select("*").order("id")),
+        selectAll(() => supabase.from("egg_logs").select("*").order("id")),
+        selectAll(() => supabase.from("flocks").select("*").order("id")),
       ]);
       const clean = (data: any[]) => data.map(({ user_id, id, created_at, updated_at, ...rest }: any) => rest);
       downloadMultiSheetExcel(

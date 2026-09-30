@@ -55,6 +55,7 @@ async function fetchAll(table: string, userId: string): Promise<any[]> {
       .from(table)
       .select("*")
       .eq("user_id", userId)
+      .order("id")
       .range(from, from + pageSize - 1);
     if (error) throw error;
     out.push(...(data ?? []));

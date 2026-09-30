@@ -5,6 +5,7 @@ import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 import { getQueue, loadQueue } from '@/lib/offlineQueue';
 import { eggLogValidationError } from '@/lib/eggLogValidation';
+import { selectAll } from '@/lib/selectAll';
 
 // ==================== TYPES ====================
 
@@ -98,7 +99,7 @@ async function getUserId(): Promise<string> {
 
 export async function getHens(): Promise<Hen[]> {
   await getUserId();
-  const { data, error } = await supabase.from('hens').select('*').order('created_at', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -108,6 +109,19 @@ export async function createHen(henData: HenInsert): Promise<Hen> {
   const { data, error } = await supabase.from('hens').insert({ ...henData, user_id: userId }).select().single();
   if (error) throw new Error(error.message);
   return data;
+}
+
+/** Adds many hens with shared details in one request per 500 rows. Returns how many were created. */
+export async function createHens(henData: Omit<HenInsert, 'name'>, names: string[]): Promise<number> {
+  const userId = await getUserId();
+  let created = 0;
+  for (let i = 0; i < names.length; i += 500) {
+    const rows = names.slice(i, i + 500).map((name) => ({ ...henData, name, user_id: userId }));
+    const { data, error } = await supabase.from('hens').insert(rows).select('id');
+    if (error) throw new Error(created > 0 ? `${created} av ${names.length} sparades innan felet: ${error.message}` : error.message);
+    created += data?.length ?? 0;
+  }
+  return created;
 }
 
 export async function updateHen(id: string, henData: HenUpdate): Promise<Hen> {
@@ -130,7 +144,7 @@ export async function getHenProfile(id: string): Promise<HenProfile> {
   await getUserId();
   const { data: hen, error } = await supabase.from('hens').select('*').eq('id', id).single();
   if (error) throw new Error(error.message);
-  const { data: healthLogs } = await supabase.from('health_logs').select('*').eq('hen_id', id).order('date', { ascending: false });
+  const { data: healthLogs } = await selectAll(() => supabase.from('health_logs').select('*').eq('hen_id', id).order('date', { ascending: false }).order('id'));
   return { ...hen, health_logs: healthLogs || [] };
 }
 
@@ -257,7 +271,7 @@ export async function removeOneEgg(id: string): Promise<void> {
 
 export async function getFeedRecords(): Promise<FeedRecord[]> {
   await getUserId();
-  const { data, error } = await supabase.from('feed_records').select('*').order('date', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -285,8 +299,8 @@ export async function getFeedInventory() {
 export async function getFeedStatistics() {
   await getUserId();
   const [feedRes, eggRes] = await Promise.all([
-    supabase.from('feed_records').select('*').order('date', { ascending: false }),
-    supabase.from('egg_logs').select('count'),
+    selectAll(() => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('count').order('id')),
   ]);
   if (feedRes.error) throw new Error(feedRes.error.message);
   const feed = feedRes.data || [];
@@ -301,7 +315,7 @@ export async function getFeedStatistics() {
 
 export async function getHatchings(): Promise<Hatching[]> {
   await getUserId();
-  const { data, error } = await supabase.from('hatchings').select('*').order('start_date', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').order('start_date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -326,7 +340,7 @@ export async function deleteHatching(id: string): Promise<void> {
 
 export async function getHatchingAlerts() {
   await getUserId();
-  const { data, error } = await supabase.from('hatchings').select('*').eq('status', 'incubating');
+  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').eq('status', 'incubating').order('id'));
   if (error) throw new Error(error.message);
   const today = new Date();
   return (data || []).filter(h => {
@@ -340,7 +354,7 @@ export async function getHatchingAlerts() {
 
 export async function getTransactions(): Promise<Transaction[]> {
   await getUserId();
-  const { data, error } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('transactions').select('*').order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -361,7 +375,7 @@ export async function deleteTransaction(id: string): Promise<void> {
 
 export async function getHealthLogs(): Promise<HealthLog[]> {
   await getUserId();
-  const { data, error } = await supabase.from('health_logs').select('*').order('date', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -394,7 +408,7 @@ export async function createHealthLog(record: HealthLogInsert): Promise<HealthLo
 }
 
 export async function getHenHealthLogs(henId: string): Promise<HealthLog[]> {
-  const { data, error } = await supabase.from('health_logs').select('*').eq('hen_id', henId).order('date', { ascending: false });
+  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').eq('hen_id', henId).order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -435,7 +449,7 @@ export async function getDailyChores(): Promise<DailyChoreWithCompletion[]> {
   const today = todayLocal();
   const [chores, completions] = await Promise.all([
     supabase.from('daily_chores').select('*').order('sort_order'),
-    supabase.from('chore_completions').select('id,chore_id,user_id,created_at').eq('completed_date', today),
+    selectAll(() => supabase.from('chore_completions').select('id,chore_id,user_id,created_at').eq('completed_date', today).order('id')),
   ]);
   if (chores.error) throw new Error(chores.error.message);
   if (completions.error) throw new Error(completions.error.message);
@@ -620,10 +634,10 @@ export async function getTodayStats() {
   await getUserId();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, feed] = await Promise.all([
-    supabase.from('egg_logs').select('count').eq('date', today),
+    selectAll(() => supabase.from('egg_logs').select('count').eq('date', today).order('id')),
     // Endast vuxna värphöns räknas i "antal höns" som statistiken jämför mot.
-    supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen'),
-    supabase.from('feed_records').select('amount_kg, cost').eq('date', today),
+    selectAll(() => supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen').order('id')),
+    selectAll(() => supabase.from('feed_records').select('amount_kg, cost').eq('date', today).order('id')),
   ]);
   const eggCount = (eggs.data || []).reduce((s, r) => s + r.count, 0);
   const henCount = (hens.data || []).length;
@@ -636,9 +650,9 @@ export async function getMonthStats(year: number, month: number) {
   await getUserId();
   const start = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
   const end = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
-  const { data: eggs } = await supabase.from('egg_logs').select('*').gte('date', start).lte('date', end).order('date');
-  const { data: feed } = await supabase.from('feed_records').select('*').gte('date', start).lte('date', end);
-  const { data: txns } = await supabase.from('transactions').select('*').gte('date', start).lte('date', end);
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').gte('date', start).lte('date', end).order('date').order('id'));
+  const { data: feed } = await selectAll(() => supabase.from('feed_records').select('*').gte('date', start).lte('date', end).order('id'));
+  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').gte('date', start).lte('date', end).order('id'));
   return {
     eggs: eggs || [],
     feed: feed || [],
@@ -652,8 +666,8 @@ export async function getYearStats(year: number) {
   await getUserId();
   const start = format(startOfYear(new Date(year, 0)), 'yyyy-MM-dd');
   const end = format(endOfYear(new Date(year, 0)), 'yyyy-MM-dd');
-  const { data: eggs } = await supabase.from('egg_logs').select('*').gte('date', start).lte('date', end);
-  const { data: txns } = await supabase.from('transactions').select('*').gte('date', start).lte('date', end);
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').gte('date', start).lte('date', end).order('id'));
+  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').gte('date', start).lte('date', end).order('id'));
   return {
     total_eggs: (eggs || []).reduce((s, r) => s + r.count, 0),
     transactions: txns || [],
@@ -664,9 +678,9 @@ export async function getYearStats(year: number) {
 export async function getSummaryStats() {
   await getUserId();
   const [eggsRes, hensRes, txnsRes] = await Promise.all([
-    supabase.from('egg_logs').select('count, date'),
-    supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen'),
-    supabase.from('transactions').select('amount, type'),
+    selectAll(() => supabase.from('egg_logs').select('count, date').order('id')),
+    selectAll(() => supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen').order('id')),
+    selectAll(() => supabase.from('transactions').select('amount, type').order('id')),
   ]);
   const eggs = eggsRes.data || [];
   const totalEggs = eggs.reduce((s, r) => s + r.count, 0);
@@ -697,7 +711,7 @@ export async function getSummaryStats() {
 export async function getYesterdaySummary() {
   await getUserId();
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  const { data: eggs } = await supabase.from('egg_logs').select('count').eq('date', yesterday);
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('count').eq('date', yesterday).order('id'));
   const eggCount = (eggs || []).reduce((s, r) => s + r.count, 0);
   return { date: yesterday, eggs: eggCount };
 }
@@ -706,8 +720,8 @@ export async function getFarmToday() {
   await getUserId();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, chores] = await Promise.all([
-    supabase.from('egg_logs').select('count').eq('date', today),
-    supabase.from('hens').select('id, name').eq('is_active', true).eq('hen_type', 'hen'),
+    selectAll(() => supabase.from('egg_logs').select('count').eq('date', today).order('id')),
+    selectAll(() => supabase.from('hens').select('id, name').eq('is_active', true).eq('hen_type', 'hen').order('id')),
     getDailyChores(),
   ]);
   return {
@@ -898,10 +912,10 @@ function calculateStreakFromEggs(eggs: EggLog[]): number {
 export async function getStatisticsInsights() {
   await getUserId();
   const [eggsRes, txnsRes, feedRes, hensRes] = await Promise.all([
-    supabase.from('egg_logs').select('count, date, hen_id'),
-    supabase.from('transactions').select('amount, type, date'),
-    supabase.from('feed_records').select('cost, amount_kg, date'),
-    supabase.from('hens').select('id, name, is_active, hen_type'),
+    selectAll(() => supabase.from('egg_logs').select('count, date, hen_id').order('id')),
+    selectAll(() => supabase.from('transactions').select('amount, type, date').order('id')),
+    selectAll(() => supabase.from('feed_records').select('cost, amount_kg, date').order('id')),
+    selectAll(() => supabase.from('hens').select('id, name, is_active, hen_type').order('id')),
   ]);
 
   const eggs = eggsRes.data || [];
@@ -970,8 +984,8 @@ export async function getStatisticsInsights() {
 export async function getHensWithEggTotals(): Promise<HenWithEggTotal[]> {
   await getUserId();
   const [hensRes, eggsRes] = await Promise.all([
-    supabase.from('hens').select('*').order('created_at', { ascending: false }),
-    supabase.from('egg_logs').select('hen_id, count'),
+    selectAll(() => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, count').order('id')),
   ]);
   if (hensRes.error) throw new Error(hensRes.error.message);
   const hens = hensRes.data || [];
@@ -996,8 +1010,8 @@ export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unass
   await getUserId();
   const [flocksRes, eggsRes, hensRes] = await Promise.all([
     supabase.from('flocks').select('*'),
-    supabase.from('egg_logs').select('count, date, flock_id, hen_id'),
-    supabase.from('hens').select('id, name, flock_id, is_active, hen_type'),
+    selectAll(() => supabase.from('egg_logs').select('count, date, flock_id, hen_id').order('id')),
+    selectAll(() => supabase.from('hens').select('id, name, flock_id, is_active, hen_type').order('id')),
   ]);
 
   const flocks = flocksRes.data || [];
@@ -1369,7 +1383,7 @@ export async function getAgeAnalytics(): Promise<AgeAnalytics> {
 // Legacy compatibility: export as api object for existing imports
 
 export const api = {
-  getHens, createHen, updateHen, deleteHen, getHenProfile,
+  getHens, createHen, createHens, updateHen, deleteHen, getHenProfile,
   getHenHealthScores, getProductivityAlerts,
   getHensWithEggTotals,
   getEggs, createEggRecord, updateEggRecord, deleteEggRecord, removeOneEgg, fetchEggLogWeatherSnapshot,
@@ -1448,7 +1462,7 @@ export interface ProductionForecast {
 
 export async function getProductionForecast(): Promise<ProductionForecast> {
   const [eggsRes, goalsRes] = await Promise.all([
-    supabase.from('egg_logs').select('date, count'),
+    selectAll(() => supabase.from('egg_logs').select('date, count').order('id')),
     supabase.from('egg_goals').select('target_count, period, is_active').eq('is_active', true).limit(1),
   ]);
 
@@ -1737,8 +1751,8 @@ export interface FeedEfficiencyTrend {
 
 export async function getFeedEfficiencyTrend(): Promise<FeedEfficiencyTrend> {
   const [feed, eggs] = await Promise.all([
-    supabase.from('feed_records').select('amount_kg, cost, feed_type, brand, date'),
-    supabase.from('egg_logs').select('count, date'),
+    selectAll(() => supabase.from('feed_records').select('amount_kg, cost, feed_type, brand, date').order('id')),
+    selectAll(() => supabase.from('egg_logs').select('count, date').order('id')),
   ]);
 
   const feedRows = (feed.data ?? []) as any[];
@@ -2027,8 +2041,8 @@ function extractLat(weather: any): number | null {
 
 export async function getDaylightTempAnalysis(): Promise<DaylightTempAnalysis> {
   const [eggsRes, hensRes, coopRes] = await Promise.all([
-    supabase.from('egg_logs').select('date, count, weather'),
-    supabase.from('hens').select('created_at, death_date, hen_type'),
+    selectAll(() => supabase.from('egg_logs').select('date, count, weather').order('id')),
+    selectAll(() => supabase.from('hens').select('created_at, death_date, hen_type').order('id')),
     supabase.from('coop_settings').select('latitude').limit(1),
   ]);
 
@@ -2210,7 +2224,7 @@ export interface ProductionControlData {
 }
 
 export async function getProductionControlData(windowSize: 14 | 28 = 28): Promise<ProductionControlData> {
-  const res = await supabase.from('egg_logs').select('date, count');
+  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').order('id'));
   const rows = (res.data ?? []) as { date: string; count: number | null }[];
 
   if (rows.length === 0) {
@@ -2322,7 +2336,7 @@ export interface DecompositionResult {
 }
 
 export async function getDecomposition(): Promise<DecompositionResult> {
-  const res = await supabase.from('egg_logs').select('date, count');
+  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').order('id'));
   const rows = (res.data ?? []) as { date: string; count: number | null }[];
 
   if (rows.length === 0) {
@@ -2545,8 +2559,8 @@ export interface HenConsistencyResult {
 
 export async function getHenConsistency(): Promise<HenConsistencyResult> {
   const [logsRes, hensRes] = await Promise.all([
-    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
-    supabase.from('hens').select('id, name, hen_type, created_at, death_date'),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
+    selectAll(() => supabase.from('hens').select('id, name, hen_type, created_at, death_date').order('id')),
   ]);
 
   const logs = (logsRes.data ?? []) as { hen_id: string; date: string; count: number | null }[];
@@ -2680,10 +2694,8 @@ export interface BreedingAnalysisResult {
 
 export async function getBreedingValues(): Promise<BreedingAnalysisResult> {
   const [hensRes, logsRes] = await Promise.all([
-    supabase
-      .from('hens')
-      .select('id, name, father_id, mother_id, birth_date, hen_type, death_date, created_at'),
-    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
+    selectAll(() => supabase.from('hens').select('id, name, father_id, mother_id, birth_date, hen_type, death_date, created_at').order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
   ]);
 
   const hens = (hensRes.data ?? []) as {
@@ -2868,10 +2880,8 @@ export interface CohortAnalysisResult {
 
 export async function getCohortAnalysis(): Promise<CohortAnalysisResult> {
   const [hensRes, logsRes, sessionsRes] = await Promise.all([
-    supabase
-      .from('hens')
-      .select('id, birth_date, hatch_session_id, hen_type, death_date'),
-    supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null),
+    selectAll(() => supabase.from('hens').select('id, birth_date, hatch_session_id, hen_type, death_date').order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
     supabase.from('hatch_sessions').select('id, name'),
   ]);
 
@@ -3067,8 +3077,8 @@ function pearson(xs: number[], ys: number[]): number | null {
 
 export async function getCorrelationMatrix(): Promise<CorrelationMatrixResult> {
   const [eggsRes, feedRes, coopRes] = await Promise.all([
-    supabase.from('egg_logs').select('date, count, weather'),
-    supabase.from('feed_records').select('date, amount_kg'),
+    selectAll(() => supabase.from('egg_logs').select('date, count, weather').order('id')),
+    selectAll(() => supabase.from('feed_records').select('date, amount_kg').order('id')),
     supabase.from('coop_settings').select('latitude').limit(1),
   ]);
 

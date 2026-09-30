@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { selectAll } from '@/lib/selectAll';
 import { useAuth } from '@/hooks/useAuth';
 import { TrendingUp, TrendingDown, Minus, Egg, Thermometer, CloudRain, Wind, Activity, Info } from 'lucide-react';
 
@@ -71,11 +72,12 @@ export default function WeatherImpactCard({ daily, latitude, longitude }: Props)
       const since = new Date(Date.now() - 60 * 24 * 3600_000).toISOString().split('T')[0];
 
       // egg_logs har user_id direkt på raden – ingen farm-uppslagning behövs
-      const eggsRes = await supabase
+      const eggsRes = await selectAll(() => supabase
         .from('egg_logs')
         .select('date, count')
         .eq('user_id', user!.id)
-        .gte('date', since);
+        .gte('date', since)
+        .order('id'));
       const weatherRes = await supabase
         .from('weather_advice_cache')
         .select('cache_date, weather_snapshot')
