@@ -14,6 +14,7 @@ import { brandName, isInternationalDomain } from '@/lib/brand';
 import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent, parseAnalyticsSource } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
+import { logClientError } from '@/lib/errorLogger';
 import { isNativeIos, isNativeAndroid } from '@/lib/nativePlatform';
 import {
   isIosBillingAvailable,
@@ -189,7 +190,8 @@ export default function Premium() {
 
         try {
           const { data, error } = await supabase.functions.invoke('check-subscription');
-          if (!error && data?.subscribed) {
+          if (!error && data?.subscribed === true && data.premium_type === 'paid'
+            && (!data.source || data.source === 'stripe')) {
             await refreshSubscription();
             // Analytics: faktisk verifierad prenumeration (server-side bekräftad).
             trackEvent('Premium Purchased', {
@@ -385,10 +387,11 @@ export default function Premium() {
         });
         window.location.href = data.url;
       } else throw new Error(t('toasts.no_checkout_url'));
-    } catch (err: any) {
+    } catch (err: unknown) {
+      void logClientError(err, { context: { source: 'plus_checkout', plan } });
       toast({
         title: t('toasts.checkout_fail_title'),
-        description: err.message || t('toasts.checkout_fail_desc'),
+        description: err instanceof Error ? err.message : t('toasts.checkout_fail_desc'),
         variant: 'destructive',
       });
     } finally {

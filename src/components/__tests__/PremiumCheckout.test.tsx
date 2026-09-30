@@ -6,11 +6,13 @@ import Premium from '@/pages/Premium';
 
 const mockInvoke = vi.fn();
 const mockToast = vi.fn();
+const mockLogClientError = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: (...args: unknown[]) => mockInvoke(...args) } },
 }));
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => mockToast(...args) }));
+vi.mock('@/lib/errorLogger', () => ({ logClientError: (...args: unknown[]) => mockLogClientError(...args) }));
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1', premium_type: null }, refreshSubscription: vi.fn() }),
 }));
@@ -73,5 +75,30 @@ describe('Premium – checkout-flöde', () => {
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' })),
     );
+  });
+
+  it('bevarar serverns feltext, sparar felsökningskontext och låter kunden försöka igen', async () => {
+    mockInvoke.mockResolvedValue({
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: { json: async () => ({ error: 'price_unavailable', message: 'Det valda priset är inte tillgängligt.' }) },
+      },
+    });
+    renderPremium();
+    const button = screen.getByText('plans.monthly.cta');
+    fireEvent.click(button);
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'Det valda priset är inte tillgängligt.',
+      variant: 'destructive',
+    })));
+    expect(mockLogClientError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Det valda priset är inte tillgängligt.' }),
+      { context: { source: 'plus_checkout', plan: 'monthly' } },
+    );
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(2));
   });
 });
