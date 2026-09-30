@@ -5443,6 +5443,14 @@ export type Database = {
           read_ct: number
         }[]
       }
+      register_native_push: {
+        Args: {
+          p_platform: string
+          p_registration_id: string
+          p_token: string
+        }
+        Returns: boolean
+      }
       request_public_egg_alert: {
         Args: {
           p_email: string

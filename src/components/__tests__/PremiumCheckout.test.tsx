@@ -2,14 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import Premium from '@/pages/Premium';
 
 const mockInvoke = vi.fn();
 const mockToast = vi.fn();
 const mockLogClientError = vi.fn();
+const mockRefreshSession = vi.fn();
 
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { functions: { invoke: (...args: unknown[]) => mockInvoke(...args) } },
+  supabase: {
+    functions: { invoke: (...args: unknown[]) => mockInvoke(...args) },
+    auth: { refreshSession: (...args: unknown[]) => mockRefreshSession(...args) },
+  },
 }));
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => mockToast(...args) }));
 vi.mock('@/lib/errorLogger', () => ({ logClientError: (...args: unknown[]) => mockLogClientError(...args) }));
@@ -46,6 +51,8 @@ function renderPremium() {
 describe('Premium – checkout-flöde', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockInvoke.mockReset();
+    mockRefreshSession.mockReset();
     mockInvoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.test/session' }, error: null });
   });
 
@@ -80,10 +87,9 @@ describe('Premium – checkout-flöde', () => {
   it('bevarar serverns feltext, sparar felsökningskontext och låter kunden försöka igen', async () => {
     mockInvoke.mockResolvedValue({
       data: null,
-      error: {
-        message: 'Edge Function returned a non-2xx status code',
-        context: { json: async () => ({ error: 'price_unavailable', message: 'Det valda priset är inte tillgängligt.' }) },
-      },
+      error: new FunctionsHttpError(new Response(JSON.stringify({
+        error: 'price_unavailable', message: 'Det valda priset är inte tillgängligt.',
+      }), { status: 500, headers: { 'Content-Type': 'application/json' } })),
     });
     renderPremium();
     const button = screen.getByText('plans.monthly.cta');
@@ -95,10 +101,40 @@ describe('Premium – checkout-flöde', () => {
     })));
     expect(mockLogClientError).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Det valda priset är inte tillgängligt.' }),
-      { context: { source: 'plus_checkout', plan: 'monthly' } },
+      { context: { source: 'plus_checkout', plan: 'monthly', httpStatus: 500 } },
     );
     expect(button).not.toBeDisabled();
     fireEvent.click(button);
     await waitFor(() => expect(mockInvoke).toHaveBeenCalledTimes(2));
+  });
+
+  it('förnyar en avvisad inloggning en gång och visar serverns fel om det nya försöket misslyckas', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      data: null,
+      error: new FunctionsHttpError(new Response(JSON.stringify({ message: 'Invalid JWT' }), { status: 401 })),
+    }).mockResolvedValueOnce({
+      data: null,
+      error: new FunctionsHttpError(new Response(JSON.stringify({
+        code: 'BOOT_ERROR', message: 'Betalningstjänsten är tillfälligt otillgänglig.',
+      }), { status: 503 })),
+    });
+    mockRefreshSession.mockResolvedValue({ data: { session: { access_token: 'test-refreshed-token' } }, error: null });
+    renderPremium();
+    const button = screen.getByText('plans.yearly.cta');
+    fireEvent.click(button);
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'Betalningstjänsten är tillfälligt otillgänglig.', variant: 'destructive',
+    })));
+    expect(mockRefreshSession).toHaveBeenCalledTimes(1);
+    expect(mockInvoke).toHaveBeenCalledTimes(2);
+    expect(mockInvoke).toHaveBeenLastCalledWith('create-checkout', {
+      body: { plan: 'yearly' }, headers: { Authorization: 'Bearer test-refreshed-token' },
+    });
+    expect(mockLogClientError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Betalningstjänsten är tillfälligt otillgänglig.' }),
+      { context: { source: 'plus_checkout', plan: 'yearly', httpStatus: 503, errorCode: 'BOOT_ERROR' } },
+    );
+    expect(button).not.toBeDisabled();
   });
 });

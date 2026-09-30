@@ -15,6 +15,7 @@ import { isLegacyPriceId } from '@/lib/legacyPricing';
 import { trackEvent, parseAnalyticsSource } from '@/lib/analytics';
 import { getPremiumEntryState } from '@/lib/premiumEntry';
 import { logClientError } from '@/lib/errorLogger';
+import { PremiumCheckoutError, startPremiumCheckout } from '@/lib/premiumCheckout';
 import { isNativeIos, isNativeAndroid } from '@/lib/nativePlatform';
 import {
   isIosBillingAvailable,
@@ -355,17 +356,7 @@ export default function Premium() {
     trackClick('checkout_start', { metadata: { plan } });
     setLoadingPlan(plan);
     try {
-      const checkoutResult = await supabase.functions.invoke('create-checkout', {
-        body: { plan },
-      });
-      let data = checkoutResult.data;
-      const error = checkoutResult.error;
-
-      if (error && !data && (error as any).context?.json) {
-        try { data = await (error as any).context.json(); } catch { /* ignore */ }
-      } else if (error && !data && (error as any).context?.text) {
-        try { data = JSON.parse(await (error as any).context.text()); } catch { /* ignore */ }
-      }
+      const data = await startPremiumCheckout(plan);
 
       if (data?.error === 'already_subscribed' && data?.portal_url) {
         toast({
@@ -376,8 +367,6 @@ export default function Premium() {
         return;
       }
 
-      if (data?.error) throw new Error(data.message || data.error);
-      if (error) throw new Error(error.message);
       if (data?.url) {
         // Analytics: efter faktiskt lyckad checkout-session (URL genererad), precis innan redirect.
         trackEvent('Premium Checkout Started', {
@@ -388,7 +377,12 @@ export default function Premium() {
         window.location.href = data.url;
       } else throw new Error(t('toasts.no_checkout_url'));
     } catch (err: unknown) {
-      void logClientError(err, { context: { source: 'plus_checkout', plan } });
+      void logClientError(err, { context: {
+        source: 'plus_checkout',
+        plan,
+        ...(err instanceof PremiumCheckoutError && err.status !== undefined ? { httpStatus: err.status } : {}),
+        ...(err instanceof PremiumCheckoutError && err.code !== undefined ? { errorCode: err.code } : {}),
+      } });
       toast({
         title: t('toasts.checkout_fail_title'),
         description: err instanceof Error ? err.message : t('toasts.checkout_fail_desc'),
