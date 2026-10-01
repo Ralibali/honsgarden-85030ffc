@@ -104,10 +104,13 @@ export type AnalyticsOutboundPage =
  */
 export type AnalyticsEventMap = {
   'Blog Offer Shown': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant };
-  'Blog Offer Clicked': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant; action: 'product' | 'sample' | 'dismiss' };
+  'Blog Offer Clicked': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant; action: 'product' | 'sample' };
+  'Blog Offer Dismissed': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant };
   'Guide CTA Clicked': { placement: 'blog_index' | 'blog_article' | 'beginner_guide' | 'breed_guide'; audience: 'beginner' | 'breed'; action: 'product' | 'sample' };
   'Premium Viewed': { source?: AnalyticsSource };
   'Diary Entry Saved': { action: 'create' | 'edit' };
+  'Signup Form Viewed': { source?: AnalyticsSource };
+  'Signup Error': { source?: AnalyticsSource; reason: 'request_failed' };
   'Signup Started': {
     source?: AnalyticsSource;
   };
@@ -130,8 +133,9 @@ export type AnalyticsEventMap = {
     plan?: AnalyticsPlan;
     billing_interval?: AnalyticsBillingInterval;
   };
-  'First Egg Logged': {
+  'Egg Log Saved': {
     source?: AnalyticsSource;
+    persistence: 'online' | 'offline_sync';
   };
   'Smart Upsell Shown': {
     trigger?: string;
@@ -383,23 +387,6 @@ export function maybeTrackAuthSignup(
 ): boolean {
   if (event !== 'SIGNED_IN' || !hasOAuthIdentity(user)) return false;
   return trackSignupIfNew(user, props);
-}
-
-const FIRST_EGG_FLAG = 'hg_first_egg_tracked_v1';
-
-/**
- * Fire "First Egg Logged" en gång per enhet.
- * Anropas efter faktiskt lyckad äggloggning från valfri UI-yta.
- */
-export function trackFirstEggIfNew(source: AnalyticsSource): void {
-  try {
-    if (typeof window === 'undefined') return;
-    if (localStorage.getItem(FIRST_EGG_FLAG)) return;
-    localStorage.setItem(FIRST_EGG_FLAG, '1');
-    trackEvent('First Egg Logged', { source });
-  } catch {
-    // localStorage kan vara blockerat i privat läge
-  }
 }
 
 const FIRST_HEN_FLAG = 'hg_first_hen_tracked_v1';

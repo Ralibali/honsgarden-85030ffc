@@ -3,7 +3,7 @@ import { getNativeAuthRedirect } from '@/lib/nativeAuth';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSeo } from '@/hooks/useSeo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { parseAnalyticsSource } from '@/lib/analytics';
+import { parseAnalyticsSource, trackEvent } from '@/lib/analytics';
 import heroFarm from '@/assets/hero-farm.webp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -75,9 +75,7 @@ export default function Login() {
   // Trattmätning: besökaren har nått registreringsformuläret
   useEffect(() => {
     if (authMode === 'register') {
-      void import('@/lib/analytics').then(({ trackEvent }) =>
-        trackEvent('Signup Started', { source: signupSource }),
-      );
+      trackEvent('Signup Form Viewed', { source: signupSource });
     }
   }, [authMode, signupSource]);
 
@@ -133,7 +131,11 @@ export default function Login() {
         marketing_consent_source: marketingOptIn ? 'registration' : null,
       };
 
-      const data = await register(email.trim().toLowerCase(), password, name.trim(), meta);
+      trackEvent('Signup Started', { source: signupSource });
+      const data = await register(email.trim().toLowerCase(), password, name.trim(), meta).catch((error) => {
+        trackEvent('Signup Error', { source: signupSource, reason: 'request_failed' });
+        throw error;
+      });
       // Authoritative Signup: only after signUp created a real account (identities present).
       // Existing-email anti-enumeration responses have empty identities and are ignored.
       const { trackSignupIfNew } = await import('@/lib/analytics');

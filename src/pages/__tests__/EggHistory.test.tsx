@@ -14,7 +14,6 @@ vi.mock('@/lib/api', () => ({ api: {
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
 vi.mock('@/hooks/useActiveKarens', () => ({ useActiveKarens: () => ({ data: [] }) }));
 vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
-vi.mock('@/lib/analytics', () => ({ trackFirstEggIfNew: vi.fn() }));
 vi.mock('@/lib/personalRecords', () => ({ checkPersonalRecords: () => [], recordLabel: vi.fn() }));
 vi.mock('@/components/EggSuccessAnimation', () => ({ EggSuccessAnimation: () => null }));
 vi.mock('@/components/PersonalRecordToast', () => ({ PersonalRecordToast: () => null }));

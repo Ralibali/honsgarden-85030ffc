@@ -1,4 +1,5 @@
 import { get as idbGet, update as idbUpdate } from "idb-keyval";
+import type { AnalyticsSource } from "./analytics";
 
 const KEY = "honsgarden_offline_queue_v2";
 const LEGACY_KEY = "honsgarden_offline_queue_v1";
@@ -11,6 +12,7 @@ export interface QueuedEggLog {
   hen_id?: string;
   flock_id?: string;
   queued_at: string;
+  analytics_source?: AnalyticsSource;
 }
 export type CreateEggRecordFn = (record: {
   date: string;
@@ -20,6 +22,8 @@ export type CreateEggRecordFn = (record: {
   weather?: Record<string, unknown> | null;
   client_id?: string;
   expected_user_id?: string;
+  analytics_source?: AnalyticsSource;
+  analytics_persistence?: "online" | "offline_sync";
 }) => Promise<unknown>;
 let cache: QueuedEggLog[] = [];
 let loaded = false;
@@ -207,6 +211,8 @@ export function syncQueue(
           weather: null,
           client_id: item.client_id,
           expected_user_id: userId,
+          analytics_source: item.analytics_source,
+          analytics_persistence: "offline_sync",
         });
       } catch (error) {
         if (!isPermanentRejection(error)) break;

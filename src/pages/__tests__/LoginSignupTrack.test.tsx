@@ -104,6 +104,21 @@ describe('Login – Signup fires only when an account is created', () => {
     expect(plausible).toHaveBeenCalledWith('Signup Completed', {
       props: { source: 'signup_form' },
     });
+    expect(plausible.mock.calls.filter(call => call[0] === 'Signup Started')).toHaveLength(1);
+  });
+
+  it('distinguishes opening the form from a validated signup submission', async () => {
+    renderLogin('/login?mode=register&source=blog_inline');
+    await waitFor(() => expect(plausible).toHaveBeenCalledWith('Signup Form Viewed', {
+      props: { source: 'blog_inline' },
+    }));
+    expect(plausible.mock.calls.filter(call => call[0] === 'Signup Started')).toHaveLength(0);
+    fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+    expect(register).not.toHaveBeenCalled();
+    expect(plausible.mock.calls.filter(call => call[0] === 'Signup Started')).toHaveLength(0);
   });
 
   it('does not fire Signup Completed on a successful email login', async () => {
@@ -160,6 +175,10 @@ describe('Login – Signup fires only when an account is created', () => {
       expect(register).toHaveBeenCalledTimes(1);
     });
     expect(signupCalls(plausible)).toHaveLength(0);
+
+    expect(plausible).toHaveBeenCalledWith('Signup Error', {
+      props: { source: 'signup_form', reason: 'request_failed' },
+    });
 
     register.mockResolvedValueOnce({
       user: { id: 'existing', created_at: CREATED, identities: [] },

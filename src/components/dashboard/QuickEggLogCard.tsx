@@ -8,7 +8,6 @@ import { hapticTap, hapticSuccess } from '@/lib/haptics';
 import { todayLocal } from '@/lib/datetime';
 import { CountUp } from '@/components/CountUp';
 import { useState } from 'react';
-import { trackFirstEggIfNew } from '@/lib/analytics';
 import { useAuth } from '@/hooks/useAuth';
 import { saveEggLog } from '@/lib/saveEggLog';
 import type { EggLog } from '@/lib/api';
@@ -26,7 +25,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
 
   const addOne = useMutation({
     mutationFn: async () => {
-      return saveEggLog(user?.id, { date: todayLocal(), count: 1 }, api.createEggRecord);
+      return saveEggLog(user?.id, { date: todayLocal(), count: 1, analytics_source: 'quick_log_card' }, api.createEggRecord);
     },
     onSuccess: (result) => {
       if ('__offline' in result) {
@@ -34,7 +33,6 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
         toast({ title: 'Sparat på enheten', description: 'Ägget synkas när du får täckning.' });
       } else {
         queryClient.invalidateQueries({ queryKey: ['eggs'] });
-        trackFirstEggIfNew('quick_log_card');
         toast({ title: '🥚 +1 ägg loggat' });
       }
       hapticSuccess();

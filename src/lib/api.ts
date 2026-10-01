@@ -6,6 +6,7 @@ import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
 import { getQueue, loadQueue } from '@/lib/offlineQueue';
 import { eggLogValidationError } from '@/lib/eggLogValidation';
 import { selectAll } from '@/lib/selectAll';
+import { trackEvent, type AnalyticsSource } from '@/lib/analytics';
 
 // ==================== TYPES ====================
 
@@ -171,7 +172,7 @@ export async function getEggs(): Promise<EggLog[]> {
   return [...pending, ...remote].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null; client_id?: string; expected_user_id?: string }): Promise<EggLog> {
+export async function createEggRecord(record: { date: string; count: number; notes?: string; hen_id?: string; flock_id?: string; weather?: Record<string, unknown> | null; client_id?: string; expected_user_id?: string; analytics_source?: AnalyticsSource; analytics_persistence?: 'online' | 'offline_sync' }): Promise<EggLog> {
   const userId = await getUserId();
   if (record.expected_user_id && record.expected_user_id !== userId) throw new Error('Logga in på kontot som sparade loggningen.');
   const insertData: TablesInsert<'egg_logs'> = { date: record.date, count: record.count, user_id: userId };
@@ -194,6 +195,12 @@ export async function createEggRecord(record: { date: string; count: number; not
     }
     throw new Error(error.message);
   }
+  // Only a confirmed new insert counts. The idempotent retry branch above
+  // returns the existing row without sending another save event.
+  trackEvent('Egg Log Saved', {
+    source: record.analytics_source,
+    persistence: record.analytics_persistence ?? 'online',
+  });
   return data;
 }
 

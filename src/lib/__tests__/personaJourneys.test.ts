@@ -56,7 +56,7 @@ describe('demo-ytans navigeringshål (persona: Nybörjaren i demo)', () => {
 describe('persona-trattar har mätning i varje steg', () => {
   const analyticsSrc = readFileSync(join(ROOT, 'lib', 'analytics.ts'), 'utf8');
 
-  it('nybörjartratten: demo → registrering → onboarding → första ägget', () => {
+  it('nybörjartratten: demo → registrering → onboarding → sparad ägglogg', () => {
     for (const event of [
       'Demo Opened',
       'Demo Feature Used',
@@ -64,7 +64,7 @@ describe('persona-trattar har mätning i varje steg', () => {
       'CTA Register Clicked',
       'Signup Completed',
       'Onboarding Completed',
-      'First Egg Logged',
+      'Egg Log Saved',
       'First Hen Added',
     ]) {
       expect(analyticsSrc, `saknar event '${event}'`).toContain(`'${event}'`);
