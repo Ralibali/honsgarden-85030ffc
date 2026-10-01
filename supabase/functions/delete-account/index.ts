@@ -9,6 +9,8 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: corsHeaders });
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -31,6 +33,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { error: revokeError } = await admin.auth.admin.signOut(authHeader.replace(/^Bearer\s+/i, ''), 'global');
+    if (revokeError) throw new Error('Session revocation failed');
     const result = await deleteUserCompletely(user.id);
     if (!result.ok) {
       return new Response(JSON.stringify({ error: result.error || "Delete failed" }), {
@@ -44,7 +49,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Delete account error:", err);
-    return new Response(JSON.stringify({ error: (err as Error).message || "Internal error" }), {
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

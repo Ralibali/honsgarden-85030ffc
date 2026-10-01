@@ -8,5 +8,5 @@ initGa4({
   "excluded": [
     "/app/admin"
   ],
-  "consentKey": "honsgarden_ga4_consent_v1"
+  "consentKey": "honsgarden_ga4_consent_v2"
 });

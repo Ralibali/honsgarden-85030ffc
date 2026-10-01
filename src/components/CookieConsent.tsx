@@ -1,15 +1,16 @@
+import { readPrivacyConsent, storePrivacyConsent } from '@/lib/privacyConsent';
 import { setAnalyticsConsent } from '@/lib/ga4Runtime';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Cookie } from 'lucide-react';
 
-const CONSENT_KEY = 'honsgarden_ga4_consent_v1';
+const CONSENT_KEY = 'honsgarden_ga4_consent_v2';
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem(CONSENT_KEY);
+    const consent = readPrivacyConsent(CONSENT_KEY);
     if (!consent) {
       const t = setTimeout(() => setVisible(true), 1200);
       return () => clearTimeout(t);
@@ -17,13 +18,13 @@ export default function CookieConsent() {
   }, []);
 
   const accept = () => {
-    localStorage.setItem(CONSENT_KEY, 'accepted');
+    storePrivacyConsent(CONSENT_KEY, true);
     setAnalyticsConsent(true);
     setVisible(false);
   };
 
   const decline = () => {
-    localStorage.setItem(CONSENT_KEY, 'declined');
+    storePrivacyConsent(CONSENT_KEY, false);
     setAnalyticsConsent(false);
     setVisible(false);
   };
@@ -47,7 +48,7 @@ export default function CookieConsent() {
           </div>
         </div>
         <div className="flex gap-1.5 sm:gap-2">
-          <Button onClick={accept} size="sm" className="flex-1 h-7 sm:h-9 text-xs sm:text-sm">
+          <Button onClick={accept} variant="outline" size="sm" className="flex-1 h-7 sm:h-9 text-xs sm:text-sm">
             Acceptera statistik
           </Button>
           <Button onClick={decline} variant="outline" size="sm" className="flex-1 h-7 sm:h-9 text-xs sm:text-sm">

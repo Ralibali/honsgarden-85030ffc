@@ -1,3 +1,4 @@
+import ExternalEmbedGate from '@/components/ExternalEmbedGate';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, Leaf, Play, ShieldCheck, Sparkles, Sun } from 'lucide-react';
 import type { SaleSection } from '@/lib/eggSaleTheme';
@@ -111,7 +112,7 @@ export function CustomSectionsRenderer({ sections, accent }: { sections: SaleSec
                   {s.title && <h2 className="font-serif text-lg" style={accentStyle}>{s.title}</h2>}
                   {embed ? (
                     <div className="aspect-video w-full overflow-hidden rounded-2xl border bg-black">
-                      <iframe src={embed} title={s.title || 'Video'} className="w-full h-full" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                      <ExternalEmbedGate service="videotjänsten"><iframe src={embed} title={s.title || 'Video'} className="w-full h-full" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></ExternalEmbedGate>
                     </div>
                   ) : s.url ? (
                     <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium" style={accentStyle}>

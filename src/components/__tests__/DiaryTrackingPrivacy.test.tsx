@@ -7,7 +7,7 @@ function Surface() {
   useAutoClickTracking();
   return <><section data-private-content><button><span>Min privata dagbokstext</span></button></section><button>Vanlig publik knapp</button></>;
 }
-beforeEach(() => { vi.clearAllMocks(); localStorage.setItem('cookie-consent', 'accepted'); sessionStorage.setItem('_track_sid', 'test-session'); insert.mockResolvedValue({ error: null }); });
+beforeEach(() => { vi.clearAllMocks(); localStorage.clear(); localStorage.setItem('honsgarden_ga4_consent_v2', JSON.stringify({ version: 2, analytics: true, updatedAt: new Date().toISOString() })); sessionStorage.setItem('_track_sid', 'test-session'); insert.mockResolvedValue({ error: null }); });
 describe('Dagbokens integritet i automatisk klickspårning', () => {
   it('skickar ingen innehållstext ens när besökaren har accepterat statistik', () => {
     render(<Surface />);
@@ -17,6 +17,6 @@ describe('Dagbokens integritet i automatisk klickspårning', () => {
   it('behåller befintlig spårning av publika handlingar utanför privata ytor', () => {
     render(<Surface />);
     fireEvent.click(screen.getByText('Vanlig publik knapp'));
-    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ element_text: 'Vanlig publik knapp' }));
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ event_name: 'button_click', element_text: undefined }));
   });
 });

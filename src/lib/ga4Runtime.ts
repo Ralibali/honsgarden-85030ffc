@@ -1,3 +1,4 @@
+import { parsePrivacyConsent } from './privacyConsent';
 /** GA4 transport. No Google requests or event buffering before statistics consent.
  * Enhanced measurement must be disabled in the stream: this owns SPA pageviews.
  */
@@ -23,13 +24,7 @@ function blocked(path: string): boolean {
 }
 
 function readConsent(raw: string | null): boolean {
-  try {
-    if (config?.consentFormat === 'updro') {
-      const state = raw ? JSON.parse(raw) : null;
-      return state?.analytics === true || state?.level === 'all';
-    }
-    return raw === 'accepted';
-  } catch { return false; }
+  return parsePrivacyConsent(raw)?.analytics === true;
 }
 
 export function cleanAnalyticsUrl(raw: string): string {

@@ -10,7 +10,7 @@ export default function ShopTerms() {
     path: '/butik/villkor',
   });
 
-  const support = settings?.supportEmail?.trim() || '';
+  const support = 'info@auroramedia.se';
   const deliveryText = settings?.deliveryText?.trim() || '';
   const deliveryMethod = settings?.deliveryMethod?.trim() || '';
   const freeThresholdOre = settings?.freeShippingThresholdOre;

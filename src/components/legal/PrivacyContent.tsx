@@ -33,11 +33,11 @@ export function PrivacyContentSv() {
       <li><strong>Kamera & bilder:</strong> Foton du väljer att ladda upp till hönsprofiler eller annonser (mobilappen ber om kamera- och biblioteksåtkomst separat)</li>
       <li><strong>Platsdata:</strong> Endast om du aktivt anger postort/adress för väderprognoser eller marknadsplatsannonser – vi spårar inte din realtidsposition</li>
       <li><strong>Tekniska data:</strong> IP-adress, enhetstyp, webbläsare, operativsystem och sessionsinformation</li>
-      <li><strong>Användningsdata:</strong> Sidvisningar, klickhändelser och navigeringsmönster (anonymiserat)</li>
+      <li><strong>Användningsdata:</strong> Sidvisningar, klickhändelser och navigeringsmönster (med pseudonyma identifierare, efter samtycke)</li>
       <li><strong>Betalningsuppgifter:</strong> Webbköp hanteras av Stripe och köp i iOS-appen av Apple. Vi lagrar inte kortuppgifter. Vi behandlar köpets identifierare, produkt, abonnemangsstatus och giltighetstid, kopplade till ditt konto, för att aktivera och återställa Plus.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      Vi samlar inte in känsliga personuppgifter enligt art. 9 GDPR (t.ex. hälsodata om personer, religiös övertygelse eller politisk tillhörighet).
+      Tjänsten är avsedd för hönsdata. Lägg inte in känsliga personuppgifter om personer, exempelvis hälsodata, i anteckningar, foton eller AI-chatten.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">3. Rättslig grund för behandlingen</h2>
@@ -45,7 +45,7 @@ export function PrivacyContentSv() {
     <ul className="text-sm text-foreground space-y-2 list-disc pl-5">
       <li><strong>Fullgörande av avtal (art. 6.1 b)</strong> – Behandling som är nödvändig för att tillhandahålla tjänsten du registrerat dig för, t.ex. lagring av dina äggregistreringar, hantering av ditt konto och betalning.</li>
       <li><strong>Samtycke (art. 6.1 a)</strong> – För utskick av nyhetsbrev och marknadsföring samt cookies för analys. Du kan när som helst återkalla ditt samtycke.</li>
-      <li><strong>Berättigat intresse (art. 6.1 f)</strong> – För säkerhet, felsökning, missbruksskydd och förbättring av tjänsten. Vi har gjort en intresseavvägning och bedömt att vårt intresse inte väger tyngre än dina rättigheter.</li>
+      <li><strong>Berättigat intresse (art. 6.1 f)</strong> – För säkerhet, felsökning, missbruksskydd och förbättring av tjänsten. Du har rätt att invända mot behandling som stöds på berättigat intresse. Statistik kräver ett separat samtycke.</li>
       <li><strong>Rättslig förpliktelse (art. 6.1 c)</strong> – När vi är skyldiga att spara uppgifter enligt lag, t.ex. bokföringslagen.</li>
     </ul>
 
@@ -58,7 +58,7 @@ export function PrivacyContentSv() {
       <li>Skicka nyhetsbrev och erbjudanden (med ditt samtycke)</li>
       <li>Hantera betalningar och prenumerationer via Stripe på webben och Apple i iOS-appen</li>
       <li>Upptäcka och förhindra missbruk och säkerhetshot</li>
-      <li>Analysera användningsmönster för att förbättra tjänsten (anonymiserat)</li>
+      <li>Analysera användningsmönster för att förbättra tjänsten (med pseudonyma identifierare, efter samtycke)</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">5. Delning med tredje part & underbiträden</h2>
@@ -71,50 +71,43 @@ export function PrivacyContentSv() {
           <tr className="border-b border-border/50">
             <th className="text-left py-2 pr-4 font-semibold">Leverantör</th>
             <th className="text-left py-2 pr-4 font-semibold">Syfte</th>
-            <th className="text-left py-2 font-semibold">Plats</th>
           </tr>
         </thead>
         <tbody>
+          <tr className="border-b border-border/30"><td className="py-2 pr-4">Google Analytics 4</td><td className="py-2 pr-4">Statistik efter samtycke / Analytics after consent</td></tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Lovable Cloud (Supabase)</td>
             <td className="py-2 pr-4">Databas, autentisering, backend-funktioner</td>
-            <td className="py-2">EU/EES</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Stripe</td>
             <td className="py-2 pr-4">Betalningshantering</td>
-            <td className="py-2">USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Brevo (Sendinblue)</td>
             <td className="py-2 pr-4">E-postutskick, nyhetsbrev, transaktionsmejl</td>
-            <td className="py-2">EU (Frankrike)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Google (Gemini) / Lovable AI Gateway</td>
             <td className="py-2 pr-4">AI-funktioner (Agda-chatt, dagliga tips, insikter)</td>
-            <td className="py-2">EU/USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Apple Push Notification Service</td>
             <td className="py-2 pr-4">Pushnotiser i iOS-appen</td>
-            <td className="py-2">USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Open-Meteo</td>
             <td className="py-2 pr-4">Väderprognoser (endast koordinater/postort)</td>
-            <td className="py-2">EU</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Firecrawl</td>
-            <td className="py-2 pr-4">Produktdata för affiliate-länkar (ingen personuppgift)</td>
-            <td className="py-2">USA (EU SCC)</td>
+            <td className="py-2 pr-4">Uppslag av produktdata för affiliate-länkar</td>
           </tr>
         </tbody>
       </table>
     </div>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      Vid överföring av personuppgifter utanför EU/EES säkerställer vi att adekvat skyddsnivå upprätthålls genom EU:s standardavtalsklausuler (Standard Contractual Clauses, SCC) i enlighet med artikel 46.2 c GDPR.
+      Vissa leverantörer kan behandla personuppgifter utanför EU/EES. Kontakta oss för information om mottagare, behandlingsländer och de skyddsåtgärder som gäller för dina uppgifter.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">6. Cookies och liknande tekniker</h2>
@@ -125,7 +118,7 @@ export function PrivacyContentSv() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Nödvändiga cookies (kräver ej samtycke):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Autentisering</strong> – Sessionshantering för inloggade användare</li>
-      <li><strong>Cookie-val</strong> – Sparar ditt val av cookieinställningar (<code>honsgarden_ga4_consent_v1</code> i localStorage)</li>
+      <li><strong>Cookie-val</strong> – Sparar ditt val av cookieinställningar (<code>honsgarden_ga4_consent_v2</code> i localStorage)</li>
     </ul>
 
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Valfria cookies (kräver samtycke):</h3>
@@ -133,17 +126,17 @@ export function PrivacyContentSv() {
       <li><strong>Analys</strong> – Google Analytics 4 från Google mäter sidvisningar och produkthändelser efter ditt samtycke. Statistikcookies används för att skilja besök åt. Du kan återkalla samtycket via Cookieinställningar</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      Du kan ändra dina cookieinställningar när som helst via cookie-bannern eller i din webbläsare. Att blockera nödvändiga cookies kan påverka tjänstens funktion.
+      Google kan efter samtycke skapa <code>_ga</code> och <code>_ga_*</code> som innehåller pseudonyma besöksidentifierare, normalt i upp till två år efter senaste användning. Inloggningslagring (<code>sb-*-auth-token</code>) används tills du loggar ut eller rensar den. Du tillfrågas om samtycke igen efter 365 dagar. Du kan ändra dina cookieinställningar när som helst via cookie-bannern eller i din webbläsare. Att blockera nödvändiga cookies kan påverka tjänstens funktion.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">7. Lagringstid</h2>
     <p className="text-sm text-foreground leading-relaxed">Vi lagrar dina personuppgifter enligt följande principer:</p>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Kontodata och användarinnehåll:</strong> Så länge ditt konto är aktivt</li>
-      <li><strong>Vid kontoavslut:</strong> Personuppgifter raderas inom 30 dagar</li>
-      <li><strong>Ekonomiska transaktioner:</strong> Sparas i 7 år enligt bokföringslagen (1999:1078)</li>
-      <li><strong>E-postloggar:</strong> Sparas i 90 dagar för felsökning</li>
-      <li><strong>Anonymiserad statistik:</strong> Sparas utan tidsgräns (är inte personuppgifter)</li>
+      <li><strong>Vid kontoavslut:</strong> Du kan avsluta kontot i appen och begära radering via kontaktadressen. Uppgifter som behövs enligt lag och uppgifter hos leverantörer kan behöva hanteras separat.</li>
+      <li><strong>Bokföringsunderlag för köp i tjänsten:</strong> Bevaras enligt tillämpliga bokföringskrav. Din egen ekonomiloggbok omfattas av kontoraderingen.</li>
+      <li><strong>Loggar och leverantörsdata:</strong> Kontakta oss för besked om lagringstiden för en viss uppgift.</li>
+      <li><strong>Statistik:</strong> Kan innehålla pseudonyma identifierare och är då personuppgifter. Kontakta oss för lagringstid och uppgifter om Googles behandling.</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">8. Dina rättigheter</h2>
@@ -151,14 +144,14 @@ export function PrivacyContentSv() {
     <ul className="text-sm text-foreground space-y-2 list-disc pl-5">
       <li><strong>Rätt till tillgång (art. 15)</strong> – Du kan begära information om vilka personuppgifter vi behandlar om dig.</li>
       <li><strong>Rätt till rättelse (art. 16)</strong> – Du kan begära att felaktiga uppgifter korrigeras.</li>
-      <li><strong>Rätt till radering (art. 17)</strong> – Du kan radera ditt konto och all tillhörande data via <em>Inställningar → Radera konto</em> i appen.</li>
+      <li><strong>Rätt till radering (art. 17)</strong> – Du kan avsluta ditt konto och begära radering av dina uppgifter via <em>Inställningar → Radera konto</em> i appen.</li>
       <li><strong>Rätt till begränsning (art. 18)</strong> – Du kan begära att behandlingen av dina uppgifter begränsas.</li>
-      <li><strong>Rätt till dataportabilitet (art. 20)</strong> – Du kan exportera dina uppgifter som CSV-fil via <em>Inställningar → Exportera data</em>.</li>
+      <li><strong>Rätt till dataportabilitet (art. 20)</strong> – Du kan hämta dina tillgängliga personuppgifter som JSON eller exportera kategorier som CSV via <em>Inställningar → Exportera data</em>.</li>
       <li><strong>Rätt att invända (art. 21)</strong> – Du har rätt att invända mot behandling baserad på berättigat intresse.</li>
       <li><strong>Rätt att återkalla samtycke</strong> – Du kan när som helst återkalla samtycke för nyhetsbrev via avprenumerationslänken eller via inställningar i appen.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      Radering och export kan du göra direkt i appen. För övriga förfrågningar, kontakta oss på <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a>. Vi besvarar din begäran inom 30 dagar.
+      Radering och export kan du göra direkt i appen. För övriga förfrågningar, kontakta oss på <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a>. Vi besvarar din begäran inom en månad.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">9. Automatiserat beslutsfattande</h2>
@@ -175,7 +168,7 @@ export function PrivacyContentSv() {
       <li>Dataseparering genom Row Level Security (RLS) på databasnivå</li>
       <li>Hashade lösenord – vi lagrar aldrig lösenord i klartext</li>
       <li>Rate limiting för att förhindra missbruk</li>
-      <li>Regelbunden säkerhetsgranskning av koden</li>
+      <li>Åtkomstkontroller för inloggade funktioner</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">11. Personuppgiftsincidenter</h2>
@@ -237,7 +230,7 @@ export function PrivacyContentSv() {
     </p>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Pushnotiser:</strong> Skickas endast om du aktivt godkänt det i operativsystemet. Innehåller ex. äggpåminnelser, marknadsplatsnotiser och abonnemangsstatus. Kan stängas av när som helst i enhetens inställningar.</li>
-      <li><strong>Kamera & fotobibliotek:</strong> Åtkomst begärs endast när du väljer att lägga till bilder på höns eller annonser. Bilderna lagras krypterat i tjänsten och tas bort när du raderar dem eller ditt konto.</li>
+      <li><strong>Kamera & fotobibliotek:</strong> Åtkomst begärs endast när du väljer att lägga till bilder på höns eller annonser. Bilder överförs via HTTPS och lagras för den funktion du använder. Bilder som du publicerar kan visas för andra. Kontakta oss om radering av bilder.</li>
       <li><strong>Offline-läge:</strong> Loggade ägg sparas lokalt i din enhet och synkas vid uppkoppling. Ingen tredje part har tillgång till offline-kön.</li>
       <li><strong>Betalning i appen:</strong> All betalning sker via Stripe på webben. Vi använder inte Apples köp inom app (IAP) för prenumeration.</li>
     </ul>
@@ -250,7 +243,7 @@ export function PrivacyContentSv() {
       <li>E-postadress, valfri ort/postnummer och sökradie</li>
       <li>Rättslig grund: samtycke (art. 6.1 a GDPR) via <strong>dubbel opt-in</strong> – du måste bekräfta via länk i e-post</li>
       <li>Avanmälan: länk finns i varje utskick och tar omedelbar effekt</li>
-      <li>Lagringstid: tills du avanmäler dig; vid inaktivitet i 24 månader raderas prenumerationen</li>
+      <li>Lagringstid: så länge du prenumererar. När du avanmäler dig stoppas utskicken. Kontakta oss för besked om radering och bevarande av samtyckesuppgifter.</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">18. Referral- och vänbjudansprogram</h2>
@@ -303,11 +296,11 @@ export function PrivacyContentEn() {
       <li><strong>Camera & photos:</strong> Photos you choose to upload to hen profiles or listings (the mobile app requests camera and library access separately)</li>
       <li><strong>Location data:</strong> Only if you actively enter a postcode/address for weather or marketplace listings — we do not track your real-time location</li>
       <li><strong>Technical data:</strong> IP address, device type, browser, operating system and session information</li>
-      <li><strong>Usage data:</strong> Page views, click events and navigation patterns (anonymized)</li>
+      <li><strong>Usage data:</strong> Page views, click events and navigation patterns (with pseudonymous identifiers, after consent)</li>
       <li><strong>Payment data:</strong> Web purchases are handled by Stripe and purchases in the iOS app by Apple. We do not store card details. We process purchase identifiers, product, subscription status and expiry dates linked to your account to activate and restore Plus.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      We do not collect special-category personal data under art. 9 GDPR (e.g. health data about individuals, religious beliefs or political affiliation).
+      The service is intended for poultry data. Do not enter sensitive personal data about people, such as health data, in notes, photos or AI chats.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">3. Legal basis for processing</h2>
@@ -315,7 +308,7 @@ export function PrivacyContentEn() {
     <ul className="text-sm text-foreground space-y-2 list-disc pl-5">
       <li><strong>Performance of a contract (art. 6.1 b)</strong> — Processing necessary to provide the service you registered for, e.g. storing your egg records, managing your account and processing payments.</li>
       <li><strong>Consent (art. 6.1 a)</strong> — For newsletters and marketing, and analytics cookies. You can withdraw consent at any time.</li>
-      <li><strong>Legitimate interest (art. 6.1 f)</strong> — For security, debugging, abuse prevention and service improvement. We have balanced this interest against your rights.</li>
+      <li><strong>Legitimate interest (art. 6.1 f)</strong> — For security, debugging, abuse prevention and service improvement. You can object to processing based on this ground. Statistics requires separate consent.</li>
       <li><strong>Legal obligation (art. 6.1 c)</strong> — When we are required to retain data under law, e.g. accounting regulations.</li>
     </ul>
 
@@ -328,7 +321,7 @@ export function PrivacyContentEn() {
       <li>Send newsletters and offers (with your consent)</li>
       <li>Process payments and subscriptions through Stripe on the web and Apple in the iOS app</li>
       <li>Detect and prevent abuse and security threats</li>
-      <li>Analyze usage patterns to improve the service (anonymized)</li>
+      <li>Analyze usage patterns to improve the service (with pseudonymous identifiers, after consent)</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">5. Third parties & sub-processors</h2>
@@ -341,50 +334,43 @@ export function PrivacyContentEn() {
           <tr className="border-b border-border/50">
             <th className="text-left py-2 pr-4 font-semibold">Provider</th>
             <th className="text-left py-2 pr-4 font-semibold">Purpose</th>
-            <th className="text-left py-2 font-semibold">Location</th>
           </tr>
         </thead>
         <tbody>
+          <tr className="border-b border-border/30"><td className="py-2 pr-4">Google Analytics 4</td><td className="py-2 pr-4">Statistik efter samtycke / Analytics after consent</td></tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Lovable Cloud (Supabase)</td>
             <td className="py-2 pr-4">Database, authentication, backend functions</td>
-            <td className="py-2">EU/EEA</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Stripe</td>
             <td className="py-2 pr-4">Payment processing</td>
-            <td className="py-2">USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Brevo (Sendinblue)</td>
             <td className="py-2 pr-4">Email delivery, newsletters, transactional mail</td>
-            <td className="py-2">EU (France)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Google (Gemini) / Lovable AI Gateway</td>
             <td className="py-2 pr-4">AI features (Agda chat, daily tips, insights)</td>
-            <td className="py-2">EU/USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Apple Push Notification Service</td>
             <td className="py-2 pr-4">Push notifications in the iOS app</td>
-            <td className="py-2">USA (EU SCC)</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Open-Meteo</td>
             <td className="py-2 pr-4">Weather forecasts (coordinates/postcode only)</td>
-            <td className="py-2">EU</td>
           </tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Firecrawl</td>
-            <td className="py-2 pr-4">Product data for affiliate links (no personal data)</td>
-            <td className="py-2">USA (EU SCC)</td>
+            <td className="py-2 pr-4">Product data lookup for affiliate links</td>
           </tr>
         </tbody>
       </table>
     </div>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      When transferring personal data outside the EU/EEA, we ensure an adequate level of protection through the EU Standard Contractual Clauses (SCC) in accordance with article 46.2 c GDPR.
+      Some providers may process personal data outside the EU/EEA. Contact us for information about recipients, processing countries and the safeguards applicable to your data.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">6. Cookies and similar technologies</h2>
@@ -393,7 +379,7 @@ export function PrivacyContentEn() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Necessary cookies (no consent required):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Authentication</strong> — Session management for signed-in users</li>
-      <li><strong>Cookie choice</strong> — Stores your cookie preferences (<code>honsgarden_ga4_consent_v1</code> in localStorage)</li>
+      <li><strong>Cookie choice</strong> — Stores your cookie preferences (<code>honsgarden_ga4_consent_v2</code> in localStorage)</li>
     </ul>
 
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Optional cookies (consent required):</h3>
@@ -401,17 +387,17 @@ export function PrivacyContentEn() {
       <li><strong>Analytics</strong> — Google Analytics 4 by Google measures page views and product events after your consent. Analytics cookies distinguish visits. You can withdraw consent via Cookie settings</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      You can change your cookie settings at any time via the cookie banner or in your browser. Blocking necessary cookies may affect how the service works.
+      After consent, Google may set <code>_ga</code> and <code>_ga_*</code> with pseudonymous visitor identifiers, usually lasting up to two years after last use. Login storage (<code>sb-*-auth-token</code>) remains until logout or clearing. Consent is requested again after 365 days. You can change your cookie settings at any time via the cookie banner or in your browser. Blocking necessary cookies may affect how the service works.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">7. Retention</h2>
     <p className="text-sm text-foreground leading-relaxed">We retain your personal data according to the following principles:</p>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Account data and user content:</strong> As long as your account is active</li>
-      <li><strong>On account closure:</strong> Personal data is deleted within 30 days</li>
-      <li><strong>Financial transactions:</strong> Retained for 7 years under applicable accounting law</li>
-      <li><strong>Email logs:</strong> Retained for 90 days for troubleshooting</li>
-      <li><strong>Anonymized statistics:</strong> Retained without time limit (not personal data)</li>
+      <li><strong>On account closure:</strong> You can close your account in the app and request erasure through the contact address. Records required by law and data held by providers may need separate handling.</li>
+      <li><strong>Accounting records for purchases in the service:</strong> Retained under applicable accounting requirements. Your own financial log is included in account deletion.</li>
+      <li><strong>Logs and provider data:</strong> Contact us for the retention period applicable to a specific record.</li>
+      <li><strong>Statistics:</strong> May contain pseudonymous identifiers and is then personal data. Contact us for retention information and details of Google’s processing.</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">8. Your rights</h2>
@@ -419,14 +405,14 @@ export function PrivacyContentEn() {
     <ul className="text-sm text-foreground space-y-2 list-disc pl-5">
       <li><strong>Right of access (art. 15)</strong> — Request information about what personal data we process about you.</li>
       <li><strong>Right to rectification (art. 16)</strong> — Request that inaccurate data be corrected.</li>
-      <li><strong>Right to erasure (art. 17)</strong> — Delete your account and all related data via <em>Settings → Delete account</em> in the app.</li>
+      <li><strong>Right to erasure (art. 17)</strong> — Close your account and request erasure of your data via <em>Settings → Delete account</em> in the app.</li>
       <li><strong>Right to restriction (art. 18)</strong> — Request that the processing of your data be restricted.</li>
-      <li><strong>Right to data portability (art. 20)</strong> — Export your data as a CSV file via <em>Settings → Export data</em>.</li>
+      <li><strong>Right to data portability (art. 20)</strong> — Download your available personal data as JSON or export categories as CSV via <em>Settings → Export data</em>.</li>
       <li><strong>Right to object (art. 21)</strong> — Object to processing based on legitimate interest.</li>
       <li><strong>Right to withdraw consent</strong> — Withdraw consent for newsletters at any time via the unsubscribe link or in app settings.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
-      Deletion and export can be done directly in the app. For other requests, contact us at <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a>. We will respond within 30 days.
+      Deletion and export can be done directly in the app. For other requests, contact us at <a href="mailto:info@auroramedia.se" className="text-primary hover:underline">info@auroramedia.se</a>. We will respond within one month.
     </p>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">9. Automated decision-making</h2>
@@ -443,7 +429,7 @@ export function PrivacyContentEn() {
       <li>Data separation through Row Level Security (RLS) at the database level</li>
       <li>Hashed passwords — we never store passwords in plain text</li>
       <li>Rate limiting to prevent abuse</li>
-      <li>Regular security reviews of the code</li>
+      <li>Access controls for authenticated features</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">11. Data breaches</h2>
@@ -504,9 +490,9 @@ export function PrivacyContentEn() {
     </p>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Push notifications:</strong> Sent only if you actively opt in via the operating system. Content includes egg reminders, marketplace alerts and subscription status. Can be disabled anytime in device settings.</li>
-      <li><strong>Camera & photo library:</strong> Access is requested only when you choose to add images to hens or listings. Images are stored encrypted and deleted when you remove them or your account.</li>
-      <li><strong>Offline mode:</strong> Logged eggs are stored locally on your device and synced when online. No third party has access to the offline queue.</li>
-      <li><strong>In-app payment:</strong> All payments are processed via Stripe on the web. We do not use Apple In-App Purchase for subscriptions.</li>
+      <li><strong>Camera & photo library:</strong> Access is requested only when you choose to add images to hens or listings. Images are transferred via HTTPS and stored for the feature you use. Published images may be visible to others. Contact us about image erasure.</li>
+      <li><strong>Offline mode:</strong> Logged eggs are stored locally on your device and synced when online. Device backups and access depend on your device settings.</li>
+      <li><strong>In-app payment:</strong> Web purchases are handled by Stripe. Purchases in the iOS app are handled by Apple.</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">17. Email alerts for eggs for sale (public form)</h2>
@@ -517,7 +503,7 @@ export function PrivacyContentEn() {
       <li>Email address, optional city/postcode and search radius</li>
       <li>Legal basis: consent (art. 6.1 a GDPR) via <strong>double opt-in</strong> — you must confirm via an email link</li>
       <li>Unsubscribe: link included in every message, with immediate effect</li>
-      <li>Retention: until you unsubscribe; after 24 months of inactivity the subscription is deleted</li>
+      <li>Retention: while you subscribe. Unsubscribing stops further messages. Contact us about erasure and retention of consent records.</li>
     </ul>
 
     <h2 className="font-serif text-lg text-foreground mt-6 mb-2">18. Referral program</h2>

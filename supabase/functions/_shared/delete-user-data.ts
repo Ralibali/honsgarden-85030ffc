@@ -1,39 +1,63 @@
+import { deleteAccountPhotos } from './account-storage-deletion.ts';
 // Shared helper that wipes all rows belonging to a user from public tables,
 // then deletes the auth user. Uses a service-role client.
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Tables keyed by user_id
+// Current user-owned tables, children before parents. Merchant payment records remain subject to legal retention.
 const USER_ID_TABLES = [
-  "chore_completions",
   "achievement_rewards",
-  "health_logs",
-  "egg_logs",
-  "feed_records",
-  "transactions",
-  "hatchings",
-  "daily_chores",
-  "feedback",
-  "reminder_settings",
-  "coop_settings",
-  "hens",
-  "flocks",
-  "egg_goals",
+  "affiliate_clicks",
+  "affiliate_impressions",
+  "agda_chat_logs",
+  "backup_exports",
   "blog_comments",
-  "community_comments",
-  "community_reactions",
-  "community_posts",
-  "public_egg_sale_listings",
-  "notification_reads",
-  "user_notifications",
-  "page_views",
+  "chore_completions",
   "click_events",
+  "client_error_logs",
+  "community_reactions",
+  "device_tokens",
+  "egg_goals",
+  "egg_logs",
+  "egg_sale_templates",
+  "egg_sales",
+  "farm_members",
+  "feed_records",
+  "feedback",
+  "generated_reports",
+  "hatchings",
+  "health_events",
+  "health_logs",
+  "health_schedules",
+  "hen_photos",
+  "inventory_transactions",
+  "lifecycle_emails_sent",
+  "marketplace_alerts",
+  "marketplace_favorites",
+  "notification_reads",
+  "page_views",
+  "profiles",
+  "public_egg_sale_listings",
+  "push_subscriptions",
+  "rate_limits",
+  "reminder_settings",
+  "reminders",
+  "transactions",
+  "user_notifications",
+  "user_roles",
   "weather_advice_cache",
   "weather_alert_preferences",
   "weather_alerts_sent",
-  "rate_limits",
-  "farm_members",
-  "user_roles",
-  "profiles",
+  "community_comments",
+  "coop_settings",
+  "daily_chores",
+  "inventory_items",
+  "marketplace_listings",
+  "community_posts",
+  "breeding_pairs",
+  "flocks",
+  "hatch_sessions",
+  "hens",
 ];
 
 // Tables keyed by other user-ish columns
@@ -73,16 +97,16 @@ async function sendGoodbyeEmail(
 <div style="font-family: 'Inter', Arial, sans-serif; max-width: 540px; padding: 36px 28px; background: #ffffff;">
   <img src="${LOGO_URL}" width="140" alt="Hönsgården" style="margin: 0 0 28px;" />
   <h1 style="font-family: 'Young Serif', Georgia, serif; font-size: 22px; color: hsl(22,18%,12%); margin: 0 0 20px;">
-    Ditt konto är raderat
+    Begäran om kontoradering
   </h1>
   <p style="font-size: 15px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
     Hej <strong>${displayName}</strong>,
   </p>
   <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
-    Vi bekräftar att ditt Hönsgården-konto och all tillhörande data nu är permanent borttaget från våra system.
+    Vi har tagit emot din begäran om att avsluta ditt Hönsgården-konto. Raderingen bekräftas i appen när den har slutförts.
   </p>
   <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 16px;">
-    Detta inkluderar dina hönor, äggloggar, hälsonoteringar, transaktioner, inställningar och övriga uppgifter kopplade till din profil.
+    Uppgifter som behöver bevaras enligt lag kan finnas kvar. Kontakta oss om du behöver hjälp med ett registerutdrag eller din begäran.
   </p>
   <p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 24px;">
     Tack för tiden du var med oss. Du är alltid välkommen tillbaka 🐔
@@ -99,9 +123,9 @@ async function sendGoodbyeEmail(
         to: email,
         from: "Hönsgården <noreply@notify.honsgarden.se>",
         sender_domain: "notify.honsgarden.se",
-        subject: "Ditt Hönsgården-konto är raderat",
+        subject: "Din begäran om kontoradering i Hönsgården",
         html,
-        text: `Hej ${displayName}, vi bekräftar att ditt Hönsgården-konto och all tillhörande data är permanent borttaget. Tack för tiden du var med oss.`,
+        text: `Hej ${displayName}, vi har tagit emot din begäran om kontoradering. Raderingen bekräftas i appen när den har slutförts. Tack för tiden du var med oss.`,
         purpose: "transactional",
         label: "account-deleted",
         message_id: `account-deleted-${userId}-${Date.now()}`,
@@ -119,6 +143,15 @@ export async function deleteUserCompletely(userId: string): Promise<{ ok: boolea
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     { auth: { persistSession: false } },
   );
+
+  try {
+    for (const bucket of ['hen-images', 'hen-photos', 'egg-sale-images', 'community-images', 'reports', 'backups']) {
+      await deleteAccountPhotos(supabaseAdmin.storage.from(bucket), userId);
+    }
+  } catch (error) {
+    console.error('[delete-user] storage cleanup failed');
+    return { ok: false, error: 'Kunde inte ta bort kontots filer. Försök igen eller kontakta support.' };
+  }
 
   // Skicka bekräftelsemejl INNAN vi raderar (vi behöver email-adressen)
   await sendGoodbyeEmail(supabaseAdmin, userId);

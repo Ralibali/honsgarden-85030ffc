@@ -1,3 +1,4 @@
+import { downloadAccountData } from '@/lib/accountExport';
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,15 @@ export function MyDataSection() {
     }
   };
 
+  const exportPersonalData = async () => {
+    setBusyKey('personal-data');
+    try {
+      const result = await downloadAccountData();
+      toast({ title: 'Personuppgifter hämtade', description: result.unavailable.length ? 'Vissa interna uppgifter behöver begäras via info@auroramedia.se. Se filens information.' : 'Se filens information om uppgifter i andra system.' });
+    } catch (error) { toast({ title: 'Export misslyckades', description: error instanceof Error ? error.message : 'Försök igen.', variant: 'destructive' }); }
+    finally { setBusyKey(null); }
+  };
+
   const createBackup = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("generate-backup");
@@ -157,7 +167,7 @@ export function MyDataSection() {
       if (data?.error) throw new Error(data.error);
     },
     onSuccess: async () => {
-      toast({ title: "Konto raderat 👋", description: "All din data har tagits bort." });
+      toast({ title: "Konto raderat 👋", description: "Ditt konto har avslutats. Uppgifter som behöver bevaras enligt lag kan finnas kvar." });
       await logout();
       navigate("/login");
     },
@@ -178,6 +188,10 @@ export function MyDataSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Button variant="outline" onClick={exportPersonalData} disabled={busyKey !== null}>Hämta mina personuppgifter (JSON)</Button>
+            <p className="text-xs text-muted-foreground">Tillgängligt för alla konton. För registerutdrag som omfattar interna loggar och uppgifter hos leverantörer: info@auroramedia.se.</p>
+          </div>
           {/* CSV per kategori */}
           <div>
             <p className="text-xs text-muted-foreground mb-3">
