@@ -18,12 +18,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const supabaseUser = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid session" }), {
         status: 401,
@@ -32,11 +33,9 @@ Deno.serve(async (req) => {
     }
 
     // Verify caller is admin
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { persistSession: false } },
-    );
+    const supabaseAdmin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+      auth: { persistSession: false },
+    });
     const { data: isAdmin } = await supabaseAdmin.rpc("has_role", {
       _user_id: user.id,
       _role: "admin",
@@ -65,10 +64,13 @@ Deno.serve(async (req) => {
       });
     }
     if (targetId === user.id) {
-      return new Response(JSON.stringify({ error: "Använd 'Radera mitt konto' i Inställningar för att ta bort dig själv." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Använd 'Radera mitt konto' i Inställningar för att ta bort dig själv." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const result = await deleteUserCompletely(targetId);
