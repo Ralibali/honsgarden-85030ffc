@@ -20,12 +20,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    const supabaseUser = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid session" }), {
         status: 401,
@@ -34,8 +35,8 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { error: revokeError } = await admin.auth.admin.signOut(authHeader.replace(/^Bearer\s+/i, ''), 'global');
-    if (revokeError) throw new Error('Session revocation failed');
+    const { error: revokeError } = await admin.auth.admin.signOut(authHeader.replace(/^Bearer\s+/i, ""), "global");
+    if (revokeError) throw new Error("Session revocation failed");
     const result = await deleteUserCompletely(user.id);
     if (!result.ok) {
       return new Response(JSON.stringify({ error: result.error || "Delete failed" }), {
