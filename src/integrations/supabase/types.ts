@@ -5142,6 +5142,24 @@ export type Database = {
     }
     Functions: {
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
+      active_native_push_tokens: {
+        Args: { p_token?: string; p_user_ids: string[] }
+        Returns: {
+          created_at: string
+          device_info: Json | null
+          id: string
+          platform: string
+          token: string
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "device_tokens"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       apply_apple_iap_entitlement: {
         Args: { _entitlement: Json; _user_id: string }
         Returns: Json
@@ -5444,11 +5462,7 @@ export type Database = {
         }[]
       }
       register_native_push: {
-        Args: {
-          p_platform: string
-          p_registration_id: string
-          p_token: string
-        }
+        Args: { p_platform: string; p_registration_id: string; p_token: string }
         Returns: boolean
       }
       request_public_egg_alert: {

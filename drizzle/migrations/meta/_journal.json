@@ -8,6 +8,13 @@
       "when": 1790709462851,
       "tag": "0000_20260928072522_google_play_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790928631116,
+      "tag": "0001_native_push_session_binding",
+      "breakpoints": true
     }
   ]
 }
