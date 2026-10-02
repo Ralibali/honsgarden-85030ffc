@@ -15,22 +15,32 @@ Deno.serve(async (req) => {
   const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
   const rawSubject = Deno.env.get("VAPID_SUBJECT") ?? "";
   const vapidSubject = /^(mailto:|https?:\/\/)/i.test(rawSubject) ? rawSubject : "mailto:info@auroramedia.se";
-  const webConfigured = !!vapidPublic && !!vapidPrivate;
+  let webConfigured = !!vapidPublic && !!vapidPrivate;
   if (!serviceKey) {
     return new Response(JSON.stringify({ error: "config" }), { status: 500, headers: corsHeaders });
+  }
+
+  // An invalid browser-push key must not crash authentication or prevent
+  // scheduled reminders from reaching native devices through APNs/FCM.
+  if (webConfigured) {
+    try {
+      webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+    } catch {
+      console.error('[send-push] Web push configuration is invalid');
+      webConfigured = false;
+    }
   }
 
   const body = await req.json().catch(() => ({}));
 
   // Publik endpoint: returnera VAPID public key (behövs av klienten för subscribe)
   if (body.get_public_key) {
-    if (!vapidPublic) return new Response(JSON.stringify({ error: 'Web push unavailable' }), { status: 503, headers: corsHeaders });
+    if (!webConfigured) return new Response(JSON.stringify({ error: 'Web push unavailable' }), { status: 503, headers: corsHeaders });
     return new Response(JSON.stringify({ public_key: vapidPublic }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  if (webConfigured) webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
   const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
   const auth = req.headers.get("Authorization") ?? "";
