@@ -1,6 +1,8 @@
 # Remote push — release checklist
 
-The implementation below is local work. The new migration and functions have not been deployed, credentials have not been verified, and no real remote notification has been demonstrated on either platform.
+On 2 October 2026 the existing session-binding migration and both push functions were deployed together through Lovable to `sikbymtrbhrofysgkqsj`. A separate database read confirmed both private/public RPC pairs, the private registration grant to authenticated users, the private delivery grant to service role, and removal of direct authenticated INSERT/UPDATE privileges. Public wrappers remain security-invoker functions. No real remote notification has been demonstrated on either platform.
+
+The live sender rejects missing/forged authentication. Native delivery is still blocked by missing APNs credentials and `FCM_SERVICE_ACCOUNT_JSON`. The existing website `VAPID_PUBLIC_KEY` is invalid; the send-push handler now treats invalid website configuration as unavailable so that it cannot crash authentication or prevent a scheduled native delivery. This source correction still needs deployment. No key was rotated, and no existing device registration was removed.
 
 ## Implemented locally
 
@@ -23,7 +25,7 @@ The implementation below is local work. The new migration and functions have not
 
 1. Verify the existing Apple push key and app entitlement. Server secrets: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID=se.honsgarden.app`, and `APNS_PRIVATE_KEY`. `APNS_ENV` defaults to production. Never put private keys into the app bundle or Git.
 2. Register the new Android package `se.auroramedia.honsgarden` in Firebase project `honsgarden-c4e22`. The historical `se.honsgarden.app` Android registration cannot be used for our Play draft; that Play package belongs to another developer. Replace `android/app/google-services.json` locally with the matching configuration; it is ignored by Git. Release builds reject missing or mismatched Firebase configuration. Verify the FCM API is enabled and configure `FCM_SERVICE_ACCOUNT_JSON` as a server secret with permission to send messages for that Firebase project. A Play Billing account/service credential does not automatically configure Firebase. Apple bundle remains `se.honsgarden.app`.
-3. Apply `20260908113721_native_push_session_binding.sql` and deploy `send-push-notification` and `send-push` together with the updated native app. The migration removes direct client insert/update access to device tokens; older native builds must update to register through the new RPC. No journal or other farm records are changed.
+3. Completed on 2 October: `20260908113721_native_push_session_binding.sql` and both senders deployed together. Do not rerun the migration. The migration removes direct client insert/update access to device tokens; older native builds must update to register through the new RPC. No journal or other farm records were changed. Deploy the subsequent invalid-VAPID isolation correction in `send-push` before checking its responses again.
 4. Build the current web bundle, sync Capacitor, and build/install both native applications. Test the actual installed binaries, including a TestFlight build using production APNs.
 
 ## Required end-to-end proof
