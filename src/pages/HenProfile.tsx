@@ -44,11 +44,10 @@ function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
         date: todayLocal(),
         count: Number(count),
         hen_id: henId,
+        analytics_source: 'hen_profile',
       });
       queryClient.invalidateQueries({ queryKey: ['eggs'] });
       queryClient.invalidateQueries({ queryKey: ['hen-profile', henId] });
-      const { trackFirstEggIfNew } = await import('@/lib/analytics');
-      trackFirstEggIfNew('hen_profile');
       toast({ title: `Snyggt, ${count} ägg är loggat för ${henName}! 🥚` });
       setCount('1');
     } catch {

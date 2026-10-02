@@ -7,7 +7,6 @@ import { todayLocal } from '@/lib/datetime';
 const mockCreate = vi.fn();
 const mockDelete = vi.fn();
 const mockToast = vi.fn();
-const mockTrack = vi.fn();
 
 vi.mock('@/lib/api', () => ({
   api: {
@@ -17,7 +16,7 @@ vi.mock('@/lib/api', () => ({
 }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
 vi.mock('@/hooks/use-toast', () => ({ toast: (...args: unknown[]) => mockToast(...args) }));
-vi.mock('@/lib/analytics', () => ({ trackFirstEggIfNew: (...args: unknown[]) => mockTrack(...args) }));
+
 
 function renderCard(todayEggs: number, ids: string[] = []) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -42,7 +41,7 @@ describe('QuickEggLogCard – äggloggning', () => {
     await waitFor(() => expect(mockCreate).toHaveBeenCalledTimes(1));
     expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ date: todayLocal(), count: 1, expected_user_id: 'owner', client_id: expect.any(String) }));
     await waitFor(() => expect(mockToast).toHaveBeenCalledWith({ title: '🥚 +1 ägg loggat' }));
-    expect(mockTrack).toHaveBeenCalledWith('quick_log_card');
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ analytics_source: 'quick_log_card' }));
   });
 
   it('minus är avaktiverad när det inte finns några ägg idag', () => {

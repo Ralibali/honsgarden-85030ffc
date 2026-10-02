@@ -27,7 +27,6 @@ import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate } from '@/lib/feedback';
 import { useAuth } from '@/hooks/useAuth';
 import { saveEggLog } from '@/lib/saveEggLog';
-import { trackFirstEggIfNew } from '@/lib/analytics';
 
 function localDateOffset(days: number) {
   const date = new Date();
@@ -104,7 +103,7 @@ export default function Eggs() {
   const createMutation = useMutation({
     mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
       const weather = navigator.onLine ? await api.fetchEggLogWeatherSnapshot(data.date).catch(() => null) : null;
-      return saveEggLog(user?.id, { ...data, weather }, api.createEggRecord);
+      return saveEggLog(user?.id, { ...data, weather, analytics_source: 'eggs_page' }, api.createEggRecord);
     },
     onSuccess: (result, variables) => {
       const isOffline = '__offline' in result;
@@ -132,7 +131,6 @@ export default function Eggs() {
       setAnimCount(variables.count);
       setShowAnimation(true);
       setShowForm(false);
-      if (!isOffline) trackFirstEggIfNew('eggs_page');
 
       const updatedEggs = [...eggs, { date: variables.date, count: variables.count }];
       const records = checkPersonalRecords(user?.id, updatedEggs, variables.date);

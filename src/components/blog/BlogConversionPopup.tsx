@@ -77,7 +77,7 @@ export default function BlogConversionPopup({ articleSlug, category }: { article
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOffer(null);
-        trackEvent('Blog Offer Clicked', { product: offer.product, variant: offer.id, action: 'dismiss' });
+        trackEvent('Blog Offer Dismissed', { product: offer.product, variant: offer.id });
       }
     };
     document.addEventListener('keydown', onEscape);
@@ -87,7 +87,8 @@ export default function BlogConversionPopup({ articleSlug, category }: { article
   if (!eligible || !offer) return null;
   const product = DIGITAL_PRODUCT_CATALOG[offer.product];
   const act = (action: 'product' | 'sample' | 'dismiss') => {
-    trackEvent('Blog Offer Clicked', { product: offer.product, variant: offer.id, action });
+    if (action === 'dismiss') trackEvent('Blog Offer Dismissed', { product: offer.product, variant: offer.id });
+    else trackEvent('Blog Offer Clicked', { product: offer.product, variant: offer.id, action });
     setOffer(null);
   };
   return (

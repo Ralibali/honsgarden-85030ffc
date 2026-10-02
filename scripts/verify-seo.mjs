@@ -1,3 +1,4 @@
+import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
   assertDemoPageHtml,
@@ -5,6 +6,7 @@ import {
   assertTopicPageHtml,
   extractH1Texts,
   extractTitle,
+  escapeHtml,
 } from "../src/lib/prerenderTopicPages.mjs";
 import { CONTEXTUAL_CTAS, assertContextualRegisterCta } from "../src/lib/contextualRegisterCtas.mjs";
 
@@ -176,3 +178,13 @@ if (!/"@type"\s*:\s*"FAQPage"/.test(reglerHtml)) {
 }
 
 console.log(`SEO-build verifierad: / + /demo + /salja-agg + /guider/salja-agg-regler + ${articles.length} artiklar + ${topicPages.length} topic-sidor`);
+
+// Product landings must ship their real body, not just route-specific metadata.
+for (const page of Object.values(SEO_LANDING_PAGES)) {
+  const html = readFileSync(`dist${page.path}/index.html`, "utf8");
+  assertTopicPageHtml(html, { path: page.path, topicH1: page.h1 });
+  if (extractH1Texts(html).length !== 1) throw new Error(`Dubbla H1 för ${page.path}`);
+  if ((html.match(/<main\b/gi) || []).length !== 1) throw new Error(`Fel antal main för ${page.path}`);
+  if (!html.includes(`rel="canonical" href="https://honsgarden.se${page.path}"`)) throw new Error(`Fel canonical för ${page.path}`);
+  if (!html.includes(escapeHtml(page.sections[0].body))) throw new Error(`Sakinnehåll saknas för ${page.path}`);
+}

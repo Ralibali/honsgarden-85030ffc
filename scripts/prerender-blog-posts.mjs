@@ -1,3 +1,5 @@
+import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
+import { renderSeoLandingBody } from '../src/lib/prerenderSeoLanding.mjs';
 import { DIGITAL_GUIDE_COVER_PATH, DIGITAL_GUIDE_SAMPLE_PATH, digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -331,6 +333,8 @@ const CATEGORY_META = {
 };
 
 function buildStaticPage(template, page) {
+  const landing = SEO_LANDING_PAGES[page.route];
+  if (landing) page = { ...page, title: landing.title, description: landing.description };
   const jsonLd = { '@context': 'https://schema.org', '@type': page.path === '/' ? 'WebSite' : 'WebPage', name: page.title, description: page.description, url: `${BASE_URL}${page.path}`, inLanguage: 'sv-SE' };
   const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
   if (page.productTitle) {
@@ -344,6 +348,14 @@ function buildStaticPage(template, page) {
   }
   if (page.path === '/') {
     return injectTopicBody(withHead, renderHomeTopicBody());
+  }
+  if (landing) {
+    let body = renderSeoLandingBody(landing);
+    if (page.path === '/borja-med-hons') {
+      const placement = shopPlacementForPath(page.path);
+      body += renderDigitalGuidePlacement('beginner') + (placement ? renderContextualShopPlacementHtml(placement) : '');
+    }
+    return injectTopicBody(withHead, body);
   }
   const shopPlacement = shopPlacementForPath(page.path);
   if (['/blogg', '/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {

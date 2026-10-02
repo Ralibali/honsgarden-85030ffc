@@ -5,6 +5,7 @@ export async function saveEggLog<T>(
   record: {
     date: string;
     count: number;
+    analytics_source?: Parameters<CreateEggRecordFn>[0]["analytics_source"];
     hen_id?: string;
     flock_id?: string;
     weather?: Record<string, unknown> | null;

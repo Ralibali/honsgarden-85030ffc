@@ -14,7 +14,7 @@ import { hapticSuccess } from '@/lib/haptics';
 import { todayLocal } from '@/lib/datetime';
 import { api } from '@/lib/api';
 import { readActiveFlockId, resolveFlockIdForHenCreate } from '@/lib/flockSelection';
-import { trackEvent, trackFirstHenIfNew, trackFirstEggIfNew } from '@/lib/analytics';
+import { trackEvent, trackFirstHenIfNew } from '@/lib/analytics';
 import type { AnalyticsOnboardingStep } from '@/lib/analytics';
 
 /** Funnel-steg i onboardingen (låg kardinalitet, se analytics-katalogen). */
@@ -248,7 +248,7 @@ export default function OnboardingGuide() {
       setEggCount((c) => c + 1);
       setEggLogged(true);
       trackOnboardingStep('first_egg');
-      trackFirstEggIfNew('onboarding');
+      trackEvent('Egg Log Saved', { source: 'onboarding', persistence: 'online' });
       toast({ title: '🥚 Första ägget loggat!', description: 'Din streak har börjat.' });
     } catch (err) {
       console.error('[OnboardingGuide] logFirstEgg failed:', err);

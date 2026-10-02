@@ -15,7 +15,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate, hapticTap } from '@/lib/feedback';
-import { trackFirstEggIfNew } from '@/lib/analytics';
 
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
@@ -57,7 +56,7 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
         ? localCalendarDate(new Date(Date.now() - 86400000))
         : todayLocal();
       const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
-      return saveEggLog(user?.id, payload, api.createEggRecord);
+      return saveEggLog(user?.id, { ...payload, analytics_source: 'quick_fab' }, api.createEggRecord);
     },
     onMutate: async ({ count }) => {
       await queryClient.cancelQueries({ queryKey: ['eggs'] });
@@ -98,7 +97,6 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
       setAnimCount(count);
       setShowAnimation(true);
       setOpen(false);
-      if (!isOffline) trackFirstEggIfNew('quick_fab');
       const savedCount = count;
       setCount(1);
       setUseYesterday(false);

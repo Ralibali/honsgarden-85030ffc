@@ -63,7 +63,20 @@ describe('blog product popup', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     rerender(view('another-future-article')); advance(60_000);
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(trackEvent).toHaveBeenCalledWith('Blog Offer Clicked', expect.objectContaining({ action: 'dismiss' }));
+    expect(trackEvent).toHaveBeenCalledWith('Blog Offer Dismissed', expect.objectContaining({ product: expect.any(String) }));
+    expect(trackEvent).not.toHaveBeenCalledWith('Blog Offer Clicked', expect.anything());
+  });
+  it.each(['Stäng erbjudandet', 'Fortsätt läsa'])('does not count %s as a CTA click', (name) => {
+    render(view()); advance(45_000);
+    fireEvent.click(screen.getByRole('button', { name }));
+    expect(trackEvent).toHaveBeenCalledWith('Blog Offer Dismissed', expect.anything());
+    expect(trackEvent).not.toHaveBeenCalledWith('Blog Offer Clicked', expect.anything());
+  });
+  it('counts the sample link as a CTA click with a separate action', () => {
+    render(view()); advance(45_000);
+    fireEvent.click(screen.getByRole('link', { name: /Gratis smakprov/ }));
+    expect(trackEvent).toHaveBeenCalledWith('Blog Offer Clicked', expect.objectContaining({ action: 'sample' }));
+    expect(trackEvent).not.toHaveBeenCalledWith('Blog Offer Dismissed', expect.anything());
   });
   it('respects the 24-hour cap across sessions', () => {
     localStorage.setItem('hg-blog-offer-v2', String(Date.now() - 3600_000));

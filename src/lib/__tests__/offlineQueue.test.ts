@@ -38,13 +38,13 @@ describe("durable, account-scoped egg queue", () => {
     }
   );
   it("syncs only the requested account with a stable id and expected owner", async () => {
-    await queue.enqueueEggLog(row);
+    await queue.enqueueEggLog({ ...row, analytics_source: "quick_fab" });
     await queue.enqueueEggLog({ ...row, user_id: "another" });
     const create = vi.fn().mockResolvedValue({});
     await queue.syncQueue(create, "owner");
     expect(create).toHaveBeenCalledOnce();
     expect(create).toHaveBeenCalledWith(
-      expect.objectContaining({ client_id: "one", expected_user_id: "owner" })
+      expect.objectContaining({ client_id: "one", expected_user_id: "owner", analytics_source: "quick_fab", analytics_persistence: "offline_sync" })
     );
     expect(queue.getQueue("another")).toHaveLength(1);
     expect(queue.getQueue("owner")).toHaveLength(0);
