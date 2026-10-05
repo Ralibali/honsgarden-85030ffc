@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
+import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -30,7 +31,7 @@ export default function BlogTag() {
         .contains('tags', [decodedTag])
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return withoutConsolidatedPosts(data ?? []);
     },
     enabled: !!tag,
   });
@@ -74,11 +75,11 @@ export default function BlogTag() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('blog_posts')
-        .select('tags')
+        .select('slug, tags')
         .eq('is_published', true);
       if (error) throw error;
       const tagSet = new Set<string>();
-      data?.forEach(p => p.tags?.forEach((t: string) => tagSet.add(t)));
+      withoutConsolidatedPosts(data ?? []).forEach(p => p.tags?.forEach((t: string) => tagSet.add(t)));
       return Array.from(tagSet).sort();
     },
   });

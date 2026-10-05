@@ -285,6 +285,321 @@
       "source": "/skansk-blommehona",
       "destination": "/honsraser/skansk-blommehona",
       "statusCode": 308
+    },
+    {
+      "source": "/blogg/mobilapp-jamfort-med-kalkylblad-for-hons",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/honsapp-eller-kalkylblad",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/app-eller-parm-for-hons",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/app-eller-pappersjournal-for-hons-vad-passar",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/digital-flockjournal-vs-papper",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/fran-anteckningsbok-till-honsapp",
+      "destination": "/blogg/mobilapp-vs-excel-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/app-for-honsagare",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/basta-appen-for-honshallning",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/appar-for-hobbyuppfodare-av-hons",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/gratis-honsapp-jamforelse",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/recension-av-app-for-honsagare",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/recension-flockadministrationsapp-hons",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/flockadministration-hobbyhons-app",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/organisera-flocken-med-app",
+      "destination": "/app-for-honsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/kom-igang-med-honsapp",
+      "destination": "/blogg/honsapp-for-nyborjare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/agglogg-app-battre-koll-honsgarden",
+      "destination": "/agglogg",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/basta-appen-for-aggloggning",
+      "destination": "/agglogg",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/logga-aggproduktion-i-app",
+      "destination": "/agglogg",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/aggproduktion-hons-app",
+      "destination": "/agglogg",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/verktyg-for-smaskalig-aggproduktion",
+      "destination": "/agglogg",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/registrera-agg-per-dag",
+      "destination": "/blogg/hur-loggar-man-aggproduktion",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/exempel-pa-digital-aggjournal",
+      "destination": "/blogg/hur-loggar-man-aggproduktion",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hur-haller-man-koll-pa-varpning",
+      "destination": "/blogg/spara-varpning-per-hona",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/spara-historik-for-varje-hona",
+      "destination": "/blogg/spara-varpning-per-hona",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/varfor-sjunker-aggproduktionen-plotsligt",
+      "destination": "/blogg/hons-varper-inte",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/upptacka-avvikande-varpmonster-tidigt",
+      "destination": "/blogg/hons-varper-inte",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/offline-flockhantering-hons",
+      "destination": "/blogg/kan-man-registrera-utan-internet",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/test-av-offline-honsapp",
+      "destination": "/blogg/kan-man-registrera-utan-internet",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/spara-honsdata-offline-enkelt",
+      "destination": "/blogg/kan-man-registrera-utan-internet",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/anvanda-honsapp-utan-internet",
+      "destination": "/blogg/kan-man-registrera-utan-internet",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/offline-app-for-stall",
+      "destination": "/blogg/kan-man-registrera-utan-internet",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/starta-flockjournal-pa-mobilen",
+      "destination": "/blogg/hur-startar-man-flockjournal",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/fordelar-med-mobil-flockjournal",
+      "destination": "/blogg/hur-startar-man-flockjournal",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/komma-igang-med-flockregister",
+      "destination": "/blogg/hur-startar-man-flockjournal",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/digitalt-honsregister",
+      "destination": "/blogg/hur-startar-man-flockjournal",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/basta-sattet-att-dokumentera-flocken",
+      "destination": "/blogg/hur-startar-man-flockjournal",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/verktyg-for-flockadministration",
+      "destination": "/blogg/5-verktyg-for-hobbyhonsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hobbyhonsagarens-verktyg-flockkontroll",
+      "destination": "/blogg/5-verktyg-for-hobbyhonsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/verktyg-for-smaskalig-honshallning",
+      "destination": "/blogg/5-verktyg-for-hobbyhonsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/enkelt-system-for-hobbyuppfodare",
+      "destination": "/blogg/5-verktyg-for-hobbyhonsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-till-flockadministration-for-hobbyhons",
+      "destination": "/blogg/5-verktyg-for-hobbyhonsagare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-till-daglig-honsoversikt",
+      "destination": "/blogg/daglig-kontroll-av-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-till-daglig-flockuppfoljning",
+      "destination": "/blogg/daglig-kontroll-av-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/fa-overblick-over-honsflock",
+      "destination": "/blogg/daglig-kontroll-av-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/sa-forbattras-overblick-i-flocken-enkelt",
+      "destination": "/blogg/daglig-kontroll-av-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-for-daglig-honsskotsel-hemma",
+      "destination": "/blogg/daglig-kontroll-av-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/basta-sattet-att-planera-honsskotsel",
+      "destination": "/blogg/planera-skotsel-av-hobbyhons-med-battre-koll",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-till-enklare-flockplanering",
+      "destination": "/blogg/planera-skotsel-av-hobbyhons-med-battre-koll",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/skapa-rutiner-for-honsskottsel-som-haller",
+      "destination": "/blogg/planera-skotsel-av-hobbyhons-med-battre-koll",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hobbyhons-skotsel-schema",
+      "destination": "/blogg/planera-skotsel-av-hobbyhons-med-battre-koll",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/honshalsa-digital-uppfoljning",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/folja-honsens-halsa-digitalt",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/honshalsa-app-battre-koll-flocken",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/journal-for-honsens-halsa",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hur-foljer-man-honshalsa",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/folja-flockens-halsomonster-over-tid",
+      "destination": "/blogg/guide-till-halsologgning-honsflock",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hur-dokumenterar-man-sjuka-hons",
+      "destination": "/blogg/dokumentera-sjukdom-hos-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-till-honsens-kostnadsoversikt",
+      "destination": "/blogg/guide-till-smaskalig-honsekonomi",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/guide-for-kostnadskontroll-i-honsgard",
+      "destination": "/blogg/guide-till-smaskalig-honsekonomi",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/mata-lonsamhet-i-hobbyhons",
+      "destination": "/blogg/guide-till-smaskalig-honsekonomi",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/vad-kostar-fodret-per-agg",
+      "destination": "/blogg/berakna-foderkostnad-for-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/mata-flockens-foderforbrukning",
+      "destination": "/blogg/vad-paverkar-honsens-foderforbrukning",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/halla-koll-pa-foderatgang",
+      "destination": "/blogg/vad-paverkar-honsens-foderforbrukning",
+      "statusCode": 308
     }
   ]
 }

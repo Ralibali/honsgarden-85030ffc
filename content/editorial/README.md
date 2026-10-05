@@ -23,7 +23,7 @@ Använd enbart program godkända för den exakta webbplatskanalen. Hönsgårdens
 
 ## Fortlöpande SEO-arbete
 
-Varje körning: kontrollera föregående publicering, indexerbar HTML, sitemap, canonical, bildägande och relevanta interna länkar. Före ny artikel: jämför avsikten med befintligt innehåll och välj en obesvarad fråga. Länka till minst en relevant befintlig guide samt en verklig produktfunktion.
+Varje körning: kontrollera föregående publicering, indexerbar HTML, sitemap, canonical, bildägande och relevanta interna länkar. Före ny artikel: jämför avsikten med befintligt innehåll och välj en obesvarad fråga. Sammanslagna artiklar finns i `src/data/blogConsolidation.mjs`: skriv aldrig en ny artikel för en sökavsikt som redan har en målsida där, och återanvänd aldrig en sammanslagen slug. Förbättra målsidan i stället. Länka till minst en relevant befintlig guide samt en verklig produktfunktion.
 
 Varje vecka: använd Search Console om en autentiserad anslutning faktiskt finns; jämför senaste 28 dagar med föregående 28 för sidors visningar, klick och sökfrågor. Saknas åtkomst ska det uttryckligen stå att organisk effekt inte kan mätas. Prioritera uppdatering av en befintlig relevant sida framför ännu en liknande artikel. Gör innehållsuppdateringar i separat PR med den gamla texten tillgänglig för jämförelse. Publikationsverktyget får inte användas för att kringgå create-only-skyddet.
 

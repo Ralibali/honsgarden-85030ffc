@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,7 @@ import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
 import { allowsAutomaticProductPlacements, isReviewedEditorialArticle } from '@/lib/editorialPlacementPolicy';
 import { extractFaqPairs, faqPageJsonLd } from '@/lib/prerenderBlogHub.mjs';
+import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -108,7 +109,8 @@ function renderContent(
   slug?: string,
   showAds = false,
 ): string {
-  let raw = isHtmlContent(content) ? content : renderBlogMarkdown(content);
+  // Internal links to merged articles point straight at their target.
+  let raw = rewriteConsolidatedBlogLinks(isHtmlContent(content) ? content : renderBlogMarkdown(content));
   // Ta bort inledande rubrik som bara upprepar artikelns titel
   raw = stripDuplicateTitleHeading(raw, postTitle);
   raw = raw.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h[23]>/gi, (full, level, attrs, inner) => {
@@ -199,7 +201,15 @@ function renderContent(
   });
 }
 
+/** Merged articles (src/data/blogConsolidation.mjs) redirect to their target. */
 export default function GuideArticle() {
+  const { slug } = useParams<{ slug: string }>();
+  const target = consolidatedBlogTarget(slug);
+  if (target) return <Navigate to={target} replace />;
+  return <GuideArticlePage />;
+}
+
+function GuideArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAuth();
   const showAds = useShowAds();
@@ -237,7 +247,7 @@ export default function GuideArticle() {
         .eq('is_published', true)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return withoutConsolidatedPosts(data ?? []);
     },
   });
 

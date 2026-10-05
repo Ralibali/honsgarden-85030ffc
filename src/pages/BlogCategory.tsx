@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
+import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -85,7 +86,7 @@ export default function BlogCategory() {
         .eq('category', category!)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return withoutConsolidatedPosts(data ?? []);
     },
     enabled: !!category,
   });

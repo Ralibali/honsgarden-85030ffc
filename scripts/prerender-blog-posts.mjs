@@ -9,6 +9,7 @@ import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
+import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
 import { injectContextualShopPlacement, renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
@@ -195,7 +196,7 @@ function renderArticle(post, { allPosts = [], sitewide = false } = {}) {
   const categoryLabel = CATEGORY_META[post.category]?.label;
   const rendered = isHtmlContent(post.content) ? post.content : renderBlogMarkdown(post.content);
   const rewritten = rewriteNakedShopAffiliateHrefs(
-    injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)),
+    rewriteConsolidatedBlogLinks(injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title))),
     post.slug,
     { sitewide },
   );
@@ -732,12 +733,16 @@ async function main() {
   });
 
   let posts = [];
+  // Sammanslagna artiklar (blogConsolidation.mjs): bara redirect-stubbar.
+  let consolidatedPosts = [];
   let orter = [];
   let activeListingLocations = null; // null = okänd likviditet → fail-open
   const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
 
   await runStep('fetch-posts', async () => {
-    posts = await fetchPosts();
+    const fetched = await fetchPosts();
+    posts = withoutConsolidatedPosts(fetched);
+    consolidatedPosts = fetched.filter((post) => consolidatedBlogTarget(post.slug));
   });
   if (!posts.length) throw new Error('Refusing to publish a build without native blog articles');
   await runStep('load-orter', async () => {
@@ -780,6 +785,12 @@ async function main() {
       }
       return ops;
     }));
+    // Fallback where the host does not apply the vercel.json 308s.
+    for (const post of consolidatedPosts) {
+      const target = consolidatedBlogTarget(post.slug);
+      await writeRoute(`blogg/${post.slug}`, buildRedirectPage(pageTemplate, target));
+      await writeRoute(`guider/${post.slug}`, buildRedirectPage(pageTemplate, target));
+    }
     await writeRoute('guider', buildRedirectPage(pageTemplate, '/blogg'));
     await writeRoute('blogg/spåra-varpning-per-hona', buildRedirectPage(pageTemplate, '/blogg/spara-varpning-per-hona'));
   });
@@ -833,7 +844,7 @@ async function main() {
         console.warn(`[sitemap] kunde inte hämta bloggposter live: ${error?.message || error}`);
       }
     }
-    const sitemapPosts = mergeBlogPosts(livePosts, fallbackPosts);
+    const sitemapPosts = withoutConsolidatedPosts(mergeBlogPosts(livePosts, fallbackPosts));
     if (!sitemapPosts.some((post) => post.slug === 'bast-honsras-sverige')) {
       throw new Error('sitemap saknar /blogg/bast-honsras-sverige');
     }
@@ -845,7 +856,7 @@ async function main() {
   });
 
   const ortSummary = suppliedOrtSlugs ? `${suppliedOrtSlugs.size}/${orter.length} med utbud` : `${orter.length} (likviditet okänd)`;
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- (+ ${consolidatedPosts.length} sammanslagna → redirect) + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
 
 
 
