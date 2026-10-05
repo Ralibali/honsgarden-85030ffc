@@ -9,7 +9,7 @@
 import {
   buildTrackedShopHref,
   type PacketShopMerchant,
-} from './adtractionShopLinks';
+} from './adtractionPrograms';
 
 export type ShopPlacementLink = {
   merchant: PacketShopMerchant;

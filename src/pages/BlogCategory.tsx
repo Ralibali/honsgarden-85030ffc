@@ -75,14 +75,33 @@ export default function BlogCategory() {
   const { category } = useParams<{ category: string }>();
   const meta = categoryMeta[category || ''];
 
+  const { data: posts = [], isLoading, isSuccess } = useQuery({
+    queryKey: ['blog-posts-category', category],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, cover_image_url, feature_image_url, category, tags, published_at, reading_time_minutes')
+        .eq('is_published', true)
+        .eq('category', category!)
+        .order('published_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!category,
+  });
+
+  // Only a confirmed empty result; a failed fetch must not noindex the page.
+  const isEmpty = isSuccess && posts.length === 0;
+
   useSeo({
     title: meta?.title || `Kategorin hittades inte | Hönsgården`,
     description: meta?.description || 'Den här kategorin finns inte. Återgå till bloggen.',
     path: `/blogg/kategori/${category}`,
     ogImage: meta?.ogImage,
     ogImageAlt: meta?.label,
-    noindex: !meta,
-    jsonLd: !meta ? undefined : [
+    // Empty categories are thin pages; same rule as the prerender and sitemap.
+    noindex: !meta || isEmpty,
+    jsonLd: !meta || isEmpty ? undefined : [
       {
         '@type': 'CollectionPage',
         '@id': `https://honsgarden.se/blogg/kategori/${category}`,
@@ -101,21 +120,6 @@ export default function BlogCategory() {
         ],
       },
     ],
-  });
-
-  const { data: posts = [], isLoading } = useQuery({
-    queryKey: ['blog-posts-category', category],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('id, title, slug, excerpt, cover_image_url, feature_image_url, category, tags, published_at, reading_time_minutes')
-        .eq('is_published', true)
-        .eq('category', category!)
-        .order('published_at', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!category,
   });
 
   if (!meta) {

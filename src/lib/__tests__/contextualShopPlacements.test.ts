@@ -134,7 +134,8 @@ describe('Packet 1 contextual shop placements', () => {
     const article = readFileSync(join(process.cwd(), 'src/pages/GuideArticle.tsx'), 'utf8');
     const prerender = readFileSync(join(process.cwd(), 'scripts/prerender-blog-posts.mjs'), 'utf8');
     expect(article).toContain('injectContextualShopPlacement');
-    expect(article).toContain("hrefLower.includes('outl1')");
+    // Outl1 (and every other program) click attribution goes through the shared host map.
+    expect(article).toContain('shopMerchantFromHref(href)');
     expect(article).not.toContain('AffiliateProductStrip');
     expect(prerender).toContain('injectContextualShopPlacement');
 
