@@ -5,6 +5,7 @@ import { AFFILIATE_ENABLED } from '@/lib/featureFlags';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { trackClick } from '@/hooks/useTracking';
 import { useCommerceTipsEnabled } from '@/hooks/useCommerceTipsEnabled';
+import { useShowAds } from '@/hooks/useShowAds';
 
 type Category = AffiliateProduct['category'];
 
@@ -21,7 +22,8 @@ const ADVERTISER_LABEL: Record<string, string> = {
 
 export default function AffiliateProductStrip({ category, title, limit = 3 }: Props) {
   const tipsEnabled = useCommerceTipsEnabled();
-  const active = AFFILIATE_ENABLED && tipsEnabled;
+  const showAds = useShowAds();
+  const active = AFFILIATE_ENABLED && showAds && tipsEnabled;
   const { data, isLoading } = useAffiliateProducts(active);
 
   if (!active || isLoading) return null;

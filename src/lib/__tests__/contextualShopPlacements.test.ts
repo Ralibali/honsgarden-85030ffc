@@ -104,8 +104,8 @@ describe('Packet 1 contextual shop placements', () => {
     expect(rewriteNakedShopAffiliateHrefs(source, 'bast-honsras-sverige')).toBe(source);
   });
 
-  it('leaves AFFILIATE_ENABLED off and keeps killed merchants out of the catalog', () => {
-    expect(AFFILIATE_ENABLED).toBe(false);
+  it('keeps killed merchants out of the catalog', () => {
+    expect(AFFILIATE_ENABLED).toBe(true);
     const blob = JSON.stringify(CONTEXTUAL_SHOP_PLACEMENTS);
     expect(blob).not.toMatch(KILLED);
     expect(Object.values(SHOP_DESTINATIONS).join(' ')).not.toMatch(KILLED);

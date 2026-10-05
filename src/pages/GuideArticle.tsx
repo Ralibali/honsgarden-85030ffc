@@ -14,6 +14,7 @@ import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
 import { digitalGuideAudienceForArticle } from '@/lib/digitalGuidePlacements.mjs';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
+import { useShowAds } from '@/hooks/useShowAds';
 import { trackEvent } from '@/lib/analytics';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
@@ -105,6 +106,7 @@ function renderContent(
   otherPosts?: { title: string; slug: string }[],
   glossary?: { keyword: string; url: string; rel: string }[],
   slug?: string,
+  showAds = false,
 ): string {
   let raw = isHtmlContent(content) ? content : renderBlogMarkdown(content);
   // Ta bort inledande rubrik som bara upprepar artikelns titel
@@ -186,7 +188,8 @@ function renderContent(
   raw = rewriteNakedShopAffiliateHrefs(raw, slug, { sitewide: !slug || !isReviewedEditorialArticle(slug) });
 
   raw = injectContextualRegisterCta(raw, slug);
-  raw = injectContextualShopPlacement(raw, slug);
+  // The "Annons" box is an ad unit; Plus customers do not see ads.
+  if (showAds) raw = injectContextualShopPlacement(raw, slug);
 
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],
@@ -199,6 +202,7 @@ function renderContent(
 export default function GuideArticle() {
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAuth();
+  const showAds = useShowAds();
   const [readingProgress, setReadingProgress] = useState(0);
 
   // Fetch current post
@@ -283,8 +287,9 @@ export default function GuideArticle() {
       allPosts.filter(p => p.slug !== slug).map(p => ({ title: p.title, slug: p.slug })),
       glossary,
       slug,
+      showAds,
     );
-  }, [post, allPosts, glossary, slug]);
+  }, [post, allPosts, glossary, slug, showAds]);
 
   const [articleIntroHtml, articleRestHtml] = useMemo(() => {
     if (!renderedArticleHtml) return ['', ''];
@@ -653,14 +658,14 @@ export default function GuideArticle() {
         )}
 
         {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
-        {allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
+        {showAds && allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
         />}
 
         {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
-        {allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
+        {showAds && allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
@@ -670,7 +675,7 @@ export default function GuideArticle() {
         />}
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
-        <AffiliateBannerRotator slug={post.slug} />
+        {showAds && <AffiliateBannerRotator slug={post.slug} />}
 
         {/* Tags + Share */}
         {post.tags && post.tags.length > 0 && (

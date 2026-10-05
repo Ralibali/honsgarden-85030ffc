@@ -1,4 +1,5 @@
 import { AffiliateLink } from '@/components/AffiliateLink';
+import { useShowAds } from '@/hooks/useShowAds';
 import {
   shopPlacementForPath,
   trackedShopHref,
@@ -12,8 +13,9 @@ type Props = {
 
 /** Annons-disclosed shop CTA. Reuses AffiliateLink + existing Adtraction wraps. */
 export default function ContextualShopCta({ path, placement: provided }: Props) {
+  const showAds = useShowAds();
   const placement = provided ?? shopPlacementForPath(path);
-  if (!placement) return null;
+  if (!placement || !showAds) return null;
 
   return (
     <aside
