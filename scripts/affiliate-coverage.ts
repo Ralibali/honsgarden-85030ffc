@@ -20,6 +20,9 @@ import { isHtmlContent, renderBlogMarkdown } from '../src/lib/blogMarkdown';
 import { extractHrefValues, rewriteNakedShopAffiliateHrefs, shopMerchantFromHref } from '../src/lib/adtractionShopLinks';
 import { withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
 import { linkProductMentions } from '../src/lib/inTextProductLinks';
+import { parseDelimited } from '../supabase/functions/sync-affiliate-feed/csv.ts';
+import { isRelevantAdtraction } from '../supabase/functions/sync-affiliate-feed/adtraction.ts';
+import { isRelevantAddRevenue } from '../supabase/functions/sync-affiliate-feed/addrevenue.ts';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://sikbymtrbhrofysgkqsj.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -129,6 +132,38 @@ function analyse(post: Post, catalog: SmartAffiliateProduct[], prof: Profile, re
   };
 }
 
+/** Feed URLs committed in migrations, with how many rows the sync would import. */
+async function feedDiagnostics(): Promise<string[]> {
+  const dir = join(process.cwd(), 'supabase/migrations');
+  const urls = new Set<string>();
+  for (const file of readdirSync(dir)) {
+    for (const match of readFileSync(join(dir, file), 'utf8').matchAll(/'(https:\/\/(?:adtraction\.com\/productfeed\.htm|addrevenue\.io\/productfeed)[^']+)'/g)) urls.add(match[1]);
+  }
+  const addRevenueSlugs: Record<string, string> = { '984666': 'by-benson', '985743': 'dintradgard' };
+  const lines = ['## Produktflöden i migreringarna', '', '| Flöde | HTTP | Rader | Skulle importeras | Varav i lager |', '|---|---:|---:|---:|---:|'];
+  for (const url of urls) {
+    const label = url.includes('addrevenue') ? `AddRevenue ${addRevenueSlugs[new URL(url).searchParams.get('a') ?? ''] ?? '?'}` : `Adtraction apid=${new URL(url).searchParams.get('apid')}`;
+    try {
+      const response = await fetch(url);
+      const text = response.ok ? await response.text() : '';
+      if (url.includes('addrevenue')) {
+        const rows = parseDelimited(text, ';').filter((row) => row.id);
+        const slug = addRevenueSlugs[new URL(url).searchParams.get('a') ?? ''] ?? '';
+        const kept = rows.filter((row) => isRelevantAddRevenue(row, slug) && row.image_link && row.link);
+        lines.push(`| ${label} | ${response.status} | ${rows.length} | ${kept.length} | ${kept.filter((row) => !/out of stock/i.test(row.availability ?? '')).length} |`);
+        if (rows.length === 0) lines.push(`|  | första 200 tecken: \`${text.slice(0, 200).replace(/[|\n`]/g, ' ')}\` | | | |`);
+      } else {
+        const rows = parseDelimited(text, '\t', "'").filter((row) => row.SKU);
+        const kept = rows.filter(isRelevantAdtraction);
+        lines.push(`| ${label} | ${response.status} | ${rows.length} | ${kept.length} | ${kept.filter((row) => /yes/i.test(row.Instock ?? '')).length} |`);
+      }
+    } catch (error) {
+      lines.push(`| ${label} | fel | ${error instanceof Error ? error.message : String(error)} | | |`);
+    }
+  }
+  return lines;
+}
+
 const fmtLinks = (links: Record<string, number>) => Object.entries(links).map(([merchant, count]) => `${merchant}×${count}`).join(', ') || '–';
 
 async function main() {
@@ -172,6 +207,7 @@ async function main() {
   lines.push('', `## Luckor med trafik (${gaps.length})`, '');
   for (const r of gaps.slice(0, 40)) lines.push(`- **${r.slug}** (${r.views30d} visn., saknar ${r.shortfall}): ${r.headings.slice(0, 8).join(' / ')}`);
 
+  lines.push('', ...(await feedDiagnostics()));
   const markdown = lines.join('\n');
   console.log(markdown);
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\n`);

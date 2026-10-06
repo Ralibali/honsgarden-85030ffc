@@ -70,3 +70,31 @@ describe('affiliate network links', () => {
     expect(advertiserFromTrackingUrl('https://www.awin1.com/cread.php?awinmid=12345&awinaffid=1&ued=x')).toBe('awin-12345');
   });
 });
+
+describe('relevance rules', () => {
+  const rede = product({ id: 'rede', name: 'Värprede "Poppis" – 2 rum', keywords: ['värprede', 'rede'], category: 'hus' });
+  const honshus = product({ id: 'hus', name: 'Hönshus XL med utegård', keywords: ['hönshus', 'värprede', 'sittpinne'], category: 'hus' });
+
+  it('links a product named after the term before one that only lists it as a keyword', () => {
+    const out = linkProductMentions('<p>Ett värprede per fyra hönor räcker i hönshuset.</p>', [honshus, rede], ctx);
+    expect(out).toContain('data-intext-product="rede"');
+  });
+
+  it('keeps poultry gear out of articles that are not about hens', () => {
+    const tunna = product({ id: 'tunna', name: 'Fodertunna med lock', keywords: ['fodertunna', 'mat', 'förvaring'], category: 'foder' });
+    const hiking = { slug: 'packlista-vandring', title: 'Packlista för vandring', heading: 'Kök och mat', text: 'Packa mat för tre dagar, kåsa och en liten stormkök.' };
+    expect(matchSmartProducts([tunna], hiking, 5)).toHaveLength(0);
+  });
+
+  it('keeps garden tools out of articles that are not about the garden', () => {
+    const handskar = product({ id: 'h', name: 'Trädgårdshandskar Basic', keywords: ['handskar', 'skydd', 'trädgårdsarbete'], category: 'tradgardsklader' });
+    const regler = { slug: 'registrera-hons', title: 'Registrera höns hos Jordbruksverket', heading: 'Smittskydd', text: 'Smittskydd och skydd mot fågelinfluensa: använd handskar vid sjuka djur.' };
+    expect(matchSmartProducts([handskar], regler, 5)).toHaveLength(0);
+  });
+
+  it('does not count the word "höns" itself as evidence', () => {
+    const gunga = product({ id: 'g', name: 'Gunga för höns', keywords: [], category: 'hus' });
+    const kvalster = { slug: 'kvalster-hons', title: 'Kvalster hos höns', heading: 'Behandling – steg för steg', text: 'Behandla hönshuset och hönsen mot kvalster och upprepa efter en vecka.' };
+    expect(matchSmartProducts([gunga], kvalster, 5)).toHaveLength(0);
+  });
+});

@@ -35,11 +35,16 @@ function escapeAttribute(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/** Products that show this term in their name or keywords. */
+/**
+ * Products named after this term ("Värprede Poppis" for "värprede"). Only when
+ * none exists do products that merely list it as a keyword qualify, so a
+ * hönshus with "värprede" in its keywords never wins a "värprede" mention.
+ */
 function candidatesFor(term: string, catalog: SmartAffiliateProduct[]): SmartAffiliateProduct[] {
   const normalized = normalizeAffiliateText(term);
-  return catalog.filter((product) => normalizeAffiliateText(product.name).includes(normalized)
-    || (product.keywords ?? []).some((keyword) => normalizeAffiliateText(keyword) === normalized));
+  const named = catalog.filter((product) => normalizeAffiliateText(product.name).includes(normalized));
+  if (named.length > 0) return named;
+  return catalog.filter((product) => (product.keywords ?? []).some((keyword) => normalizeAffiliateText(keyword) === normalized));
 }
 
 export function maxInTextProductLinks(html: string): number {

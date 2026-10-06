@@ -101,6 +101,15 @@ function containsPhrase(haystack: string, phrase: string): boolean {
   return haystack.includes(normalized);
 }
 
+/** Words every poultry product shares; they say nothing about which product fits. */
+const NAME_NOISE = new Set(['hons', 'hona', 'honor', 'honan', 'kyckling', 'kycklingar', 'fjaderfa', 'flock', 'liter', 'litet', 'liten', 'stor', 'stort']);
+
+const POULTRY_CATEGORIES = new Set(['vatten', 'foder', 'vaerme', 'hus', 'klackning', 'staengsel', 'tillskott', 'startset']);
+const POULTRY_CONTEXT = /\b(?:hons\w*|hona|honor|honan|tupp\w*|kyckling\w*|fjaderfa\w*|flock\w*|agg\w*|varp\w*)\b/;
+
+const GARDEN_CATEGORIES = new Set(['bevattning', 'beskarning', 'odling', 'stadning', 'tradgardsklader', 'forvaring', 'grasmatta', 'tradgardsredskap']);
+const GARDEN_CONTEXT = /\b(?:tradgard\w*|odla\w*|odling\w*|plantera\w*|rabatt\w*|grasmatta\w*|kompost\w*|bevattn\w*|vattna\w*|beskar\w*|frukttrad\w*|kokstradgard\w*|ogras\w*|skord\w*)\b/;
+
 /** Products that must never be suggested automatically next to care advice (slaughter/euthanasia). */
 const NEVER_AUTO_PLACE = /\b(?:bultpistol|avlivning\w*|slakt\w*)\b/;
 
@@ -138,6 +147,10 @@ export function scoreAffiliateProduct(
   const fullContext = `${slug} ${title} ${heading} ${section}`.trim();
 
   if (!hasCategorySignal(product.category, fullContext)) return Number.NEGATIVE_INFINITY;
+  // Poultry gear only where the text is about hens; garden tools only where
+  // the article or section is about the garden.
+  if (POULTRY_CATEGORIES.has(product.category) && !POULTRY_CONTEXT.test(fullContext)) return Number.NEGATIVE_INFINITY;
+  if (GARDEN_CATEGORIES.has(product.category) && !GARDEN_CONTEXT.test(`${slug} ${title} ${heading}`)) return Number.NEGATIVE_INFINITY;
 
   // Evidence about this product. The category bonus below only ranks
   // products that already have some; it never qualifies one on its own.
@@ -154,23 +167,25 @@ export function scoreAffiliateProduct(
     if (containsPhrase(section, normalizedKeyword)) score += generic ? 1 : 5;
   }
 
-  const nameTokens = meaningfulTokens(product.name);
+  const nameTokens = meaningfulTokens(product.name).filter((token) => !NAME_NOISE.has(token));
   for (const token of nameTokens) {
     if (containsPhrase(heading, token)) score += 9;
     else if (containsPhrase(title, token)) score += 6;
     else if (containsPhrase(section, token)) score += 3;
   }
 
-  if (product.description) {
-    const descriptionTokens = meaningfulTokens(product.description).slice(0, 20);
-    const overlap = descriptionTokens.filter((token) => containsPhrase(`${heading} ${section}`, token)).length;
-    score += Math.min(10, overlap * 2);
-  }
-
   const legacySlugs = (product as SmartAffiliateProduct & { slugs?: string[] }).slugs;
   if (legacySlugs?.some((item) => context.slug.includes(item))) score += 100;
 
   if (score === 0) return Number.NEGATIVE_INFINITY;
+
+  // Description overlap only ranks products that already matched: generic
+  // description words ("vatten", "enkel") are not evidence on their own.
+  if (product.description) {
+    const descriptionTokens = meaningfulTokens(product.description).filter((token) => !NAME_NOISE.has(token)).slice(0, 20);
+    const overlap = descriptionTokens.filter((token) => containsPhrase(`${heading} ${section}`, token)).length;
+    score += Math.min(10, overlap * 2);
+  }
 
   const categorySignals = CATEGORY_SIGNALS[product.category] ?? [];
   const categoryHits = categorySignals.filter((signal) => containsPhrase(fullContext, signal)).length;
