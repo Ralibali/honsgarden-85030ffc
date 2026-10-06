@@ -15,11 +15,7 @@ function normalizeCategory(c?: string | null): AffiliateProduct['category'] {
   return (ALLOWED_CATEGORIES.includes(c ?? '') ? c : 'redskap') as AffiliateProduct['category'];
 }
 
-/** Plockar ut cupa_sku ur en tracking-URL så vi kan matcha mot DB-katalogens external_id. */
-export function skuFromTrackingUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  return url.match(/cupa_sku=([^&]+)/)?.[1] ?? null;
-}
+export { skuFromTrackingUrl } from '@/lib/affiliateCatalog';
 
 /**
  * Hämtar aktiva produkter i lager från affiliate_products (DB-katalogen som
