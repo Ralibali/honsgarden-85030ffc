@@ -19,6 +19,7 @@ import { matchSmartProducts, type SmartAffiliateProduct } from '../src/lib/smart
 import { isHtmlContent, renderBlogMarkdown } from '../src/lib/blogMarkdown';
 import { extractHrefValues, rewriteNakedShopAffiliateHrefs, shopMerchantFromHref } from '../src/lib/adtractionShopLinks';
 import { withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
+import { linkProductMentions } from '../src/lib/inTextProductLinks';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://sikbymtrbhrofysgkqsj.supabase.co';
 const SUPABASE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -101,6 +102,9 @@ function analyse(post: Post, catalog: SmartAffiliateProduct[], prof: Profile, re
   }
   const articleCandidates = matchSmartProducts(catalog, { slug: post.slug, title: post.title, heading: post.title, text: plain(html).slice(0, 4000) }, 5);
   const totalWords = words(html);
+  const inTextLinks = reviewed ? [] : [...linkProductMentions(html, catalog, { slug: post.slug, title: post.title })
+    .matchAll(/<a [^>]*data-intext-product="([^"]+)"[^>]*>([^<]+)<\/a>/g)]
+    .map(([, id, word]) => `${word} → ${catalog.find((product) => product.id === id)?.name ?? id}`);
   const target = reviewed ? 0 : desiredBlocks(totalWords, prof.tier, prof.max_blocks);
 
   return {
@@ -118,6 +122,7 @@ function analyse(post: Post, catalog: SmartAffiliateProduct[], prof: Profile, re
     sectionMatches: placements.length,
     shortfall: Math.max(0, target - placements.length),
     inTextShopLinks: linkMerchants,
+    newInTextLinks: inTextLinks,
     placements,
     articleCandidates: articleCandidates.map((product) => `${product.name} (${product.advertiser}/${product.category})`),
     headings: all.map((section) => section.heading),
@@ -158,10 +163,10 @@ async function main() {
     lines.push(`| ${slug} | ${entry.active} | ${entry.inStock} | ${Object.entries(entry.categories).map(([c, n]) => `${c} ${n}`).join(', ')} |`);
   }
   lines.push('', '## Artiklar (sorterat på visningar senaste 30 dagarna)', '');
-  lines.push('| Artikel | Visn. 30d | Nivå | Ord | Mål | Matchade avsnitt | Butikslänkar i text | Exempel |', '|---|---:|---|---:|---:|---:|---|---|');
+  lines.push('| Artikel | Visn. 30d | Nivå | Ord | Mål | Matchade avsnitt | Butikslänkar i text | Nya textlänkar | Exempel |', '|---|---:|---|---:|---:|---:|---|---|---|');
   for (const r of results) {
     const example = r.placements[0] ? `${r.placements[0].product} (${r.placements[0].advertiser})` : (r.articleCandidates[0] ?? '–');
-    lines.push(`| ${r.slug}${r.reviewed ? ' (granskad)' : ''} | ${r.views30d} | ${r.tier} | ${r.words} | ${r.targetBlocks} | ${r.sectionMatches}${r.shortfall ? ` (−${r.shortfall})` : ''} | ${fmtLinks(r.inTextShopLinks)} | ${example.replace(/\|/g, '/')} |`);
+    lines.push(`| ${r.slug}${r.reviewed ? ' (granskad)' : ''} | ${r.views30d} | ${r.tier} | ${r.words} | ${r.targetBlocks} | ${r.sectionMatches}${r.shortfall ? ` (−${r.shortfall})` : ''} | ${fmtLinks(r.inTextShopLinks)} | ${r.newInTextLinks.join('; ').replace(/\|/g, '/') || '–'} | ${example.replace(/\|/g, '/')} |`);
   }
   const gaps = results.filter((r) => !r.reviewed && r.shortfall > 0 && r.views30d > 0);
   lines.push('', `## Luckor med trafik (${gaps.length})`, '');

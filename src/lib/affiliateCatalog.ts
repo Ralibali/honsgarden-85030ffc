@@ -1,6 +1,27 @@
 import { AFFILIATE_PRODUCTS } from '@/data/affiliateProducts';
 import { ADDREVENUE_PRODUCTS } from '@/data/addRevenueProducts';
 import { normalizeAffiliateText, type SmartAffiliateProduct } from '@/lib/smartAffiliate';
+import { shopMerchantFromHref } from '@/lib/adtractionShopLinks';
+
+/** AddRevenue advertiser ids (`a=`) from the feeds in affiliate_advertisers. */
+const ADDREVENUE_ADVERTISERS: Record<string, string> = { '984666': 'by-benson', '985743': 'dintradgard' };
+
+/**
+ * The advertiser relation is not readable with the public key, so DB rows
+ * arrive as "unknown". The tracking link names the merchant reliably.
+ */
+export function advertiserFromTrackingUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const merchant = shopMerchantFromHref(url);
+  if (merchant) return merchant;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith('addrevenue.io')) return ADDREVENUE_ADVERTISERS[parsed.searchParams.get('a') ?? ''] ?? null;
+  } catch {
+    /* not a URL */
+  }
+  return null;
+}
 
 /**
  * Pure catalog logic shared by the blog's product engine
@@ -51,7 +72,8 @@ function relationName(relation: unknown): string | undefined {
 }
 
 export function mapDatabaseProduct(row: Record<string, any>): SmartAffiliateProduct | null {
-  const advertiser = relationSlug(row.affiliate_advertisers);
+  const relation = relationSlug(row.affiliate_advertisers);
+  const advertiser = relation !== 'unknown' ? relation : advertiserFromTrackingUrl(row.affiliate_url || row.product_url) ?? 'unknown';
   const specs = row.specs && typeof row.specs === 'object' ? row.specs as Record<string, unknown> : {};
   const specKeywords = Array.isArray(specs.keywords) ? specs.keywords.filter((value): value is string => typeof value === 'string') : [];
   const imageUrl = row.image_url || row.image_urls?.[0] || '';
