@@ -104,8 +104,8 @@ describe('Packet 1 contextual shop placements', () => {
     expect(rewriteNakedShopAffiliateHrefs(source, 'bast-honsras-sverige')).toBe(source);
   });
 
-  it('leaves AFFILIATE_ENABLED off and keeps killed merchants out of the catalog', () => {
-    expect(AFFILIATE_ENABLED).toBe(false);
+  it('keeps killed merchants out of the catalog', () => {
+    expect(AFFILIATE_ENABLED).toBe(true);
     const blob = JSON.stringify(CONTEXTUAL_SHOP_PLACEMENTS);
     expect(blob).not.toMatch(KILLED);
     expect(Object.values(SHOP_DESTINATIONS).join(' ')).not.toMatch(KILLED);
@@ -134,7 +134,8 @@ describe('Packet 1 contextual shop placements', () => {
     const article = readFileSync(join(process.cwd(), 'src/pages/GuideArticle.tsx'), 'utf8');
     const prerender = readFileSync(join(process.cwd(), 'scripts/prerender-blog-posts.mjs'), 'utf8');
     expect(article).toContain('injectContextualShopPlacement');
-    expect(article).toContain("hrefLower.includes('outl1')");
+    // Outl1 (and every other program) click attribution goes through the shared host map.
+    expect(article).toContain('shopMerchantFromHref(href)');
     expect(article).not.toContain('AffiliateProductStrip');
     expect(prerender).toContain('injectContextualShopPlacement');
 

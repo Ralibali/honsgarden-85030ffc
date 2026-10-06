@@ -3,7 +3,7 @@
  * Keep in sync with `src/lib/contextualShopPlacements.ts`.
  */
 
-import { buildTrackedShopHref } from './adtractionShopLinks.mjs';
+import { buildTrackedShopHref } from './adtractionPrograms.mjs';
 
 export const SHOP_DESTINATIONS = {
   outl1Honshus: 'https://outl1.se/honshus-med-utegard?var=12423',

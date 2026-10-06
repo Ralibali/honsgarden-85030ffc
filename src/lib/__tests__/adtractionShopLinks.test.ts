@@ -21,7 +21,9 @@ import {
   isNakedVetapotekShopHref,
   isNakedWexthusetShopHref,
   rewriteNakedShopAffiliateHrefs,
+  shopMerchantFromHref,
 } from '@/lib/adtractionShopLinks';
+import { rewriteNakedShopAffiliateHrefs as rewriteForPrerender } from '@/lib/adtractionShopLinks.mjs';
 
 /** Representative HTML taken from the live blog_posts content (hrefs + link text). */
 const PAGE_FIXTURES: Record<string, string> = {
@@ -337,9 +339,9 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     expect(rewritten).toContain('do.p-lindberg.se');
   });
 
-  it('does not wrap P-Lindberg on the köpguide slug; wraps remaining naked Vetapotek 2 kg + 500 g', () => {
+  it('reviewed mode: does not wrap P-Lindberg on the köpguide slug; wraps remaining naked Vetapotek 2 kg + 500 g', () => {
     const source = `${KOPGUIDE_FIXTURE} <a href="https://www.p-lindberg.se/">P-Lindberg</a>`;
-    const rewritten = rewriteNakedShopAffiliateHrefs(source, 'honshus-2026-kompletta-kopguiden');
+    const rewritten = rewriteNakedShopAffiliateHrefs(source, 'honshus-2026-kompletta-kopguiden', { sitewide: false });
     expect(rewritten).toContain('href="https://www.p-lindberg.se/"');
     expect(rewritten).not.toContain(
       'href="https://vetapotek.se/produkt/kosttillskott-eclipse-biofarmab-kiselgur-forte-2-kg-7330824007972/"',
@@ -359,21 +361,21 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     expect(rewritten).not.toContain('id.vetapotek.se/t/t?a=1701463575&amp;as=2056181186&amp;t=2&amp;tk=1&amp;url=https://id.vetapotek.se');
   });
 
-  it('does not wrap Outl1 on slugs other than the köpguide', () => {
+  it('reviewed mode: does not wrap Outl1 on slugs other than the köpguide', () => {
     const source = '<a href="https://outl1.se/honshus-med-utegard?var=12423">Lyfco</a>';
-    const rewritten = rewriteNakedShopAffiliateHrefs(source, 'bygga-honshus');
+    const rewritten = rewriteNakedShopAffiliateHrefs(source, 'bygga-honshus', { sitewide: false });
     expect(rewritten).toBe(source);
   });
 
-  it('does not wrap Bonden on slugs that have no existing Bonden href allowlist entry', () => {
+  it('reviewed mode: does not wrap Bonden on slugs that have no existing Bonden href allowlist entry', () => {
     const source = '<a href="https://www.bonden.se/">Bonden</a>';
-    expect(rewriteNakedShopAffiliateHrefs(source, 'klacka-agg')).toBe(source);
-    expect(rewriteNakedShopAffiliateHrefs(source, 'fjaderplockning-hons')).toBe(source);
+    expect(rewriteNakedShopAffiliateHrefs(source, 'klacka-agg', { sitewide: false })).toBe(source);
+    expect(rewriteNakedShopAffiliateHrefs(source, 'fjaderplockning-hons', { sitewide: false })).toBe(source);
   });
 
   it('does not double-wrap already tracked köpguide / Outl1 / Bonden hosts', () => {
-    const rewritten = rewriteNakedShopAffiliateHrefs(KOPGUIDE_FIXTURE, 'bygga-honshus');
-    expect(rewritten).toBe(KOPGUIDE_FIXTURE);
+    const rewritten = rewriteNakedShopAffiliateHrefs(KOPGUIDE_FIXTURE, 'bygga-honshus', { sitewide: false });
+    expect(extractHrefValues(rewritten)).toEqual(extractHrefValues(KOPGUIDE_FIXTURE));
     expect(rewritten.match(/do\.p-lindberg\.se/g)?.length).toBe(1);
     expect(rewritten).not.toContain('do.p-lindberg.se/t/t?a=1954027467&amp;as=2056181186&amp;t=2&amp;tk=1&amp;url=https://do.p-lindberg.se');
 
@@ -388,8 +390,11 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
       '<a href="https://go.wexthuset.com/t/t?a=1577762835&amp;as=2056181186&amp;t=2&amp;tk=1&amp;url=https%3A%2F%2Fwww.wexthuset.com%2F">Wexthuset</a>',
       '<a href="https://do.shop.firstvet.com/t/t?a=1615741779&amp;as=2056181186&amp;t=2&amp;tk=1&amp;url=https%3A%2F%2Ffirstvet.com%2Fsv%2Fbutik">FirstVet</a>',
     ].join(' ');
-    expect(rewriteNakedShopAffiliateHrefs(alreadyTracked, 'skaffa-hons-nyborjare')).toBe(alreadyTracked);
-    expect(rewriteNakedShopAffiliateHrefs(alreadyTracked, 'vad-ater-hons')).toBe(alreadyTracked);
+    for (const slug of ['skaffa-hons-nyborjare', 'vad-ater-hons', 'helt-ny-artikel']) {
+      const rewritten = rewriteNakedShopAffiliateHrefs(alreadyTracked, slug);
+      expect(extractHrefValues(rewritten)).toEqual(extractHrefValues(alreadyTracked));
+      expect(rewritten.replace(/ rel="sponsored noopener"/g, '')).toBe(alreadyTracked);
+    }
   });
 
   it('does not add FirstVet or Wexthuset to pages that do not already have those hrefs', () => {
@@ -436,5 +441,79 @@ describe('rewriteNakedShopAffiliateHrefs', () => {
     expect(rewritten).toContain('[P-Lindberg]');
     expect(rewritten).toContain('[Vetapotek]');
     expect(rewritten).toContain('[Bonden]');
+  });
+});
+
+describe('sitewide shop programs', () => {
+  const NAKED_SHOPS =
+    '<p><a href="https://www.p-lindberg.se/vattenautomat">P-Lindberg</a> <a href="https://www.bonden.se/">Bonden</a> '
+    + '<a href="https://vetapotek.se/produkt/x">Vetapotek</a> <a href="https://www.wexthuset.com/">Wexthuset</a> '
+    + '<a href="https://outl1.se/honshus-med-utegard?var=12423">Outl1</a></p>';
+
+  it('wraps naked approved-shop links on articles outside every slug allowlist', () => {
+    const rewritten = rewriteNakedShopAffiliateHrefs(NAKED_SHOPS, 'helt-ny-artikel');
+    expectNoNakedShopHrefs(rewritten, { plindberg: true, bonden: true, vetapotek: true, wexthuset: true, outl1: true });
+    const hrefs = extractHrefValues(rewritten);
+    expectTracked(hrefs, 'do.p-lindberg.se', PLINDBERG_AD_ID);
+    expectTracked(hrefs, 'pin.bonden.se', BONDEN_AD_ID);
+    expectTracked(hrefs, 'id.vetapotek.se', VETAPOTEK_AD_ID);
+    expectTracked(hrefs, 'go.wexthuset.com', WEXTHUSET_AD_ID);
+    expectTracked(hrefs, 'do.outl1.se', OUTL1_AD_ID);
+    expect(rewritten.replace(/<[^>]+>/g, '')).toBe(NAKED_SHOPS.replace(/<[^>]+>/g, ''));
+  });
+
+  it('keeps FirstVet allowlist-only so cited advice pages stay plain links', () => {
+    const source = '<a href="https://firstvet.com/sv/artiklar/kvalster">FirstVet om kvalster</a>';
+    expect(rewriteNakedShopAffiliateHrefs(source, 'helt-ny-artikel')).toBe(source);
+    expect(rewriteNakedShopAffiliateHrefs(source, 'kvalster-hons')).toContain('do.shop.firstvet.com');
+  });
+
+  it('leaves reviewed editorial guides to their slug allowlists', () => {
+    expect(rewriteNakedShopAffiliateHrefs(NAKED_SHOPS, 'honsvakt-checklista-overlamning', { sitewide: false })).toBe(NAKED_SHOPS);
+  });
+
+  it('never wraps shops without a program or internal links', () => {
+    const source = '<a href="https://www.granngarden.se/">Granngården</a> <a href="https://www.vetzoo.se/">VetZoo</a> <a href="/blogg/kopa-hons">Köpa höns</a>';
+    expect(rewriteNakedShopAffiliateHrefs(source, 'helt-ny-artikel')).toBe(source);
+  });
+
+  it('marks wrapped and already-tracked anchors rel="sponsored noopener" without duplicating tokens', () => {
+    const source = [
+      '<a href="https://www.bonden.se/" target="_blank">Bonden</a>',
+      '<a href="https://www.p-lindberg.se/" rel="nofollow">P-Lindberg</a>',
+      '<a href="https://do.outl1.se/t/t?a=1728546061&amp;as=2056181186&amp;url=https://outl1.se/">Outl1</a>',
+      '<a href="https://pin.bonden.se/t/t?a=1960530621&amp;as=2056181186" rel="sponsored noopener">Redan märkt</a>',
+    ].join(' ');
+    const rewritten = rewriteNakedShopAffiliateHrefs(source, 'helt-ny-artikel');
+    const anchors = rewritten.match(/<a\b[^>]*>/g) ?? [];
+    expect(anchors).toHaveLength(4);
+    for (const anchor of anchors) expect(anchor).toMatch(/rel="[^"]*\bsponsored\b[^"]*\bnoopener\b[^"]*"|rel="[^"]*\bnoopener\b[^"]*\bsponsored\b[^"]*"/);
+    expect(anchors[1]).toContain('rel="nofollow sponsored noopener"');
+    expect(anchors[3]).toBe('<a href="https://pin.bonden.se/t/t?a=1960530621&amp;as=2056181186" rel="sponsored noopener">');
+    expect(rewritten).not.toMatch(/sponsored[^"]*sponsored/);
+  });
+
+  it('maps naked and tracking hosts to their merchant for click attribution', () => {
+    expect(shopMerchantFromHref('https://do.outl1.se/t/t?a=1')).toBe('outl1');
+    expect(shopMerchantFromHref('https://outl1.se/x')).toBe('outl1');
+    expect(shopMerchantFromHref('https://id.vetapotek.se/t/t?a=1')).toBe('vetapotek');
+    expect(shopMerchantFromHref('https://go.wexthuset.com/t/t?a=1')).toBe('wexthuset');
+    expect(shopMerchantFromHref('https://do.shop.firstvet.com/t/t?a=1')).toBe('firstvet');
+    expect(shopMerchantFromHref('https://pin.bonden.se/t/t?a=1')).toBe('bonden');
+    expect(shopMerchantFromHref('https://www.p-lindberg.se/')).toBe('p-lindberg');
+    expect(shopMerchantFromHref('https://www.granngarden.se/')).toBeNull();
+    expect(shopMerchantFromHref('/blogg/x')).toBeNull();
+  });
+
+  it('prerender (.mjs) and runtime (.ts) rewrite identically', () => {
+    const sources = [...Object.values(PAGE_FIXTURES), KOPGUIDE_FIXTURE, NAKED_SHOPS];
+    const slugs = ['helt-ny-artikel', 'vad-ater-hons', 'honshus-2026-kompletta-kopguiden', 'kvalster-hons'];
+    for (const source of sources) {
+      for (const slug of slugs) {
+        for (const sitewide of [true, false]) {
+          expect(rewriteForPrerender(source, slug, { sitewide })).toBe(rewriteNakedShopAffiliateHrefs(source, slug, { sitewide }));
+        }
+      }
+    }
   });
 });

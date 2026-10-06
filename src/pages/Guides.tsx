@@ -1,6 +1,7 @@
 import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
+import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, Navigate, useLocation } from 'react-router-dom';
@@ -60,7 +61,7 @@ export default function Guides() {
         .eq('is_published', true)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return withoutConsolidatedPosts(data ?? []);
     },
   });
 

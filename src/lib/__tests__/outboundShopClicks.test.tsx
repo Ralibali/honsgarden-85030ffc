@@ -95,8 +95,8 @@ describe('HQ outbound shop click mapping', () => {
     expect(outboundProgramFromHref('https://id.granngarden.se/')).toBeNull();
   });
 
-  it('does not flip AFFILIATE_ENABLED', () => {
-    expect(AFFILIATE_ENABLED).toBe(false);
+  it('keeps in-app strips on; useShowAds decides who sees them', () => {
+    expect(AFFILIATE_ENABLED).toBe(true);
   });
 });
 
@@ -190,8 +190,10 @@ describe('GuideArticle wires Outbound Clicked without mounting the strip', () =>
     expect(article).toContain('trackOutboundShopClick(href, slug)');
   });
 
-  it('does not mount AffiliateProductStrip and leaves AFFILIATE_ENABLED false', () => {
+  it('does not mount AffiliateProductStrip and hides article ad units for Plus', () => {
     expect(article).not.toContain('AffiliateProductStrip');
-    expect(flags).toMatch(/export const AFFILIATE_ENABLED = false/);
+    expect(flags).toMatch(/export const AFFILIATE_ENABLED = true/);
+    expect(article).toContain('const showAds = useShowAds();');
+    expect(article).toContain('{showAds && <AffiliateBannerRotator');
   });
 });

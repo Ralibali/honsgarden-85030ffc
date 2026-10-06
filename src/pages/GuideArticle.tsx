@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
 import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
 import { digitalGuideAudienceForArticle } from '@/lib/digitalGuidePlacements.mjs';
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
+import { useShowAds } from '@/hooks/useShowAds';
 import { trackEvent } from '@/lib/analytics';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
@@ -22,10 +23,12 @@ import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { injectContextualRegisterCta } from '@/lib/contextualRegisterCtas';
 import { injectContextualShopPlacement } from '@/lib/contextualShopPlacements';
-import { rewriteNakedShopAffiliateHrefs } from '@/lib/adtractionShopLinks';
+import { rewriteNakedShopAffiliateHrefs, shopMerchantFromHref } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
-import { allowsAutomaticProductPlacements } from '@/lib/editorialPlacementPolicy';
+import { allowsAutomaticProductPlacements, isReviewedEditorialArticle } from '@/lib/editorialPlacementPolicy';
+import { extractFaqPairs, faqPageJsonLd } from '@/lib/prerenderBlogHub.mjs';
+import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -50,13 +53,12 @@ function handleProseAffiliateClick(
   const rel = (anchor.getAttribute('rel') || '').toLowerCase();
   const isSponsored = rel.includes('sponsored');
   const hrefLower = href.toLowerCase();
-  let advertiser: string | null = null;
-  if (hrefLower.includes('bonden.se') || hrefLower.includes('pin.bonden')) advertiser = 'bonden';
-  else if (hrefLower.includes('p-lindberg')) advertiser = 'p-lindberg';
-  else if (hrefLower.includes('outl1')) advertiser = 'outl1';
-  else if (hrefLower.includes('adtraction')) advertiser = 'adtraction';
-  else if (hrefLower.includes('awin')) advertiser = 'awin';
-  else if (hrefLower.includes('tradedoubler')) advertiser = 'tradedoubler';
+  let advertiser: string | null = shopMerchantFromHref(href);
+  if (!advertiser) {
+    if (hrefLower.includes('adtraction')) advertiser = 'adtraction';
+    else if (hrefLower.includes('awin')) advertiser = 'awin';
+    else if (hrefLower.includes('tradedoubler')) advertiser = 'tradedoubler';
+  }
 
   if (!isSponsored && !advertiser) return;
 
@@ -105,8 +107,10 @@ function renderContent(
   otherPosts?: { title: string; slug: string }[],
   glossary?: { keyword: string; url: string; rel: string }[],
   slug?: string,
+  showAds = false,
 ): string {
-  let raw = isHtmlContent(content) ? content : renderBlogMarkdown(content);
+  // Internal links to merged articles point straight at their target.
+  let raw = rewriteConsolidatedBlogLinks(isHtmlContent(content) ? content : renderBlogMarkdown(content));
   // Ta bort inledande rubrik som bara upprepar artikelns titel
   raw = stripDuplicateTitleHeading(raw, postTitle);
   raw = raw.replace(/<h([23])([^>]*)>([\s\S]*?)<\/h[23]>/gi, (full, level, attrs, inner) => {
@@ -181,11 +185,13 @@ function renderContent(
   // Rasbilder efter matchande h3-rubriker (t.ex. "### 1. Hedemora" → bild på Hedemora)
   raw = injectBreedFigures(raw);
 
-  // Wrap already-present naked shop hrefs on allowlisted slugs.
-  raw = rewriteNakedShopAffiliateHrefs(raw, slug);
+  // Wrap already-present naked shop hrefs. Reviewed editorial guides keep
+  // their individually reviewed links (slug allowlists only).
+  raw = rewriteNakedShopAffiliateHrefs(raw, slug, { sitewide: !slug || !isReviewedEditorialArticle(slug) });
 
   raw = injectContextualRegisterCta(raw, slug);
-  raw = injectContextualShopPlacement(raw, slug);
+  // The "Annons" box is an ad unit; Plus customers do not see ads.
+  if (showAds) raw = injectContextualShopPlacement(raw, slug);
 
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],
@@ -195,9 +201,18 @@ function renderContent(
   });
 }
 
+/** Merged articles (src/data/blogConsolidation.mjs) redirect to their target. */
 export default function GuideArticle() {
   const { slug } = useParams<{ slug: string }>();
+  const target = consolidatedBlogTarget(slug);
+  if (target) return <Navigate to={target} replace />;
+  return <GuideArticlePage />;
+}
+
+function GuideArticlePage() {
+  const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAuth();
+  const showAds = useShowAds();
   const [readingProgress, setReadingProgress] = useState(0);
 
   // Fetch current post
@@ -232,7 +247,7 @@ export default function GuideArticle() {
         .eq('is_published', true)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return data;
+      return withoutConsolidatedPosts(data ?? []);
     },
   });
 
@@ -282,8 +297,9 @@ export default function GuideArticle() {
       allPosts.filter(p => p.slug !== slug).map(p => ({ title: p.title, slug: p.slug })),
       glossary,
       slug,
+      showAds,
     );
-  }, [post, allPosts, glossary, slug]);
+  }, [post, allPosts, glossary, slug, showAds]);
 
   const [articleIntroHtml, articleRestHtml] = useMemo(() => {
     if (!renderedArticleHtml) return ['', ''];
@@ -317,13 +333,17 @@ export default function GuideArticle() {
       el.setAttribute('content', content);
     };
 
-    const addLink = (rel: string, href: string, attrs?: Record<string, string>) => {
-      const el = document.createElement('link');
-      el.rel = rel;
+    // Update the prerendered hreflang tag in place instead of adding a duplicate.
+    const upsertAlternate = (href: string, hreflang: string) => {
+      let el = document.head.querySelector<HTMLLinkElement>(`link[rel="alternate"][hreflang="${hreflang}"]`);
+      if (!el) {
+        el = document.createElement('link');
+        el.rel = 'alternate';
+        el.setAttribute('hreflang', hreflang);
+        document.head.appendChild(el);
+        createdElements.push(el);
+      }
       el.href = href;
-      if (attrs) Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-      document.head.appendChild(el);
-      createdElements.push(el);
     };
 
     // Title
@@ -335,8 +355,8 @@ export default function GuideArticle() {
 
     // Canonical + hreflang
     // SeoCanonical owns the canonical, including the adopted prerendered tag.
-    addLink('alternate', fullUrl, { hreflang: 'sv' });
-    addLink('alternate', fullUrl, { hreflang: 'x-default' });
+    upsertAlternate(fullUrl, 'sv');
+    upsertAlternate(fullUrl, 'x-default');
 
     // OG tags
     setMeta('property', 'og:title', pageTitle);
@@ -395,7 +415,7 @@ export default function GuideArticle() {
           name: 'Hönsgården',
           url: BASE,
           '@id': `${BASE}/#organization`,
-          logo: { '@type': 'ImageObject', url: `${BASE}/favicon.ico` },
+          logo: { '@type': 'ImageObject', url: `${BASE}/logo.png`, width: 1920, height: 1024 },
         },
         mainEntityOfPage: { '@type': 'WebPage', '@id': fullUrl },
         isPartOf: { '@id': `${BASE}/#website` },
@@ -425,32 +445,10 @@ export default function GuideArticle() {
       },
     ];
 
-    // Extract FAQ pairs from HTML content
-    const faqPairs: { q: string; a: string }[] = [];
-    const faqRegex = /<(?:div|dt)[^>]*class="faq-q"[^>]*>([\s\S]*?)<\/(?:div|dt)>\s*<(?:div|dd)[^>]*class="faq-a"[^>]*>([\s\S]*?)<\/(?:div|dd)>/gi;
+    // Same FAQ extraction as the prerendered first-byte HTML.
+    const faqPage = faqPageJsonLd(extractFaqPairs(post.content));
+    if (faqPage) graph.push(faqPage);
     let match;
-    while ((match = faqRegex.exec(post.content)) !== null) {
-      const q = match[1].replace(/<[^>]+>/g, '').trim();
-      const a = match[2].replace(/<[^>]+>/g, '').trim();
-      if (q && a) faqPairs.push({ q, a });
-    }
-    const detailsRegex = /<summary[^>]*>([\s\S]*?)<\/summary>\s*([\s\S]*?)(?=<\/details>)/gi;
-    while ((match = detailsRegex.exec(post.content)) !== null) {
-      const q = match[1].replace(/<[^>]+>/g, '').trim();
-      const a = match[2].replace(/<[^>]+>/g, '').trim();
-      if (q && a) faqPairs.push({ q, a });
-    }
-
-    if (faqPairs.length > 0) {
-      graph.push({
-        '@type': 'FAQPage',
-        mainEntity: faqPairs.map(({ q, a }) => ({
-          '@type': 'Question',
-          name: q,
-          acceptedAnswer: { '@type': 'Answer', text: a },
-        })),
-      });
-    }
 
     // Extract HowTo schema from ordered lists in guide/nyborjare category
     if (post.category === 'guide' || post.category === 'nyborjare' || post.category === 'tips') {
@@ -634,7 +632,11 @@ export default function GuideArticle() {
           src={heroForPost(post)}
           alt={post.title}
           className="w-full rounded-2xl aspect-video object-cover mb-8"
-          loading="lazy"
+          width={1200}
+          height={675}
+          loading="eager"
+          decoding="async"
+          {...{ fetchpriority: 'high' }}
         />
 
         {/* Affiliate-disclosure – synligt över första CTA/annonslänk */}
@@ -666,14 +668,14 @@ export default function GuideArticle() {
         )}
 
         {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
-        {allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
+        {showAds && allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
         />}
 
         {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
-        {allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
+        {showAds && allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
           slug={post.slug}
           title={post.title}
           content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
@@ -683,7 +685,7 @@ export default function GuideArticle() {
         />}
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
-        <AffiliateBannerRotator slug={post.slug} />
+        {showAds && <AffiliateBannerRotator slug={post.slug} />}
 
         {/* Tags + Share */}
         {post.tags && post.tags.length > 0 && (

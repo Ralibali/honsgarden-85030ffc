@@ -1,7 +1,7 @@
 import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { renderSeoLandingBody } from '../src/lib/prerenderSeoLanding.mjs';
 import { DIGITAL_GUIDE_COVER_PATH, DIGITAL_GUIDE_SAMPLE_PATH, digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
@@ -9,9 +9,30 @@ import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
+import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
 import { injectContextualShopPlacement, renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
+import {
+  BLOG_INDEX_H1,
+  categoriesWithPosts,
+  collectionJsonLd,
+  extractFaqPairs,
+  faqPageJsonLd,
+  formatSwedishDate,
+  hasSponsoredLinks,
+  lastModifiedDate,
+  postsInCategory,
+  postsWithTag,
+  relatedPosts,
+  renderAdDisclosure,
+  renderBlogIndexBody,
+  renderCategoryBody,
+  renderRelatedPosts,
+  renderTagBody,
+  sortPostsByDate,
+  tagDisplayName,
+} from '../src/lib/prerenderBlogHub.mjs';
 import {
   breedTopicH1,
   DEMO_DESCRIPTION,
@@ -63,12 +84,16 @@ function sanitizeHtml(html = '') {
     .replace(/javascript:/gi, '');
 }
 
-function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noindex, ogType = 'website', jsonLd }) {
+const DEFAULT_OG_IMAGE = '/og-image.jpg';
+
+function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noindex, ogType = 'website', jsonLd, extraHead = '' }) {
   const url = `${BASE_URL}${path}`;
-  const image = ogImage || '/og-image.jpg';
+  const image = ogImage || DEFAULT_OG_IMAGE;
   const imageUrl = image.startsWith('http') ? image : `${BASE_URL}${image}`;
   const robots = noindex ? NOINDEX_ROBOTS : DEFAULT_ROBOTS;
   const jsonLdTag = jsonLd ? `\n<script type="application/ld+json" id="json-ld-prerendered">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>` : '';
+  // Only the default share image has known dimensions.
+  const imageSize = image === DEFAULT_OG_IMAGE ? '\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">' : '';
 
   return `\n<title>${escapeHtml(title)}</title>
 <meta name="description" content="${escapeHtml(description)}">
@@ -81,17 +106,26 @@ function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noind
 <meta property="og:title" content="${escapeHtml(title)}">
 <meta property="og:description" content="${escapeHtml(description)}">
 <meta property="og:image" content="${escapeHtml(imageUrl)}">
-<meta property="og:image:alt" content="${escapeHtml(ogImageAlt || title)}">
+<meta property="og:image:alt" content="${escapeHtml(ogImageAlt || title)}">${imageSize}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${escapeHtml(title)}">
 <meta name="twitter:description" content="${escapeHtml(description)}">
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+<meta name="twitter:image:alt" content="${escapeHtml(ogImageAlt || title)}">${extraHead}
 <link rel="alternate" type="application/rss+xml" title="Hönsgården – blogg om höns" href="https://sikbymtrbhrofysgkqsj.supabase.co/functions/v1/rss">${jsonLdTag}`;
 }
 
 function injectHead(template, headHtml) {
   return template
     .replace(/<title>[\s\S]*?<\/title>/, '')
+    // Template tags that buildHeadGeneric re-emits per route (avoid duplicates
+    // and homepage values leaking onto every page).
+    .replace(/<link rel="alternate" hreflang="sv-SE"[^>]*>/gi, '')
+    .replace(/<meta property="og:type"[^>]*>/gi, '')
+    .replace(/<meta property="og:image:width"[^>]*>/gi, '')
+    .replace(/<meta property="og:image:height"[^>]*>/gi, '')
+    .replace(/<meta name="twitter:card"[^>]*>/gi, '')
+    .replace(/<meta name="twitter:image:alt"[^>]*>/gi, '')
     .replace(/<meta name="description"[\s\S]*?>/i, '')
     .replace(/<meta name="robots"[\s\S]*?>/i, '')
     .replace(/<link rel="canonical"[\s\S]*?>/i, '')
@@ -108,36 +142,84 @@ function injectHead(template, headHtml) {
     .replace('</head>', `${headHtml}\n</head>`);
 }
 
+/**
+ * Template for every route except `/`: drop homepage-only meta (keywords,
+ * citation title) and keep only the sitewide Organization + WebSite nodes of
+ * the template JSON-LD, so no page claims to be the homepage WebPage.
+ */
+function sitewideTemplate(template) {
+  let html = String(template)
+    .replace(/\s*<meta name="keywords"[^>]*>/i, '')
+    .replace(/\s*<meta name="citation_title"[^>]*>/i, '');
+  html = html.replace(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/i, (full, json) => {
+    try {
+      const data = JSON.parse(json);
+      if (!Array.isArray(data['@graph'])) return full;
+      const graph = data['@graph'].filter((node) => node['@type'] === 'Organization' || node['@type'] === 'WebSite');
+      return `<script type="application/ld+json">${JSON.stringify({ ...data, '@graph': graph })}</script>`;
+    } catch {
+      return full;
+    }
+  });
+  return html;
+}
+
+async function loadReviewedEditorialSlugs() {
+  const dir = join('content', 'editorial', 'articles');
+  const slugs = new Set();
+  for (const file of await readdir(dir)) {
+    if (!file.endsWith('.json')) continue;
+    const article = JSON.parse(await readFile(join(dir, file), 'utf8'));
+    if (article?.slug) slugs.add(article.slug);
+  }
+  return slugs;
+}
+
 async function writeRoute(route, html) {
   const target = route === '' ? join('dist', 'index.html') : join('dist', route, 'index.html');
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, html, 'utf8');
 }
 
-function renderArticle(post) {
+function isUpdatedAfterPublish(post) {
+  const published = Date.parse(post.published_at || '');
+  const updated = Date.parse(post.updated_at || '');
+  // Ignore same-day saves; only show a real later revision.
+  return Number.isFinite(published) && Number.isFinite(updated) && updated - published > 24 * 60 * 60 * 1000;
+}
+
+function renderArticle(post, { allPosts = [], sitewide = false } = {}) {
   const image = heroForPost(post);
   const imageUrl = image.startsWith('http') ? image : `${BASE_URL}${image}`;
-  const date = post.published_at ? new Date(post.published_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const date = formatSwedishDate(post.published_at);
+  const updated = isUpdatedAfterPublish(post) ? formatSwedishDate(post.updated_at) : '';
+  const categoryLabel = CATEGORY_META[post.category]?.label;
   const rendered = isHtmlContent(post.content) ? post.content : renderBlogMarkdown(post.content);
   const rewritten = rewriteNakedShopAffiliateHrefs(
-    injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title)),
+    rewriteConsolidatedBlogLinks(injectBreedFigures(stripDuplicateTitleHeading(rendered, post.title))),
     post.slug,
+    { sitewide },
   );
   const content = sanitizeHtml(injectContextualShopPlacement(injectContextualRegisterCta(rewritten, post.slug), post.slug));
+  const related = relatedPosts(post, allPosts, 4);
 
   return `<div class="min-h-screen bg-background">
 <header class="border-b border-border/50 bg-card/50"><div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between"><a href="/blogg" class="text-sm text-muted-foreground hover:text-foreground">← Blogg</a><a href="/login?mode=register&amp;source=blog_header" class="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">Kom igång</a></div></header>
 <main class="max-w-4xl mx-auto px-4 py-8" id="main-content"><article>
-<nav class="text-xs text-muted-foreground mb-5"><a href="/">Hem</a> / <a href="/blogg">Blogg</a> / ${escapeHtml(post.title)}</nav>
-<div class="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">${post.category ? `<span class="rounded-full border border-border px-2 py-1">${escapeHtml(post.category)}</span>` : ''}${date ? `<time datetime="${escapeHtml(post.published_at)}">${date}</time>` : ''}<span>${post.reading_time_minutes || Math.max(1, Math.ceil(stripTags(post.content).split(/\s+/).length / 220))} min läsning</span></div>
+<nav aria-label="Brödsmulor" class="text-xs text-muted-foreground mb-5"><a href="/">Hem</a> / <a href="/blogg">Blogg</a> / ${categoryLabel ? `<a href="/blogg/kategori/${escapeHtml(post.category)}">${escapeHtml(categoryLabel)}</a> / ` : ''}<span aria-current="page">${escapeHtml(post.title)}</span></nav>
+<div class="mb-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">${categoryLabel ? `<a href="/blogg/kategori/${escapeHtml(post.category)}" class="rounded-full border border-border px-2 py-1">${escapeHtml(categoryLabel)}</a>` : ''}${date ? `<time datetime="${escapeHtml(post.published_at)}">${date}</time>` : ''}${updated ? `<span>Uppdaterad <time datetime="${escapeHtml(post.updated_at)}">${updated}</time></span>` : ''}<span>${post.reading_time_minutes || Math.max(1, Math.ceil(stripTags(post.content).split(/\s+/).length / 220))} min läsning</span></div>
 <h1 class="font-serif text-3xl sm:text-5xl text-foreground leading-tight mb-4">${escapeHtml(post.title)}</h1>
 ${post.excerpt ? `<p class="text-lg text-muted-foreground leading-relaxed mb-6">${escapeHtml(post.excerpt)}</p>` : ''}
-<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" class="w-full aspect-[16/9] object-cover rounded-2xl mb-8" loading="eager" />
+<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" width="1200" height="675" class="w-full aspect-[16/9] object-cover rounded-2xl mb-8" loading="eager" fetchpriority="high" decoding="async" />
 ${digitalGuideAudienceForArticle(post.slug) ? renderDigitalGuidePlacement(digitalGuideAudienceForArticle(post.slug)) : ''}
+${hasSponsoredLinks(content) ? renderAdDisclosure() : ''}
 <div class="prose-custom">${content}</div>
 ${post.slug === 'honsvakt-checklista-overlamning' ? '<p>AI-assisterad originalguide, skriven med ChatGPT. Arbetsmallen är ett redaktionellt förslag.</p>' : ''}
+${renderRelatedPosts(related)}
 </article></main></div>`;
 }
+
+const ORGANIZATION_REF = { '@type': 'Organization', '@id': `${BASE_URL}/#organization`, name: 'Hönsgården', url: BASE_URL };
 
 function buildArticleHead(post) {
   const path = `/blogg/${post.slug}`;
@@ -146,14 +228,47 @@ function buildArticleHead(post) {
   const url = `${BASE_URL}${path}`;
   const image = heroForPost(post);
   const imageUrl = image.startsWith('http') ? image : `${BASE_URL}${image}`;
+  const categoryLabel = CATEGORY_META[post.category]?.label;
+  const tags = Array.isArray(post.tags) ? post.tags.filter(Boolean) : [];
+  const keywords = post.meta_keywords || (tags.length ? tags.join(', ') : '');
+  const breadcrumbs = [
+    { name: 'Hem', item: BASE_URL },
+    { name: 'Blogg', item: `${BASE_URL}/blogg` },
+    ...(categoryLabel ? [{ name: categoryLabel, item: `${BASE_URL}/blogg/kategori/${post.category}` }] : []),
+    { name: post.title, item: url },
+  ];
+  const faq = faqPageJsonLd(extractFaqPairs(post.content));
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
-      { '@type': 'Article', '@id': `${url}#article`, headline: post.title, description, image: imageUrl, datePublished: post.published_at, dateModified: post.updated_at || post.published_at, author: { '@type': 'Organization', name: 'Hönsgården', url: BASE_URL }, publisher: { '@type': 'Organization', name: 'Hönsgården', url: BASE_URL }, mainEntityOfPage: { '@type': 'WebPage', '@id': url }, inLanguage: 'sv-SE', wordCount: post.word_count || stripTags(post.content).split(/\s+/).length },
-      { '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Hem', item: BASE_URL }, { '@type': 'ListItem', position: 2, name: 'Blogg', item: `${BASE_URL}/blogg` }, { '@type': 'ListItem', position: 3, name: post.title, item: url }] },
+      {
+        '@type': 'Article',
+        '@id': `${url}#article`,
+        headline: post.title,
+        description,
+        image: { '@type': 'ImageObject', url: imageUrl },
+        datePublished: post.published_at,
+        dateModified: post.updated_at || post.published_at,
+        author: ORGANIZATION_REF,
+        publisher: { ...ORGANIZATION_REF, logo: { '@type': 'ImageObject', url: `${BASE_URL}/logo.png`, width: 1920, height: 1024 } },
+        mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+        isPartOf: { '@id': `${BASE_URL}/#website` },
+        inLanguage: 'sv-SE',
+        ...(categoryLabel ? { articleSection: categoryLabel } : {}),
+        ...(keywords ? { keywords } : {}),
+        wordCount: post.word_count || stripTags(post.content).split(/\s+/).length,
+      },
+      { '@type': 'BreadcrumbList', itemListElement: breadcrumbs.map((crumb, index) => ({ '@type': 'ListItem', position: index + 1, ...crumb })) },
+      ...(faq ? [faq] : []),
     ],
   };
-  return buildHeadGeneric({ title, description, path, ogImage: image, ogImageAlt: post.title, ogType: 'article', jsonLd });
+  const articleMeta = [
+    post.published_at ? `<meta property="article:published_time" content="${escapeHtml(post.published_at)}">` : '',
+    post.updated_at || post.published_at ? `<meta property="article:modified_time" content="${escapeHtml(post.updated_at || post.published_at)}">` : '',
+    categoryLabel ? `<meta property="article:section" content="${escapeHtml(categoryLabel)}">` : '',
+    ...tags.map((tag) => `<meta property="article:tag" content="${escapeHtml(tag)}">`),
+  ].filter(Boolean).map((tag) => `\n${tag}`).join('');
+  return buildHeadGeneric({ title, description, path, ogImage: image, ogImageAlt: post.title, ogType: 'article', jsonLd, extraHead: articleMeta });
 }
 
 async function fetchPosts() {
@@ -224,9 +339,12 @@ const STATIC_PAGES = [
   { path: '/klackningskalender', route: 'klackningskalender', title: 'Kläckningskalender för hönsägg – följ dag 1 till 21 | Hönsgården', description: 'Digital kläckningskalender för hönsägg. Håll koll på startdatum, lysning, vändning, luftfuktighet och beräknad kläckdag.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/borja-med-hons', route: 'borja-med-hons', title: 'Börja med höns – praktisk guide för nya hönsägare | Hönsgården', description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
-  { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, tips & hälsa | Hönsgården', description: 'Läs Sveriges bästa blogg om höns. Guider för nybörjare, hälsotips, hönsraser och allt om hobbyhönsägande.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'daily' },
+  // Same title/description as the runtime page (src/pages/Guides.tsx useSeo).
+  { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, recensioner & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
   { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? | Hönsgården', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
+  // Same title/description as src/pages/StartCostCalculator.tsx useSeo.
+  { path: '/verktyg/vad-kostar-hons', route: 'verktyg/vad-kostar-hons', title: 'Vad kostar det att skaffa höns? Startkostnadskalkylator | Hönsgården', description: 'Räkna på hönshus, höns, stängsel, foder och utrustning. Gratis startkostnadskalkylator för dig som funderar på att skaffa höns.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/karta', route: 'karta', title: 'Hönskarta – hitta säljare av färska ägg nära dig | Hönsgården', description: 'Interaktiv karta över svenska hönsägare som säljer färska ägg. Hitta säljare i din närhet, se öppettider och boka direkt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'weekly' },
   { path: '/marknad', route: 'marknad', title: 'Marknad för höns, ägg och tillbehör | Hönsgården', description: 'Köp och sälj höns, tuppar, kläckägg och tillbehör mellan svenska hönsägare. Enkla annonser, direkt kontakt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'daily' },
@@ -332,10 +450,13 @@ const CATEGORY_META = {
   friluftsliv: { label: 'Friluftsliv & natur', title: 'Friluftsliv & natur – Utomhuslivet med höns | Hönsgården', description: 'Friluftsliv, naturupplevelser och livet utomhus.', ogImage: '/blog-images/sunset-farm.jpg' },
 };
 
-function buildStaticPage(template, page) {
+function buildStaticPage(template, page, { posts = [] } = {}) {
   const landing = SEO_LANDING_PAGES[page.route];
   if (landing) page = { ...page, title: landing.title, description: landing.description };
-  const jsonLd = { '@context': 'https://schema.org', '@type': page.path === '/' ? 'WebSite' : 'WebPage', name: page.title, description: page.description, url: `${BASE_URL}${page.path}`, inLanguage: 'sv-SE' };
+  if (page.path === '/blogg') return buildBlogIndexPage(template, page, posts);
+  // The homepage's WebSite/WebPage graph lives in index.html; a second WebSite
+  // node with the page title as `name` would compete for Google's site name.
+  const jsonLd = page.path === '/' ? undefined : { '@context': 'https://schema.org', '@type': 'WebPage', name: page.title, description: page.description, url: `${BASE_URL}${page.path}`, isPartOf: { '@id': `${BASE_URL}/#website` }, inLanguage: 'sv-SE' };
   const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
   if (page.productTitle) {
     return injectTopicBody(withHead, `<main class="container mx-auto max-w-3xl px-5 pt-24 pb-16" id="main-content">
@@ -358,7 +479,7 @@ function buildStaticPage(template, page) {
     return injectTopicBody(withHead, body);
   }
   const shopPlacement = shopPlacementForPath(page.path);
-  if (['/blogg', '/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {
+  if (['/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {
     const audience = page.path.startsWith('/honsraser') ? 'breed' : 'beginner';
     return injectTopicBody(withHead, renderDigitalGuidePlacement(audience) + (shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''));
   }
@@ -390,16 +511,50 @@ function buildDemoPage(template) {
   return injectTopicBody(withHead, renderDemoTopicBody());
 }
 
-function buildCategoryPage(template, slug, meta) {
-  const path = `/blogg/kategori/${slug}`;
-  const jsonLd = { '@context': 'https://schema.org', '@type': 'CollectionPage', name: meta.label, description: meta.description, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE' };
-  return injectHead(template, buildHeadGeneric({ title: meta.title, description: meta.description, path, ogImage: meta.ogImage, ogImageAlt: meta.label, jsonLd }));
+function buildBlogIndexPage(template, page, posts) {
+  const sorted = sortPostsByDate(posts);
+  const jsonLd = collectionJsonLd({
+    name: BLOG_INDEX_H1,
+    description: page.description,
+    path: page.path,
+    posts: sorted,
+    breadcrumbs: [{ name: 'Hem', path: '/' }, { name: 'Blogg', path: '/blogg' }],
+  });
+  const withHead = injectHead(template, buildHeadGeneric({ ...page, jsonLd }));
+  return injectTopicBody(withHead, renderBlogIndexBody({
+    posts: sorted,
+    categoryMeta: CATEGORY_META,
+    afterIntroHtml: renderDigitalGuidePlacement('beginner'),
+  }));
 }
 
-function buildTagPage(template, tag) {
+function buildCategoryPage(template, slug, meta, posts = []) {
+  const path = `/blogg/kategori/${slug}`;
+  const inCategory = postsInCategory(posts, slug);
+  const jsonLd = collectionJsonLd({
+    name: meta.label,
+    description: meta.description,
+    path,
+    posts: inCategory,
+    breadcrumbs: [{ name: 'Hem', path: '/' }, { name: 'Blogg', path: '/blogg' }, { name: meta.label, path }],
+  });
+  // An empty category is a thin page: keep it reachable but out of the index.
+  const head = buildHeadGeneric({ title: meta.title, description: meta.description, path, ogImage: meta.ogImage, ogImageAlt: meta.label, noindex: inCategory.length === 0, jsonLd });
+  return injectTopicBody(injectHead(template, head), renderCategoryBody({ slug, meta, posts, categoryMeta: CATEGORY_META }));
+}
+
+function buildTagPage(template, tag, posts = []) {
   const path = `/blogg/tagg/${encodeURIComponent(tag)}`;
-  const display = tag.charAt(0).toUpperCase() + tag.slice(1);
-  return injectHead(template, buildHeadGeneric({ title: `${display} – Artiklar om ${tag} | Hönsgården`, description: `Läs alla artiklar om ${tag}. Tips, guider och information från Hönsgården.`, path, ogImage: '/og-image.jpg', ogImageAlt: display, jsonLd: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: display, url: `${BASE_URL}${path}`, inLanguage: 'sv-SE' } }));
+  const display = tagDisplayName(tag);
+  const jsonLd = collectionJsonLd({
+    name: display,
+    description: `Artiklar taggade med ${tag}`,
+    path,
+    posts: postsWithTag(posts, tag),
+    breadcrumbs: [{ name: 'Hem', path: '/' }, { name: 'Blogg', path: '/blogg' }, { name: display, path }],
+  });
+  const head = buildHeadGeneric({ title: `${display} – Artiklar om ${tag} | Hönsgården`, description: `Läs alla artiklar om ${tag}. Tips, guider och information från Hönsgården.`, path, ogImage: '/og-image.jpg', ogImageAlt: display, jsonLd });
+  return injectTopicBody(injectHead(template, head), renderTagBody({ tag, posts }));
 }
 
 function buildTermsPage(template) {
@@ -493,8 +648,8 @@ function buildMarketplaceCategoryPage(template, page) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root">${renderMarketplaceCategoryBody(page)}</div>`);
 }
 
-function buildArticlePage(template, post) {
-  return injectTopicBody(injectHead(template, buildArticleHead(post)), renderArticle(post));
+function buildArticlePage(template, post, context) {
+  return injectTopicBody(injectHead(template, buildArticleHead(post)), renderArticle(post, context));
 }
 
 
@@ -504,19 +659,27 @@ function buildRedirectPage(template, targetPath) {
   return injectHead(template, head).replace('<div id="root"></div>', `<div id="root"><p>Den här sidan har flyttats. Omdirigerar till <a href="${escapeHtml(targetUrl)}">${escapeHtml(targetUrl)}</a>…</p></div>`);
 }
 
+function ownPostImageUrl(post) {
+  const image = post.feature_image_url || post.cover_image_url;
+  if (!image) return '';
+  return image.startsWith('http') ? image : `${BASE_URL}${image}`;
+}
+
 // suppliedOrtSlugs: null = okänd likviditet (inkludera alla), Set = bara orter med aktivt utbud.
+// lastmod skrivs bara när ett verkligt ändringsdatum finns (artiklar, hubbar,
+// regelguider). Ett bygg-datum på varje URL lär Google att ignorera lastmod.
 function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = [], disallows = [], suppliedOrtSlugs = null) {
-  const now = new Date().toISOString().split('T')[0];
   const urls = [];
   const push = (loc, opts = {}) => {
     if (isRobotsDisallowed(loc, disallows)) return;
-    urls.push({ loc, lastmod: opts.lastmod || now, changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7' });
+    urls.push({ loc, lastmod: opts.lastmod || '', changefreq: opts.changefreq || 'monthly', priority: opts.priority || '0.7', image: opts.image || '' });
   };
 
-  STATIC_PAGES.forEach((page) => push(`${BASE_URL}${page.path}`, { changefreq: page.changefreq, priority: page.priority }));
-  Object.keys(CATEGORY_META).forEach((slug) => push(`${BASE_URL}/blogg/kategori/${slug}`, { changefreq: 'weekly', priority: '0.7' }));
-  tags.forEach((tag) => push(`${BASE_URL}/blogg/tagg/${encodeURIComponent(tag)}`, { changefreq: 'weekly', priority: '0.6' }));
-  posts.forEach((post) => push(`${BASE_URL}/blogg/${post.slug}`, { lastmod: (post.updated_at || post.published_at || now).split('T')[0], changefreq: 'weekly', priority: '0.8' }));
+  STATIC_PAGES.forEach((page) => push(`${BASE_URL}${page.path}`, { changefreq: page.changefreq, priority: page.priority, lastmod: page.path === '/blogg' ? lastModifiedDate(posts) : '' }));
+  // Bara kategorier med artiklar; tomma kategorier prerenderas med noindex.
+  categoriesWithPosts(posts, CATEGORY_META).forEach(({ slug }) => push(`${BASE_URL}/blogg/kategori/${slug}`, { changefreq: 'weekly', priority: '0.7', lastmod: lastModifiedDate(postsInCategory(posts, slug)) }));
+  tags.forEach((tag) => push(`${BASE_URL}/blogg/tagg/${encodeURIComponent(tag)}`, { changefreq: 'weekly', priority: '0.6', lastmod: lastModifiedDate(postsWithTag(posts, tag)) }));
+  posts.forEach((post) => push(`${BASE_URL}/blogg/${post.slug}`, { lastmod: lastModifiedDate([post]), changefreq: 'weekly', priority: '0.8', image: ownPostImageUrl(post) }));
   orter.forEach((ort) => {
     // Likviditetsgrind: orter utan aktivt utbud listas inte i sitemap och
     // får noindex i prerender (se ort-pages-steget). Runtime-sidan speglar
@@ -528,8 +691,16 @@ function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [
   breeds.forEach((b) => push(`${BASE_URL}/honsraser/${b.slug}`, { changefreq: 'monthly', priority: '0.8' }));
   marketplaceCategories.forEach((p) => push(`${BASE_URL}/marknad/k/${p.slug}`, { changefreq: 'daily', priority: '0.8' }));
 
-  const body = urls.map(u => `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <lastmod>${u.lastmod}</lastmod>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`;
+  const body = urls.map((u) => [
+    '  <url>',
+    `    <loc>${escapeXml(u.loc)}</loc>`,
+    u.lastmod ? `    <lastmod>${u.lastmod}</lastmod>` : '',
+    `    <changefreq>${u.changefreq}</changefreq>`,
+    `    <priority>${u.priority}</priority>`,
+    u.image ? `    <image:image><image:loc>${escapeXml(u.image)}</image:loc></image:image>` : '',
+    '  </url>',
+  ].filter(Boolean).join('\n')).join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${body}\n</urlset>\n`;
 }
 
 
@@ -553,20 +724,25 @@ function noteSkipped(name, reason) {
 
 async function main() {
   const template = await readFile('dist/index.html', 'utf8');
+  const pageTemplate = sitewideTemplate(template);
 
   // Write /demo before network-dependent steps so first-byte never falls
   // through to the prerendered landing shell at dist/index.html.
   await runStep('demo-page', async () => {
-    await writeRoute('demo', buildDemoPage(template));
+    await writeRoute('demo', buildDemoPage(pageTemplate));
   });
 
   let posts = [];
+  // Sammanslagna artiklar (blogConsolidation.mjs): bara redirect-stubbar.
+  let consolidatedPosts = [];
   let orter = [];
   let activeListingLocations = null; // null = okänd likviditet → fail-open
   const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
 
   await runStep('fetch-posts', async () => {
-    posts = await fetchPosts();
+    const fetched = await fetchPosts();
+    posts = withoutConsolidatedPosts(fetched);
+    consolidatedPosts = fetched.filter((post) => consolidatedBlogTarget(post.slug));
   });
   if (!posts.length) throw new Error('Refusing to publish a build without native blog articles');
   await runStep('load-orter', async () => {
@@ -576,13 +752,20 @@ async function main() {
     activeListingLocations = await fetchActiveListingLocations();
   });
 
+  // Reviewed editorial guides keep their individually reviewed shop links.
+  // If the list cannot be read, fall back to slug allowlists everywhere.
+  let reviewedSlugs = null;
+  await runStep('reviewed-editorial-slugs', async () => {
+    reviewedSlugs = await loadReviewedEditorialSlugs();
+  });
+
   await runStep('static-pages', async () => {
-    for (const page of STATIC_PAGES) await writeRoute(page.route, buildStaticPage(template, page));
-    await writeRoute('terms', buildTermsPage(template));
+    for (const page of STATIC_PAGES) await writeRoute(page.route, buildStaticPage(page.path === '/' ? template : pageTemplate, page, { posts }));
+    await writeRoute('terms', buildTermsPage(pageTemplate));
   });
 
   await runStep('category-pages', async () => {
-    for (const [slug, meta] of Object.entries(CATEGORY_META)) await writeRoute(`blogg/kategori/${slug}`, buildCategoryPage(template, slug, meta));
+    for (const [slug, meta] of Object.entries(CATEGORY_META)) await writeRoute(`blogg/kategori/${slug}`, buildCategoryPage(pageTemplate, slug, meta, posts));
   });
 
   // Indexhygiene: bara taggar med minst TAG_MIN_POSTS artiklar prerenderas
@@ -590,24 +773,31 @@ async function main() {
   // SPA-routen men får noindex av BlogTag.tsx i runtime.
   const tags = indexableTags(posts);
   await runStep('tag-pages', async () => {
-    for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(template, tag));
+    for (const tag of tags) await writeRoute(`blogg/tagg/${encodeURIComponent(tag)}`, buildTagPage(pageTemplate, tag, posts));
   });
 
   await runStep('blog-articles', async () => {
     await Promise.all(posts.flatMap((post) => {
-      const ops = [writeRoute(`blogg/${post.slug}`, buildArticlePage(template, post))];
+      const sitewide = reviewedSlugs ? !reviewedSlugs.has(post.slug) : false;
+      const ops = [writeRoute(`blogg/${post.slug}`, buildArticlePage(pageTemplate, post, { allPosts: posts, sitewide }))];
       if (!regulationSlugs.has(post.slug)) {
-        ops.push(writeRoute(`guider/${post.slug}`, buildRedirectPage(template, `/blogg/${post.slug}`)));
+        ops.push(writeRoute(`guider/${post.slug}`, buildRedirectPage(pageTemplate, `/blogg/${post.slug}`)));
       }
       return ops;
     }));
-    await writeRoute('guider', buildRedirectPage(template, '/blogg'));
-    await writeRoute('blogg/spåra-varpning-per-hona', buildRedirectPage(template, '/blogg/spara-varpning-per-hona'));
+    // Fallback where the host does not apply the vercel.json 308s.
+    for (const post of consolidatedPosts) {
+      const target = consolidatedBlogTarget(post.slug);
+      await writeRoute(`blogg/${post.slug}`, buildRedirectPage(pageTemplate, target));
+      await writeRoute(`guider/${post.slug}`, buildRedirectPage(pageTemplate, target));
+    }
+    await writeRoute('guider', buildRedirectPage(pageTemplate, '/blogg'));
+    await writeRoute('blogg/spåra-varpning-per-hona', buildRedirectPage(pageTemplate, '/blogg/spara-varpning-per-hona'));
   });
 
   await runStep('regulation-guides', async () => {
     for (const guide of REGULATION_GUIDES) {
-      await writeRoute(`guider/${guide.slug}`, buildRegulationGuidePage(template, guide));
+      await writeRoute(`guider/${guide.slug}`, buildRegulationGuidePage(pageTemplate, guide));
     }
   });
 
@@ -619,19 +809,19 @@ async function main() {
     for (const ort of orter) {
       const ogPath = await generateOrtOgImage(ort);
       const noSupply = suppliedOrtSlugs ? !suppliedOrtSlugs.has(ort.slug) : false;
-      await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(template, ort, ogPath, { noindex: noSupply }));
+      await writeRoute(`salja-agg/${ort.slug}`, buildOrtPage(pageTemplate, ort, ogPath, { noindex: noSupply }));
     }
   });
 
   await runStep('breed-pages', async () => {
     for (const breed of BREED_PRERENDER_PROFILES) {
-      await writeRoute(`honsraser/${breed.slug}`, buildBreedPage(template, breed));
+      await writeRoute(`honsraser/${breed.slug}`, buildBreedPage(pageTemplate, breed));
     }
   });
 
   await runStep('marketplace-category-pages', async () => {
     for (const page of MARKETPLACE_CATEGORY_PAGES) {
-      await writeRoute(`marknad/k/${page.slug}`, buildMarketplaceCategoryPage(template, page));
+      await writeRoute(`marknad/k/${page.slug}`, buildMarketplaceCategoryPage(pageTemplate, page));
     }
   });
 
@@ -654,7 +844,7 @@ async function main() {
         console.warn(`[sitemap] kunde inte hämta bloggposter live: ${error?.message || error}`);
       }
     }
-    const sitemapPosts = mergeBlogPosts(livePosts, fallbackPosts);
+    const sitemapPosts = withoutConsolidatedPosts(mergeBlogPosts(livePosts, fallbackPosts));
     if (!sitemapPosts.some((post) => post.slug === 'bast-honsras-sverige')) {
       throw new Error('sitemap saknar /blogg/bast-honsras-sverige');
     }
@@ -666,7 +856,7 @@ async function main() {
   });
 
   const ortSummary = suppliedOrtSlugs ? `${suppliedOrtSlugs.size}/${orter.length} med utbud` : `${orter.length} (likviditet okänd)`;
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- (+ ${consolidatedPosts.length} sammanslagna → redirect) + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
 
 
 

@@ -24,6 +24,12 @@ interface AuthContextType {
   register: (email: string, password: string, name: string, meta?: Record<string, any>) => Promise<any>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  /**
+   * False while a signed-in user's Plus status is still being read (local
+   * profile + Stripe sync). Until then `user.is_premium` may read false for a
+   * paying customer, so ad decisions must wait for this.
+   */
+  premiumResolved: boolean;
   refreshSubscription: () => Promise<void>;
   reloadProfile: () => Promise<void>;
 }
@@ -184,6 +190,7 @@ async function hydratePremiumProfile(
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [premiumResolvedFor, setPremiumResolvedFor] = useState<string | null>(null);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentUserRef = useRef<SupabaseUser | null>(null);
   const profileReadyRef = useRef(false);
@@ -233,12 +240,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const applySession = (session: Session | null, hydrateProfile: boolean) => {
       const supaUser = session?.user ?? null;
       if (!supaUser) {
-        if (isMounted) setUser(null);
+        if (isMounted) {
+          setUser(null);
+          setPremiumResolvedFor(null);
+        }
         stopPeriodicSync();
         return;
       }
 
-      if (isMounted) setUser(toBasicProfile(supaUser));
+      // Keep the hydrated profile on token refreshes for the same user;
+      // resetting to the basic profile would drop Plus status until the next sync.
+      if (isMounted) setUser((prev) => (prev?.id === supaUser.id ? prev : toBasicProfile(supaUser)));
       if (!hydrateProfile) return;
 
       // Sync profile from auth metadata (fills Google name/avatar on every login, never overwrites edits)
@@ -259,6 +271,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileReadyRef.current = true;
           startPeriodicSync(supaUser);
         }
+      }).finally(() => {
+        if (isMounted) setPremiumResolvedFor(supaUser.id);
       });
     };
 
@@ -387,7 +401,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, isAuthenticated: !!user, refreshSubscription, reloadProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, isAuthenticated: !!user, premiumResolved: !user || premiumResolvedFor === user.id, refreshSubscription, reloadProfile }}>
       {children}
     </AuthContext.Provider>
   );
@@ -409,6 +423,7 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     user: DEMO_USER_PROFILE,
     loading: false,
     isAuthenticated: true,
+    premiumResolved: true,
     login: async () => {},
     loginWithGoogle: async () => {},
     register: async () => ({}),

@@ -11,6 +11,8 @@
  * Pure ESM data + string matching only — safe to import from Node scripts.
  */
 
+import { CONSOLIDATED_BLOG_REDIRECTS } from '../data/blogConsolidation.mjs';
+
 /** Infra-level permanent redirects (308), evaluated before the filesystem. */
 export const ROUTE_REDIRECTS = [
   { source: '/index', destination: '/', statusCode: 308 },
@@ -20,6 +22,8 @@ export const ROUTE_REDIRECTS = [
   // exakt en indexerbar URL per sida.
   { source: '/dvarghons', destination: '/honsraser/dvarghons', statusCode: 308 },
   { source: '/skansk-blommehona', destination: '/honsraser/skansk-blommehona', statusCode: 308 },
+  // Sammanslagna bloggartiklar med samma sökavsikt (src/data/blogConsolidation.mjs).
+  ...CONSOLIDATED_BLOG_REDIRECTS,
 ];
 
 /**

@@ -4,139 +4,21 @@
  *
  * Granngården and Vetzoo stay naked — wrap BLOCKED (no real program `a=` /
  * tracking host after repo + PR 25/26/34 lookup). Do not invent IDs.
+ * Pure shop programs (`sitewide: true`) apply to every article; reviewed
+ * editorial guides pass `{ sitewide: false }`. Tracked anchors get
+ * `rel="sponsored noopener"`.
+ * Program IDs and tracking hosts live in `adtractionPrograms.mjs`.
  * Keep in sync with `src/lib/adtractionShopLinks.ts` (React app + tests).
  */
 
-export const ADTRACTION_SOURCE_ID = '2056181186';
-export const PLINDBERG_AD_ID = '1954027467';
-export const VETAPOTEK_AD_ID = '1701463575';
-export const WEXTHUSET_AD_ID = '1577762835';
-export const FIRSTVET_AD_ID = '1615741779';
-export const OUTL1_AD_ID = '1728546059';
-export const BONDEN_AD_ID = '1960530621';
+import { SHOP_PROGRAMS as PROGRAMS, unescapeHref, wrapShopDestination } from './adtractionPrograms.mjs';
 
-export const PLINDBERG_REWRITE_SLUGS = [
-  'bygga-honshus',
-  'klacka-agg',
-  'vad-ater-hons',
-  'kopa-hons',
-  'vattenautomat-hons',
-  'varmelampa-hons',
-  'varprede-hons',
-  'sittpinnar-hons',
-  'kalkben-hos-hons',
-  'hur-manga-agg-lagger-en-hona',
-  'brahma-hons',
-  'hons-pa-vintern',
-  'skaffa-hons-nyborjare',
-  'fjaderplockning-hons',
-];
+export * from './adtractionPrograms.mjs';
 
-export const VETAPOTEK_REWRITE_SLUGS = [
-  'vattenautomat-hons',
-  'vad-ater-hons',
-  'sittpinnar-hons',
-  'kalkben-hos-hons',
-  'kvalster-hons',
-  'honshus-2026-kompletta-kopguiden',
-  'aggledarinflammation-hons',
-  'hur-manga-agg-lagger-en-hona',
-  'hons-pa-vintern',
-  'skaffa-hons-nyborjare',
-];
-
-export const WEXTHUSET_REWRITE_SLUGS = [
-  'vattenautomat-hons',
-  'varmelampa-hons',
-  'sittpinnar-hons',
-  'kvalster-hons',
-  'kalkben-hos-hons',
-  'vad-ater-hons',
-  'hur-manga-agg-lagger-en-hona',
-  'hons-pa-vintern',
-  'skaffa-hons-nyborjare',
-];
-
-export const FIRSTVET_REWRITE_SLUGS = [
-  'varmelampa-hons',
-  'kvalster-hons',
-  'kalkben-hos-hons',
-  'vad-ater-hons',
-  'aggledarinflammation-hons',
-  'skaffa-hons-nyborjare',
-];
-
-export const BONDEN_REWRITE_SLUGS = [
-  'bygga-honshus',
-  'vad-ater-hons',
-  'kopa-hons',
-  'vattenautomat-hons',
-  'varmelampa-hons',
-  'varprede-hons',
-  'sittpinnar-hons',
-  'kalkben-hos-hons',
-  'kvalster-hons',
-  'hur-manga-agg-lagger-en-hona',
-  'brahma-hons',
-  'hons-pa-vintern',
-  'skaffa-hons-nyborjare',
-  'ruggning-hons',
-  'paduan-hons',
-];
-
-export const OUTL1_REWRITE_SLUGS = ['honshus-2026-kompletta-kopguiden'];
-
-const PROGRAMS = [
-  {
-    slugs: PLINDBERG_REWRITE_SLUGS,
-    trackingHost: 'do.p-lindberg.se',
-    adId: PLINDBERG_AD_ID,
-    encodeDestination: true,
-    isNakedHost: (hostname) => hostname === 'www.p-lindberg.se' || hostname === 'p-lindberg.se',
-  },
-  {
-    slugs: VETAPOTEK_REWRITE_SLUGS,
-    trackingHost: 'id.vetapotek.se',
-    adId: VETAPOTEK_AD_ID,
-    encodeDestination: false,
-    isNakedHost: (hostname) => hostname === 'www.vetapotek.se' || hostname === 'vetapotek.se',
-  },
-  {
-    slugs: WEXTHUSET_REWRITE_SLUGS,
-    trackingHost: 'go.wexthuset.com',
-    adId: WEXTHUSET_AD_ID,
-    encodeDestination: true,
-    isNakedHost: (hostname) => hostname === 'www.wexthuset.com' || hostname === 'wexthuset.com',
-  },
-  {
-    slugs: FIRSTVET_REWRITE_SLUGS,
-    trackingHost: 'do.shop.firstvet.com',
-    adId: FIRSTVET_AD_ID,
-    encodeDestination: true,
-    isNakedHost: (hostname) => hostname === 'www.firstvet.com' || hostname === 'firstvet.com',
-  },
-  {
-    slugs: OUTL1_REWRITE_SLUGS,
-    trackingHost: 'do.outl1.se',
-    adId: OUTL1_AD_ID,
-    encodeDestination: false,
-    isNakedHost: (hostname) => hostname === 'www.outl1.se' || hostname === 'outl1.se',
-  },
-  {
-    slugs: BONDEN_REWRITE_SLUGS,
-    trackingHost: 'pin.bonden.se',
-    adId: BONDEN_AD_ID,
-    encodeDestination: false,
-    isNakedHost: (hostname) => hostname === 'www.bonden.se' || hostname === 'bonden.se',
-  },
-];
-
-const HTML_HREF_RE = /href=(["'])([^"']+)\1/gi;
+const ANCHOR_OPEN_RE = /<a\b[^>]*>/gi;
+const HREF_ATTR_RE = /\shref=(["'])([^"']+)\1/i;
+const REL_ATTR_RE = /\srel=(["'])([^"']*)\1/i;
 const MARKDOWN_LINK_RE = /\]\((https?:\/\/[^)\s]+)\)/gi;
-
-function unescapeHref(href) {
-  return href.replace(/&amp;/g, '&').trim();
-}
 
 function parseAbsoluteUrl(href) {
   try {
@@ -146,51 +28,63 @@ function parseAbsoluteUrl(href) {
   }
 }
 
-function programForSlugAndHost(slug, hostname) {
+function programForSlugAndHost(slug, hostname, sitewide) {
   for (const program of PROGRAMS) {
-    if (!program.slugs.includes(slug)) continue;
-    if (program.isNakedHost(hostname)) return program;
+    if (!program.isNakedHost(hostname)) continue;
+    if (program.slugs.includes(slug) || (sitewide && program.sitewide)) return program;
   }
   return null;
 }
 
-export function wrapShopDestination(destination, program) {
-  const dest = unescapeHref(destination);
-  const urlParam = program.encodeDestination ? encodeURIComponent(dest) : dest;
-  return `https://${program.trackingHost}/t/t?a=${program.adId}&as=${ADTRACTION_SOURCE_ID}&t=2&tk=1&url=${urlParam}`;
-}
-
-const PACKET_PROGRAM_BY_MERCHANT = {
-  'p-lindberg': PROGRAMS.find((program) => program.adId === PLINDBERG_AD_ID),
-  outl1: PROGRAMS.find((program) => program.adId === OUTL1_AD_ID),
-  bonden: PROGRAMS.find((program) => program.adId === BONDEN_AD_ID),
-};
-
-export function buildTrackedShopHref(merchant, destination) {
-  return wrapShopDestination(destination, PACKET_PROGRAM_BY_MERCHANT[merchant]);
-}
-
-function rewriteIfNakedShopUrl(href, slug, htmlAttribute) {
-  if (!slug) return href;
+export function shopMerchantFromHref(href) {
   const parsed = parseAbsoluteUrl(href);
-  if (!parsed) return href;
-  const program = programForSlugAndHost(slug, parsed.hostname.toLowerCase());
-  if (!program) return href;
-  const tracked = wrapShopDestination(parsed.toString(), program);
-  return htmlAttribute ? tracked.replace(/&/g, '&amp;') : tracked;
+  if (!parsed) return null;
+  const hostname = parsed.hostname.toLowerCase();
+  const program = PROGRAMS.find((item) => item.trackingHost === hostname || item.isNakedHost(hostname));
+  return program?.merchant ?? null;
 }
 
-export function rewriteNakedShopAffiliateHrefs(content, slug) {
+function isTrackedShopHref(href) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return false;
+  const hostname = parsed.hostname.toLowerCase();
+  return PROGRAMS.some((program) => program.trackingHost === hostname);
+}
+
+function withSponsoredRel(anchorOpenTag) {
+  const relMatch = anchorOpenTag.match(REL_ATTR_RE);
+  if (!relMatch) return anchorOpenTag.replace(/^<a\b/i, '<a rel="sponsored noopener"');
+  const tokens = relMatch[2].split(/\s+/).filter(Boolean).map((token) => token.toLowerCase());
+  if (tokens.includes('sponsored') && tokens.includes('noopener')) return anchorOpenTag;
+  const next = [...new Set([...tokens, 'sponsored', 'noopener'])].join(' ');
+  return anchorOpenTag.replace(REL_ATTR_RE, ` rel=${relMatch[1]}${next}${relMatch[1]}`);
+}
+
+function trackedShopUrl(href, slug, sitewide) {
+  const parsed = parseAbsoluteUrl(href);
+  if (!parsed) return null;
+  const program = programForSlugAndHost(slug, parsed.hostname.toLowerCase(), sitewide);
+  return program ? wrapShopDestination(parsed.toString(), program) : null;
+}
+
+export function rewriteNakedShopAffiliateHrefs(content, slug, { sitewide = true } = {}) {
   if (!slug || !content) return content;
 
-  let out = content.replace(HTML_HREF_RE, (full, quote, href) => {
-    const next = rewriteIfNakedShopUrl(href, slug, true);
-    return next === href ? full : `href=${quote}${next}${quote}`;
+  let out = content.replace(ANCHOR_OPEN_RE, (tag) => {
+    const hrefMatch = tag.match(HREF_ATTR_RE);
+    if (!hrefMatch) return tag;
+    const [, quote, href] = hrefMatch;
+    const tracked = trackedShopUrl(href, slug, sitewide);
+    if (tracked) {
+      const replaced = tag.replace(HREF_ATTR_RE, ` href=${quote}${tracked.replace(/&/g, '&amp;')}${quote}`);
+      return withSponsoredRel(replaced);
+    }
+    return isTrackedShopHref(href) ? withSponsoredRel(tag) : tag;
   });
 
   out = out.replace(MARKDOWN_LINK_RE, (full, url) => {
-    const next = rewriteIfNakedShopUrl(url, slug, false);
-    return next === url ? full : `](${next})`;
+    const tracked = trackedShopUrl(url, slug, sitewide);
+    return tracked ? `](${tracked})` : full;
   });
 
   return out;
