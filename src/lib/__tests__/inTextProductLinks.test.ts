@@ -98,3 +98,18 @@ describe('relevance rules', () => {
     expect(matchSmartProducts([gunga], kvalster, 5)).toHaveLength(0);
   });
 });
+
+describe('generic matches', () => {
+  it('does not place a product only because the text mentions hönshus', () => {
+    const gunga = product({ id: 'g2', name: 'Aktivitetsgunga', keywords: ['hönshus', 'aktivering'], category: 'hus' });
+    const ljus = { slug: 'hons-varper-inte', title: 'Höns värper inte', heading: '1. Ljusbrist', text: 'Hönsen behöver ljus. Sätt en lampa med timer i hönshuset under vintern.' };
+    expect(matchSmartProducts([gunga], ljus, 5)).toHaveLength(0);
+  });
+
+  it('places generic hardware only when the heading or title is about it', () => {
+    const borr = product({ id: 'drill', name: 'Borr- och skruvdragare 18 V', keywords: ['skruvdragare', 'borra'], category: 'redskap' });
+    const body = { slug: 'klacka-agg', title: 'Kläcka ägg', heading: 'Utrustning som oftast behövs', text: 'Du kan behöva en skruvdragare för att montera kläckskåpet och hönshuset.' };
+    expect(matchSmartProducts([borr], body, 5)).toHaveLength(0);
+    expect(matchSmartProducts([borr], { ...body, heading: 'Välj skruvdragare för bygget av hönshuset' }, 5).map((item) => item.id)).toEqual(['drill']);
+  });
+});

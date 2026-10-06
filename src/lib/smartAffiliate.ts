@@ -33,6 +33,7 @@ const STOP_WORDS = new Set([
 
 const GENERIC_KEYWORDS = new Set([
   'gård', 'höns', 'odling', 'redskap', 'trädgård', 'utrustning', 'vatten',
+  'hönshus', 'hönsgård', 'fjäderfä',
 ]);
 
 const CATEGORY_SIGNALS: Record<string, string[]> = {
@@ -155,29 +156,38 @@ export function scoreAffiliateProduct(
   // Evidence about this product. The category bonus below only ranks
   // products that already have some; it never qualifies one on its own.
   let score = 0;
+  // Specific (non-generic) hits; headline = heading, title or slug.
+  let evidence = 0;
+  let headlineEvidence = 0;
   const productKeywords = product.keywords ?? [];
 
   for (const keyword of productKeywords) {
     const normalizedKeyword = normalizeAffiliateText(keyword);
     if (normalizedKeyword.length < 3 || NORMALIZED_STOP_WORDS.has(normalizedKeyword)) continue;
     const generic = GENERIC_KEYWORDS.has(keyword.toLowerCase());
+    const inHeadline = containsPhrase(heading, normalizedKeyword) || containsPhrase(title, normalizedKeyword) || containsPhrase(slug, normalizedKeyword);
     if (containsPhrase(heading, normalizedKeyword)) score += generic ? 4 : 18;
     if (containsPhrase(title, normalizedKeyword)) score += generic ? 3 : 10;
     if (containsPhrase(slug, normalizedKeyword)) score += generic ? 2 : 7;
     if (containsPhrase(section, normalizedKeyword)) score += generic ? 1 : 5;
+    if (!generic && (inHeadline || containsPhrase(section, normalizedKeyword))) evidence += 1;
+    if (!generic && inHeadline) headlineEvidence += 1;
   }
 
   const nameTokens = meaningfulTokens(product.name).filter((token) => !NAME_NOISE.has(token));
   for (const token of nameTokens) {
-    if (containsPhrase(heading, token)) score += 9;
-    else if (containsPhrase(title, token)) score += 6;
-    else if (containsPhrase(section, token)) score += 3;
+    if (containsPhrase(heading, token)) { score += 9; evidence += 1; headlineEvidence += 1; }
+    else if (containsPhrase(title, token)) { score += 6; evidence += 1; headlineEvidence += 1; }
+    else if (containsPhrase(section, token)) { score += 3; evidence += 1; }
   }
 
   const legacySlugs = (product as SmartAffiliateProduct & { slugs?: string[] }).slugs;
-  if (legacySlugs?.some((item) => context.slug.includes(item))) score += 100;
+  if (legacySlugs?.some((item) => context.slug.includes(item))) { score += 100; evidence += 1; headlineEvidence += 1; }
 
-  if (score === 0) return Number.NEGATIVE_INFINITY;
+  if (evidence === 0) return Number.NEGATIVE_INFINITY;
+  // Generic hardware (drills, fittings, thermostats) only where the heading or
+  // title is about it, never because the body text mentions it in passing.
+  if (product.category === 'redskap' && headlineEvidence === 0) return Number.NEGATIVE_INFINITY;
 
   // Description overlap only ranks products that already matched: generic
   // description words ("vatten", "enkel") are not evidence on their own.
