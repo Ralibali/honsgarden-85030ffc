@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20261001-undvik-dubbelregistrering-agg",
+  "author": "ChatGPT",
+  "status": "ready",
+  "written_at": "2026-10-01T08:46:15.434899+00:00",
+  "sources_checked_at": "2026-10-06T07:15:23.619121+00:00",
+  "slug": "undvik-dubbelregistrering-agg",
+  "title": "När flera samlar ägg: undvik dubbelregistrering",
+  "description": "Bestäm vem som antecknar äggen när flera hjälps åt. En enkel rutin för att skilja nya fynd, redan räknade ägg och uppgifter som behöver redas ut.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Undvika att samma insamlade ägg antecknas två gånger vid manuell överlämning mellan personer; skilt från beräkning av värpning och allmän äggloggning.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>När flera personer hjälper till i hönsgården kan samma ägg lätt bli föremål för två anteckningar. Någon samlar in, en annan räknar det som står på bänken och båda tror att dagens journal behöver fyllas i. En gemensam rutin börjar med en tydlig fråga: vem skriver upp just den här insamlingen?</p><p>Utgå från hur ni redan arbetar och välj ett ställe för dagens noteringar. Det kan vara en anteckning på papper eller ett verktyg ni använder. Rutinen nedan kräver ingen särskild funktion för delade konton och säger inget om hur äggen ska hanteras eller förvaras.</p><h2>Bestäm vad en anteckning betyder</h2><p>Skriv om er anteckning avser en enskild insamling eller dagens sammanlagda antal. Blanda inte dessa två sätt utan en tydlig förklaring. Om en person har skrivit tre för morgonens insamling och nästa skriver fem som dagens summa kan talen annars råka läggas ihop.</p><p>Bestäm också vilket datum anteckningen gäller. En uppgift som förs in senare ska kopplas till den verkliga insamlingsdagen. Om dagen är okänd ska osäkerheten stå kvar i underlaget tills den går att reda ut.</p><h2>Låt insamlingen få en ansvarig antecknare</h2><p>Kom överens om vem som dokumenterar varje tillfälle. Den som hjälper till kan lämna sitt besked till antecknaren utan att samtidigt göra en egen registrering av samma händelse. Skriv hur överlämningen sker så att rutinen fungerar även när någon annan hjälper till.</p><p>En praktisk överlämningsrad kan vara: datum, tillfälle, antal, vem som räknade och om uppgiften är införd i den gemensamma journalen. Använd exempelvis ordet ”infört” när antecknaren är klar. Det gör en färdig notering lättare att skilja från ett meddelande som fortfarande väntar på hantering.</p><h2>Prova med ett påhittat exempel</h2><p>Anta att morgonens insamling var tre ägg och en senare insamling två. Om ni antecknar per insamling blir det två rader, med tre respektive två. Om ni i stället skriver en dagssumma blir slutuppgiften fem. Dessa exempel beskriver samma påhittade dag på två olika sätt.</p><p>Fråga nästa person om underlaget går att förstå utan en muntlig förklaring. Om personen tolkar dagssumman som ytterligare en insamling behöver rubriken eller rutinen ändras innan den används i den riktiga journalen.</p><h2>Red ut en misstänkt dubblett innan du ändrar</h2><p>Gå tillbaka till den ursprungliga noteringen och fråga den som räknade. Två lika stora antal är inte i sig bevis på en dubblett; de kan avse två olika tillfällen. Skriv vad som är oklart och undvik att ändra flera dagar utifrån en gissning.</p><p>När ni har klarlagt felet kan ni använda en <a href=\"/blogg/ratta-flockanteckning-behall-sammanhang\">tydlig rättelse i flockjournalen</a>. Behåll sammanhanget kring vad som korrigerades och varför. En osäker uppgift ska inte bli ett säkert tal bara för att dagsöversikten ska se färdig ut.</p><h2>Lägg rutinen där nästa person hittar den</h2><p>Ta med rutinen i <a href=\"/blogg/honsvakt-checklista-overlamning\">överlämningen till hönsvakten</a> och prova den tillsammans vid ett tillfälle. Det viktigaste är att nästa person kan se vad som redan är infört och vem som tar nästa steg.</p><p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> för att se appens presentation av dagliga äggnoteringar. AI-assisterad originalguide med en manuell arbetsrutin. Artikeln utlovar ingen automatisk dubblettkontroll eller särskild åtkomst för flera personer.</p>",
+  "published_at": "2026-10-06T07:15:23.619121+00:00",
+  "quality_checked_at": "2026-10-06T07:15:23.619121+00:00"
+}
