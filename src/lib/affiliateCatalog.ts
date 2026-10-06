@@ -17,6 +17,10 @@ export function advertiserFromTrackingUrl(url: string | null | undefined): strin
   try {
     const parsed = new URL(url);
     if (parsed.hostname.endsWith('addrevenue.io')) return ADDREVENUE_ADVERTISERS[parsed.searchParams.get('a') ?? ''] ?? null;
+    if (parsed.hostname.endsWith('awin1.com')) {
+      const merchantId = parsed.searchParams.get('awinmid');
+      return merchantId ? `awin-${merchantId}` : 'awin';
+    }
   } catch {
     /* not a URL */
   }

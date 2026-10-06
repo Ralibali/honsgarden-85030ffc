@@ -64,3 +64,9 @@ describe('catalog safety', () => {
     expect(matchSmartProducts([bolt], context, 5)).toHaveLength(0);
   });
 });
+
+describe('affiliate network links', () => {
+  it('maps Awin clicks to their merchant id', () => {
+    expect(advertiserFromTrackingUrl('https://www.awin1.com/cread.php?awinmid=12345&awinaffid=1&ued=x')).toBe('awin-12345');
+  });
+});

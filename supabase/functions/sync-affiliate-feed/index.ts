@@ -2,6 +2,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { parseDelimited } from './csv.ts';
 import { isRelevantAddRevenue, mapAddRevenueProduct, type FeedAdvertiser } from './addrevenue.ts';
 import { isRelevantAdtraction, mapAdtractionProduct } from './adtraction.ts';
+import { isAwinFeedUrl, isRelevantAwin, mapAwinProduct, readFeedText, resolveAwinFeedUrl } from './awin.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -20,12 +21,19 @@ async function save(client: Client, advertiser: FeedAdvertiser, records: Record<
 }
 
 async function sync(client: Client, advertiser: FeedAdvertiser, timestamp: string) {
-  const response = await fetch(advertiser.product_feed_url);
+  const awin = isAwinFeedUrl(advertiser.product_feed_url);
+  const feedUrl = awin ? resolveAwinFeedUrl(advertiser.product_feed_url, Deno.env.get('AWIN_API_KEY')) : advertiser.product_feed_url;
+  const response = await fetch(feedUrl);
   if (!response.ok) throw new Error(`feed ${response.status}`);
-  const text = await response.text();
+  const text = await readFeedText(response);
   let records: Record<string, unknown>[];
 
-  if (advertiser.product_feed_url.includes('addrevenue.io')) {
+  if (awin) {
+    records = parseDelimited(text, ',')
+      .filter((row) => (row.aw_product_id || row.merchant_product_id) && isRelevantAwin(row))
+      .map((row) => mapAwinProduct(row, advertiser.id, timestamp))
+      .filter((record) => record.image_url && record.affiliate_url);
+  } else if (advertiser.product_feed_url.includes('addrevenue.io')) {
     records = parseDelimited(text, ';')
       .filter((row) => row.id && isRelevantAddRevenue(row, advertiser.slug))
       .map((row) => mapAddRevenueProduct(row, advertiser, timestamp))
