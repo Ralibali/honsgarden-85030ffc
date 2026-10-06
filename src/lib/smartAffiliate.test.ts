@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ADDREVENUE_PRODUCTS } from '@/data/addRevenueProducts';
-import { matchSmartProducts } from '@/lib/smartAffiliate';
+import { matchSmartProducts, type SmartAffiliateProduct } from '@/lib/smartAffiliate';
 
 describe('smart affiliate matching', () => {
   it('matchar beskärningsprodukter mot ett beskärningsavsnitt', () => {
@@ -40,4 +40,26 @@ describe('smart affiliate matching', () => {
       expect(product.trackingUrl.startsWith('https://addrevenue.io/')).toBe(true);
     }
   });
+
+  const product = (overrides: Partial<SmartAffiliateProduct>): SmartAffiliateProduct => ({
+    id: 'p', advertiser: 'p-lindberg', name: 'Produkt', price: '1 kr', imageUrl: 'https://x/y.jpg',
+    trackingUrl: 'https://do.p-lindberg.se/t/t', keywords: [], category: 'redskap', ...overrides,
+  });
+
+  it('matchar korta ord bara som hela ord eller böjningar', () => {
+    const kultivator = product({ id: 'k', name: 'Kultivator', keywords: ['jord', 'odla'], category: 'odling' });
+    const regler = { slug: 'regler', title: 'Registrera höns hos Jordbruksverket', heading: 'Anmälan till Jordbruksverket', text: 'Jordbruksverket vill ha uppgifter om flockens storlek och information om platsen.' };
+    expect(matchSmartProducts([kultivator], regler, 5)).toHaveLength(0);
+    const odling = { slug: 'odla', title: 'Odla grönsaker', heading: 'Förbered jorden', text: 'Luckra jorden innan du sår och rensa bort ogräs ur rabatten.' };
+    expect(matchSmartProducts([kultivator], odling, 5).map((item) => item.id)).toEqual(['k']);
+  });
+
+  it('kräver träff på själva produkten, inte bara på kategorin', () => {
+    const trag = product({ id: 't', name: 'Fodertråg', keywords: ['fodertråg'], category: 'foder' });
+    const generic = { slug: 'rutiner', title: 'Rutiner i hönsgården', heading: 'Foder och mat', text: 'Ge foder på samma tid varje dag och notera hur mycket mat som går åt.' };
+    expect(matchSmartProducts([trag], generic, 5)).toHaveLength(0);
+    const specific = { ...generic, heading: 'Välj ett fodertråg som inte spiller' };
+    expect(matchSmartProducts([trag], specific, 5).map((item) => item.id)).toEqual(['t']);
+  });
 });
+

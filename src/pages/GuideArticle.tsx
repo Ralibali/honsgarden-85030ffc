@@ -15,6 +15,9 @@ import { digitalGuideAudienceForArticle } from '@/lib/digitalGuidePlacements.mjs
 import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
 import { useShowAds } from '@/hooks/useShowAds';
+import { useSmartAffiliateCatalog } from '@/hooks/useSmartAffiliateCatalog';
+import { linkProductMentions } from '@/lib/inTextProductLinks';
+import type { SmartAffiliateProduct } from '@/lib/smartAffiliate';
 import { trackEvent } from '@/lib/analytics';
 import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
 import { AffiliateProductBox } from '@/components/AffiliateProductBox';
@@ -108,6 +111,7 @@ function renderContent(
   glossary?: { keyword: string; url: string; rel: string }[],
   slug?: string,
   showAds = false,
+  productCatalog: SmartAffiliateProduct[] = [],
 ): string {
   // Internal links to merged articles point straight at their target.
   let raw = rewriteConsolidatedBlogLinks(isHtmlContent(content) ? content : renderBlogMarkdown(content));
@@ -182,6 +186,11 @@ function renderContent(
     }
   }
 
+  // In-text product links: first mention of a product type → matching product (ads, non-Plus only).
+  if (showAds && slug && allowsAutomaticProductPlacements(slug)) {
+    raw = linkProductMentions(raw, productCatalog, { slug, title: postTitle });
+  }
+
   // Rasbilder efter matchande h3-rubriker (t.ex. "### 1. Hedemora" → bild på Hedemora)
   raw = injectBreedFigures(raw);
 
@@ -213,6 +222,7 @@ function GuideArticlePage() {
   const { slug } = useParams<{ slug: string }>();
   const { isAuthenticated } = useAuth();
   const showAds = useShowAds();
+  const productCatalog = useSmartAffiliateCatalog();
   const [readingProgress, setReadingProgress] = useState(0);
 
   // Fetch current post
@@ -298,8 +308,9 @@ function GuideArticlePage() {
       glossary,
       slug,
       showAds,
+      productCatalog,
     );
-  }, [post, allPosts, glossary, slug, showAds]);
+  }, [post, allPosts, glossary, slug, showAds, productCatalog]);
 
   const [articleIntroHtml, articleRestHtml] = useMemo(() => {
     if (!renderedArticleHtml) return ['', ''];

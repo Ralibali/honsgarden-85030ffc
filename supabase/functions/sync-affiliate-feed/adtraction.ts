@@ -9,7 +9,8 @@ export function isRelevantAdtraction(row: FeedRow): boolean {
   return INCLUDE.some((term) => text.includes(term));
 }
 
-function category(row: FeedRow): string {
+/** Poultry product category from name + feed category (also used for Awin). */
+export function poultryCategory(row: FeedRow): string {
   const text = `${row.Name ?? ''} ${row.Category ?? ''}`.toLowerCase();
   if (/(startset|startpaket)/.test(text)) return 'startset';
   if (/(kläck|ruvmaskin|äggkläck|hygrometer)/.test(text)) return 'klackning';
@@ -25,7 +26,7 @@ function category(row: FeedRow): string {
 export function mapAdtractionProduct(row: FeedRow, advertiserId: string, timestamp: string) {
   const name = decodeFeedText(row.Name ?? '');
   const description = decodeFeedText(row.Description ?? '');
-  const productCategory = category(row);
+  const productCategory = poultryCategory(row);
   const price = parseFeedMoney(row.Price);
   const original = parseFeedMoney(row.OriginalPrice);
   const signalWords = normalizeFeedText(`${name} ${description}`).split(' ').filter((word) => word.length >= 4).slice(0, 20);

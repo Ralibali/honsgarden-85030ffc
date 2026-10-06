@@ -44,11 +44,14 @@ export function shopMerchantFromHref(href) {
   return program?.merchant ?? null;
 }
 
+/** Affiliate network click hosts whose links must also be marked sponsored. */
+const NETWORK_TRACKING_HOSTS = new Set(['www.awin1.com', 'awin1.com', 'addrevenue.io']);
+
 function isTrackedShopHref(href) {
   const parsed = parseAbsoluteUrl(href);
   if (!parsed) return false;
   const hostname = parsed.hostname.toLowerCase();
-  return PROGRAMS.some((program) => program.trackingHost === hostname);
+  return NETWORK_TRACKING_HOSTS.has(hostname) || PROGRAMS.some((program) => program.trackingHost === hostname);
 }
 
 function withSponsoredRel(anchorOpenTag) {
