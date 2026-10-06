@@ -1,15 +1,11 @@
 name: Affiliate coverage report
 
 # Report of which catalog products the blog can place in each article,
-# sorted by 30-day views. Read-only: uses the public publishable key.
+# sorted by 30-day views, plus a health check of every product feed.
+# Read-only: uses the public publishable key. Run it from the Actions tab
+# ("Run workflow"); the report appears in the run summary.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - claude/eloquent-keller-1a8htr
-    paths:
-      - scripts/affiliate-coverage.ts
-      - .github/workflows/affiliate-coverage.yml
 
 permissions:
   contents: read
