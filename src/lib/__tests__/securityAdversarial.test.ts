@@ -25,6 +25,23 @@ function walk(dir: string, ext: RegExp): string[] {
   return out;
 }
 
+function tableName(raw: string): string {
+  const name = raw.replace(/["\s]/g, '').toLowerCase();
+  return name.includes('.') ? name : `public.${name}`;
+}
+
+function rlsCoverage(sql: string) {
+  const created = new Set<string>();
+  for (const m of sql.matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?((?:"?\w+"?\s*\.\s*)?"?\w+"?)/gi)) {
+    created.add(tableName(m[1]));
+  }
+  const events: { table: string; on: boolean }[] = [];
+  for (const m of sql.matchAll(/alter\s+table\s+(?:only\s+)?((?:"?\w+"?\s*\.\s*)?"?\w+"?)\s+(enable|disable)\s+row\s+level\s+security/gi)) {
+    events.push({ table: tableName(m[1]), on: m[2].toLowerCase() === 'enable' });
+  }
+  return { created, events, rlsEnabled: new Set(events.filter((event) => event.on).map((event) => event.table)) };
+}
+
 describe('RLS-täckning över migrationskedjan', () => {
   const migrationsDir = join(ROOT, 'supabase', 'migrations');
   const sqlFiles = readdirSync(migrationsDir)
@@ -32,15 +49,21 @@ describe('RLS-täckning över migrationskedjan', () => {
     .sort();
   const chain = sqlFiles.map((f) => readFileSync(join(migrationsDir, f), 'utf8')).join('\n');
 
-  const created = new Set<string>();
-  for (const m of chain.matchAll(/create table (?:if not exists )?(?:public\.)?"?(\w+)"?/gi)) {
-    created.add(m[1].toLowerCase());
-  }
+  const { created, rlsEnabled, events } = rlsCoverage(chain);
 
-  const rlsEnabled = new Set<string>();
-  for (const m of chain.matchAll(/alter table (?:public\.)?"?(\w+)"? enable row level security/gi)) {
-    rlsEnabled.add(m[1].toLowerCase());
-  }
+  it('skiljer schema från tabell och granskar privata tabeller separat', () => {
+    const sample = rlsCoverage(`
+      create table public.sources (id uuid);
+      create table "support_hub_private"."sources" (id uuid);
+      create table support_hub_private.outbox (id uuid);
+      alter table public.sources enable row level security;
+      alter table support_hub_private.outbox enable row level security;
+      alter table support_hub_private.outbox disable row level security;
+    `);
+    expect([...sample.created]).toEqual(['public.sources', 'support_hub_private.sources', 'support_hub_private.outbox']);
+    expect([...sample.created].filter((table) => !sample.rlsEnabled.has(table))).toEqual(['support_hub_private.sources']);
+    expect(sample.events.at(-1)).toEqual({ table: 'support_hub_private.outbox', on: false });
+  });
 
   it('varje skapad tabell har RLS påslaget någonstans i kedjan', () => {
     const missing = [...created].filter((t) => !rlsEnabled.has(t));
@@ -49,10 +72,6 @@ describe('RLS-täckning över migrationskedjan', () => {
 
   it('ingen tabell avslutas i RLS-avstängt tillstånd', () => {
     // Per tabell: sista enable/disable-händelsen i kedjan måste vara enable.
-    const events: { table: string; on: boolean; pos: number }[] = [];
-    for (const m of chain.matchAll(/alter table (?:public\.)?"?(\w+)"? (enable|disable) row level security/gi)) {
-      events.push({ table: m[1].toLowerCase(), on: m[2].toLowerCase() === 'enable', pos: m.index ?? 0 });
-    }
     const lastByTable = new Map<string, boolean>();
     for (const e of events) lastByTable.set(e.table, e.on);
     const disabled = [...lastByTable.entries()].filter(([, on]) => !on).map(([t]) => t);
@@ -62,8 +81,8 @@ describe('RLS-täckning över migrationskedjan', () => {
   it('användardatatabeller har minst en policy (eller är medvetet deny-all)', () => {
     const policyCount = new Map<string, number>();
     // CREATE POLICY "Namn med mellanslag" ON public.tabell — hantera citattecken.
-    for (const m of chain.matchAll(/create policy\s+(?:"[^"]+"|\S+)\s+on\s+(?:public\.)?"?(\w+)"?/gi)) {
-      const t = m[1].toLowerCase();
+    for (const m of chain.matchAll(/create policy\s+(?:"[^"]+"|\S+)\s+on\s+((?:"?\w+"?\s*\.\s*)?"?\w+"?)/gi)) {
+      const t = tableName(m[1]);
       policyCount.set(t, (policyCount.get(t) ?? 0) + 1);
     }
     // Kärn-tabeller med användardata MÅSTE ha explicita policies (inte deny-all).
@@ -71,7 +90,7 @@ describe('RLS-täckning över migrationskedjan', () => {
     // därför krävs policies i kedjan, inte CREATE TABLE i kedjan.
     const mustHavePolicies = ['hens', 'egg_logs', 'feed_records', 'health_logs', 'transactions', 'profiles'];
     for (const table of mustHavePolicies) {
-      expect(policyCount.get(table) ?? 0, `${table} saknar RLS-policy`).toBeGreaterThan(0);
+      expect(policyCount.get(`public.${table}`) ?? 0, `${table} saknar RLS-policy`).toBeGreaterThan(0);
     }
   });
 });
