@@ -1,3 +1,7 @@
+import { resolveWeatherLocation, type WeatherSettings } from '@/lib/weatherLocation';
+import { withRequestTimeout } from '@/lib/requestTimeout';
+import QueryNotice from '@/components/QueryNotice';
+import { isActiveHen } from '@/lib/farmMetrics';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +54,7 @@ function calculateStreak(eggs: EggLog[], now: Date) {
   for (let i = 0; i < 365; i += 1) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    const dateKey = localCalendarDate(date);
+    const dateKey = localCalendarDate(date, Intl.DateTimeFormat().resolvedOptions().timeZone);
     const hasEggs = eggs.some((egg) => egg.date === dateKey && (egg.count || 0) > 0);
     if (hasEggs) streak += 1;
     else if (i > 0) break;
@@ -58,30 +62,16 @@ function calculateStreak(eggs: EggLog[], now: Date) {
   return streak;
 }
 
-async function fetchLocalWeather(): Promise<WeatherSnapshot | null> {
-  if (typeof navigator === 'undefined' || !navigator.geolocation) return null;
-
-  const position = await new Promise<GeolocationPosition | null>((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      resolve,
-      () => resolve(null),
-      { timeout: 3000, maximumAge: 30 * 60 * 1000 },
-    );
+async function fetchLocalWeather(settings?: WeatherSettings | null): Promise<WeatherSnapshot | null> {
+  const { lat, lon } = await resolveWeatherLocation(settings);
+  return withRequestTimeout(async (signal) => {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode&timezone=auto&forecast_days=1`, { signal });
+    if (!response.ok) return null;
+    const json = await response.json();
+    const temperature = Number(json?.current?.temperature_2m);
+    const code = Number(json?.current?.weathercode ?? 0);
+    return Number.isFinite(temperature) ? { temperature, code } : null;
   });
-
-  if (!position) return null;
-
-  const { latitude, longitude } = position.coords;
-  const response = await fetch(
-    `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&timezone=auto&forecast_days=1`,
-  );
-  if (!response.ok) return null;
-
-  const json = await response.json();
-  const temperature = Number(json?.current?.temperature_2m);
-  const code = Number(json?.current?.weathercode ?? 0);
-  if (!Number.isFinite(temperature)) return null;
-  return { temperature, code };
 }
 
 function weatherIcon(code: number) {
@@ -138,11 +128,11 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const { user } = useAuth();
   const [now, setNow] = useState(() => new Date());
 
-  const { data: eggs = [] } = useQuery({
+  const { data: eggs = [], isPending: eggsLoading, isError: eggsError, refetch: reloadEggs } = useQuery({
     queryKey: ['eggs'],
     queryFn: () => api.getEggs(),
   });
-  const { data: hens = [] } = useQuery({
+  const { data: hens = [], isPending: hensLoading, isError: hensError, refetch: reloadHens } = useQuery({
     queryKey: ['hens'],
     queryFn: () => api.getHens(),
   });
@@ -154,10 +144,11 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     queryKey: ['feed-records'],
     queryFn: () => api.getFeedRecords(),
   });
+  const settingsQuery = useQuery({ queryKey: ['coop-settings'], queryFn: () => api.getCoopSettings(), enabled: !demo });
   const { data: weather, isLoading: weatherLoading } = useQuery({
-    queryKey: ['dashboard-local-weather'],
-    queryFn: fetchLocalWeather,
-    enabled: !demo,
+    queryKey: ['dashboard-local-weather', user?.id, settingsQuery.data?.city, settingsQuery.data?.postal_code],
+    queryFn: () => fetchLocalWeather(settingsQuery.data),
+    enabled: !demo && settingsQuery.isSuccess,
     staleTime: 20 * 60 * 1000,
     retry: false,
   });
@@ -172,10 +163,10 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     return String(name).trim().split(/\s+/)[0] || '';
   }, [user]);
 
-  const todayKey = localCalendarDate(now);
+  const todayKey = localCalendarDate(now, Intl.DateTimeFormat().resolvedOptions().timeZone);
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = localCalendarDate(yesterday);
+  const yesterdayKey = localCalendarDate(yesterday, Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   const todayRows = eggs.filter((egg) => egg.date === todayKey).map((egg) => egg.id);
   const todayEggs = eggs
@@ -192,9 +183,9 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const previousWeekEnd = new Date(now);
   previousWeekEnd.setDate(previousWeekEnd.getDate() - 7);
 
-  const weekStartKey = localCalendarDate(weekStart);
-  const previousWeekStartKey = localCalendarDate(previousWeekStart);
-  const previousWeekEndKey = localCalendarDate(previousWeekEnd);
+  const weekStartKey = localCalendarDate(weekStart, Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const previousWeekStartKey = localCalendarDate(previousWeekStart, Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const previousWeekEndKey = localCalendarDate(previousWeekEnd, Intl.DateTimeFormat().resolvedOptions().timeZone);
 
   const weekEggs = eggs
     .filter((egg) => egg.date >= weekStartKey && egg.date <= todayKey)
@@ -204,7 +195,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
   const weekDelta = weekEggs - previousWeekEggs;
 
-  const activeHens = hens.filter((hen) => hen.is_active && hen.hen_type !== 'rooster').length;
+  const activeHens = hens.filter(isActiveHen).length;
   const pendingChores = chores.filter((chore: any) => !chore.completed).length;
   const streak = calculateStreak(eggs, now);
   const showOnboarding = hens.length === 0 || eggs.length === 0;
@@ -217,6 +208,9 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     previousWeekEggs,
     pendingChores,
   });
+
+  if (eggsError || hensError) return <QueryNotice title="Kunde inte läsa dagens översikt" onRetry={() => { void reloadEggs(); void reloadHens(); }} />;
+  if (eggsLoading || hensLoading) return <QueryNotice loading title="Hämtar din hönsgård…" />;
 
   return (
     <div className="today-v3 max-w-2xl mx-auto pb-8" aria-labelledby="today-heading">

@@ -1,3 +1,4 @@
+import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import React, { useState, useCallback } from 'react';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { Egg, Plus, Minus, Check, X, CalendarMinus, Bird } from 'lucide-react';
@@ -91,8 +92,7 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
         });
         toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['eggs'] });
-        queryClient.invalidateQueries({ queryKey: ['streak'] });
+        void invalidateEggQueries(queryClient);
       }
       setAnimCount(count);
       setShowAnimation(true);

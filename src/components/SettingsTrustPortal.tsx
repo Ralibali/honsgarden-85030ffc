@@ -70,7 +70,7 @@ function SettingsTrustContent() {
     try {
       await refreshSubscription();
       await queryClient.invalidateQueries();
-      toast({ title: 'Premiumstatus kontrollerad ✅', description: 'Vi har synkat din prenumeration mot betalningssystemet.' });
+      toast({ title: 'Ditt medlemskap är kontrollerat ✅', description: 'Vi har synkat din prenumeration mot betalningssystemet.' });
     } catch (err: any) {
       toast({ title: 'Kunde inte synka just nu', description: err?.message || 'Försök igen om en stund.', variant: 'destructive' });
     } finally {
@@ -81,11 +81,11 @@ function SettingsTrustContent() {
   const refreshFeedback = async () => {
     await queryClient.invalidateQueries({ queryKey: ['user-feedback'] });
     await refetch();
-    toast({ title: 'Feedbackhistoriken är uppdaterad' });
+    toast({ title: 'Dina ärenden är uppdaterade' });
   };
 
   return (
-    <section className="space-y-4" aria-label="Premium och feedbackstatus">
+    <section className="space-y-4" aria-label="Ditt medlemskap och dina ärenden">
       <Card className={`shadow-sm border ${isPremium ? 'border-primary/25 bg-primary/[0.04]' : 'border-warning/25 bg-warning/[0.04]'}`}>
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -94,12 +94,12 @@ function SettingsTrustContent() {
                 {isPremium ? <ShieldCheck className="h-5 w-5 text-primary" /> : <Crown className="h-5 w-5 text-warning" />}
               </div>
               <div className="min-w-0">
-                <p className="data-label mb-1">Premiumstatus</p>
+                <p className="text-sm font-semibold text-muted-foreground mb-1">Ditt medlemskap</p>
                 <h2 className="font-serif text-lg text-foreground">{isPremium ? 'Premium är aktivt' : 'Premium visas inte som aktivt'}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                   {isPremium
                     ? 'Allt ser bra ut. Om något ändå verkar låst kan du synka statusen manuellt.'
-                    : 'Har du nyligen betalat men appen visar gratis? Synka premiumstatus så kontrollerar vi betalningen direkt.'}
+                    : 'Har du nyligen betalat men appen visar gratis? Uppdatera medlemskapet så kontrollerar vi betalningen direkt.'}
                 </p>
                 {user?.subscription_end && <p className="text-xs text-muted-foreground mt-1">Gäller till: {new Date(user.subscription_end).toLocaleDateString('sv-SE')}</p>}
               </div>
@@ -107,7 +107,7 @@ function SettingsTrustContent() {
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button onClick={syncPremium} disabled={syncing} variant={isPremium ? 'outline' : 'default'} className="rounded-xl gap-2 w-full sm:w-auto">
                 {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                Synka premiumstatus
+                Uppdatera medlemskapet
               </Button>
               {!isPremium && (
                 <Button variant="outline" onClick={() => navigate('/app/premium')} className="rounded-xl gap-2 w-full sm:w-auto">
@@ -123,7 +123,7 @@ function SettingsTrustContent() {
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
             <div>
-              <p className="data-label mb-1">Feedbackhistorik</p>
+              <p className="text-sm font-semibold text-muted-foreground mb-1">Dina ärenden</p>
               <h2 className="font-serif text-lg text-foreground">Dina skickade ärenden och svar</h2>
               <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                 Här ser du feedback och supportärenden du skickat in. Det gör att inget försvinner i tomma intet.

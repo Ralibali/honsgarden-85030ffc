@@ -15,6 +15,9 @@ import { CONSOLIDATED_BLOG_REDIRECTS } from '../data/blogConsolidation.mjs';
 
 /** Infra-level permanent redirects (308), evaluated before the filesystem. */
 export const ROUTE_REDIRECTS = [
+  { source: '/funktioner', destination: '/#funktioner', statusCode: 308 },
+  { source: '/priser', destination: '/#priser', statusCode: 308 },
+  { source: '/villkor', destination: '/terms', statusCode: 308 },
   { source: '/index', destination: '/', statusCode: 308 },
   { source: '/index.html', destination: '/', statusCode: 308 },
   // Äldre landningssidor sammanslagna under /honsraser/ (MERGE+REDIRECT).
@@ -33,6 +36,12 @@ export const ROUTE_REDIRECTS = [
  */
 export const STATIC_PUBLIC_ROUTES = [
   '/',
+  '/s/bergs-agg',
+  '/funktioner/agda-ai',
+  '/funktioner/statistik',
+  '/funktioner/vader',
+  '/funktioner/community',
+  '/funktioner/rapporter',
   '/app-for-honsagare',
   '/agglogg',
   '/honskalender',
@@ -191,3 +200,4 @@ export function buildVercelRedirects() {
     statusCode,
   }));
 }
+

@@ -1,3 +1,5 @@
+import { withRequestTimeout } from '@/lib/requestTimeout';
+import { isActiveHen, isLayingHen } from '@/lib/farmMetrics';
 import { supabase } from '@/integrations/supabase/client';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
@@ -90,19 +92,42 @@ interface AdminFeedbackItem extends Feedback {
 
 // Helper to get current user id
 async function getUserId(): Promise<string> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await withRequestTimeout(() => supabase.auth.getSession());
   const userId = session?.user?.id;
   if (!userId) throw new Error('Not authenticated');
   return userId;
 }
 
+// Share concurrent reads only, scoped to the authenticated account. No stale data cache.
+const activeReads = new Map<string, Promise<unknown>>();
+async function readRows<Row>(table: string, build: () => {
+  range(from: number, to: number): PromiseLike<{ data: Row[] | null; error: { message: string } | null }>;
+  abortSignal?: (signal: AbortSignal) => unknown;
+}): Promise<Row[]> {
+  const userId = await getUserId();
+  const key = `${userId}:${table}`;
+  const existing = activeReads.get(key);
+  if (existing) return existing as Promise<Row[]>;
+  const request = withRequestTimeout(async (signal) => {
+    const result: Row[] = [];
+    for (let offset = 0; ; offset += 1000) {
+      if (signal.aborted) throw new Error('Hämtningen avbröts. Försök igen.');
+      const query = build();
+      query.abortSignal?.(signal);
+      const { data, error } = await query.range(offset, offset + 999);
+      if (error) throw new Error(error.message);
+      result.push(...(data ?? []));
+      if (!data || data.length < 1000) return result;
+    }
+  }).finally(() => { if (activeReads.get(key) === request) activeReads.delete(key); });
+  activeReads.set(key, request);
+  return request;
+}
+
 // ==================== HENS ====================
 
 export async function getHens(): Promise<Hen[]> {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id'));
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return readRows('hens', () => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id'));
 }
 
 export async function createHen(henData: HenInsert): Promise<Hen> {
@@ -153,17 +178,8 @@ export async function getHenProfile(id: string): Promise<HenProfile> {
 
 export async function getEggs(): Promise<EggLog[]> {
   const userId = await getUserId();
-  const remote: EggLog[] = [];
-  const pageSize = 1000;
-  // Fetch every page so older registrations remain reachable in the egg book.
-  for (let offset = 0; ; offset += pageSize) {
-    const { data, error } = await supabase.from('egg_logs').select('*')
-      .order('date', { ascending: false }).order('id').range(offset, offset + pageSize - 1);
-    if (error) throw new Error(error.message);
-    remote.push(...(data ?? []));
-    if (!data || data.length < pageSize) break;
-  }
-  try { await loadQueue(); } catch { /* The status banner reports local storage failures. */ }
+  const remote = await readRows('egg_logs', () => supabase.from('egg_logs').select('*').order('date', { ascending: false }).order('id'));
+  try { await withRequestTimeout(() => loadQueue(), 2_000); } catch { /* The status banner reports local storage failures. */ }
   const ids = new Set(remote.map(row => (row as EggLog & { client_id?: string }).client_id));
   const pending = getQueue(userId).filter(row => !ids.has(row.client_id)).map(row => ({
     ...row, id: `pending-${row.client_id}`, created_at: row.queued_at, hen_id: row.hen_id ?? null,
@@ -277,10 +293,7 @@ export async function removeOneEgg(id: string): Promise<void> {
 // ==================== FEED ====================
 
 export async function getFeedRecords(): Promise<FeedRecord[]> {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id'));
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return readRows('feed_records', () => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id'));
 }
 
 export async function createFeedRecord(record: FeedRecordInsert): Promise<FeedRecord> {
@@ -304,16 +317,10 @@ export async function getFeedInventory() {
 }
 
 export async function getFeedStatistics() {
-  await getUserId();
-  const [feedRes, eggRes] = await Promise.all([
-    selectAll(() => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id')),
-    selectAll(() => supabase.from('egg_logs').select('count').order('id')),
-  ]);
-  if (feedRes.error) throw new Error(feedRes.error.message);
-  const feed = feedRes.data || [];
+  const [feed, eggs] = await Promise.all([getFeedRecords(), getEggs()]);
   const totalCost = feed.reduce((sum, r) => sum + (r.cost || 0), 0);
   const totalKg = feed.reduce((sum, r) => sum + (r.amount_kg || 0), 0);
-  const totalEggs = (eggRes.data || []).reduce((sum, r) => sum + r.count, 0);
+  const totalEggs = eggs.reduce((sum, r) => sum + r.count, 0);
   const costPerEgg = totalEggs > 0 ? totalCost / totalEggs : 0;
   return { total_cost: totalCost, total_kg: totalKg, record_count: feed.length, cost_per_egg: costPerEgg };
 }
@@ -360,10 +367,7 @@ export async function getHatchingAlerts() {
 // ==================== TRANSACTIONS ====================
 
 export async function getTransactions(): Promise<Transaction[]> {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('transactions').select('*').order('date', { ascending: false }).order('id'));
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return readRows('transactions', () => supabase.from('transactions').select('*').order('date', { ascending: false }).order('id'));
 }
 
 export async function createTransaction(record: TransactionInsert): Promise<Transaction> {
@@ -570,10 +574,7 @@ export async function updateCoopSettings(settings: CoopSettingsUpdate): Promise<
 // ==================== FLOCKS ====================
 
 export async function getFlocks(): Promise<Flock[]> {
-  await getUserId();
-  const { data, error } = await supabase.from('flocks').select('*').order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  return readRows('flocks', () => supabase.from('flocks').select('*').order('created_at', { ascending: false }).order('id'));
 }
 
 export async function getOrCreateDefaultFlock(preferredFlockId?: string | null): Promise<Flock> {
@@ -683,17 +684,12 @@ export async function getYearStats(year: number) {
 }
 
 export async function getSummaryStats() {
-  await getUserId();
-  const [eggsRes, hensRes, txnsRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('count, date').order('id')),
-    selectAll(() => supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen').order('id')),
-    selectAll(() => supabase.from('transactions').select('amount, type').order('id')),
-  ]);
-  const eggs = eggsRes.data || [];
-  const totalEggs = eggs.reduce((s, r) => s + r.count, 0);
-  const activeHens = (hensRes.data || []).length;
-  const income = (txnsRes.data || []).filter(t => t.type === 'income').reduce((s, r) => s + r.amount, 0);
-  const expense = (txnsRes.data || []).filter(t => t.type === 'expense').reduce((s, r) => s + r.amount, 0);
+  const [eggs, hens, transactions] = await Promise.all([getEggs(), getHens(), getTransactions()]);
+  const totalEggs = eggs.reduce((sum, row) => sum + row.count, 0);
+  const activeHens = hens.filter(isActiveHen).length;
+  const layingHens = hens.filter(isLayingHen).length;
+  const income = transactions.filter(row => row.type === 'income').reduce((sum, row) => sum + row.amount, 0);
+  const expense = transactions.filter(row => row.type === 'expense').reduce((sum, row) => sum + row.amount, 0);
 
   const dailyCounts: Record<string, number> = {};
   eggs.forEach(e => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + e.count; });
@@ -701,7 +697,7 @@ export async function getSummaryStats() {
   const avgPerDay = days.length > 0 ? totalEggs / days.length : 0;
   const bestDayEntry = days.length > 0 ? days.reduce((best, d) => dailyCounts[d] > dailyCounts[best] ? d : best, days[0]) : null;
   const bestDay = bestDayEntry ? `${dailyCounts[bestDayEntry]} (${new Date(bestDayEntry).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })})` : '–';
-  const productivity = activeHens > 0 && days.length > 0 ? (avgPerDay / activeHens) * 100 : 0;
+  const productivity = layingHens > 0 && days.length > 0 ? (avgPerDay / layingHens) * 100 : 0;
 
   return {
     total_eggs: totalEggs,
@@ -917,19 +913,8 @@ function calculateStreakFromEggs(eggs: EggLog[]): number {
 // ==================== STATISTICS INSIGHTS (real) ====================
 
 export async function getStatisticsInsights() {
-  await getUserId();
-  const [eggsRes, txnsRes, feedRes, hensRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('count, date, hen_id').order('id')),
-    selectAll(() => supabase.from('transactions').select('amount, type, date').order('id')),
-    selectAll(() => supabase.from('feed_records').select('cost, amount_kg, date').order('id')),
-    selectAll(() => supabase.from('hens').select('id, name, is_active, hen_type').order('id')),
-  ]);
-
-  const eggs = eggsRes.data || [];
-  const txns = txnsRes.data || [];
-  const feed = feedRes.data || [];
-  // Exkludera tuppar och unghöns från statistik-snitt (unghöns har ännu inte börjat värpa).
-  const hens = (hensRes.data || []).filter(h => (h.hen_type ?? 'hen') === 'hen');
+  const [eggs, txns, feed, allHens] = await Promise.all([getEggs(), getTransactions(), getFeedRecords(), getHens()]);
+  const hens = allHens.filter(hen => (hen.hen_type ?? 'hen') === 'hen');
 
   const tips: string[] = [];
 
@@ -989,14 +974,7 @@ export async function getStatisticsInsights() {
 
 /** Get hens with computed egg totals from egg_logs */
 export async function getHensWithEggTotals(): Promise<HenWithEggTotal[]> {
-  await getUserId();
-  const [hensRes, eggsRes] = await Promise.all([
-    selectAll(() => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id')),
-    selectAll(() => supabase.from('egg_logs').select('hen_id, count').order('id')),
-  ]);
-  if (hensRes.error) throw new Error(hensRes.error.message);
-  const hens = hensRes.data || [];
-  const eggs = eggsRes.data || [];
+  const [hens, eggs] = await Promise.all([getHens(), getEggs()]);
 
   const henEggCounts: Record<string, number> = {};
   eggs.filter(e => e.hen_id).forEach(e => {
@@ -1014,16 +992,7 @@ export async function getHensWithEggTotals(): Promise<HenWithEggTotal[]> {
 
 /** Flock statistics – egg totals, weekly/monthly breakdown per flock */
 export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unassigned_eggs: number }> {
-  await getUserId();
-  const [flocksRes, eggsRes, hensRes] = await Promise.all([
-    supabase.from('flocks').select('*'),
-    selectAll(() => supabase.from('egg_logs').select('count, date, flock_id, hen_id').order('id')),
-    selectAll(() => supabase.from('hens').select('id, name, flock_id, is_active, hen_type').order('id')),
-  ]);
-
-  const flocks = flocksRes.data || [];
-  const eggs = eggsRes.data || [];
-  const hens = hensRes.data || [];
+  const [flocks, eggs, hens] = await Promise.all([getFlocks(), getEggs(), getHens()]);
   const now = new Date();
 
   const flockStats: FlockStat[] = flocks.map(flock => {

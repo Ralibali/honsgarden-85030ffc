@@ -39,8 +39,8 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
     links: [
       { labelKey: 'links.dashboard', href: '/app' },
       { labelKey: 'links.agda_shop', href: '/app/egg-sales' },
-      { labelKey: 'links.community', href: '/app/community' },
-      { labelKey: 'links.weather', href: '/app/weather' },
+      { labelKey: 'links.community', href: '/funktioner/community' },
+      { labelKey: 'links.weather', href: '/funktioner/vader' },
       { labelKey: 'links.feedback', href: '/app/feedback' },
       { labelKey: 'links.premium', href: '/app/premium' },
     ],
@@ -61,7 +61,7 @@ export default function LandingFooter() {
   const { t } = useTranslation('footer');
   const brand = brandName();
   return (
-    <footer className="relative z-10 bg-[#1c2e1a] text-[#d4e8ce]">
+    <footer data-landing-footer className="relative z-10 bg-[#1c2e1a] text-[#d4e8ce]">
       <div className="container max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
           <div>

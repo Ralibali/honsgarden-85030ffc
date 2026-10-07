@@ -179,21 +179,22 @@ export default function Marketplace() {
           <Card className="border-border/60">
             <CardContent className="p-4 space-y-3">
               <div className="flex gap-2">
-                <div className="relative flex-1">
+                <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && applySearch()}
+                    aria-label="Sök annonser"
                     placeholder="Sök efter höns, hönshus, foder…"
                     className="pl-10"
                   />
                 </div>
                 <Button onClick={applySearch}>Sök</Button>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                 <Select value={filters.category ?? 'all'} onValueChange={(v) => setFilters((f) => ({ ...f, category: v as any }))}>
-                  <SelectTrigger><SelectValue placeholder="Kategori" /></SelectTrigger>
+                  <SelectTrigger aria-label="Kategori" className="min-h-11"><SelectValue placeholder="Kategori" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Alla kategorier</SelectItem>
                     {CATEGORIES.map((c) => (
@@ -202,14 +203,14 @@ export default function Marketplace() {
                   </SelectContent>
                 </Select>
                 <Select value={filters.region ?? 'all'} onValueChange={(v) => setFilters((f) => ({ ...f, region: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Region" /></SelectTrigger>
+                  <SelectTrigger aria-label="Region" className="min-h-11"><SelectValue placeholder="Region" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Hela Sverige</SelectItem>
                     {REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Select value={filters.sort ?? 'newest'} onValueChange={(v) => setFilters((f) => ({ ...f, sort: v as any }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger aria-label="Sortering" className="min-h-11"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="newest">Nyast först</SelectItem>
                     <SelectItem value="price_asc">Billigast först</SelectItem>
@@ -217,6 +218,7 @@ export default function Marketplace() {
                   </SelectContent>
                 </Select>
                 <Button
+                  aria-pressed={!!filters.hasImage}
                   variant={filters.hasImage ? 'default' : 'outline'}
                   onClick={() => setFilters((f) => ({ ...f, hasImage: !f.hasImage }))}
                   className="gap-2"

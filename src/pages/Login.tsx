@@ -1,3 +1,4 @@
+import { loginErrorMessage } from '@/lib/loginError';
 import { isNativePlatform } from '@/lib/nativePlatform';
 import { getNativeAuthRedirect } from '@/lib/nativeAuth';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -95,7 +96,7 @@ export default function Login() {
       }
       navigate('/app', { replace: true });
     } catch (err) {
-      toast({ title: 'Inloggning misslyckades', description: err instanceof Error ? err.message : 'Kontrollera e-post och lösenord.', variant: 'destructive' });
+      toast({ title: 'Inloggning misslyckades', description: loginErrorMessage(err), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -487,3 +488,4 @@ export default function Login() {
     </div>
   );
 }
+

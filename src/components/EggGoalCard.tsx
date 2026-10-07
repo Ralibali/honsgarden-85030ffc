@@ -53,7 +53,7 @@ export default function EggGoalCard({ compact = false }: { compact?: boolean }) 
     setMonthly(String(syncedGoal.monthly || ''));
   }, [syncedGoal]);
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs().catch(() => []) });
+  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
 
   const stats = useMemo(() => {
     const today = todayString();

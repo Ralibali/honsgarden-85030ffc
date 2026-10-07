@@ -74,7 +74,7 @@ export default function EggProductionChart() {
 
   const { data: eggs = [] } = useQuery({
     queryKey: ['eggs'],
-    queryFn: () => api.getEggs().catch(() => []),
+    queryFn: () => api.getEggs(),
   });
 
   const { data: feedRecords = [] } = useQuery({
@@ -84,7 +84,7 @@ export default function EggProductionChart() {
 
   const { data: hens = [] } = useQuery({
     queryKey: ['hens-for-chart'],
-    queryFn: () => api.getHens().catch(() => []),
+    queryFn: () => api.getHens(),
   });
 
   const { data: healthLogs = [] } = useQuery({

@@ -83,12 +83,12 @@ interface BreedSummary {
 export default function LayingRateCard() {
   const { data: hens = [] } = useQuery({
     queryKey: ['hens'],
-    queryFn: () => api.getHens().catch(() => [] as HenRow[]),
+    queryFn: () => api.getHens(),
   });
 
   const { data: eggs = [] } = useQuery({
     queryKey: ['eggs'],
-    queryFn: () => api.getEggs().catch(() => [] as EggRow[]),
+    queryFn: () => api.getEggs(),
   });
 
   const stats = useMemo(() => {

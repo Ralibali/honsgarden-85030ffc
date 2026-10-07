@@ -1,3 +1,4 @@
+import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
         queryClient.setQueryData<EggLog[]>(['eggs'], old => [{ ...result, id: `pending-${result.client_id}`, user_id: user!.id, created_at: new Date().toISOString(), hen_id: null, flock_id: null, notes: null, weather: null, pending: true } as EggLog, ...(old ?? [])]);
         toast({ title: 'Sparat på enheten', description: 'Ägget synkas när du får täckning.' });
       } else {
-        queryClient.invalidateQueries({ queryKey: ['eggs'] });
+        void invalidateEggQueries(queryClient);
         toast({ title: '🥚 +1 ägg loggat' });
       }
       hapticSuccess();
@@ -51,7 +52,7 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
       await api.removeOneEgg(lastId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eggs'] });
+      void invalidateEggQueries(queryClient);
       toast({ title: '−1 ägg borttaget' });
     },
     onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),

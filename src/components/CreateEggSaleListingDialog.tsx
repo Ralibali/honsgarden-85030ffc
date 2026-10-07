@@ -161,8 +161,8 @@ export default function CreateEggSaleListingDialog({ trigger }: Props) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent onEscapeKeyDown={() => setOpen(false)} className="max-w-lg max-h-[90dvh] overflow-y-auto data-[state=open]:animate-none data-[state=closed]:animate-none">
+        <DialogHeader className="pr-8">
           <DialogTitle className="font-serif">Skapa ny säljsida</DialogTitle>
           <DialogDescription>
             Fyll i en rubrik, pris och hämtinformation. Du kan ändra allt senare.
