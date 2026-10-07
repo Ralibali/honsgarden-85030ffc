@@ -1,3 +1,4 @@
+import { prepareLinkedAccountDeletion } from '../_shared/linkedAccountDeletion.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { deleteUserCompletely } from "../_shared/delete-user-data.ts";
 
@@ -34,6 +35,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    await prepareLinkedAccountDeletion(authHeader,'hens');
     const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { error: revokeError } = await admin.auth.admin.signOut(authHeader.replace(/^Bearer\s+/i, ""), "global");
     if (revokeError) throw new Error("Session revocation failed");

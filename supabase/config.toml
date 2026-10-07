@@ -94,3 +94,9 @@ project_id = "sikbymtrbhrofysgkqsj"
     verify_jwt = true
   [functions.google-play-notifications]
     verify_jwt = false
+
+[functions.unified-account]
+verify_jwt = false
+
+[functions.unified-stripe-webhook]
+verify_jwt = false

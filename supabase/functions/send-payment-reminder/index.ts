@@ -5,7 +5,7 @@
 //  - manual (POST {"booking_id":"..."} med inloggad säljare): skickar EN påminnelse direkt.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = "https://honsgarden.se";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const MIN_DAYS_AFTER_PICKUP = 2;
@@ -52,7 +52,7 @@ function buildEmail(opts: {
     + `<p style="font-size: 14px; color: hsl(22,12%,44%); line-height: 1.6; margin: 0 0 18px;">${intro}</p>`
     + `<div style="background: hsl(35,32%,97%); border: 1px solid hsl(22,15%,90%); border-radius: 14px; padding: 18px 20px; margin: 0 0 20px;">`
     + `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Att betala</p>`
-    + `<p style="margin:0 0 14px;font-size:22px;color:hsl(22,18%,12%);font-weight:700;">${Math.round(amount)} kr</p>`
+    + `<p style="margin:0 0 14px;font-size:22px;color:hsl(22,18%,12%);font-weight:700;">${amount.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr</p>`
     + (swishNumber
       ? `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Swisha till</p>`
         + `<p style="margin:0;font-size:16px;color:hsl(22,18%,12%);font-weight:600;">${swishNumber}${swishName ? ` (${swishName})` : ""}</p>`
@@ -66,7 +66,7 @@ function buildEmail(opts: {
     + `<p style="font-size: 12px; color: #999; margin: 24px 0 0;">Skickat via Agdas bod på Hönsgården.</p>`
     + `</div>`;
 
-  const text = `Hej ${customerName}! Vi noterade att du hämtade ${packs} förp. hos ${listingTitle} den ${pickupDate} men ingen betalning har registrerats än. Att betala: ${Math.round(amount)} kr`
+  const text = `Hej ${customerName}! Vi noterade att du hämtade ${packs} förp. hos ${listingTitle} den ${pickupDate} men ingen betalning har registrerats än. Att betala: ${amount.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr`
     + (swishNumber ? ` via Swish ${swishNumber}${swishName ? ` (${swishName})` : ""}.` : ".")
     + (orderUrl ? ` Se bokning: ${orderUrl}` : "")
     + " Har du redan betalat – bortse från detta mejl.";
@@ -81,7 +81,7 @@ async function sendForBooking(
 ): Promise<{ ok: boolean; reason?: string }> {
   const { data: b, error } = await supabase
     .from("public_egg_sale_bookings")
-    .select("id, listing_id, customer_name, customer_email, packs, payment_status, cancelled_at, picked_up_at, payment_reminder_last_sent_at, payment_reminder_count")
+    .select("id, listing_id, customer_name, customer_email, total_price_sek, packs, payment_status, cancelled_at, picked_up_at, payment_reminder_last_sent_at, payment_reminder_count")
     .eq("id", bookingId)
     .maybeSingle();
   if (error || !b) return { ok: false, reason: "not_found" };
@@ -114,7 +114,7 @@ async function sendForBooking(
   ]);
   if (!listing) return { ok: false, reason: "listing_missing" };
 
-  const amount = Number(listing.price_per_pack ?? 0) * Number(b.packs ?? 0);
+  const amount = Number(b.total_price_sek ?? Number(listing.price_per_pack ?? 0) * Number(b.packs ?? 0));
   const orderUrl = token?.token ? `${APP_URL}/bestallning/${token.token}` : null;
   const reminderNumber = (b.payment_reminder_count ?? 0) + 1;
 

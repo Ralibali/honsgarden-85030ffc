@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 import { isPlusSubscription, plusPriceIds } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
@@ -96,6 +97,7 @@ serve(async (req) => {
     const { data, error: authError } = await supabaseAuth.auth.getUser(token);
     if (authError || !data.user?.email) return json({ error: "User not authenticated" }, 401);
     const user = data.user;
+    if((await readBundleAccess(supabaseAdmin,user.id)).active)return json({error:'Du har redan Odling + Höns Plus. Hantera kombopaketet under Inställningar.'},409);
 
     const body = await req.json().catch(() => ({}));
     if (isNativeCheckoutBlocked(req.headers.get("x-supabase-client-platform"), (body as Record<string, unknown>).platform)) {

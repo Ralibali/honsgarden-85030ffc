@@ -1,3 +1,4 @@
+import { pendingAccountLink } from '@/lib/linkedApps';
 import { loginErrorMessage } from '@/lib/loginError';
 import { isNativePlatform } from '@/lib/nativePlatform';
 import { getNativeAuthRedirect } from '@/lib/nativeAuth';
@@ -70,7 +71,7 @@ export default function Login() {
   }, [postalCode, country, intl, normalizedPostalCode]);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) navigate('/app', { replace: true });
+    if (!authLoading && isAuthenticated) navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
   }, [authLoading, isAuthenticated, navigate]);
 
   // Trattmätning: besökaren har nått registreringsformuläret
@@ -94,7 +95,7 @@ export default function Login() {
       } catch {
         // Non-blocking legacy migration.
       }
-      navigate('/app', { replace: true });
+      navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
     } catch (err) {
       toast({ title: 'Inloggning misslyckades', description: loginErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -173,7 +174,7 @@ export default function Login() {
           ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
           : 'Du har fått sju dagars gratis Premium! 🎉',
       });
-      navigate('/app', { replace: true });
+      navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
     } catch (err) {
       toast({ title: 'Registrering misslyckades', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
     } finally {

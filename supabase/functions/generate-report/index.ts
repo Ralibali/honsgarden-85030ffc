@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 // Generate PDF reports (Plus-only) for Hönsgården
 // Validates premium server-side, fetches all relevant data,
 // builds a PDF with pdf-lib, uploads it to a private bucket.
@@ -84,11 +85,11 @@ Deno.serve(async (req) => {
     .eq("user_id", user.id)
     .single();
 
-  const isPremium =
+  const isPremium = (await readBundleAccess(admin,user.id)).active || (
     profile?.is_lifetime_premium ||
     (profile?.subscription_status === "premium" &&
       (!profile?.premium_expires_at ||
-        new Date(profile.premium_expires_at) > new Date()));
+        new Date(profile.premium_expires_at) > new Date())));
   if (!isPremium) {
     return json({ error: "Endast Plus-medlemmar kan generera rapporter" }, 403);
   }

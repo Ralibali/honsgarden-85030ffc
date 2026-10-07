@@ -23,7 +23,7 @@ export default function PremiumStatusCard() {
 
   const isLifetime = user?.premium_type === 'lifetime';
   const isTrial = user?.premium_type === 'trial';
-  const isPaid = user?.premium_type === 'paid';
+  const isPaid = ['paid','bundle'].includes(user?.premium_type ?? '');
   const isPremium = !!user?.is_premium;
 
   const expiry = useMemo(
@@ -82,7 +82,7 @@ export default function PremiumStatusCard() {
     ? 'border-primary/30 bg-primary/5'
     : 'border-warning/20 bg-warning/5';
 
-  const label = isLifetime
+  const label = user?.premium_type === 'bundle' ? 'Odling + Höns Plus' : isLifetime
     ? 'Premium – Livstid'
     : isTrial
     ? 'Premium – Provperiod'

@@ -1,3 +1,4 @@
+import { bookingTotal } from '@/lib/eggSalePricing';
 import { localCalendarDate, todayLocal } from '@/lib/datetime';
 import QueryNotice from '@/components/QueryNotice';
 import { isActiveHen } from '@/lib/farmMetrics';
@@ -92,7 +93,7 @@ function SmartFarmReportContent() {
     (listings as any[]).forEach((l) => { listingById[l.id] = l; });
     const activeBookings = (bookings as any[]).filter((b) => b.status !== 'cancelled');
     const weekBookings = activeBookings.filter((b) => b.created_at && new Date(b.created_at) >= weekStart);
-    const salesValue = weekBookings.reduce((sum, b) => sum + Number(b.packs || 0) * Number(listingById[b.listing_id]?.price_per_pack || 0), 0);
+    const salesValue = weekBookings.reduce((sum, b) => sum + bookingTotal(b,listingById[b.listing_id]), 0);
     const salesPacks = weekBookings.reduce((sum, b) => sum + Number(b.packs || 0), 0);
     const activeListings = (listings as any[]).filter((l) => l.is_active !== false && !l.sold_out_manually).length;
     const feedCostPerEgg = (feedStats as any)?.cost_per_egg || null;

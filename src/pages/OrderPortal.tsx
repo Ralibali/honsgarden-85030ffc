@@ -1,3 +1,5 @@
+import { bookingTotal } from '@/lib/eggSalePricing';
+import { Helmet } from 'react-helmet-async';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import QRCode from 'qrcode';
@@ -24,6 +26,9 @@ import {
 } from 'lucide-react';
 
 type Booking = {
+  total_price_sek?: number | null;
+  unit_price_sek?: number | null;
+  eggs_per_pack_snapshot?: number | null;
   id: string;
   reference: string;
   customer_name: string;
@@ -79,6 +84,7 @@ type OrderResponse = {
 };
 
 const STATUS_LABELS: Record<string, { label: string; tone: 'success' | 'warning' | 'destructive' | 'info' | 'neutral' }> = {
+  reserved: {label:'Mottagen',tone:'info'},
   pending: { label: 'Ny bokning', tone: 'info' },
   confirmed: { label: 'Bekräftad', tone: 'info' },
   paid: { label: 'Betald', tone: 'success' },
@@ -140,7 +146,7 @@ function buildAppleMapsUrl(listing: Listing): string | null {
 function buildSwishUrl(opts: { number: string; amount: number; message: string }): string {
   const params = new URLSearchParams({
     payee: opts.number.replace(/\s/g, ''),
-    amount: String(Math.round(opts.amount)),
+    amount: String(Math.round(opts.amount*100)/100),
     message: opts.message.slice(0, 50),
   });
   return `https://app.swish.nu/1/p/sw/?${params.toString()}`;
@@ -248,8 +254,8 @@ export default function OrderPortal() {
   const slot = order?.pickup_slot ?? null;
 
   const total = useMemo(() => {
-    if (!booking || !listing?.price_per_pack) return 0;
-    return Math.round(booking.packs * Number(listing.price_per_pack));
+    if (!booking) return 0;
+    return bookingTotal(booking,listing);
   }, [booking, listing?.price_per_pack]);
 
   const swishUrl = useMemo(() => {
@@ -384,7 +390,7 @@ export default function OrderPortal() {
     );
   }
 
-  const totalEggs = booking.packs * listing.eggs_per_pack;
+  const totalEggs = booking.packs * (booking.eggs_per_pack_snapshot??listing.eggs_per_pack);
   const mapsUrl = buildMapsUrl(listing);
   const appleMapsUrl = buildAppleMapsUrl(listing);
   const buyAgainHref = listing.slug ? `/s/${listing.slug}` : null;
@@ -444,16 +450,17 @@ export default function OrderPortal() {
             <div className="flex items-start justify-between gap-3 pb-2 mb-2 border-b border-border/40">
               <div>
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Att betala</p>
-                <p className="font-serif text-3xl text-foreground">{total} kr</p>
+                <p className="font-serif text-3xl text-foreground">{total.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr</p>
                 <p className="text-xs text-muted-foreground">
-                  {booking.packs} × {listing.eggs_per_pack}-pack · totalt {totalEggs} ägg
+                  {booking.packs} × {booking.eggs_per_pack_snapshot??listing.eggs_per_pack}-pack · totalt {totalEggs} ägg
                 </p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Package className="h-5 w-5" />
               </div>
             </div>
-            <SectionRow label="Pris per förpackning" value={listing.price_per_pack ? `${listing.price_per_pack} kr` : '—'} />
+            <Helmet><meta name="robots" content="noindex,nofollow"/><meta name="referrer" content="no-referrer"/></Helmet>
+            <SectionRow label="Pris per förpackning" value={booking.unit_price_sek!=null ? `${Number(booking.unit_price_sek).toLocaleString('sv-SE')} kr` : listing.price_per_pack ? `${Number(listing.price_per_pack).toLocaleString('sv-SE')} kr (dagens pris)` : '—'} />
             <SectionRow label="Antal förpackningar" value={String(booking.packs)} />
             <SectionRow label="Ägg per förpackning" value={String(listing.eggs_per_pack)} />
             <SectionRow label="Totalt ägg" value={String(totalEggs)} />
@@ -474,7 +481,7 @@ export default function OrderPortal() {
                 <div className="space-y-1.5 text-sm">
                   <p>
                     <span className="text-muted-foreground">Belopp:</span>{' '}
-                    <span className="font-medium">{total} kr</span>
+                    <span className="font-medium">{total.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr</span>
                   </p>
                   <p>
                     <span className="text-muted-foreground">Till:</span>{' '}

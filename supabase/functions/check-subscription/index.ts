@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 import { refreshKnownGooglePurchases } from '../_shared/googlePlaySync.ts';
 import { isPlusSubscription, plusPriceIds, stripePeriodEnd as getStripeEnd, stripeAccessActive } from "../_shared/stripeBilling.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -58,6 +59,9 @@ serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const bundle=await readBundleAccess(supabaseClient,user.id);
+    if(bundle.active) return new Response(JSON.stringify({subscribed:true,access_type:'bundle',premium_type:'bundle',subscription_end:bundle.until,can_manage_subscription:false,source:'bundle'}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
 
     await refreshKnownGooglePurchases(supabaseClient, user.id);
 

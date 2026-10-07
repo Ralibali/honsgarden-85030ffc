@@ -1,3 +1,4 @@
+import { OnboardingFrame } from '../../packages/app-foundation/src/OnboardingFrame';
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,6 @@ export default function OnboardingGuide() {
   const [henName, setHenName] = useState('');
   const [henBreed, setHenBreed] = useState('');
   const [saving, setSaving] = useState(false);
-  const [loadingDemo, setLoadingDemo] = useState(false);
   const [createdHenName, setCreatedHenName] = useState('');
   const [createdHenId, setCreatedHenId] = useState<string | null>(null);
   const [eggLogged, setEggLogged] = useState(false);
@@ -121,31 +121,24 @@ export default function OnboardingGuide() {
   const markDone = async () => {
     if (!user?.id) return;
     const scopedKey = getOnboardingKey(user.id);
-    localStorage.setItem(scopedKey, '1');
-    localStorage.removeItem(ONBOARDING_KEY);
     const { data } = await supabase
       .from('profiles')
       .select('preferences')
       .eq('user_id', user.id)
       .maybeSingle();
     const prefs = (data?.preferences as Record<string, unknown> | null) ?? {};
-    await supabase
-      .from('profiles')
-      .update({ preferences: { ...prefs, onboarding_done: true } })
-      .eq('user_id', user.id);
+    const { error } = await supabase.from('profiles').update({ preferences: { ...prefs, onboarding_done: true } }).eq('user_id', user.id);
+    if (error) throw error;
+    localStorage.setItem(scopedKey, '1');
+    localStorage.removeItem(ONBOARDING_KEY);
   };
 
-  const finish = () => {
-    setOpen(false);
-    trackOnboardingStep('completed');
-    trackEvent('Onboarding Completed');
-    void markDone();
-  };
-
-  // Soft close — only allowed once a hen exists (or via demo). When 0 hens we keep
-  // the dialog mandatory to fix the 50% onboarding leak.
-  const softClose = () => {
-    setOpen(false);
+  const finish = async () => {
+    if (saving || loggingEgg) return;
+    setSaving(true);
+    try { await markDone(); setOpen(false); trackOnboardingStep('completed'); trackEvent('Onboarding Completed'); return true; }
+    catch { toast({ title: 'Kunde inte spara introduktionen', description: 'Försök igen.', variant: 'destructive' }); return false; }
+    finally { setSaving(false); }
   };
 
   const addHen = async () => {
@@ -182,56 +175,6 @@ export default function OnboardingGuide() {
     }
   };
 
-  const loadDemoData = async () => {
-    if (!user?.id) return;
-    setLoadingDemo(true);
-    try {
-      const demoHens = [
-        { name: 'Greta', breed: 'Barnevelder', color: 'Brun', user_id: user.id, hen_type: 'hen', is_active: true },
-        { name: 'Astrid', breed: 'Sussex', color: 'Vit', user_id: user.id, hen_type: 'hen', is_active: true },
-        { name: 'Signe', breed: 'Maran', color: 'Koppar', user_id: user.id, hen_type: 'hen', is_active: true },
-      ];
-      const { data: insertedHens, error: henErr } = await supabase.from('hens').insert(demoHens).select();
-      if (henErr) throw henErr;
-
-      const eggLogs: { date: string; count: number; hen_id: string; user_id: string }[] = [];
-      const today = new Date();
-      for (let i = 0; i < 14; i++) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const hen = insertedHens![Math.floor(Math.random() * insertedHens!.length)];
-        eggLogs.push({
-          date: dateStr,
-          count: Math.floor(Math.random() * 3) + 1,
-          hen_id: hen.id,
-          user_id: user.id,
-        });
-      }
-      const { error: eggErr } = await supabase.from('egg_logs').insert(eggLogs);
-      if (eggErr) throw eggErr;
-
-      localStorage.setItem('honsgarden-demo-data', '1');
-      setCreatedHenName('Greta, Astrid & Signe');
-      setCreatedHenId(null);
-      setStep(2);
-      // Exempeldata räknas som genomfört steg men INTE som "First Hen Added"
-      // — användaren har ännu inte lagt till sin egen höna.
-      trackOnboardingStep('first_hen');
-      await markDone();
-      toast({ title: 'Exempeldata är inlagt! 🐔', description: 'Nu kan du se hur Hönsgården fungerar med hönor och äggloggar.' });
-    } catch (err) {
-      console.error('[OnboardingGuide] loadDemoData failed:', err);
-      const e = err as { message?: string; error_description?: string };
-      const description = e?.message || e?.error_description || 'Okänt fel. Försök igen om en stund.';
-      toast({ title: 'Kunde inte skapa exempeldata', description, variant: 'destructive' });
-    } finally {
-      setLoadingDemo(false);
-    }
-  };
-
-  // "Första ägget på 30 sekunder": ett tryck direkt i dialogen –
-  // ingen navigering, omedelbar belöning.
   const logFirstEgg = async () => {
     if (!createdHenId || !user?.id || loggingEgg) return;
     setLoggingEgg(true);
@@ -261,7 +204,7 @@ export default function OnboardingGuide() {
   const confettiEmojis = ['🎉', '🥚', '🐔', '✨', '💚', '🌟'];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { softClose(); void markDone(); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) void finish(); }}>
       <DialogContent
         className="max-w-md p-0 overflow-hidden rounded-2xl border-border/60 gap-0"
       >
@@ -269,7 +212,7 @@ export default function OnboardingGuide() {
         <DialogDescription className="sr-only">
           Lägg till din första höna och logga ditt första ägg på under en minut.
         </DialogDescription>
-        <AnimatePresence mode="wait">
+        <OnboardingFrame onSkip={() => void finish()} busy={saving || loggingEgg} status={user?.premium_type === 'trial' ? `Du provar Plus gratis${user.subscription_end ? ` till ${new Date(user.subscription_end).toLocaleDateString('sv-SE')}` : ''}. Därefter fortsätter kontot gratis. Ingen automatisk betalning.` : user?.is_premium ? 'Du har Plus-tillgång.' : 'Du använder ett gratiskonto.'}><AnimatePresence mode="wait">
           <motion.div
             key={step}
             initial={{ opacity: 0, x: 30 }}
@@ -308,19 +251,7 @@ export default function OnboardingGuide() {
                       Lägg till höna <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-border/40">
-                    <button
-                      onClick={loadDemoData}
-                      disabled={loadingDemo}
-                      className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors py-2 rounded-xl hover:bg-primary/5"
-                    >
-                      {loadingDemo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                      {loadingDemo ? 'Skapar exempeldata...' : 'Testa med exempeldata istället'}
-                    </button>
-                  </div>
-                  <p className="w-full text-center text-[10px] text-muted-foreground/50 mt-3">
-                    Du kan börja med exempeldata och byta ut den senare.
-                  </p>
+
                 </div>
               </>
             )}
@@ -473,14 +404,14 @@ export default function OnboardingGuide() {
                     <Button
                       size="sm"
                       className="h-9 px-5 text-xs rounded-xl gap-1.5"
-                      onClick={() => { finish(); navigate(eggLogged ? '/app' : '/app/eggs'); }}
+                      onClick={async () => { if(await finish())navigate(eggLogged ? '/app' : '/app/eggs'); }}
                     >
                       {eggLogged ? 'Till dashboarden 🏡' : <><Egg className="h-3.5 w-3.5" /> Logga dagens ägg</>}
                     </Button>
                   </div>
                   {!eggLogged && (
                     <button
-                      onClick={() => { finish(); navigate('/app'); }}
+                      onClick={async () => { if(await finish())navigate('/app'); }}
                       className="w-full text-center text-[11px] text-muted-foreground/60 mt-3 hover:text-muted-foreground transition-colors"
                     >
                       Gå till dashboarden
@@ -490,7 +421,7 @@ export default function OnboardingGuide() {
               </>
             )}
           </motion.div>
-        </AnimatePresence>
+        </AnimatePresence></OnboardingFrame>
       </DialogContent>
     </Dialog>
   );

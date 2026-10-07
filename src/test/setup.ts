@@ -11,7 +11,7 @@ class MockIntersectionObserver implements IntersectionObserver {
   disconnect = () => {};
   takeRecords = (): IntersectionObserverEntry[] => [];
 }
-Object.defineProperty(window, "IntersectionObserver", {
+if (typeof window !== "undefined") Object.defineProperty(window, "IntersectionObserver", {
   writable: true,
   value: MockIntersectionObserver,
 });
@@ -20,7 +20,7 @@ Object.defineProperty(globalThis, "IntersectionObserver", {
   value: MockIntersectionObserver,
 });
 
-Object.defineProperty(window, "matchMedia", {
+if (typeof window !== "undefined") Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: (query: string) => ({
     matches: false,

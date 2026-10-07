@@ -1,5 +1,6 @@
+import { atomicEggOrdersEnabled } from '@/lib/eggSalePricing';
 import ExternalEmbedGate from '@/components/ExternalEmbedGate';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,6 +56,8 @@ export default function PublicEggSaleV3() {
   const [wlPacks, setWlPacks] = useState('1');
   const [swishConfirm, setSwishConfirm] = useState(false);
   const [bookingConfirm, setBookingConfirm] = useState(false);
+  const [receipt,setReceipt]=useState<{id?:string;reference?:string;token?:string;packs:number;total_price_sek:number;eggs_per_pack:number}|null>(null);
+  const requestAttempt=useRef<{key:string;id:string}|null>(null);
   const [subFreq, setSubFreq] = useState<'weekly' | 'biweekly' | 'monthly'>('weekly');
   const isMobile = useIsMobile();
   const [subPacks, setSubPacks] = useState('1');
@@ -191,7 +194,7 @@ export default function PublicEggSaleV3() {
   const basePricePerPack = parseKr(sale.p12) || parseKr(sale.price);
   const packCount = Math.max(1, Number(packs) || 1);
   const pricePerPack = tiers.length ? getPricePerPack(packCount, tiers, basePricePerPack) : basePricePerPack;
-  const swishAmount = Math.round(packCount * pricePerPack);
+  const swishAmount = Math.round(packCount * pricePerPack * 100)/100;
   const swishMsgFull = `${sale.swishMsg || 'Ägg'} ${packCount}x${sale.size}-pack`.slice(0, 50);
   const swishPayee = (sale.swish || '').replace(/\D/g, '');
   const swishDeepLink = sale.swish
@@ -220,7 +223,8 @@ export default function PublicEggSaleV3() {
   const bookingMutation = useMutation({
     mutationFn: async () => {
       if (!listing?.id || !listing?.user_id) throw new Error('Den här säljlistan kan inte ta emot förfrågningar just nu.');
-      const packAmount = Math.max(1, Number(packs) || 1);
+      const packAmount = Number(packs);
+      if(!Number.isInteger(packAmount)||packAmount<1||packAmount>1000)throw new Error('Ange ett helt antal kartor mellan 1 och 1 000.');
       if (!name.trim()) throw new Error('Skriv ditt namn.');
       if (!phone.trim()) throw new Error('Skriv ditt telefonnummer.');
       if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) throw new Error('Skriv en giltig e-postadress.');
@@ -236,17 +240,25 @@ export default function PublicEggSaleV3() {
         payload.pickup_person_name = pickupPersonName.trim();
         payload.pickup_person_phone = pickupPersonPhone.trim() || null;
       }
-      const { data: inserted, error } = await (supabase as any)
-        .from('public_egg_sale_bookings')
-        .insert(payload)
-        .select('id')
-        .single();
-      if (error) throw error;
+      const customer={name:name.trim(),phone:phone.trim(),email:email.trim(),message:message.trim(),pickup_name:payload.pickup_person_name||'',pickup_phone:payload.pickup_person_phone||''};
+      const request={p_listing_id:listing.id,p_customer:customer,p_packs:packAmount,p_expected_total:swishAmount,p_slot:pickupSlotId||null};
+      const key=JSON.stringify(request);
+      if(requestAttempt.current?.key!==key)requestAttempt.current={key,id:crypto.randomUUID()};
+      let inserted:any;
+      if(atomicEggOrdersEnabled){
+        const {data,error}=await (supabase as any).rpc('create_egg_order',{...request,p_request_id:requestAttempt.current.id});
+        if(error)throw error;inserted=data;
+      }else{
+        // Compatible with the existing anonymous INSERT policy: never request seller-only SELECT.
+        const {error}=await (supabase as any).from('public_egg_sale_bookings').insert(payload);
+        if(error)throw error;
+        inserted={packs:packAmount,total_price_sek:swishAmount,eggs_per_pack:Number(sale.size)};
+      }
       // Notify the seller by email — fire and forget, never block the booking.
       // Only the booking_id is sent; the edge function reads all customer/pickup
       // data straight from the stored booking row.
       try {
-        if (inserted?.id) {
+        if (inserted?.id && !inserted.duplicate) {
           await supabase.functions.invoke('notify-seller-booking', {
             body: { booking_id: inserted.id },
           });
@@ -254,8 +266,10 @@ export default function PublicEggSaleV3() {
       } catch (notifyErr) {
         console.warn('notify-seller-booking failed (non-blocking)', notifyErr);
       }
+      return inserted;
     },
-    onSuccess: async () => {
+    onSuccess: async (confirmed) => {
+      setReceipt(confirmed);requestAttempt.current=null;
       setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
       setPickupSlotId(''); setPickupPersonName(''); setPickupPersonPhone(''); setOtherPickup(false);
       setBookingConfirm(true);
@@ -513,7 +527,7 @@ export default function PublicEggSaleV3() {
           <div className="rounded-xl border bg-white/70 p-4 space-y-2">
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Mottagare</span><strong>{sale.swishName || sale.swish}</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Belopp</span><strong className="text-green-700">{swishAmount} kr</strong></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{receipt?.packs} × {receipt?.eggs_per_pack}-pack</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Meddelande</span><strong className="truncate max-w-[140px]">{swishMsgFull}</strong></div>
           </div>
           {!isMobile && swishDeepLink && (
@@ -549,14 +563,16 @@ export default function PublicEggSaleV3() {
           </div>
           <div className="rounded-xl border bg-card/70 p-4 space-y-2">
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Säljare</span><strong>{sale.title}</strong></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Beräknat pris</span><strong>{swishAmount} kr</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{receipt?.packs} × {receipt?.eggs_per_pack}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Pris vid bokningen</span><strong>{receipt?.total_price_sek.toLocaleString('sv-SE')} kr</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Hämtas</span><strong>{sale.location}</strong></div>
           </div>
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <Clock className="h-4 w-4 shrink-0 mt-0.5" />
             <p>Ingen betalning har ännu skett. Säljaren kontaktar dig för att bekräfta tillgång och hämtning. Du betalar först vid upphämtning.</p>
           </div>
+          {receipt?.reference&&<p className="text-sm">Bokningsnummer: <strong>{receipt.reference}</strong></p>}
+          {receipt?.token&&<a className="inline-block underline text-sm" href={`/bestallning/${receipt.token}`}>Öppna min beställning</a>}
           <Button variant="ghost" size="sm" className="rounded-lg" onClick={() => setBookingConfirm(false)}>Stäng</Button>
         </CardContent>
       </Card>

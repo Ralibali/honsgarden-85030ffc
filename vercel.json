@@ -85,6 +85,14 @@
       "destination": "/index.html"
     },
     {
+      "source": "/auth/confirm",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth/connect",
+      "destination": "/index.html"
+    },
+    {
       "source": "/delete-account",
       "destination": "/index.html"
     },
@@ -290,6 +298,11 @@
     }
   ],
   "redirects": [
+    {
+      "source": "/pris",
+      "destination": "/priser",
+      "statusCode": 308
+    },
     {
       "source": "/funktioner",
       "destination": "/#funktioner",
@@ -639,6 +652,42 @@
       "source": "/blogg/halla-koll-pa-foderatgang",
       "destination": "/blogg/vad-paverkar-honsens-foderforbrukning",
       "statusCode": 308
+    }
+  ],
+  "headers": [
+    {
+      "source": "/auth/:path*",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/bestallning/:path*",
+      "headers": [
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ]
 }

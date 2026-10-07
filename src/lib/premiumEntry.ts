@@ -1,4 +1,5 @@
-export type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
+import type { PremiumType } from './premiumStatus';
+export type { PremiumType } from './premiumStatus';
 
 export type PremiumEntryInput = {
   premiumType?: PremiumType | null;
@@ -30,7 +31,7 @@ export function daysUntil(end: Date | string | null | undefined, now: Date = new
  */
 export function getPremiumEntryState(input: PremiumEntryInput = {}): PremiumEntryState {
   const premiumType = input.premiumType ?? 'free';
-  const isPaidPremium = premiumType === 'paid' || premiumType === 'lifetime';
+  const isPaidPremium = premiumType === 'paid' || premiumType === 'lifetime' || premiumType === 'bundle';
   const isTrialing = premiumType === 'trial';
   const hasPlusAccess = isPaidPremium || isTrialing;
 

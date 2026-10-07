@@ -1,4 +1,4 @@
-export type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime';
+export type PremiumType = 'free' | 'trial' | 'paid' | 'lifetime' | 'bundle';
 
 export function parseTimestamp(value: string | null | undefined): Date | null {
   if (!value) return null;
@@ -45,6 +45,7 @@ export function resolvePremiumType(input: {
   const hasValidProfileExpiry = hasActiveLocalPremium(input.profileExpiry, now);
   const hasValidSyncedExpiry = hasActiveLocalPremium(input.subscriptionEnd, now);
 
+  if (input.synced && input.subscribed && input.syncedPremiumType === 'bundle' && hasValidSyncedExpiry) return 'bundle';
   if (input.isLifetime || input.syncedPremiumType === 'lifetime') return 'lifetime';
   if (input.synced && input.subscribed && input.syncedPremiumType === 'paid' && hasValidSyncedExpiry) {
     return 'paid';

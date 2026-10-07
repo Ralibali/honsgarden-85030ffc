@@ -15,7 +15,7 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
     titleKey: 'columns.product',
     links: [
       { labelKey: 'links.all_features', href: '/#funktioner' },
-      { labelKey: 'links.pricing', href: '/#priser' },
+      { labelKey: 'links.pricing', href: '/priser' },
       { labelKey: 'links.app_for_owners', href: '/app-for-honsagare' },
       { labelKey: 'links.digital_egg_log', href: '/agglogg' },
       { labelKey: 'links.chicken_calendar', href: '/honskalender' },

@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 
@@ -68,9 +69,9 @@ Deno.serve(async (req) => {
       .select("subscription_status, premium_expires_at, is_lifetime_premium")
       .eq("user_id", user.id)
       .maybeSingle();
-    const isPremium = profile?.is_lifetime_premium ||
+    const isPremium = (await readBundleAccess(admin,user.id)).active || ( profile?.is_lifetime_premium ||
       (profile?.subscription_status === "premium" &&
-        (!profile?.premium_expires_at || new Date(profile.premium_expires_at) > new Date()));
+        (!profile?.premium_expires_at || new Date(profile.premium_expires_at) > new Date())));
     if (!isPremium) {
       return new Response(JSON.stringify({ error: "Premium krävs för komplett backup." }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },

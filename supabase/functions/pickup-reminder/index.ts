@@ -3,7 +3,7 @@
 // Idempotent: marks each booking with pickup_reminder_sent_at after enqueueing.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = "https://honsgarden.se";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 // Returns YYYY-MM-DD in Europe/Stockholm for now() + addDays
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
   // Fetch bookings for those slots that need reminding
   const { data: bookings, error: bErr } = await supabase
     .from("public_egg_sale_bookings")
-    .select("id, listing_id, customer_name, customer_email, packs, payment_status, status, pickup_slot_id, pickup_reminder_sent_at")
+    .select("id, listing_id, customer_name, customer_email, total_price_sek, packs, payment_status, status, pickup_slot_id, pickup_reminder_sent_at")
     .in("pickup_slot_id", slotIds)
     .is("pickup_reminder_sent_at", null)
     .neq("status", "cancelled")
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       const endTime = slot.ends_at ? fmtTime(slot.ends_at) : null;
       const slotText = endTime ? `${datePart} ${startTime} – ${endTime}` : `${datePart} ${startTime}`;
 
-      const amount = Number(listing.price_per_pack ?? 0) * Number(b.packs ?? 0);
+      const amount = Number(b.total_price_sek ?? Number(listing.price_per_pack ?? 0) * Number(b.packs ?? 0));
       const showSwish = b.payment_status === "unpaid" && listing.swish_number;
 
       const subject = `Påminnelse: imorgon hämtar du dina ägg hos ${title}`;
@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
           : "")
         + (showSwish
           ? `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Att betala</p>`
-            + `<p style="margin:0 0 14px;font-size:18px;color:hsl(22,18%,12%);font-weight:700;">${Math.round(amount)} kr</p>`
+            + `<p style="margin:0 0 14px;font-size:18px;color:hsl(22,18%,12%);font-weight:700;">${amount.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr</p>`
             + `<p style="margin:0 0 6px;font-size:13px;color:hsl(22,12%,44%);">Swisha till</p>`
             + `<p style="margin:0;font-size:15px;color:hsl(22,18%,12%);font-weight:600;">${listing.swish_number}${listing.swish_name ? ` (${listing.swish_name})` : ""}</p>`
           : "")
@@ -170,7 +170,7 @@ Deno.serve(async (req) => {
         + `</div>`;
 
       const text = `Hej ${b.customer_name}! Imorgon hämtar du ${b.packs} förp. hos ${title}. Tid: ${slotText}.`
-        + (showSwish ? ` Att betala: ${Math.round(amount)} kr via Swish ${listing.swish_number}.` : "")
+        + (showSwish ? ` Att betala: ${amount.toLocaleString('sv-SE',{maximumFractionDigits:2})} kr via Swish ${listing.swish_number}.` : "")
         + (cancelLink ? ` Avboka: ${cancelLink}` : "");
 
       const { error: enqErr } = await supabase.rpc("enqueue_email", {

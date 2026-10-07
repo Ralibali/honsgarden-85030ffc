@@ -1,3 +1,4 @@
+import { bookingTotal } from '@/lib/eggSalePricing';
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -243,12 +244,12 @@ export default function EggSalesProV7() {
   }, [listings]);
 
   const activeBookings = useMemo(() => (bookings as Booking[]).filter((booking) => booking.status !== 'cancelled'), [bookings]);
-  const paidBookings = useMemo(() => activeBookings.filter((booking) => booking.status === 'paid' || booking.status === 'picked_up'), [activeBookings]);
+  const paidBookings = useMemo(() => activeBookings.filter((booking) => booking.payment_status === 'paid' || (booking.status === 'paid' && booking.payment_status !== 'refunded')), [activeBookings]);
   const pickedUpBookings = useMemo(() => activeBookings.filter((booking) => booking.status === 'picked_up'), [activeBookings]);
 
   const amountFor = (rows: Booking[]) => rows.reduce((sum, booking) => {
     const listing = listingById[booking.listing_id];
-    return sum + Number(booking.packs || 0) * Number(listing?.price_per_pack || 0);
+    return sum + bookingTotal(booking,listing);
   }, 0);
 
   const weekStart = startOfWeek();
@@ -264,7 +265,7 @@ export default function EggSalesProV7() {
       const key = phone || name.toLowerCase();
       if (!key) return;
       const listing = listingById[booking.listing_id];
-      const amount = Number(booking.packs || 0) * Number(listing?.price_per_pack || 0);
+      const amount = bookingTotal(booking,listing);
       const row = map.get(key) || { name: name || 'Kund', orders: 0, packs: 0, amount: 0 };
       row.orders += 1;
       row.packs += Number(booking.packs || 0);

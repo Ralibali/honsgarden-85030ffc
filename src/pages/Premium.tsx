@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bot, Crown, Loader2, ShieldCheck, Sparkles, RefreshCcw, MessageCircle, FileText, Coins, BellRing, CalendarDays, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -36,6 +36,7 @@ const NATIVE_PRODUCTS_TIMEOUT_MS = 20_000;
 const FEATURE_ICONS = [Bot, FileText, Coins, BellRing, CalendarDays, BarChart3];
 
 export default function Premium() {
+  const navigate=useNavigate();
   const { t, i18n } = useTranslation('premium');
   const { user, refreshSubscription } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<BillingPlan | null>(null);
@@ -247,6 +248,7 @@ export default function Premium() {
   };
 
   const handleManageSubscription = async () => {
+    if(user?.premium_type==='bundle'){navigate('/app/settings');return;}
     setLoadingPortal(true);
     try {
       if (nativeBilling) {

@@ -15,6 +15,7 @@ import { CONSOLIDATED_BLOG_REDIRECTS } from '../data/blogConsolidation.mjs';
 
 /** Infra-level permanent redirects (308), evaluated before the filesystem. */
 export const ROUTE_REDIRECTS = [
+  { source: '/pris', destination: '/priser', statusCode: 308 },
   { source: '/funktioner', destination: '/#funktioner', statusCode: 308 },
   { source: '/priser', destination: '/#priser', statusCode: 308 },
   { source: '/villkor', destination: '/terms', statusCode: 308 },
@@ -56,6 +57,8 @@ export const STATIC_PUBLIC_ROUTES = [
   '/demo',
   '/s/agg',
   '/login',
+  '/auth/confirm',
+  '/auth/connect',
   '/delete-account',
   '/terms',
   '/integritet',

@@ -365,7 +365,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name, ...(meta ?? {}) } },
+      options: { data: { name, ...(meta ?? {}) }, emailRedirectTo: 'https://honsgarden.se/auth/confirm' },
     });
     if (error) throw new Error(error.message);
     return data;

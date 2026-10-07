@@ -4,7 +4,7 @@
  */
 
 /** Path-prefix som aldrig ska ge events (interna/admin-vyer). */
-const EXCLUDED_PATH_PREFIXES = ['/app/admin'] as const;
+const EXCLUDED_PATH_PREFIXES = ['/app/admin', '/auth', '/bestallning'] as const;
 
 /** Tillåtna plan-värden (låg kardinalitet). */
 export type AnalyticsPlan = 'free' | 'plus';

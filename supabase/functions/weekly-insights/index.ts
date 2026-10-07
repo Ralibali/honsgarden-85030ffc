@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { normalizeWeekData, buildUserPrompt } from "../_shared/weeklyData.ts";
@@ -116,11 +117,11 @@ serve(async (req) => {
 
     const isLifetime = profile?.is_lifetime_premium === true;
     const expiresAt = profile?.premium_expires_at ? new Date(profile.premium_expires_at) : null;
-    const isPremium = isLifetime || (
+    const isPremium = (await readBundleAccess(adminClient,user.id)).active || ( isLifetime || (
       profile?.subscription_status === "premium" &&
       !!expiresAt &&
       expiresAt.getTime() > Date.now()
-    );
+    ));
     if (!isPremium) return jsonResponse({ error: "premium_required", message: "Veckorapporten kräver Hönsgården Plus." }, 403);
 
     const { data: allowed, error: rateError } = await adminClient.rpc("check_rate_limit", {

@@ -6,7 +6,7 @@ initGa4({
     "www.honsgarden.se"
   ],
   "excluded": [
-    "/app/admin"
+    "/app/admin", "/auth", "/bestallning"
   ],
   "consentKey": "honsgarden_ga4_consent_v2"
 });

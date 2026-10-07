@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingStatusActions from '@/components/egg-sales/BookingStatusActions';
 import PriceTiersEditor from '@/components/egg-sales/PriceTiersEditor';
 import BulkPriceTiersPanel from '@/components/egg-sales/BulkPriceTiersPanel';
-import { getOrderTotal, normalizeTiers } from '@/lib/eggSalePricing';
+import { bookingTotal, atomicEggOrdersEnabled, normalizeTiers } from '@/lib/eggSalePricing';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -45,9 +45,12 @@ const STATUS_COLUMNS = [
   { key: 'paid', label: 'Betald' },
   { key: 'packed', label: 'Packad' },
   { key: 'picked_up', label: 'Hämtad' },
+  { key: 'cancelled', label: 'Avbokad' },
+  { key: 'no_show', label: 'Ej hämtad' },
+  { key: 'refunded', label: 'Återbetald' },
 ] as const;
 
-const kr = (value: unknown) => `${Math.round(Number(value || 0))} kr`;
+const kr = (value: unknown) => `${Number(value || 0).toLocaleString('sv-SE',{maximumFractionDigits:2})} kr`;
 const dt = (value?: string | null) => value ? new Date(value).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }) : 'Ingen tid vald';
 
 async function currentUserId() {
@@ -132,12 +135,12 @@ function Dashboard() {
 function BookingsBoard({ listing }: { listing: Row }) {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const { data: bookings = [], isLoading } = useQuery<Row[]>({
+  const { data: bookings = [], isLoading, isError, refetch } = useQuery<Row[]>({
     queryKey: ['dash-bookings', listing.id],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('public_egg_sale_bookings')
-        .select('*, egg_sale_pickup_slots(starts_at, ends_at, label), egg_sale_booking_tokens(token)')
+        .select(atomicEggOrdersEnabled?'*, egg_sale_pickup_slots(starts_at, ends_at, label), egg_sale_booking_tokens(token)':'*, egg_sale_pickup_slots(starts_at, ends_at, label)')
         .eq('listing_id', listing.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -148,9 +151,12 @@ function BookingsBoard({ listing }: { listing: Row }) {
 
   const update = useMutation({
     mutationFn: async ({ ids, status, paymentStatus }: { ids: string[]; status: string; paymentStatus?: string }) => {
+      if(atomicEggOrdersEnabled){const {error}=await (supabase as any).rpc('transition_egg_orders',{p_ids:ids,p_status:status,p_mark_paid:paymentStatus==='paid'});if(error)throw error;return;}
       const now = new Date().toISOString();
       for (const id of ids) {
-        const patch: Row = { status, updated_at: now };
+        const current=bookings.find(b=>b.id===id);
+        const patch: Row = { status:status==='paid'&&['packed','picked_up'].includes(current?.status)?current.status:status==='refunded'?current?.status:status, updated_at: now };
+        if(status==='refunded')patch.payment_status='refunded';
         const stamp: Row = { confirmed: 'confirmed_at', paid: 'paid_at', packed: 'packed_at', picked_up: 'picked_up_at', cancelled: 'cancelled_at', no_show: 'no_show_at', refunded: 'refunded_at' };
         if (stamp[status]) patch[stamp[status]] = now;
         if (paymentStatus) patch.payment_status = paymentStatus;
@@ -160,7 +166,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
     },
     onSuccess: () => {
       setSelected(new Set());
-      qc.invalidateQueries({ queryKey: ['dash-bookings', listing.id] });
+      void qc.invalidateQueries({predicate:query=>['dash-bookings','dash-stats-bookings','agda-pro-bookings','egg-sales-overview-bookings'].includes(String(query.queryKey[0]))});
       toast({ title: 'Bokningarna är uppdaterade' });
     },
     onError: (error: Error) => toast({ title: 'Kunde inte uppdatera', description: error.message, variant: 'destructive' }),
@@ -169,7 +175,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
   const groups = useMemo(() => {
     const result: Row = Object.fromEntries(STATUS_COLUMNS.map((column) => [column.key, []]));
     for (const booking of bookings) {
-      let key = booking.status || 'reserved';
+      let key = booking.status === 'pending' ? 'reserved' : booking.status || 'reserved';
       if (booking.payment_status === 'paid' && ['reserved', 'confirmed'].includes(key)) key = 'paid';
       if (result[key]) result[key].push(booking);
     }
@@ -197,6 +203,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
     onError: (err: Error) => toast({ title: 'Kunde inte skicka påminnelse', description: err.message, variant: 'destructive' }),
   });
 
+  if (isError) return <Card><CardContent className="p-6"><p role="alert">Bokningarna kunde inte hämtas.</p><Button variant="outline" onClick={()=>void refetch()}>Försök igen</Button></CardContent></Card>;
   if (isLoading) return <Card><CardContent className="p-6">Laddar bokningar…</CardContent></Card>;
 
   return <div className="space-y-3">
@@ -212,7 +219,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
           <p className="text-xs text-muted-foreground">Påminnelser går ut automatiskt 2 dagar efter hämtning och sedan varannan dag (max 4 ggr). Du kan också skicka manuellt.</p>
           <div className="space-y-2">
             {unpaidPickups.map((b) => {
-              const amount = getOrderTotal(Number(b.packs || 0), normalizeTiers(listing.price_tiers), Number(listing.price_per_pack || 0));
+              const amount = bookingTotal(b,listing);
               const reminders = Number(b.payment_reminder_count || 0);
               const lastSent = b.payment_reminder_last_sent_at;
               const token = b.egg_sale_booking_tokens?.token;
@@ -267,7 +274,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
       {STATUS_COLUMNS.map((column) => <section key={column.key} className="min-h-40 rounded-2xl border bg-muted/20 p-2.5"><div className="mb-2 flex items-center justify-between"><h3 className="font-serif">{column.label}</h3><Badge variant="secondary">{groups[column.key].length}</Badge></div><div className="space-y-2">{groups[column.key].map((booking: Row) => {
         const token = booking.egg_sale_booking_tokens?.token;
         const url = token ? `${window.location.origin}/bestallning/${token}` : null;
-        return <Card key={booking.id}><CardContent className="space-y-2 p-3"><div className="flex gap-2"><Checkbox checked={selected.has(booking.id)} onCheckedChange={() => toggle(booking.id)} /><div className="min-w-0"><p className="truncate text-sm font-medium">{booking.customer_name}</p><p className="text-xs text-muted-foreground">{booking.packs} kartor · {kr(getOrderTotal(Number(booking.packs || 0), normalizeTiers(listing.price_tiers), Number(listing.price_per_pack || 0)))}</p><p className="text-xs text-muted-foreground">{dt(booking.egg_sale_pickup_slots?.starts_at)}</p></div></div>{booking.customer_message && <p className="line-clamp-2 text-xs italic text-muted-foreground">”{booking.customer_message}”</p>}<BookingStatusActions bookingId={booking.id} status={column.key} busy={update.isPending} onChange={(id, status, paymentStatus) => update.mutate({ ids: [id], status, paymentStatus })} />{url && <div className="flex gap-1"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigator.clipboard.writeText(url).then(() => toast({ title: 'Orderlänken är kopierad' }))}><Copy className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-7 w-7" asChild><a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button></div>}</CardContent></Card>;
+        return <Card key={booking.id}><CardContent className="space-y-2 p-3"><div className="flex gap-2"><Checkbox checked={selected.has(booking.id)} onCheckedChange={() => toggle(booking.id)} /><div className="min-w-0"><p className="truncate text-sm font-medium">{booking.customer_name}</p><p className="text-xs text-muted-foreground">{booking.packs} kartor · {kr(bookingTotal(booking,listing))}</p><p className="text-xs text-muted-foreground">{dt(booking.egg_sale_pickup_slots?.starts_at)}</p></div></div>{booking.customer_message && <p className="line-clamp-2 text-xs italic text-muted-foreground">”{booking.customer_message}”</p>}<BookingStatusActions bookingId={booking.id} status={booking.status} paymentStatus={booking.payment_status} busy={update.isPending} onChange={(id, status, paymentStatus) => update.mutate({ ids: [id], status, paymentStatus })} />{url && <div className="flex gap-1"><Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => navigator.clipboard.writeText(url).then(() => toast({ title: 'Orderlänken är kopierad' }))}><Copy className="h-3.5 w-3.5" /></Button><Button size="icon" variant="ghost" className="h-7 w-7" asChild><a href={url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a></Button></div>}</CardContent></Card>;
       })}</div></section>)}
     </div>
   </div>;
@@ -334,10 +341,11 @@ function StatsPanel({ listing }: { listing: Row }) {
   const { data: bookings = [], isLoading: bLoading } = useQuery<Row[]>({
     queryKey: ['dash-stats-bookings', listing.id],
     queryFn: async () => {
-      const { data } = await (supabase as any)
+      const { data,error } = await (supabase as any)
         .from('public_egg_sale_bookings')
-        .select('status,payment_status,packs,created_at,picked_up_at,paid_at,cancelled_at')
+        .select('*')
         .eq('listing_id', listing.id);
+      if(error)throw error;
       return data || [];
     },
   });
@@ -362,8 +370,8 @@ function StatsPanel({ listing }: { listing: Row }) {
   const pickedUp = active.filter((b) => b.status === 'picked_up');
   const cancelled = inWindow.filter((b) => b.status === 'cancelled' || b.cancelled_at);
   const pendingPay = active.filter((b) => b.payment_status !== 'paid' && b.status !== 'cancelled');
-  const revenue = paid.reduce((sum, b) => sum + getOrderTotal(Number(b.packs || 0), tiers, fallback), 0);
-  const pendingValue = pendingPay.reduce((sum, b) => sum + getOrderTotal(Number(b.packs || 0), tiers, fallback), 0);
+  const revenue = paid.reduce((sum, b) => sum + bookingTotal(b,listing), 0);
+  const pendingValue = pendingPay.reduce((sum, b) => sum + bookingTotal(b,listing), 0);
   const totalPacks = active.reduce((sum, b) => sum + Number(b.packs || 0), 0);
   const eggs = pickedUp.reduce((sum, b) => sum + Number(b.packs || 0) * eggsPerPack, 0);
   const avgOrder = active.length > 0 ? revenue / Math.max(paid.length, 1) : 0;

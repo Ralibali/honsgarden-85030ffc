@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run editorial:check && node scripts/generate-sitemap.mjs",
+    "prebuild": "node scripts/check-app-foundation.mjs && npm run editorial:check && node scripts/generate-sitemap.mjs",
     "build": "vite build && npm run verify:seo && npm run verify:routes",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

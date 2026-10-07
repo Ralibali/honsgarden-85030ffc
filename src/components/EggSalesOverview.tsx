@@ -1,3 +1,4 @@
+import { bookingTotal } from '@/lib/eggSalePricing';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,6 +8,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { ArrowDownRight, ArrowUpRight, ChevronDown, ChevronUp, Minus, Package, ShoppingBasket, TrendingUp, Wallet } from 'lucide-react';
 
 type Booking = {
+  total_price_sek?: number | null;
+  payment_status?: string;
   id: string;
   listing_id: string;
   packs: number | null;
@@ -75,7 +78,7 @@ export default function EggSalesOverview() {
       since.setDate(since.getDate() - RANGE_DAYS * 2);
       const { data, error } = await (supabase as any)
         .from('public_egg_sale_bookings')
-        .select('id, listing_id, packs, status, created_at')
+        .select('*')
         .eq('seller_user_id', userId)
         .gte('created_at', since.toISOString())
         .order('created_at', { ascending: true });
@@ -116,7 +119,7 @@ export default function EggSalesOverview() {
 
       const created = startOfDay(new Date(booking.created_at));
       const packs = Number(booking.packs || 0);
-      const value = packs * priceFor(booking.listing_id);
+      const value = bookingTotal(booking,{price_per_pack:priceFor(booking.listing_id)});
 
       if (created >= periodStart) {
         const key = created.toISOString().slice(0, 10);

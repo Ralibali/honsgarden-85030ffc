@@ -5,7 +5,7 @@
 // placed into the email, so this endpoint cannot be used to spoof/spam sellers.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = "https://honsgarden.se";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {
@@ -49,7 +49,7 @@ Deno.serve(async (req) => {
     const { data: booking, error: bookingErr } = await supabase
       .from("public_egg_sale_bookings")
       .select(
-        "id, listing_id, seller_user_id, customer_name, customer_phone, customer_email, customer_message, packs, pickup_slot_id, pickup_person_name, pickup_person_phone",
+        "id, listing_id, seller_user_id, customer_name, customer_phone, customer_email, customer_message, total_price_sek, packs, pickup_slot_id, pickup_person_name, pickup_person_phone",
       )
       .eq("id", booking_id)
       .maybeSingle();
@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
     }
 
     const sellerName = seller.display_name || seller.email.split("@")[0] || "Hönsägare";
-    const amount = listing?.price_per_pack
-      ? `${Math.round(Number(listing.price_per_pack) * Number(packs))} kr`
+    const amount = (booking.total_price_sek != null || listing?.price_per_pack != null)
+      ? `${Number(booking.total_price_sek ?? Number(listing.price_per_pack) * Number(packs)).toLocaleString('sv-SE')} kr`
       : null;
     const messageId = `seller-booking-${booking.id}`;
     const subject = `Ny bokning i Agdas bod: ${customer_name} (${packs} st)`;

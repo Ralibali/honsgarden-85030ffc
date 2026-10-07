@@ -66,7 +66,7 @@ export function getOrderTotal(
   fallback: number,
 ): number {
   const q = Math.max(1, Math.floor(qty || 1));
-  return Math.round(q * getPricePerPack(q, tiers, fallback));
+  return Math.round(q * getPricePerPack(q, tiers, fallback) * 100) / 100;
 }
 
 /** Human label for a tier, e.g. "1–5 kartor" or "11+ kartor". */
@@ -74,4 +74,15 @@ export function formatTierRange(tier: PriceTier): string {
   if (tier.max_qty === null) return `${tier.min_qty}+ kartor`;
   if (tier.max_qty === tier.min_qty) return `${tier.min_qty} kartor`;
   return `${tier.min_qty}–${tier.max_qty} kartor`;
+}
+
+/** New orders keep the accepted price. Old orders remain estimates at today's price. */
+export function bookingTotal(booking: {packs?:number|null;total_price_sek?:number|string|null}, listing?: {price_per_pack?:number|null;price_tiers?:unknown}|null):number {
+ if(booking.total_price_sek!=null&&Number.isFinite(Number(booking.total_price_sek)))return Number(booking.total_price_sek);
+ return getOrderTotal(Number(booking.packs||0),normalizeTiers(listing?.price_tiers),Number(listing?.price_per_pack||0));
+}
+export const atomicEggOrdersEnabled = import.meta.env.VITE_ATOMIC_EGG_ORDERS_ENABLED === 'true';
+export function allowedOrderActions(status:string,paymentStatus?:string){
+ const closed=['cancelled','no_show','refunded'].includes(status);
+ return {confirm:['pending','reserved'].includes(status),pay:!closed&&paymentStatus!=='paid'&&paymentStatus!=='refunded'&&status!=='paid',pack:['pending','reserved','confirmed','paid'].includes(status),pickup:!closed&&status!=='picked_up',cancel:!closed&&status!=='picked_up',refund:paymentStatus==='paid'};
 }

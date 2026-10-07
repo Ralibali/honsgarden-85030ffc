@@ -1,3 +1,4 @@
+import ConnectAccount from '@/pages/ConnectAccount';
 import { NEW_DIGITAL_PRODUCTS } from './lib/digitalProducts';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -87,6 +88,7 @@ const Breeding = lazyWithRetry(() => import("./pages/Breeding"));
 const Inventory = lazyWithRetry(() => import("./pages/Inventory"));
 const Reports = lazyWithRetry(() => import("./pages/Reports"));
 const MarketplaceMap = lazyWithRetry(() => import("./pages/MarketplaceMap"));
+const ConfirmEmail = lazyWithRetry(() => import('./pages/ConfirmEmail'));
 const MapListingConfirm = lazyWithRetry(() => import("./pages/MapListingConfirm"));
 const MapListingManage = lazyWithRetry(() => import("./pages/MapListingManage"));
 const DemoApp = lazyWithRetry(() => import("./pages/DemoApp"));
@@ -180,6 +182,7 @@ const AppRoutes = () => (
         <Route path="/index" element={<Navigate to="/" replace />} />
         <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="/funktioner" element={<Navigate to="/#funktioner" replace />} />
+        <Route path="/pris" element={<Navigate to="/priser" replace />} />
         <Route path="/priser" element={<Navigate to="/#priser" replace />} />
         <Route path="/villkor" element={<Navigate to="/terms" replace />} />
         <Route path="/funktioner/agda-ai" element={<FeatureOverview feature="agda-ai" />} />
@@ -210,6 +213,8 @@ const AppRoutes = () => (
         <Route path="/r/:token" element={<RTokenDispatch />} />
         <Route path="/avboka/:token" element={<CancelBooking />} />
         <Route path="/bestallning/:token" element={<OrderPortal />} />
+        <Route path="/auth/connect" element={<ConnectAccount />} />
+          <Route path="/auth/confirm" element={<ConfirmEmail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/delete-account" element={<Navigate to="/app/settings#delete-account" replace />} />
         <Route path="/terms" element={<Terms />} />

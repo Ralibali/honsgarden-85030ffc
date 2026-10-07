@@ -1,3 +1,5 @@
+import { GardenHensCycle } from '../../packages/app-foundation/src/GardenHensCycle';
+import LinkedApps from '@/components/LinkedApps';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -368,7 +370,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Premium status */}
-      <PremiumStatusCard />
+      <PremiumStatusCard /><LinkedApps /><GardenHensCycle action={<a className="underline text-sm" href="https://odlingsdagboken.com/app/beds">Planera bäddarna i Odlingsdagboken</a>} />
 
       {/* Bjud in en hönskompis – 30 dagar Plus åt båda */}
       <ReferralCard />

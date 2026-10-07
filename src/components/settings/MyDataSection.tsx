@@ -291,7 +291,7 @@ export function MyDataSection() {
               <div>
                 <h3 className="text-sm font-semibold text-destructive">Radera konto permanent</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  All din data raderas permanent. Detta kan inte ångras. Vi rekommenderar att du först skapar en backup.
+                  All din data raderas permanent. Detta kan inte ångras. Vi rekommenderar att du först skapar en backup. Har du Odling + Höns Plus avslutas kombopaketet och Plus-tillgången i båda apparna.
                 </p>
               </div>
             </div>
@@ -314,7 +314,7 @@ export function MyDataSection() {
           <DialogHeader>
             <DialogTitle>Är du säker?</DialogTitle>
             <DialogDescription>
-              All din data raderas permanent. Detta kan inte ångras. Vi rekommenderar att du först skapar en backup.
+              All din data raderas permanent. Detta kan inte ångras. Vi rekommenderar att du först skapar en backup. Har du Odling + Höns Plus avslutas kombopaketet och Plus-tillgången i båda apparna.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

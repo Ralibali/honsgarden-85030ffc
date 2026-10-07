@@ -27,12 +27,20 @@ Deno.serve(async (req) => {
   });
 
   // 1. Get all premium users
-  const { data: premiumUsers, error: usersErr } = await supabase
+  const { data: appPremiumUsers, error: usersErr } = await supabase
     .from("profiles")
     .select("user_id, email, display_name, preferences")
     .eq("subscription_status", "premium")
     .not("email", "is", null);
 
+  let bundleUsers: typeof appPremiumUsers=[];
+  if(Deno.env.get('UNIFIED_ACCOUNT_ENABLED')==='true'){
+    const {data:grants,error:grantError}=await selectAll(()=>supabase.from('bundle_entitlements').select('user_id').eq('active',true).gt('active_until',new Date().toISOString()).order('user_id'));
+    if(grantError)return new Response('Plus-status kunde inte hämtas',{status:503});
+    const bundleIds=(grants??[]).map(g=>g.user_id);
+    for(let offset=0;offset<bundleIds.length;offset+=100){const {data,error}=await supabase.from('profiles').select('user_id,email,display_name,preferences').in('user_id',bundleIds.slice(offset,offset+100)).not('email','is',null);if(error)return new Response('Plus-status kunde inte hämtas',{status:503});bundleUsers.push(...(data||[]));}
+  }
+  const premiumUsers=[...new Map([...(appPremiumUsers||[]),...bundleUsers].map(user=>[user.user_id,user])).values()];
   if (usersErr || !premiumUsers?.length) {
     console.log("No premium users or error", usersErr);
     return new Response(JSON.stringify({ processed: 0 }), {

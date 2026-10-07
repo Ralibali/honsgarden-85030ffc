@@ -1,7 +1,7 @@
 import { readPrivacyConsent } from './privacyConsent';
 /** Shared gate for first-party usage telemetry. A legacy decision never grants consent. */
 const CONSENT_KEY = 'honsgarden_ga4_consent_v2';
-const PRIVATE_PATHS = ['/app', '/admin', '/shop/checkout', '/shop/order', '/shop/thank-you'];
+const PRIVATE_PATHS = ['/app', '/admin', '/auth', '/bestallning', '/shop/checkout', '/shop/order', '/shop/thank-you'];
 
 export function hasTelemetryConsent(): boolean {
   return readPrivacyConsent(CONSENT_KEY)?.analytics === true;

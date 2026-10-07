@@ -1,3 +1,4 @@
+import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiStream } from "../_shared/ai.ts";
@@ -234,7 +235,7 @@ serve(async (req) => {
 
     const isLifetime = profile?.is_lifetime_premium === true;
     const expiresAt = profile?.premium_expires_at ? new Date(profile.premium_expires_at) : null;
-    const hasActivePremium = isLifetime || (
+    const hasActivePremium = (await readBundleAccess(adminClient,user.id)).active || isLifetime || (
       profile?.subscription_status === "premium" &&
       !!expiresAt &&
       expiresAt.getTime() > Date.now()

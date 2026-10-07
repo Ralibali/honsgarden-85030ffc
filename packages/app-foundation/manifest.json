@@ -1,0 +1,11 @@
+{
+  "name": "@ralibali/app-foundation",
+  "version": "0.1.0",
+  "source": "Ralibali/garden-magic-bloom/packages/app-foundation",
+  "files": {
+    "src/OnboardingFrame.tsx": "da781904ad476e79b3d2ac8cd47be4ca494fa634e3eebb6415db68e65a37121f",
+    "src/LinkedAppsCard.tsx": "37dc317c3d162cd47191df7661780a033522e98b2c8765b39bf22ed9f3bf8937",
+    "src/GardenHensCycle.tsx": "180f34f8a1228da42ef66da88ad53857ce224ad5c96574e12189e9cac368c361",
+    "TEST_CHECKLIST.md": "fd1089dd7dc8f7d36fc0a623aa8c97478648b3ed02d3e2c283a43bb25497e24a"
+  }
+}
