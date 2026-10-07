@@ -19,7 +19,7 @@ import { usePwaInstallTracking } from "@/hooks/usePwaInstallTracking";
 import { SuspenseFallback } from "./components/SuspenseFallback";
 
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
-import SettingsPage from "./pages/Settings";
+const SettingsPage = lazyWithRetry(() => import("./pages/Settings"));
 const Profile = lazyWithRetry(() => import("./pages/Profile"));
 
 import Index from "./pages/IndexUpdated";
