@@ -160,23 +160,32 @@ Deno.serve(async (req) => {
       Date.parse(account.active_until || "") > Date.now();
     let until = account?.active_until;
     if (account?.stripe_subscription_id && stripe) {
+      // Timestamp the lookup before waiting for Stripe; a slower response must
+      // not overwrite a later cancellation or a replacement subscription.
+      const observed = new Date().toISOString();
       const sub = await stripe.subscriptions.retrieve(
         account.stripe_subscription_id,
       );
       const access = bundleAccess(sub, priceId);
       active = access.active;
       until = access.until;
-      const { error } = await admin.from("unified_accounts").update({
-        bundle_status: access.active
-          ? "active"
-          : sub.status === "active"
-          ? "none"
-          : sub.status,
-        active_until: until,
-        verified_at: new Date().toISOString(),
-      }).eq("id", account.id);
+      const { data: updated, error } = await admin.from("unified_accounts")
+        .update({
+          bundle_status: access.active
+            ? "active"
+            : sub.status === "active"
+            ? "none"
+            : sub.status,
+          active_until: until,
+          verified_at: observed,
+        }).eq("id", account.id)
+        .eq("stripe_subscription_id", account.stripe_subscription_id)
+        .or(`verified_at.is.null,verified_at.lt.${observed}`)
+        .select("id");
       if (error) throw error;
-      const observed = new Date().toISOString();
+      if (!updated?.length) {
+        throw new Error("Abonnemanget uppdateras. Försök igen.");
+      }
       for (const which of ["hens", "garden"] as App[]) {
         const { error } = await client(which).rpc("apply_bundle_entitlement", {
           p_user: which === "hens"

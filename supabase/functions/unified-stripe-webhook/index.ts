@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
       subscription,
       Deno.env.get("STRIPE_BUNDLE_PRICE_ID"),
     );
-    const { error: updateError } = await admin.from("unified_accounts").update({
+    let update = admin.from("unified_accounts").update({
       stripe_subscription_id: subscription.id,
       bundle_status: access.active
         ? "active"
@@ -84,8 +84,16 @@ Deno.serve(async (req) => {
         : subscription.status,
       active_until: access.until,
       verified_at: observed,
-    }).eq("id", id);
+    }).eq("id", id)
+      .or(`verified_at.is.null,verified_at.lt.${observed}`);
+    update = account.stripe_subscription_id
+      ? update.eq("stripe_subscription_id", account.stripe_subscription_id)
+      : update.is("stripe_subscription_id", null);
+    const { data: updated, error: updateError } = await update.select("id");
     if (updateError) throw updateError;
+    // Stripe retries with a fresh lookup when another writer wins the race.
+    // Never distribute grants from an observation the account did not accept.
+    if (!updated?.length) return new Response("Retry later", { status: 500 });
     const gardenKey = Deno.env.get("GARDEN_SERVICE_ROLE_KEY");
     if (!gardenKey) throw new Error("Garden connection missing");
     const garden = createClient(
