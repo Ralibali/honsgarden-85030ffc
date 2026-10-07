@@ -157,3 +157,6 @@
     transition: none;
   }
 }
+
+.hg-home-v3 .hg-tile--deep { --dark-card-text: #fff; color: var(--dark-card-text); }
+.hg-home-v3 .hg-tile--deep :is(h2,h3,p,li) { color: var(--dark-card-text); }

@@ -109,44 +109,6 @@ export function RecommendedProducts({ slug, title, content, category, tags, exce
         ))}
       </div>
 
-      {labeled.length >= 3 && (
-        <div className="mt-6 overflow-x-auto -mx-1 px-1">
-          <table className="w-full text-xs border-collapse min-w-[520px]">
-            <thead>
-              <tr className="text-left text-muted-foreground border-b border-border">
-                <th className="py-2 pr-3 font-medium">Produkt</th>
-                <th className="py-2 pr-3 font-medium">Passar bäst för</th>
-                <th className="py-2 pr-3 font-medium">Pris</th>
-                <th className="py-2 pr-3 font-medium">Butik</th>
-                <th className="py-2 pr-3 font-medium sr-only">Handla</th>
-              </tr>
-            </thead>
-            <tbody>
-              {labeled.map(({ label, product }) => (
-                <tr key={product.id} className="border-b border-border/50">
-                  <td className="py-2 pr-3 font-medium text-foreground">{product.name}</td>
-                  <td className="py-2 pr-3 text-muted-foreground">{label}</td>
-                  <td className="py-2 pr-3 stat-number text-primary">{product.price || '—'}</td>
-                  <td className="py-2 pr-3 text-muted-foreground">{affiliateAdvertiserName(product)}</td>
-                  <td className="py-2 pr-3">
-                    <AffiliateLink
-                      href={product.trackingUrl}
-                      productId={product.id}
-                      advertiser={product.advertiser}
-                      source="comparison"
-                      slug={slug}
-                      sectionTitle={label}
-                      className="text-primary underline underline-offset-2"
-                    >
-                      Se pris
-                    </AffiliateLink>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </section>
   );
 }

@@ -1,3 +1,5 @@
+import LandingNavbar from '@/components/LandingNavbar';
+import LandingFooter from '@/components/LandingFooter';
 import { pendingAccountLink } from '@/lib/linkedApps';
 import { loginErrorMessage } from '@/lib/loginError';
 import { isNativePlatform } from '@/lib/nativePlatform';
@@ -39,6 +41,8 @@ export default function Login() {
     noindex: true,
   });
 
+  const selectedPlan = ['free', 'plus_monthly', 'plus_annual'].includes(searchParams.get('plan') || '') ? searchParams.get('plan') : null;
+  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : '/app';
   const initialMode = searchParams.get('mode');
   // Valideras mot tillåtna AnalyticsSource-värden – aldrig fritext till analytics.
   const signupSource = parseAnalyticsSource(searchParams.get('source'));
@@ -71,8 +75,8 @@ export default function Login() {
   }, [postalCode, country, intl, normalizedPostalCode]);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
-  }, [authLoading, isAuthenticated, navigate]);
+    if (!authLoading && isAuthenticated) navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
+  }, [authLoading, isAuthenticated, navigate, nextPath]);
 
   // Trattmätning: besökaren har nått registreringsformuläret
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function Login() {
       } catch {
         // Non-blocking legacy migration.
       }
-      navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
+      navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
     } catch (err) {
       toast({ title: 'Inloggning misslyckades', description: loginErrorMessage(err), variant: 'destructive' });
     } finally {
@@ -174,7 +178,7 @@ export default function Login() {
           ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
           : 'Du har fått sju dagars gratis Premium! 🎉',
       });
-      navigate(pendingAccountLink()?'/auth/connect':'/app', { replace: true });
+      navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
     } catch (err) {
       toast({ title: 'Registrering misslyckades', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
     } finally {
@@ -201,11 +205,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-dvh flex">
+    <><LandingNavbar /><main id="main-content" tabIndex={-1} className="min-h-dvh pt-16 flex">
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img src={heroFarm} alt="Svensk hönsgård med höns i morgonljus" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         {/* Svävande ägg för liv i bilden */}
         {['🥚', '🐔', '🥚'].map((emoji, i) => (
           <motion.span
@@ -224,8 +228,8 @@ export default function Login() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
           >
-            <h2 className="font-serif text-4xl text-foreground mb-3">Ha full koll på din hönsgård</h2>
-            <p className="text-muted-foreground text-lg max-w-md mb-6">Logga ägg, håll ordning på flocken och följ ekonomin – enkelt och smidigt i en och samma app.</p>
+            <h2 className="font-serif text-4xl text-white mb-3">Ha full koll på din hönsgård</h2>
+            <p className="text-white/90 text-lg max-w-md mb-6">Logga ägg, håll ordning på flocken och följ ekonomin – enkelt och smidigt i en och samma app.</p>
             <div className="space-y-2.5 max-w-sm">
               {[
                 { icon: Egg, text: 'Logga dagens ägg på under fem sekunder' },
@@ -237,7 +241,7 @@ export default function Login() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.35 + i * 0.12 }}
-                  className="flex items-center gap-3 rounded-xl bg-background/60 backdrop-blur-sm border border-border/40 px-3.5 py-2.5"
+                  className="flex items-center gap-3 rounded-xl bg-white/95 backdrop-blur-sm border border-border/40 px-3.5 py-2.5"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                     <f.icon className="h-4 w-4 text-primary" />
@@ -324,6 +328,8 @@ export default function Login() {
               <GoogleAuthButton mode="login" />
               <AppleAuthButton mode="login" />
               <AuthDivider />
+              <p className="text-sm text-muted-foreground">Inga kortuppgifter krävs.</p>
+              {selectedPlan && <p className="text-sm">Vald plan: {selectedPlan === 'plus_annual' ? 'Plus – År' : selectedPlan === 'plus_monthly' ? 'Plus – Månad' : 'Gratis'}. {selectedPlan !== 'free' && 'Nya konton får prova Plus i 7 dagar.'}</p>}
               {registrationNotice && <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">{registrationNotice}</p>}
               <div className="space-y-4">
                 <div>
@@ -486,7 +492,7 @@ export default function Login() {
           )}
         </div>
       </div>
-    </div>
+    </main><LandingFooter /></>
   );
 }
 

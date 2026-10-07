@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -384,25 +385,7 @@ export default function MarketplaceMap() {
   return (
     <div className="min-h-dvh bg-background">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <header className="mb-6 sm:mb-8 text-center">
-          <h1 className="font-serif text-3xl sm:text-4xl text-foreground mb-3">{heading}</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">{subheading}</p>
-          <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <span>Dela kartan:</span>
-            <ShareButtons
-              url={
-                ort
-                  ? `https://honsgarden.se/karta?ort=${ort.slug}`
-                  : `https://honsgarden.se/karta`
-              }
-              title={
-                ort
-                  ? `Hitta färska ägg i ${ort.name} 🥚 – karta över lokala äggsäljare`
-                  : `Hitta färska ägg nära dig 🥚 – karta över lokala äggsäljare`
-              }
-            />
-          </div>
-        </header>
+        <LandingNavbar /><div className="h-16" />
 
         {/* Search + filter bar */}
         <div className="mb-4 rounded-2xl border bg-card shadow-sm p-3 sm:p-4">

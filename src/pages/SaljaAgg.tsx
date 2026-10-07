@@ -197,7 +197,7 @@ export default function SaljaAgg() {
     <div className="min-h-dvh bg-background flex flex-col">
       <LandingNavbar />
 
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
         {/* HERO */}
         <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden noise-bg">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-warning/[0.04] to-transparent pointer-events-none" />

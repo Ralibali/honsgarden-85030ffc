@@ -178,7 +178,7 @@ export default function SaljaAggOrt() {
     <div className="min-h-dvh bg-background flex flex-col">
       <LandingNavbar />
 
-      <main className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1">
         {/* Brödsmulor */}
         <nav aria-label="Brödsmulor" className="container max-w-6xl mx-auto px-5 sm:px-6 pt-6 text-xs text-muted-foreground">
           <ol className="flex items-center gap-1.5 flex-wrap">

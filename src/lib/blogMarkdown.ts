@@ -281,9 +281,25 @@ export const CATEGORY_HERO: Record<string, string> = {
   friluftsliv: '/blog-images/packlista-vandring.jpg',
 };
 
+const ARTICLE_COVERS: Record<string, string> = {
+  "honsvakt-checklista-overlamning": "/blog-images/hens-feeding.jpg",
+  "utrustningsregister-honsgard": "/blog-images/chicken-coop.jpg",
+  "ratta-flockanteckning-behall-sammanhang": "/blog-images/hen-portrait.jpg",
+  "grupp-och-plats-flockjournal": "/blog-images/chicken-run.jpg",
+  "arkivkopia-flockjournal-lasbar": "/blog-images/farm-kitchen.jpg",
+  "undvik-dubbelregistrering-agg": "/blog-images/egg-collecting.jpg",
+  "honsraser-for-agglaggeri-sverige": "/blog-images/eggs-basket.jpg",
+  "kravproblem-hos-hons": "/blog-images/hen-health-check.jpg",
+  "hobbyhons-nyborjarguide": "/blog-images/hen-with-chicks.jpg",
+  "skaffa-hons-nyborjarguide": "/blog-images/hens-meadow.jpg",
+  "bast-honsras-sverige": "/blog-images/chicken-breeds.jpg",
+  "hons-varper-inte": "/blog-images/organic-eggs.jpg",
+  "honshus-guide": "/blog-images/building-coop.jpg"
+};
 const DEFAULT_HERO = '/blog-images/hens-garden.jpg';
 
 interface HeroPost {
+  slug?: string | null;
   feature_image_url?: string | null;
   cover_image_url?: string | null;
   category?: string | null;
@@ -292,5 +308,5 @@ interface HeroPost {
 /** Välj hero-bild: egen feature/cover först, annars kategori-default. */
 export function heroForPost(post?: HeroPost | null): string {
   if (!post) return DEFAULT_HERO;
-  return post.feature_image_url || post.cover_image_url || CATEGORY_HERO[(post.category || '').toLowerCase()] || DEFAULT_HERO;
+  return (post.slug && ARTICLE_COVERS[post.slug]) || post.feature_image_url || post.cover_image_url || CATEGORY_HERO[(post.category || '').toLowerCase()] || DEFAULT_HERO;
 }

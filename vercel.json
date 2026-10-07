@@ -5,6 +5,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/priser",
+      "destination": "/index.html"
+    },
+    {
       "source": "/s/bergs-agg",
       "destination": "/index.html"
     },
@@ -306,11 +310,6 @@
     {
       "source": "/funktioner",
       "destination": "/#funktioner",
-      "statusCode": 308
-    },
-    {
-      "source": "/priser",
-      "destination": "/#priser",
       "statusCode": 308
     },
     {

@@ -101,7 +101,7 @@ export default function MinaForstaHons() {
   if (native) return (
     <div className="min-h-dvh bg-background">
       <LandingNavbar />
-      <main className="mx-auto max-w-2xl px-5 pb-16 pt-24">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-2xl px-5 pb-16 pt-24">
         <h1 className="font-serif text-3xl">Mina första höns</h1>
         <p className="mt-4 text-muted-foreground">Den här produktvyn är inte tillgänglig i appen.</p>
         <Link to="/blogg" className="mt-6 inline-flex text-primary underline">Till hönsguiderna</Link>

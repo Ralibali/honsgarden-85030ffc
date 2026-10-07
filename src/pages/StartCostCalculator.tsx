@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calculator, ChevronRight, Home, ShieldCheck, ShoppingBag } from 'lucide-react';
@@ -85,19 +86,9 @@ export default function StartCostCalculator() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="sticky top-0 z-30 border-b border-border/50 bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl" aria-hidden>🐔</span>
-            <span className="font-serif text-lg">Hönsgården</span>
-          </Link>
-          <Link to="/login?mode=register">
-            <Button size="sm" className="rounded-xl">Testa appen gratis</Button>
-          </Link>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="mx-auto max-w-5xl px-4 py-9 sm:py-14">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-4 py-9 sm:py-14">
         <div className="mx-auto max-w-3xl text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary">
             <Calculator className="h-3.5 w-3.5" />

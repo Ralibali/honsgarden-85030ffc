@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Bird, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +24,13 @@ export default function LandingNavbar() {
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') { setMobileOpen(false); menuButton.current?.focus(); } };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [mobileOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -40,7 +47,7 @@ export default function LandingNavbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
             ? 'bg-background/85 backdrop-blur-md border-b border-border/50 shadow-sm'
-            : 'bg-transparent'
+            : 'bg-background/95 border-b border-border/50'
         }`}
         aria-label="Huvudnavigation"
       >
@@ -52,7 +59,7 @@ export default function LandingNavbar() {
             <span className="font-serif text-lg text-foreground">Hönsgården</span>
           </a>
 
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -71,10 +78,12 @@ export default function LandingNavbar() {
           </div>
 
           <button
-            className="md:hidden p-2 text-foreground"
+            className="lg:hidden min-h-11 min-w-11 p-2 text-foreground"
+            ref={menuButton}
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label={mobileOpen ? 'Stäng meny' : 'Öppna meny'}
             aria-expanded={mobileOpen}
+            aria-controls="landing-mobile-menu"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -82,19 +91,19 @@ export default function LandingNavbar() {
 
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
+            <motion.div id="landing-mobile-menu"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="md:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b border-border/50"
+              className="lg:hidden overflow-hidden bg-background/95 backdrop-blur-md border-b border-border/50"
             >
               <div className="px-5 pb-5 pt-2 space-y-3">
                 {navLinks.map((link) => (
                   <a
                     key={link.href}
                     href={link.href}
-                    className="block text-sm text-muted-foreground hover:text-foreground py-2"
+                    className="block text-sm text-muted-foreground hover:text-foreground min-h-11 py-3"
                     onClick={() => setMobileOpen(false)}
                   >
                     {link.label}

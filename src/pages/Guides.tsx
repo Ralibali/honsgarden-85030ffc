@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
@@ -90,21 +91,9 @@ export default function Guides() {
         />
       )}
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <span className="text-xl">🐔</span>
-            <span className="font-serif text-lg text-foreground">Hönsgården</span>
-          </Link>
-          <Link to="/login">
-            <Button size="sm" className="rounded-xl text-xs gap-1">
-              <Egg className="h-3 w-3" /> Kom igång
-            </Button>
-          </Link>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+      <main id="main-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         {/* Hero */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-medium mb-4">

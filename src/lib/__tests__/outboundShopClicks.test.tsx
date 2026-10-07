@@ -194,6 +194,7 @@ describe('GuideArticle wires Outbound Clicked without mounting the strip', () =>
     expect(article).not.toContain('AffiliateProductStrip');
     expect(flags).toMatch(/export const AFFILIATE_ENABLED = true/);
     expect(article).toContain('const showAds = useShowAds();');
-    expect(article).toContain('{showAds && <AffiliateBannerRotator');
+    expect(article).not.toContain('<AffiliateBannerRotator');
+    expect(article).toContain('{showAds && allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts');
   });
 });

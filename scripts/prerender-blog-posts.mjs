@@ -11,7 +11,7 @@ import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, her
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
-import { injectContextualShopPlacement, renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
+import { renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 import {
   BLOG_INDEX_H1,
@@ -200,7 +200,7 @@ function renderArticle(post, { allPosts = [], sitewide = false } = {}) {
     post.slug,
     { sitewide },
   );
-  const content = sanitizeHtml(injectContextualShopPlacement(injectContextualRegisterCta(rewritten, post.slug), post.slug));
+  const content = sanitizeHtml(injectContextualRegisterCta(rewritten, post.slug));
   const related = relatedPosts(post, allPosts, 4);
 
   return `<div class="min-h-screen bg-background">
@@ -211,9 +211,9 @@ function renderArticle(post, { allPosts = [], sitewide = false } = {}) {
 <h1 class="font-serif text-3xl sm:text-5xl text-foreground leading-tight mb-4">${escapeHtml(post.title)}</h1>
 ${post.excerpt ? `<p class="text-lg text-muted-foreground leading-relaxed mb-6">${escapeHtml(post.excerpt)}</p>` : ''}
 <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(post.title)}" width="1200" height="675" class="w-full aspect-[16/9] object-cover rounded-2xl mb-8" loading="eager" fetchpriority="high" decoding="async" />
-${digitalGuideAudienceForArticle(post.slug) ? renderDigitalGuidePlacement(digitalGuideAudienceForArticle(post.slug)) : ''}
 ${hasSponsoredLinks(content) ? renderAdDisclosure() : ''}
 <div class="prose-custom">${content}</div>
+${digitalGuideAudienceForArticle(post.slug) ? renderDigitalGuidePlacement(digitalGuideAudienceForArticle(post.slug)) : ''}
 ${post.slug === 'honsvakt-checklista-overlamning' ? '<p>AI-assisterad originalguide, skriven med ChatGPT. Arbetsmallen är ett redaktionellt förslag.</p>' : ''}
 ${renderRelatedPosts(related)}
 </article></main></div>`;

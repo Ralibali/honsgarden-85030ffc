@@ -26,9 +26,13 @@ describe('visitor fixes', () => {
     expect(db.from).not.toHaveBeenCalled();
   });
 
-  it.each(['/funktioner', '/priser', '/villkor'])('redirects %s', (path) => {
-    const destinations: Record<string, string> = { '/funktioner': '/#funktioner', '/priser': '/#priser', '/villkor': '/terms' };
+  it.each(['/funktioner', '/villkor'])('redirects %s', (path) => {
+    const destinations: Record<string, string> = { '/funktioner': '/#funktioner', '/villkor': '/terms' };
     expect(matchRoute(path)).toEqual({ kind: 'redirect', destination: destinations[path], statusCode: 308 });
+  });
+
+  it('serves prices as a public page', () => {
+    expect(matchRoute('/priser')).toEqual({ kind: 'static', route: '/priser' });
   });
 
   it('translates invalid login credentials by code and by legacy message', () => {

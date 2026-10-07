@@ -1,0 +1,238 @@
+{
+  "araucana": {
+    "src": "/breeds/araucana-1200.webp",
+    "srcSet": "/breeds/araucana-1200.webp 342w",
+    "source": "https://commons.wikimedia.org/wiki/File:Araucana_hen_showing_ear_tufts.jpg",
+    "author": "User:Anne Cushing",
+    "license": "Public domain",
+    "licenseUrl": "",
+    "subject": "Araucana"
+  },
+  "australorp": {
+    "src": "/breeds/australorp-1200.webp",
+    "srcSet": "/breeds/australorp-640.webp 640w, /breeds/australorp-1200.webp 730w",
+    "source": "https://commons.wikimedia.org/wiki/File:Australorp_Rooster.jpg",
+    "author": "JTdale",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "subject": "Australorp"
+  },
+  "orpington": {
+    "src": "/breeds/orpington-1200.webp",
+    "srcSet": "/breeds/orpington-640.webp 576w, /breeds/orpington-1200.webp 1024w",
+    "source": "https://commons.wikimedia.org/wiki/File:Buff_Orpington_chicken,_UK.jpg",
+    "author": "Pete Cooper",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "subject": "Orpington chicken"
+  },
+  "wyandotte": {
+    "src": "/breeds/wyandotte-1200.webp",
+    "srcSet": "/breeds/wyandotte-640.webp 432w, /breeds/wyandotte-1200.webp 684w",
+    "source": "https://commons.wikimedia.org/wiki/File:Silver-laced_Wyandotte_rooster_(cropped).jpg",
+    "author": "ripperda",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "subject": "Wyandotte chicken"
+  },
+  "bielefelder": {
+    "src": "/breeds/bielefelder-1200.webp",
+    "srcSet": "/breeds/bielefelder-640.webp 640w, /breeds/bielefelder-1200.webp 1024w",
+    "source": "https://commons.wikimedia.org/wiki/File:Bielefelder-kennhuhn.jpg",
+    "author": "Stuhlgockel",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "subject": "Bielefelder Kennhuhn"
+  },
+  "cochin": {
+    "src": "/breeds/cochin-1200.webp",
+    "srcSet": "/breeds/cochin-640.webp 640w, /breeds/cochin-1200.webp 1200w",
+    "source": "https://commons.wikimedia.org/wiki/File:Partridge_Cochin_cockerel_(cropped).jpg",
+    "author": "sammydavisdog from East Midlands, UK",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "subject": "Cochin chicken"
+  },
+  "faverolle": {
+    "src": "/breeds/faverolle-1200.webp",
+    "srcSet": "/breeds/faverolle-640.webp 434w, /breeds/faverolle-1200.webp 814w",
+    "source": "https://commons.wikimedia.org/wiki/File:Faverolles_cock_and_hen_close-up.jpg",
+    "author": "stephen jones from uk",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "subject": "Faverolles chicken"
+  },
+  "vit-leghorn": {
+    "src": "/breeds/vit-leghorn-1200.webp",
+    "srcSet": "/breeds/vit-leghorn-640.webp 432w, /breeds/vit-leghorn-1200.webp 810w",
+    "source": "https://commons.wikimedia.org/wiki/File:-2020-09-02_White_Leghorn_chicken,_Trimingham,_Norfolk_(1).JPG",
+    "author": "Kolforn (Kolforn)\nI'd appreciate if you could mail me (Kolforn@gmail.com) if you want to use this picture out of the Wikimedia project scope.\n\n\n\n This file is licensed under the Creative Commons Attribution-Share Alike 4.0 International license.\nYou are free:\nto share – to copy, distribute and transmit the work\nto remix – to adapt the work\nUnder the following conditions:\nattribution – You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.\nshare alike – If you remix, transform, or build upon the material, you must distribute your contributions under the same or compatible license as the original.https://creativecommons.org/licenses/by-sa/4.0CC BY-SA 4.0 Creative Commons Attribution-Share Alike 4.0 truetrue",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "subject": "vit-leghorn"
+  },
+  "rhode-island-red": {
+    "src": "/breeds/rhode-island-red-1200.webp",
+    "srcSet": "/breeds/rhode-island-red-640.webp 435w, /breeds/rhode-island-red-1200.webp 816w",
+    "source": "https://commons.wikimedia.org/wiki/File:Amberbock.jpg",
+    "author": "Erica Zahn",
+    "license": "Public domain",
+    "licenseUrl": "",
+    "subject": "rhode-island-red"
+  },
+  "plymouth-rock": {
+    "src": "/breeds/plymouth-rock-1200.webp",
+    "srcSet": "/breeds/plymouth-rock-640.webp 640w, /breeds/plymouth-rock-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:Plymouth_Rock_chicken_(Gallus_gallus_domesticus).jpg",
+    "author": "Bramans",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "subject": "plymouth-rock"
+  },
+  "vorwerk": {
+    "src": "/breeds/vorwerk-1200.webp",
+    "srcSet": "/breeds/vorwerk-640.webp 432w, /breeds/vorwerk-1200.webp 810w",
+    "source": "https://commons.wikimedia.org/wiki/File:Poule_vorwerk.jpg",
+    "author": "Thomon",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "subject": "vorwerk"
+  },
+  "welsumer": {
+    "src": "/breeds/welsumer-1200.webp",
+    "srcSet": "/breeds/welsumer-640.webp 640w, /breeds/welsumer-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:Welsummer_hen.jpg",
+    "author": "Josh Larios from Seattle, US",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "subject": "welsumer"
+  },
+  "barnevelder": {
+    "src": "/breeds/barnevelder-1200.webp",
+    "srcSet": "/breeds/barnevelder-1200.webp 640w",
+    "source": "https://commons.wikimedia.org/wiki/File:Barnevelder_hen.jpg",
+    "author": "No machine-readable author provided. Morgan Leigh assumed (based on copyright claims).",
+    "license": "CC BY-SA 2.5",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5",
+    "subject": "barnevelder"
+  },
+  "new-hampshire": {
+    "src": "/breeds/new-hampshire-1200.webp",
+    "srcSet": "/breeds/new-hampshire-640.webp 640w, /breeds/new-hampshire-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:New_Hampshire_Red_Hen.jpg",
+    "author": "Bodlina",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "subject": "new-hampshire"
+  },
+  "sebright": {
+    "src": "/breeds/sebright-1200.webp",
+    "srcSet": "/breeds/sebright-640.webp 379w, /breeds/sebright-1200.webp 711w",
+    "source": "https://commons.wikimedia.org/wiki/File:Coq_Sebright_Argent%C3%A9.JPG",
+    "author": "Latropox",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "subject": "sebright"
+  },
+  "olandsk-hona": {
+    "src": "/breeds/olandsk-hona-1200.webp",
+    "srcSet": "/breeds/olandsk-hona-640.webp 640w, /breeds/olandsk-hona-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:Torek%C3%A4llberget_tuppar_2015.jpg",
+    "author": "Holger.Ellgaard",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "subject": "olandsk-hona"
+  },
+  "kindahona": {
+    "src": "/breeds/kindahona-1200.webp",
+    "srcSet": "/breeds/kindahona-640.webp 552w, /breeds/kindahona-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:Kindah%C3%B6na_sida.jpg",
+    "author": "Udo Schröter",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "subject": "kindahona"
+  },
+  "frisisk-hona": {
+    "src": "/breeds/frisisk-hona-1200.webp",
+    "srcSet": "/breeds/frisisk-hona-640.webp 640w, /breeds/frisisk-hona-1200.webp 960w",
+    "source": "https://commons.wikimedia.org/wiki/File:2014nr103_%E2%80%93_RGZV_Frankenthal_IMG041_%E2%80%93_0,1_Friesenh%C3%BChner,_gelb-wei%C3%9Fgeflockt.jpg",
+    "author": "RGZV Frankenthal",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "subject": "frisisk-hona"
+  },
+  "gotlandshona": {
+    "src": "/breeds/gotlandshona-1200.webp",
+    "srcSet": "/breeds/gotlandshona-640.webp 640w, /breeds/gotlandshona-1200.webp 1200w",
+    "source": "",
+    "author": "",
+    "license": "AI-genererad illustration",
+    "licenseUrl": "",
+    "subject": "Gotlandshöna",
+    "caption": "AI-genererad illustration av en brun gotlandshöna. Färg och teckning varierar inom lantrasen.",
+    "alt": "Illustration av en brun gotlandshöna i en trädgård"
+  },
+  "silkeshons": {
+    "src": "/breeds/silkeshons-1200.webp",
+    "srcSet": "/breeds/silkeshons-640.webp 640w, /breeds/silkeshons-1200.webp 1200w",
+    "source": "blog-images/breeds/silkehona.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "silkeshons"
+  },
+  "brahma": {
+    "src": "/breeds/brahma-1200.webp",
+    "srcSet": "/breeds/brahma-640.webp 640w, /breeds/brahma-1200.webp 1200w",
+    "source": "blog-images/brahma-hons.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "brahma"
+  },
+  "maran": {
+    "src": "/breeds/maran-1200.webp",
+    "srcSet": "/breeds/maran-640.webp 640w, /breeds/maran-1200.webp 1200w",
+    "source": "blog-images/breeds/maran.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "maran"
+  },
+  "sussex": {
+    "src": "/breeds/sussex-1200.webp",
+    "srcSet": "/breeds/sussex-640.webp 640w, /breeds/sussex-1200.webp 1200w",
+    "source": "blog-images/breeds/sussex.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "sussex"
+  },
+  "hedemorahona": {
+    "src": "/breeds/hedemorahona-1200.webp",
+    "srcSet": "/breeds/hedemorahona-640.webp 640w, /breeds/hedemorahona-1200.webp 1200w",
+    "source": "blog-images/breeds/hedemora.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "hedemorahona"
+  },
+  "bohuslan-dals-svarthona": {
+    "src": "/breeds/bohuslan-dals-svarthona-1200.webp",
+    "srcSet": "/breeds/bohuslan-dals-svarthona-640.webp 640w, /breeds/bohuslan-dals-svarthona-1200.webp 1200w",
+    "source": "blog-images/breeds/svarthona.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "bohuslan-dals-svarthona"
+  },
+  "skansk-blommehona": {
+    "src": "/breeds/skansk-blommehona-1200.webp",
+    "srcSet": "/breeds/skansk-blommehona-640.webp 640w, /breeds/skansk-blommehona-1200.webp 1200w",
+    "source": "blog-images/breeds/blommehona.jpg",
+    "author": "",
+    "license": "Befintlig sajtbild",
+    "licenseUrl": "",
+    "subject": "skansk-blommehona"
+  }
+}

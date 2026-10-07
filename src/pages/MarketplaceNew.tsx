@@ -139,7 +139,7 @@ export default function MarketplaceNew() {
   return (
     <div className="min-h-dvh bg-background">
       <LandingNavbar />
-      <main className="pt-24 pb-16 container max-w-2xl mx-auto px-5">
+      <main id="main-content" tabIndex={-1} className="pt-24 pb-16 container max-w-2xl mx-auto px-5">
         <Button variant="ghost" size="sm" onClick={() => navigate('/marknad')} className="mb-4 gap-1">
           <ArrowLeft className="h-4 w-4" /> Tillbaka till Marknad
         </Button>

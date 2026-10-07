@@ -444,6 +444,7 @@ export default function Premium() {
         </div>
       )}
 
+      {searchParams.get('plan') && <p className="mb-4 text-sm text-muted-foreground">Du valde {searchParams.get('plan') === 'plus_annual' ? 'Plus – År' : 'Plus – Månad'}. Kontrollera pris och villkor nedan innan du väljer att betala.</p>}
       <section className="premium-plans grid sm:grid-cols-2 gap-4 items-stretch">
         {plans.map((plan, i) => {
           const price = nativeBilling ? storeProducts.find((product) => product.plan === plan.id)?.priceString : plan.price;

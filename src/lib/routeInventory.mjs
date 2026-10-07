@@ -17,7 +17,6 @@ import { CONSOLIDATED_BLOG_REDIRECTS } from '../data/blogConsolidation.mjs';
 export const ROUTE_REDIRECTS = [
   { source: '/pris', destination: '/priser', statusCode: 308 },
   { source: '/funktioner', destination: '/#funktioner', statusCode: 308 },
-  { source: '/priser', destination: '/#priser', statusCode: 308 },
   { source: '/villkor', destination: '/terms', statusCode: 308 },
   { source: '/index', destination: '/', statusCode: 308 },
   { source: '/index.html', destination: '/', statusCode: 308 },
@@ -36,6 +35,7 @@ export const ROUTE_REDIRECTS = [
  * '/' is served from dist/index.html directly and needs no rewrite.
  */
 export const STATIC_PUBLIC_ROUTES = [
+  '/priser',
   '/',
   '/s/bergs-agg',
   '/funktioner/agda-ai',
