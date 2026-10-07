@@ -236,6 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let isMounted = true;
+    let authEventVersion = 0;
 
     const applySession = (session: Session | null, hydrateProfile: boolean) => {
       const supaUser = session?.user ?? null;
@@ -291,6 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted) return;
+      const eventVersion = ++authEventVersion;
       if (event === 'SIGNED_OUT') {
         setUser(null);
         stopPeriodicSync();
@@ -306,8 +308,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const shouldHydrateProfile = event === 'SIGNED_IN' || event === 'INITIAL_SESSION' || event === 'USER_UPDATED';
-      applySession(session, shouldHydrateProfile);
-      setLoading(false);
+      // Supabase auth listeners run under the auth lock. Profile reads must start afterwards.
+      setTimeout(() => {
+        if (isMounted && eventVersion === authEventVersion) {
+          applySession(session, shouldHydrateProfile);
+          setLoading(false);
+        }
+      }, 0);
     });
 
     return () => {
@@ -337,7 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     await clearPrivateClientCaches();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    if (error) throw error;
 
     if (data.user) {
       setUser(toBasicProfile(data.user));

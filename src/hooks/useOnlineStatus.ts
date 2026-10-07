@@ -1,3 +1,4 @@
+import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import { useCallback, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -34,10 +35,7 @@ export function useOnlineStatus() {
         userId
       );
       if (synced || dropped)
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["eggs"] }),
-          queryClient.invalidateQueries({ queryKey: ["streak"] }),
-        ]);
+        await invalidateEggQueries(queryClient);
       if (dropped)
         setSyncError(
           `${dropped} loggning${dropped === 1 ? "" : "ar"} kunde inte sparas (t.ex. borttagen höna) och togs bort från enheten.`

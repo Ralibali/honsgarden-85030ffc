@@ -179,7 +179,7 @@ export default function Community() {
       <PageHeader
         title="Community"
         emoji="🤝"
-        subtitle="Dela tips, frågor och erfarenheter med andra hönsägare. Inlägg, gillningar och rapporter sparas nu i databasen."
+        subtitle="Dela tips, frågor och erfarenheter med andra hönsägare. "
         actions={(
           <Badge variant="secondary" className="w-fit gap-1.5 rounded-full px-3 py-1">
             <Users className="h-3.5 w-3.5" />
@@ -209,7 +209,7 @@ export default function Community() {
               />
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <p className="text-[11px] text-muted-foreground">
-                  Inlägget blir synligt för andra när databasen tillåter publicering via RLS.
+                  När du publicerar blir inlägget synligt för andra medlemmar.
                 </p>
                 <Button className="rounded-xl gap-2 w-full sm:w-auto" disabled={message.trim().length < 5 || publishPost.isPending} onClick={() => publishPost.mutate()}>
                   {publishPost.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -236,7 +236,7 @@ export default function Community() {
       ) : isError ? (
         <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="p-5 text-center space-y-3">
-            <p className="text-sm text-destructive">Kunde inte läsa community-inlägg från databasen.</p>
+            <p className="text-sm text-destructive">Kunde inte hämta inläggen. Försök igen om en stund.</p>
             <Button variant="outline" className="rounded-xl" onClick={() => refetch()}>Försök igen</Button>
           </CardContent>
         </Card>
@@ -307,9 +307,9 @@ export default function Community() {
             <Lightbulb className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-serif text-base text-foreground">Databaskopplat community</h2>
+            <h2 className="font-serif text-base text-foreground">Ett omtänksamt community</h2>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
-              Communityt använder nu Supabase-tabellerna för inlägg, gillningar och rapporter. Admin kan moderera via adminpanelen.
+              Dela gärna frågor och erfarenheter. Visa hänsyn till varandra och rapportera inlägg som inte hör hemma här.
             </p>
           </div>
         </CardContent>

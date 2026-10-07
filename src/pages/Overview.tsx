@@ -1,3 +1,5 @@
+import QueryNotice from '@/components/QueryNotice';
+import { isActiveHen } from '@/lib/farmMetrics';
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,10 +17,10 @@ export default function Overview() {
   const [view, setView] = useState<'year' | 'month'>('year');
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs(), staleTime: 60_000 });
-  const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(), staleTime: 60_000 });
-  const { data: feedRecords = [] } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords(), staleTime: 60_000 });
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens(), staleTime: 60_000 });
+  const { data: eggs = [], isPending: eggsLoading, isError: eggsError, refetch: reloadEggs } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs(), staleTime: 60_000 });
+  const { data: transactions = [], isPending: transactionsLoading, isError: transactionsError, refetch: reloadTransactions } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(), staleTime: 60_000 });
+  const { data: feedRecords = [], isPending: feedRecordsLoading, isError: feedRecordsError, refetch: reloadFeedRecords } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords(), staleTime: 60_000 });
+  const { data: hens = [], isPending: hensLoading, isError: hensError, refetch: reloadHens } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens(), staleTime: 60_000 });
 
   const yearData = useMemo(() => {
     const monthly = Array.from({ length: 12 }, (_, i) => {
@@ -77,7 +79,10 @@ export default function Overview() {
     return { daily, totalEggs, activeDays, maxDay, avgPerDay, bestDay, momChange };
   }, [eggs, year, selectedMonth]);
 
-  const activeHens = (hens as any[]).filter(h => h.is_active).length;
+  const activeHens = hens.filter(isActiveHen).length;
+
+  if (eggsError || transactionsError || feedRecordsError || hensError) return <QueryNotice title="Kunde inte läsa översikten" onRetry={() => { void reloadEggs(); void reloadTransactions(); void reloadFeedRecords(); void reloadHens(); }} />;
+  if (eggsLoading || transactionsLoading || feedRecordsLoading || hensLoading) return <QueryNotice loading title="Hämtar översikten…" />;
 
   return (
     <PremiumGate feature="Översikt" blur>

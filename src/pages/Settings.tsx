@@ -90,7 +90,7 @@ function PushNotificationsRow() {
 }
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, reloadProfile } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -220,6 +220,8 @@ export default function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['weather-full'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-local-weather'] });
       queryClient.invalidateQueries({ queryKey: ['hens'] });
       toast({ title: 'Inställningar sparade! ✅' });
     },
@@ -233,7 +235,8 @@ export default function SettingsPage() {
       const { error } = await supabase.from('profiles').update({ display_name: name }).eq('user_id', userId);
       if (error) throw new Error(error.message);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await reloadProfile();
       toast({ title: 'Namn uppdaterat! ✅' });
     },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
@@ -365,7 +368,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Premium status */}
-      <PremiumStatusCard />
+      <section aria-labelledby="membership-heading"><h2 id="membership-heading" className="font-serif text-lg mb-3">Ditt medlemskap</h2><PremiumStatusCard /></section>
 
       {/* Bjud in en hönskompis – 30 dagar Plus åt båda */}
       <ReferralCard />
@@ -387,19 +390,20 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <Label className="text-muted-foreground">Visningsnamn</Label>
+              <Label htmlFor="display-name" className="text-muted-foreground">Visningsnamn</Label>
               <div className="flex gap-2 mt-1.5">
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ditt namn" className="h-11 rounded-xl flex-1" />
+                <Input id="display-name" aria-describedby="display-name-help" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Ditt namn" className="h-11 rounded-xl flex-1" />
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-11 px-3 rounded-xl"
-                  disabled={saveProfileMutation.isPending || displayName === user?.name}
-                  onClick={() => saveProfileMutation.mutate(displayName)}
+                  disabled={saveProfileMutation.isPending || !displayName.trim() || displayName.trim() === (user?.name || '').trim()}
+                  onClick={() => saveProfileMutation.mutate(displayName.trim())}
                 >
                   {saveProfileMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Spara'}
                 </Button>
               </div>
+              <p id="display-name-help" className="mt-1 text-xs text-muted-foreground">{!displayName.trim() ? 'Skriv ett namn för att kunna spara.' : displayName.trim() === (user?.name || '').trim() ? 'Namnet är sparat. Ändra det för att kunna spara igen.' : 'Du har ändringar som inte är sparade.'}</p>
             </div>
             <div>
               <Label className="text-muted-foreground">E-post</Label>
@@ -416,19 +420,19 @@ export default function SettingsPage() {
               <Input type="number" value={henCount} onChange={(e) => setHenCount(e.target.value)} placeholder="0" className="mt-1.5 h-11 rounded-xl" />
             </div>
             <div>
-              <Label className="text-muted-foreground">Plats</Label>
-              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="T.ex. Linköping" className="mt-1.5 h-11 rounded-xl" />
+              <Label className="text-muted-foreground">Platsbeskrivning</Label>
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="T.ex. hönshuset bakom ladan" className="mt-1.5 h-11 rounded-xl" />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label className="text-muted-foreground">Postnummer <span className="text-xs">(valfritt)</span></Label>
-              <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\s/g, '').slice(0, 5))} placeholder="58220" className="mt-1.5 h-11 rounded-xl" />
-              <p className="text-[11px] text-muted-foreground mt-1">Används endast för regionala snittpriser och väderprognos – aldrig publikt.</p>
+              <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value.replace(/\s/g, '').slice(0, 5))} inputMode="numeric" placeholder="Fem siffror" className="mt-1.5 h-11 rounded-xl" />
+              <p className="text-[11px] text-muted-foreground mt-1">Postnummer och ort används för lokala råd och väder. Fyll i gårdens uppgifter – exempeltexterna är inte sparade värden.</p>
             </div>
             <div>
               <Label className="text-muted-foreground">Ort <span className="text-xs">(valfritt)</span></Label>
-              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="T.ex. Linköping" className="mt-1.5 h-11 rounded-xl" />
+              <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Gårdens postort" className="mt-1.5 h-11 rounded-xl" />
             </div>
           </div>
           <Button onClick={() => saveCoopMutation.mutate({ coop_name: coopName, hen_count: Number(henCount) || 0, location: location || null, postal_code: postalCode || null, city: city || null } as any)} disabled={saveCoopMutation.isPending} className="rounded-xl">

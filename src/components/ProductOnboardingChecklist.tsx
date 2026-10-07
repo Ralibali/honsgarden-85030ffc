@@ -14,8 +14,8 @@ export default function ProductOnboardingChecklist() {
   const { user } = useAuth();
   const [dismissed, setDismissed] = useState(() => readScoped(user?.id, 'product-onboarding-checklist-dismissed') === '1');
 
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens().catch(() => []), staleTime: 60_000 });
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs().catch(() => []), staleTime: 60_000 });
+  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens(), staleTime: 60_000 });
+  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs(), staleTime: 60_000 });
   const { data: feedRecords = [] } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords().catch(() => []), staleTime: 60_000 });
 
   const steps = useMemo(() => {

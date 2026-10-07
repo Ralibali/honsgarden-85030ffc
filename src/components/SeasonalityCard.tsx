@@ -48,7 +48,7 @@ export default function SeasonalityCard() {
 
   const { data: eggs = [] } = useQuery({
     queryKey: ['eggs'],
-    queryFn: () => api.getEggs().catch(() => [] as EggRow[]),
+    queryFn: () => api.getEggs(),
   });
 
   // -------- Year over year --------

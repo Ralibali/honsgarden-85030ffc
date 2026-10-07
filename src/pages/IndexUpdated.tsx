@@ -1,4 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
+import React, { lazy, Suspense, useEffect } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingHeroV3 from '@/components/landing/LandingHeroV3';
 import ContextualShopCta from '@/components/ContextualShopCta';
@@ -55,15 +56,15 @@ type Tile = {
 const productModules: Tile[] = [
   { icon: Egg, title: 'Ägglogg', desc: 'Logga dagens ägg på några sekunder, följ trender och se hur flocken värper över tid.', href: '/agglogg', span: 'col-span-2 lg:col-span-2 lg:row-span-2', tone: 'deep', chart: true },
   { icon: Bird, title: 'Flock & hönsprofiler', desc: 'Hönor, ras, bilder, hälsa och historik på ett ställe.', href: '/app-for-honsagare' },
-  { icon: BarChart3, title: 'Statistik & insikter', desc: 'Veckor, månader, snitt, avvikelser och topplistor.', href: '/login?mode=register' },
+  { icon: BarChart3, title: 'Statistik & insikter', desc: 'Veckor, månader, snitt, avvikelser och topplistor.', href: '/funktioner/statistik' },
   { icon: ReceiptText, title: 'Agdas äggbod', desc: 'Egen säljsida med bild, pris, Swish, bokningar, kundlista och export.', href: '/salja-agg', badge: 'Sälj ägg', span: 'col-span-2', tone: 'sage' },
   { icon: Wheat, title: 'Foder & ekonomi', desc: 'Foderinköp, kostnad per ägg, intäkter och utgifter.', href: '/foderkostnad-hons' },
   { icon: CalendarDays, title: 'Kalender & rutiner', desc: 'Rengöring, vatten, foder, kvalster, ruggning och säsong.', href: '/honskalender' },
-  { icon: Bot, title: 'Agda AI', desc: 'Råd, säljtexter, veckorapporter och nästa steg – utifrån din egen hönsgård.', href: '/login?mode=register', badge: 'Plus', span: 'col-span-2', tone: 'sage' },
+  { icon: Bot, title: 'Agda AI', desc: 'Råd, säljtexter, veckorapporter och nästa steg – utifrån din egen hönsgård.', href: '/funktioner/agda-ai', badge: 'Plus', span: 'col-span-2', tone: 'sage' },
   { icon: Egg, title: 'Kläckningskalender', desc: 'Dag 1–21, lysning, lockdown och resultat.', href: '/klackningskalender' },
-  { icon: CloudSun, title: 'Väder & påverkan', desc: 'Se hur värme, kyla och säsong påverkar äggen.', href: '/login?mode=register' },
-  { icon: MessageCircle, title: 'Community', desc: 'Inlägg, frågor och tips mellan hönsägare.', href: '/login?mode=register' },
-  { icon: ClipboardCheck, title: 'Rapporter & export', desc: 'Kopiera rapporter och exportera CSV.', href: '/login?mode=register' },
+  { icon: CloudSun, title: 'Väder & påverkan', desc: 'Se hur värme, kyla och säsong påverkar äggen.', href: '/funktioner/vader' },
+  { icon: MessageCircle, title: 'Community', desc: 'Inlägg, frågor och tips mellan hönsägare.', href: '/funktioner/community' },
+  { icon: ClipboardCheck, title: 'Rapporter & export', desc: 'Kopiera rapporter och exportera CSV.', href: '/funktioner/rapporter' },
 ];
 
 const agdaFeatures = [
@@ -120,6 +121,12 @@ function SectionHeading({ eyebrow, title, desc }: { eyebrow?: string; title: str
 }
 
 export default function IndexUpdated() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    // Anchor targets are rendered by React after the initial document loads.
+    const target = hash === '#funktioner' ? 'funktioner' : hash === '#priser' ? 'priser' : null;
+    if (target) document.getElementById(target)?.scrollIntoView({ block: 'start' });
+  }, [hash]);
   useSeo({
     title: 'Hönsgården – ägglogg, flock, Agdas äggbod och AI',
     description: 'Hönsgården är en svensk app för hönsägare. Logga ägg, följ flocken, sälj ägg med Agdas äggbod, hantera kunder, få statistik, AI-råd, community och rapporter.',
@@ -140,7 +147,7 @@ export default function IndexUpdated() {
         <LandingHeroV3 />
 
         {/* Funktioner som bento-rutnät */}
-        <section id="funktioner" className="py-16 sm:py-24" style={{ background: 'var(--hg-cream)' }}>
+        <section id="funktioner" className="scroll-mt-20 py-16 sm:py-24" style={{ background: 'var(--hg-cream)' }}>
           <div className="container max-w-6xl mx-auto px-5 sm:px-6">
             <SectionHeading
               eyebrow="Funktioner"
@@ -212,9 +219,9 @@ export default function IndexUpdated() {
             </motion.div>
             <motion.div {...fadeUp(0.1)} className="hg-tile mt-4 p-6 sm:p-8 text-center">
               <p className="hg-eyebrow mb-3">Exempel på säljlänk</p>
-              <p className="font-mono text-sm sm:text-base break-all rounded-xl px-4 py-3 mb-5" style={{ background: 'rgba(125,155,118,.12)' }}>
+              <a href="/s/bergs-agg" aria-label="Öppna exempel på säljlänk: Bergs ägg" className="block font-mono text-sm sm:text-base break-all rounded-xl px-4 py-3 mb-5 underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" style={{ background: 'rgba(125,155,118,.12)' }}>
                 https://honsgarden.se/s/bergs-agg
-              </p>
+              </a>
               <a href="/login?mode=register" className="hg-cta-primary inline-flex items-center gap-2 h-12 min-h-[48px] px-7 text-base font-medium">
                 Skapa din första säljsida <ArrowRight className="h-4 w-4" />
               </a>
@@ -270,7 +277,7 @@ export default function IndexUpdated() {
         </section>
 
         {/* Priser */}
-        <section id="priser" className="py-16 sm:py-24" style={{ background: 'var(--hg-cream-2)' }}>
+        <section id="priser" className="scroll-mt-20 py-16 sm:py-24" style={{ background: 'var(--hg-cream-2)' }}>
           <div className="container max-w-5xl mx-auto px-5 sm:px-6">
             <SectionHeading
               eyebrow="Priser"
@@ -280,7 +287,7 @@ export default function IndexUpdated() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
               <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
               <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova 7 dagar gratis" />
-              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – motsvarar 24,90 kr/mån" features={plusFeatures} cta="Prova 7 dagar – välj år" />
+              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – ca 25 kr/mån" features={plusFeatures} cta="Prova 7 dagar – välj år" />
             </div>
           </div>
         </section>
@@ -368,3 +375,4 @@ function PricingCard({ title, price, desc, features, cta, highlighted = false }:
     </motion.div>
   );
 }
+

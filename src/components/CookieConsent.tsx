@@ -29,7 +29,11 @@ export default function CookieConsent() {
     setVisible(false);
   };
 
-  if (!visible) return <button type="button" onClick={() => setVisible(true)} className="fixed bottom-2 left-2 z-40 rounded border bg-background px-2 py-1 text-xs">Cookieinställningar</button>;
+  if (!visible) return (
+    <div className="flex justify-center border-t bg-background px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <button type="button" onClick={() => setVisible(true)} className="min-h-11 rounded border px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Cookieinställningar</button>
+    </div>
+  );
 
   return (
     <div data-cookie-consent-banner className="fixed bottom-16 sm:bottom-6 left-2 right-2 sm:left-auto sm:right-6 z-[60] sm:max-w-sm animate-fade-in">
@@ -59,3 +63,4 @@ export default function CookieConsent() {
     </div>
   );
 }
+

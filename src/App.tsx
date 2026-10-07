@@ -68,6 +68,8 @@ const SeoLandingPage = lazyWithRetry(() => import("./pages/SeoLandingPage"));
 const HonsrasLanding = lazyWithRetry(() => import("./pages/HonsrasLanding"));
 const EggSales = lazyWithRetry(() => import("./pages/EggSalesProV7"));
 const EggSaleCustomize = lazyWithRetry(() => import("./pages/EggSaleCustomize"));
+const ExampleEggSale = lazyWithRetry(() => import("./pages/ExampleEggSale"));
+const FeatureOverview = lazyWithRetry(() => import("./pages/FeatureOverview"));
 const PublicEggSale = lazyWithRetry(() => import("./pages/PublicEggSaleV3"));
 const PublicReview = lazyWithRetry(() => import("./pages/PublicReview"));
 const RTokenDispatch = lazyWithRetry(() => import("./pages/RTokenDispatch"));
@@ -177,6 +179,14 @@ const AppRoutes = () => (
         <Route path="/" element={isNativePlatform() ? <Navigate to="/app" replace /> : <Index />} />
         <Route path="/index" element={<Navigate to="/" replace />} />
         <Route path="/index.html" element={<Navigate to="/" replace />} />
+        <Route path="/funktioner" element={<Navigate to="/#funktioner" replace />} />
+        <Route path="/priser" element={<Navigate to="/#priser" replace />} />
+        <Route path="/villkor" element={<Navigate to="/terms" replace />} />
+        <Route path="/funktioner/agda-ai" element={<FeatureOverview feature="agda-ai" />} />
+        <Route path="/funktioner/statistik" element={<FeatureOverview feature="statistik" />} />
+        <Route path="/funktioner/vader" element={<FeatureOverview feature="vader" />} />
+        <Route path="/funktioner/community" element={<FeatureOverview feature="community" />} />
+        <Route path="/funktioner/rapporter" element={<FeatureOverview feature="rapporter" />} />
         <Route path="/app-for-honsagare" element={<SeoLandingPage pageKey="app-for-honsagare" />} />
         <Route path="/agglogg" element={<SeoLandingPage pageKey="agglogg" />} />
         <Route path="/honskalender" element={<SeoLandingPage pageKey="honskalender" />} />
@@ -194,6 +204,7 @@ const AppRoutes = () => (
         <Route path="/karta/bekrafta" element={<MapListingConfirm />} />
         <Route path="/karta/hantera/:token" element={<MapListingManage />} />
         <Route path="/demo" element={<DemoApp />} />
+        <Route path="/s/bergs-agg" element={<ExampleEggSale />} />
         <Route path="/s/agg" element={<PublicEggSale />} />
         <Route path="/s/:slug" element={<PublicEggSale />} />
         <Route path="/r/:token" element={<RTokenDispatch />} />
@@ -318,3 +329,4 @@ const App = () => (
 );
 
 export default App;
+

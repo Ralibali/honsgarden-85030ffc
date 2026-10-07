@@ -56,8 +56,8 @@ export default function SmartStatisticsOverview() {
   const [period, setPeriod] = useState<Period>('7d');
   const [showAllInsights, setShowAllInsights] = useState(false);
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs().catch(() => []) });
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens().catch(() => []) });
+  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
+  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
   const { data: feedStats } = useQuery({ queryKey: ['smart-feed-stats'], queryFn: () => api.getFeedStatistics().catch(() => null) });
   const { data: hensWithEggs = [] } = useQuery({ queryKey: ['smart-hens-with-eggs'], queryFn: () => api.getHensWithEggTotals().catch(() => []) });
 

@@ -1,3 +1,4 @@
+import QueryNotice from '@/components/QueryNotice';
 import React, { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,29 +79,30 @@ export default function Statistics() {
   const [showDeepDive, setShowDeepDive] = useState(false);
   const [showAllHens, setShowAllHens] = useState(false);
 
-  const { data: summary, isLoading: summaryLoading } = useQuery({
+  const { data: summary, isPending: summaryLoading, isError: summaryError, refetch: reloadSummary } = useQuery({
     queryKey: ['stats-summary'],
-    queryFn: () => api.getSummaryStats().catch(() => null),
+    queryFn: () => api.getSummaryStats(),
+    retry: false,
   });
 
-  const { data: feedStats } = useQuery({
+  const { data: feedStats, isError: feedStatisticsError, isPending: feedStatisticsLoading, refetch: reloadFeedStatistics } = useQuery({
     queryKey: ['feed-stats-for-statistics'],
-    queryFn: () => api.getFeedStatistics().catch(() => null),
+    queryFn: () => api.getFeedStatistics(),
   });
 
-  const { data: statisticsInsights } = useQuery({
+  const { data: statisticsInsights, isError: statisticsInsightsError, isPending: statisticsInsightsLoading, refetch: reloadStatisticsInsights } = useQuery({
     queryKey: ['stats-insights'],
-    queryFn: () => api.getStatisticsInsights().catch(() => null),
+    queryFn: () => api.getStatisticsInsights(),
   });
 
-  const { data: hensWithEggs = [] } = useQuery({
+  const { data: hensWithEggs = [], isError: hensWithEggTotalsError, isPending: hensWithEggTotalsLoading, refetch: reloadHensWithEggTotals } = useQuery({
     queryKey: ['hens-with-eggs'],
-    queryFn: () => api.getHensWithEggTotals().catch(() => []),
+    queryFn: () => api.getHensWithEggTotals(),
   });
 
-  const { data: flockStats } = useQuery({
+  const { data: flockStats, isError: flockStatisticsError, isPending: flockStatisticsLoading, refetch: reloadFlockStatistics } = useQuery({
     queryKey: ['flock-statistics'],
-    queryFn: () => api.getFlockStatistics().catch(() => ({ flocks: [], unassigned_eggs: 0 })),
+    queryFn: () => api.getFlockStatistics(),
   });
 
   const rankedHens = useMemo(() => {
@@ -115,7 +117,9 @@ export default function Statistics() {
   const revenuePerEgg = Number(statisticsInsights?.revenue_per_egg || 0);
   const profitPerEgg = revenuePerEgg - costPerEgg;
 
-  if (summaryLoading) {
+  if (summaryError || feedStatisticsError || statisticsInsightsError || hensWithEggTotalsError || flockStatisticsError) return <QueryNotice title="Kunde inte läsa statistiken" onRetry={() => { void reloadSummary(); void reloadFeedStatistics(); void reloadStatisticsInsights(); void reloadHensWithEggTotals(); void reloadFlockStatistics(); }} />;
+
+  if (summaryLoading || feedStatisticsLoading || statisticsInsightsLoading || hensWithEggTotalsLoading || flockStatisticsLoading) {
     return (
       <div className="max-w-5xl mx-auto space-y-4 animate-fade-in">
         <Skeleton className="h-12 w-56" />

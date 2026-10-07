@@ -1,3 +1,7 @@
+import { api } from '@/lib/api';
+import { resolveWeatherLocation, type WeatherSettings } from '@/lib/weatherLocation';
+import { withRequestTimeout } from '@/lib/requestTimeout';
+import QueryNotice from '@/components/QueryNotice';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
@@ -11,7 +15,6 @@ import { ArrowLeft, Cloud, Crown, Loader2, RefreshCw, Sparkles, Thermometer, Win
 import { toast } from 'sonner';
 import WeatherAlertSettings from '@/components/WeatherAlertSettings';
 import WeatherImpactCard from '@/components/WeatherImpactCard';
-import { reverseGeocodeCity } from '@/lib/reverseGeocode';
 
 const WEATHER_ICONS: Record<string, string> = {
   '0': '☀️', '1': '🌤️', '2': '⛅', '3': '☁️',
@@ -27,28 +30,14 @@ function getIcon(code: number) {
   return WEATHER_ICONS[String(code)] ?? '🌤️';
 }
 
-function getCoords(): Promise<{ lat: number; lon: number }> {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve({ lat: 59.33, lon: 18.07 });
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
-      () => resolve({ lat: 59.33, lon: 18.07 }),
-      { timeout: 5000, maximumAge: 10 * 60 * 1000 },
-    );
+async function fetchWeatherFull(settings?: WeatherSettings | null) {
+  const { lat, lon, city, source } = await resolveWeatherLocation(settings);
+  const weather = await withRequestTimeout(async (signal) => {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=10`, { signal });
+    if (!response.ok) throw new Error('Väderhämtning misslyckades');
+    return response.json();
   });
-}
-
-async function fetchWeatherFull() {
-  const { lat, lon } = await getCoords();
-  const [wRes, city] = await Promise.all([
-    fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weathercode,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum,wind_speed_10m_max&timezone=auto&forecast_days=10`,
-    ),
-    reverseGeocodeCity(lat, lon),
-  ]);
-  if (!wRes.ok) throw new Error('Väderhämtning misslyckades');
-  const weather = await wRes.json();
-  return { lat, lon, city, weather, fetchedAt: new Date().toISOString() };
+  return { lat, lon, city, source, weather, fetchedAt: new Date().toISOString() };
 }
 
 function dayName(dateStr: string, idx: number) {
@@ -103,11 +92,13 @@ export default function Weather() {
 
   const isPremium = user?.subscription_status === 'premium';
 
-  const { data: w, isLoading, dataUpdatedAt, refetch, isFetching } = useQuery({
-    queryKey: ['weather-full'],
-    queryFn: fetchWeatherFull,
+  const settingsQuery = useQuery({ queryKey: ['coop-settings'], queryFn: () => api.getCoopSettings(), enabled: !!isPremium });
+  const { data: w, isPending: weatherPending, error: weatherError, dataUpdatedAt, refetch, isFetching } = useQuery({
+    queryKey: ['weather-full', user?.id, settingsQuery.data?.city, settingsQuery.data?.postal_code],
+    queryFn: () => fetchWeatherFull(settingsQuery.data),
     staleTime: 10 * 60 * 1000,
-    enabled: !!isPremium,
+    enabled: !!isPremium && settingsQuery.isSuccess,
+    retry: false,
   });
 
   const { data: history } = useQuery({
@@ -192,11 +183,16 @@ export default function Weather() {
         <h1 className="text-2xl sm:text-3xl font-serif gradient-text leading-tight">Vädret för din hönsgård</h1>
         <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           {w?.city && <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {w.city}</span>}
-          {w && <span>Uppdaterat {updatedLabel(w.fetchedAt)}</span>}
+          {w && <span>{w.source === 'farm' ? 'Gårdens sparade ort' : 'Enhetens plats'} · Uppdaterat {updatedLabel(w.fetchedAt)}</span>}
         </div>
       </div>
 
-      {isLoading || !w ? (
+      {weatherError || settingsQuery.isError ? (
+        <div>
+          <QueryNotice title={weatherError instanceof Error ? weatherError.message : 'Kunde inte läsa gårdens plats'} onRetry={() => { if (settingsQuery.isError) void settingsQuery.refetch(); else void refetch(); }} />
+          <Link to="/app/settings" className="text-primary underline">Ändra gårdens ort i Inställningar</Link>
+        </div>
+      ) : weatherPending || !w ? (
         <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <>

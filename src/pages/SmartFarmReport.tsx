@@ -1,3 +1,6 @@
+import { localCalendarDate, todayLocal } from '@/lib/datetime';
+import QueryNotice from '@/components/QueryNotice';
+import { isActiveHen } from '@/lib/farmMetrics';
 import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +28,7 @@ function previousWeekStart() {
 }
 
 function iso(date: Date) {
-  return date.toISOString().slice(0, 10);
+  return localCalendarDate(date, Intl.DateTimeFormat().resolvedOptions().timeZone);
 }
 
 function kr(value: unknown) {
@@ -50,8 +53,8 @@ function SmartFarmReportContent() {
   const today = new Date();
   const weekLabel = `${weekStart.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} – ${today.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}`;
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs().catch(() => []) });
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens().catch(() => []) });
+  const { data: eggs = [], isPending: eggsLoading, isError: eggsError, refetch: reloadEggs } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
+  const { data: hens = [], isPending: hensLoading, isError: hensError, refetch: reloadHens } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
   const { data: feedStats } = useQuery({ queryKey: ['feed-stats'], queryFn: () => api.getFeedStatistics().catch(() => null) });
   const { data: chores = [] } = useQuery({ queryKey: ['daily-chores'], queryFn: () => api.getDailyChores().catch(() => []) });
 
@@ -79,10 +82,10 @@ function SmartFarmReportContent() {
     const currentWeekStart = iso(weekStart);
     const prevWeekStart = iso(prevStart);
     const prevWeekEnd = iso(new Date(weekStart.getTime() - 86400000));
-    const weekEggs = (eggs as any[]).filter((e) => e.date >= currentWeekStart).reduce((s, e) => s + Number(e.count || 0), 0);
+    const weekEggs = (eggs as any[]).filter((e) => e.date >= currentWeekStart && e.date <= todayLocal()).reduce((s, e) => s + Number(e.count || 0), 0);
     const prevWeekEggs = (eggs as any[]).filter((e) => e.date >= prevWeekStart && e.date <= prevWeekEnd).reduce((s, e) => s + Number(e.count || 0), 0);
     const diff = weekEggs - prevWeekEggs;
-    const activeHens = (hens as any[]).filter((h) => h.is_active !== false).length;
+    const activeHens = hens.filter(isActiveHen).length;
     const completedTasks = (chores as any[]).filter((c) => c.completed).length;
     const totalTasks = (chores as any[]).length;
     const listingById: Record<string, any> = {};
@@ -112,10 +115,13 @@ function SmartFarmReportContent() {
     { title: 'Skapa uppgift', text: 'Bygg återkommande rutiner.', path: '/app/tasks', icon: Bell, show: report.totalTasks === 0 },
   ].filter((a) => a.show).slice(0, 3);
 
+  if (eggsError || hensError) return <QueryNotice title="Kunde inte läsa gårdsrapporten" onRetry={() => { void reloadEggs(); void reloadHens(); }} />;
+  if (eggsLoading || hensLoading) return <QueryNotice loading title="Hämtar gårdsrapporten…" />;
+
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-8 animate-fade-in">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3">
-        <div><p className="data-label mb-1">SaaS-rapport</p><h1 className="text-2xl sm:text-3xl font-serif text-foreground">Smart gårdsrapport ✨</h1><p className="text-sm text-muted-foreground mt-1">{weekLabel} · ägg, flock, foder, uppgifter och Agdas Bod i samma överblick.</p></div>
+        <div><p className="data-label mb-1">Din vecka på gården</p><h1 className="text-2xl sm:text-3xl font-serif text-foreground">Smart gårdsrapport ✨</h1><p className="text-sm text-muted-foreground mt-1">{weekLabel} · ägg, flock, foder, uppgifter och Agdas Bod i samma överblick.</p></div>
         <Button className="rounded-xl gap-2" onClick={() => copyText(plainReport, 'Gårdsrapporten')}><Copy className="h-4 w-4" /> Kopiera rapport</Button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

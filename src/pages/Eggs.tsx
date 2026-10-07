@@ -1,3 +1,6 @@
+import { invalidateEggQueries } from '@/lib/eggQueryCache';
+import QueryNotice from '@/components/QueryNotice';
+import { isActiveHen } from '@/lib/farmMetrics';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { localCalendarDate, todayLocal } from '@/lib/datetime';
@@ -60,7 +63,7 @@ export default function Eggs() {
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [recordToast, setRecordToast] = useState<PersonalRecordToastData | null>(null);
 
-  const { data: eggs = [], isLoading } = useQuery({
+  const { data: eggs = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['eggs'],
     queryFn: () => api.getEggs(),
   });
@@ -77,7 +80,7 @@ export default function Eggs() {
     staleTime: 60_000,
   });
 
-  const activeHens = hens.filter((h) => h.is_active && h.hen_type !== 'rooster');
+  const activeHens = hens.filter(isActiveHen);
 
   const { data: feedRecords = [] } = useQuery({ queryKey: ['feed-records'], queryFn: () => api.getFeedRecords(), staleTime: 60_000 });
   const { data: transactions = [] } = useQuery({ queryKey: ['transactions'], queryFn: () => api.getTransactions(), staleTime: 60_000 });
@@ -95,9 +98,7 @@ export default function Eggs() {
   }, [animCount, unusedFeatures.length]);
 
   const refreshEggData = () => {
-    for (const key of ['eggs', 'streak', 'stats-summary', 'stats-insights', 'hens-with-eggs', 'flock-statistics']) {
-      queryClient.invalidateQueries({ queryKey: [key] });
-    }
+    void invalidateEggQueries(queryClient);
   };
 
   const createMutation = useMutation({
@@ -250,6 +251,8 @@ export default function Eggs() {
     Höna: egg.hen_id ? henNameMap[egg.hen_id] || '' : '',
     Anteckningar: egg.notes || '',
   }));
+
+  if (isError) return <QueryNotice title="Kunde inte läsa Äggboken" onRetry={() => { void refetch(); }} />;
 
   if (isLoading) {
     return (
