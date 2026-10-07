@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -68,25 +69,9 @@ export default function RegulationGuide({ slug }: Props) {
 
   return (
     <div className="min-h-dvh bg-background">
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <span className="text-xl">🐔</span>
-            <span className="font-serif text-lg">{brand}</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/blogg" className="text-sm text-muted-foreground hover:text-foreground hidden sm:block">Blogg</Link>
-            <Link to="/salja-agg" className="text-sm text-muted-foreground hover:text-foreground hidden sm:block">Sälja ägg</Link>
-            <Link to="/login">
-              <Button size="sm" className="rounded-xl text-xs gap-1">
-                <Egg className="h-3 w-3" /> Kom igång
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
+      <main id="main-content" tabIndex={-1} className="max-w-3xl mx-auto px-4 py-8 sm:py-12">
         <nav className="text-xs text-muted-foreground mb-4 flex items-center gap-1.5 flex-wrap" aria-label="Breadcrumb">
           <Link to="/" className="hover:text-foreground">Start</Link>
           <ChevronRight className="h-3 w-3" />

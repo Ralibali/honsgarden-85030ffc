@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSeo } from '@/hooks/useSeo';
@@ -51,25 +52,9 @@ export default function About() {
     <div className="min-h-dvh bg-background">
       <VisitorWelcomePopup />
 
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <span className="text-xl">🐔</span>
-            <span className="font-serif text-lg text-foreground">{brand}</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/salja-agg" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">{t('nav.sell_eggs')}</Link>
-            <Link to="/blogg" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">{t('nav.blog')}</Link>
-            <Link to="/login">
-              <Button size="sm" className="rounded-xl text-xs gap-1">
-                <Egg className="h-3 w-3" /> {t('nav.get_started')}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="max-w-5xl mx-auto px-4 py-10 sm:py-16">
+      <main id="main-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-10 sm:py-16">
         <div className="text-center mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 text-primary text-xs font-medium mb-4">
             <Heart className="h-3.5 w-3.5" /> {t('header.badge', { brand })}

@@ -1,3 +1,4 @@
+import LandingNavbar from '@/components/LandingNavbar';
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
@@ -106,28 +107,9 @@ export default function BlogTag() {
         />
       )}
 
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <span className="text-xl">🐔</span>
-            <span className="font-serif text-lg text-foreground">Hönsgården</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/blogg">
-              <Button variant="ghost" size="sm" className="text-xs gap-1">
-                <BookOpen className="h-3 w-3" /> Alla inlägg
-              </Button>
-            </Link>
-            <Link to="/login">
-              <Button size="sm" className="rounded-xl text-xs gap-1">
-                <Egg className="h-3 w-3" /> Kom igång
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+      <main id="main-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-8">
           <Link to="/blogg" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4">
             <ArrowLeft className="h-3 w-3" /> Tillbaka till bloggen

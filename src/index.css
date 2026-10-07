@@ -22,9 +22,9 @@
     --secondary-foreground: 22 18% 28%;
 
     --muted: 30 22% 86%;
-    --muted-foreground: 22 12% 44%;
+    --muted-foreground: 22 12% 36%;
 
-    --accent: 26 58% 40%;
+    --accent: 26 58% 35%;
     --accent-foreground: 35 32% 97%;
 
     --destructive: 0 58% 48%;
@@ -1178,3 +1178,12 @@ html {
 .prose-custom details[open] summary {
   margin-bottom: 8px;
 }
+
+/* Fixed banners must never obscure the last controls or footer. */
+body { padding-bottom: calc(var(--cookie-banner-height, 0px) + var(--promo-banner-height, 0px)); }
+html { scroll-padding-top: 7rem; }
+.table-scroll { max-width: 100%; overflow-x: auto; background: linear-gradient(to right, hsl(var(--background)) 30%, transparent), linear-gradient(to left, hsl(var(--background)) 30%, transparent), linear-gradient(to right, rgb(0 0 0 / .15), transparent), linear-gradient(to left, rgb(0 0 0 / .15), transparent); background-position: left center, right center, left center, right center; background-size: 40px 100%, 40px 100%, 12px 100%, 12px 100%; background-repeat: no-repeat; background-attachment: local, local, scroll, scroll; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+.prose-custom table { display: block; max-width: 100%; overflow-x: auto; }
+.prose-custom table::after { content: ''; }

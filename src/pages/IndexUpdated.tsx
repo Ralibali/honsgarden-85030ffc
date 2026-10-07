@@ -1,3 +1,4 @@
+import PublicPricing from '@/components/PublicPricing';
 import { useLocation } from 'react-router-dom';
 import React, { lazy, Suspense, useEffect } from 'react';
 import LandingNavbar from '@/components/LandingNavbar';
@@ -90,9 +91,6 @@ const audience = [
 ];
 
 const trustItems = ['Byggt för svenska hönsägare', 'Mobil, iPad och dator', 'Ingen appinstallation krävs', 'Gratis att börja', 'Export till CSV', 'Dina data i ditt konto', 'Community och feedback', 'Premium med AI och rapporter'];
-
-const freeFeatures = ['Äggloggning', 'Upp till 10 hönor', 'Hälsologg', 'Grundstatistik', 'Dagbok', 'Mobilvänlig PWA'];
-const plusFeatures = ['Allt i Gratis', 'Obegränsat antal hönor', 'Agda AI', 'Avancerad statistik', 'Foder och ekonomi', 'Smarta rapporter', 'Påminnelser', 'Kläckningsstöd'];
 
 const faqs = [
   { q: 'Vad erbjuder Hönsgården exakt?', a: 'Hönsgården samlar ägglogg, hönsprofiler, flockhälsa, statistik, foderkostnad, ekonomi, kalender, påminnelser, kläckningskalender, väderpåverkan, community, feedback, rapporter, export, Agda AI och Agdas äggbod för lokal äggförsäljning.' },
@@ -284,11 +282,7 @@ export default function IndexUpdated() {
               title="Börja gratis – uppgradera när du vill ha mer hjälp"
               desc="Gratis ger dig grunden. Plus ger mer AI, insikter, rapporter och obegränsad användning."
             />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-              <PricingCard title="Gratis" price="0 kr" desc="För att komma igång ordentligt" features={freeFeatures} cta="Skapa konto gratis" />
-              <PricingCard title="Plus – Månad" price="39 kr/mån" desc="För mer statistik och smartare stöd" features={plusFeatures} cta="Prova 7 dagar gratis" />
-              <PricingCard highlighted title="Plus – År" price="299 kr/år" desc="Bästa värdet – ca 25 kr/mån" features={plusFeatures} cta="Prova 7 dagar – välj år" />
-            </div>
+<PublicPricing />
           </div>
         </section>
 
@@ -340,39 +334,6 @@ export default function IndexUpdated() {
         <Suspense fallback={null}><LandingFooter /></Suspense>
       </div>
     </main>
-  );
-}
-
-function PricingCard({ title, price, desc, features, cta, highlighted = false }: { title: string; price: string; desc: string; features: string[]; cta: string; highlighted?: boolean }) {
-  return (
-    <motion.div
-      {...fadeUp(highlighted ? 0.16 : 0.08)}
-      className={`hg-tile hg-tile--hover p-6 sm:p-8 flex flex-col ${highlighted ? 'hg-tile--deep' : ''}`}
-    >
-      {highlighted && (
-        <span className="hg-chip absolute -top-3 left-6 text-[11px] font-semibold" style={{ background: '#f4f1e6', color: '#22392b' }}>
-          Spara 169 kr
-        </span>
-      )}
-      <h3 className="text-xl mb-1">{title}</h3>
-      <p className="text-sm mb-6" style={{ color: highlighted ? 'rgba(244,241,230,.7)' : 'var(--hg-ink-soft)' }}>{desc}</p>
-      <p className="text-4xl mb-6" style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>{price}</p>
-      <ul className="space-y-2.5 mb-8">
-        {features.map((f) => (
-          <li key={f} className="flex items-center gap-2.5 text-sm">
-            <Check className="h-4 w-4 shrink-0" style={{ color: highlighted ? '#b9d0b0' : 'var(--hg-sage-deep)' }} />
-            {f}
-          </li>
-        ))}
-      </ul>
-      <a
-        href="/login?mode=register"
-        className={`mt-auto inline-flex items-center justify-center h-12 min-h-[48px] px-6 text-base font-medium rounded-full ${highlighted ? '' : 'hg-cta-ghost'}`}
-        style={highlighted ? { background: '#f4f1e6', color: '#22392b' } : undefined}
-      >
-        {cta}
-      </a>
-    </motion.div>
   );
 }
 

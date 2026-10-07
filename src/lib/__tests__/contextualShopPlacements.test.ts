@@ -133,11 +133,12 @@ describe('Packet 1 contextual shop placements', () => {
   it('wires GuideArticle, prerender, and the three React surfaces', () => {
     const article = readFileSync(join(process.cwd(), 'src/pages/GuideArticle.tsx'), 'utf8');
     const prerender = readFileSync(join(process.cwd(), 'scripts/prerender-blog-posts.mjs'), 'utf8');
-    expect(article).toContain('injectContextualShopPlacement');
+    expect(article).not.toContain('injectContextualShopPlacement');
+    expect(article).toContain('<RecommendedProducts');
     // Outl1 (and every other program) click attribution goes through the shared host map.
     expect(article).toContain('shopMerchantFromHref(href)');
     expect(article).not.toContain('AffiliateProductStrip');
-    expect(prerender).toContain('injectContextualShopPlacement');
+    expect(prerender).not.toContain('injectContextualShopPlacement');
 
     expect(readFileSync(join(process.cwd(), 'src/pages/IndexUpdated.tsx'), 'utf8')).toContain('ContextualShopCta');
     expect(readFileSync(join(process.cwd(), 'src/pages/HonsrasLanding.tsx'), 'utf8')).toContain('ContextualShopCta');

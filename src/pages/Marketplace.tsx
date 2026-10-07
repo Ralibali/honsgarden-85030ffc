@@ -153,7 +153,7 @@ export default function Marketplace() {
   return (
     <div className="min-h-dvh bg-background">
       <LandingNavbar />
-      <main className="pt-24 pb-16 container max-w-6xl mx-auto px-5">
+      <main id="main-content" tabIndex={-1} className="pt-24 pb-16 container max-w-6xl mx-auto px-5">
         <header className="mb-8">
           {categoryPage && (
             <nav className="mb-4 text-xs text-muted-foreground">

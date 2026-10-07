@@ -38,6 +38,7 @@ const Reminders = lazyWithRetry(() => import("./pages/Reminders"));
 const Hatching = lazyWithRetry(() => import("./pages/Hatching"));
 const DailyTasks = lazyWithRetry(() => import("./pages/DailyTasks"));
 const Feedback = lazyWithRetry(() => import("./pages/Feedback"));
+const Prices = lazyWithRetry(() => import('./pages/Prices'));
 const Premium = lazyWithRetry(() => import("./pages/Premium"));
 const Community = lazyWithRetry(() => import("./pages/Community"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
@@ -183,7 +184,7 @@ const AppRoutes = () => (
         <Route path="/index.html" element={<Navigate to="/" replace />} />
         <Route path="/funktioner" element={<Navigate to="/#funktioner" replace />} />
         <Route path="/pris" element={<Navigate to="/priser" replace />} />
-        <Route path="/priser" element={<Navigate to="/#priser" replace />} />
+        <Route path="/priser" element={<Prices />} />
         <Route path="/villkor" element={<Navigate to="/terms" replace />} />
         <Route path="/funktioner/agda-ai" element={<FeatureOverview feature="agda-ai" />} />
         <Route path="/funktioner/statistik" element={<FeatureOverview feature="statistik" />} />

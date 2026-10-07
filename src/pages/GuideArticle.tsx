@@ -1,5 +1,6 @@
+import ContentToc from '@/components/ContentToc';
+import LandingNavbar from '@/components/LandingNavbar';
 import React, { lazy, Suspense, useMemo, useState, useEffect } from 'react';
-import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { useQuery } from '@tanstack/react-query';
@@ -12,20 +13,16 @@ import NewsletterSignup from '@/components/NewsletterSignup';
 import ArticleCta from '@/components/blog/ArticleCta';
 import DigitalGuideCard from '@/components/blog/DigitalGuideCard';
 import { digitalGuideAudienceForArticle } from '@/lib/digitalGuidePlacements.mjs';
-import StickySidebarCta from '@/components/blog/StickySidebarCta';
 import { useAuth } from '@/hooks/useAuth';
 import { useShowAds } from '@/hooks/useShowAds';
 import { useSmartAffiliateCatalog } from '@/hooks/useSmartAffiliateCatalog';
 import { linkProductMentions } from '@/lib/inTextProductLinks';
 import type { SmartAffiliateProduct } from '@/lib/smartAffiliate';
 import { trackEvent } from '@/lib/analytics';
-import { AffiliateBannerRotator } from '@/components/AffiliateBannerRotator';
-import { AffiliateProductBox } from '@/components/AffiliateProductBox';
 import RecommendedProducts from '@/components/affiliate/RecommendedProducts';
 import { trackAffiliateClick } from '@/lib/affiliateTracking';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, slugifyHeading, isHtmlContent } from '@/lib/blogMarkdown';
 import { injectContextualRegisterCta } from '@/lib/contextualRegisterCtas';
-import { injectContextualShopPlacement } from '@/lib/contextualShopPlacements';
 import { rewriteNakedShopAffiliateHrefs, shopMerchantFromHref } from '@/lib/adtractionShopLinks';
 import { trackOutboundShopClick } from '@/lib/outboundShopClicks';
 import { documentTitleForPath } from '@/lib/prerenderTopicPages';
@@ -84,24 +81,6 @@ const categoryLabels: Record<string, string> = {
   hem: 'Hem & hållbarhet',
   friluftsliv: 'Friluftsliv & natur',
 };
-
-function extractToc(content: string) {
-  const source = content.replace(/<[^>]+>/g, (tag) => tag.startsWith('<h') || tag.startsWith('</h') ? tag : '');
-  const headings: { id: string; text: string; level: number }[] = [];
-  const markdownRegex = /^(##|###)\s+(.+)$/gm;
-  let match;
-  while ((match = markdownRegex.exec(content)) !== null) {
-    const text = match[2].replace(/[#*_`]/g, '').trim();
-    // "Innehåll"-rubriken renderas som TOC-kort, inte som egen rubrik – hoppa över den
-    if (text && text.toLowerCase() !== 'innehåll') headings.push({ id: slugifyHeading(text), text, level: match[1].length });
-  }
-  const htmlRegex = /<h([23])[^>]*>([\s\S]*?)<\/h[23]>/gi;
-  while ((match = htmlRegex.exec(source)) !== null) {
-    const text = match[2].replace(/<[^>]+>/g, '').trim();
-    if (text && text.toLowerCase() !== 'innehåll' && !headings.some(h => h.id === slugifyHeading(text))) headings.push({ id: slugifyHeading(text), text, level: Number(match[1]) });
-  }
-  return headings.slice(0, 12);
-}
 
 /** Sanitize and render content – supports both raw HTML and Markdown */
 function renderContent(
@@ -200,8 +179,20 @@ function renderContent(
 
   raw = injectContextualRegisterCta(raw, slug);
   // The "Annons" box is an ad unit; Plus customers do not see ads.
-  if (showAds) raw = injectContextualShopPlacement(raw, slug);
 
+
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(raw, 'text/html');
+    doc.querySelectorAll('.blog-toc, nav[aria-label="Innehåll"]').forEach(node => node.remove());
+    doc.querySelectorAll('table').forEach(table => {
+      const wrapper = doc.createElement('div');
+      wrapper.className = 'table-scroll'; wrapper.tabIndex = 0;
+      wrapper.setAttribute('role', 'region'); wrapper.setAttribute('aria-label', 'Tabell – scrolla i sidled');
+      table.style.minWidth = `${Math.max(560, table.querySelectorAll('thead th').length * 105)}px`;
+      table.replaceWith(wrapper); wrapper.append(table);
+    });
+    raw = doc.body.innerHTML;
+  }
   return DOMPurify.sanitize(raw, {
     ADD_TAGS: ['video', 'source', 'picture', 'details', 'summary'],
     ADD_ATTR: ['loading', 'target', 'rel', 'title', 'id'],
@@ -278,7 +269,6 @@ function GuideArticlePage() {
     enabled: !!post,
   });
 
-  const toc = useMemo(() => post ? extractToc(post.content) : [], [post]);
   const readingMinutes = post?.reading_time_minutes || Math.max(1, Math.ceil((post?.word_count || post?.content?.replace(/<[^>]+>/g, '').split(/\s+/).length || 0) / 220));
 
   useEffect(() => {
@@ -311,15 +301,6 @@ function GuideArticlePage() {
       productCatalog,
     );
   }, [post, allPosts, glossary, slug, showAds, productCatalog]);
-
-  const [articleIntroHtml, articleRestHtml] = useMemo(() => {
-    if (!renderedArticleHtml) return ['', ''];
-    const matches = [...renderedArticleHtml.matchAll(/<h2\b/gi)];
-    const splitAt = matches[1]?.index ?? matches[0]?.index ?? -1;
-    return splitAt > 0
-      ? [renderedArticleHtml.slice(0, splitAt), renderedArticleHtml.slice(splitAt)]
-      : [renderedArticleHtml, ''];
-  }, [renderedArticleHtml]);
 
   // SEO - full OG, Twitter, hreflang, JSON-LD with Article + FAQ + Product + BreadcrumbList
   React.useEffect(() => {
@@ -577,29 +558,15 @@ function GuideArticlePage() {
 
   return (
     <div className="min-h-dvh bg-background">
-      <BlogConversionPopup key={post.slug} articleSlug={post.slug} category={post.category} />
+
       <div className="fixed inset-x-0 top-0 z-50 h-1 bg-border/40" aria-hidden="true">
         <div className="h-full bg-primary transition-[width] duration-150" style={{ width: `${readingProgress}%` }} />
       </div>
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/blogg" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Blogg
-          </Link>
-          <Link
-            to="/login?mode=register&source=blog_header"
-            onClick={() => trackEvent('CTA Register Clicked', { source: 'blog_header' })}
-          >
-            <Button size="sm" className="rounded-xl text-xs gap-1">
-              <Egg className="h-3 w-3" /> Kom igång
-            </Button>
-          </Link>
-        </div>
-      </header>
+      <LandingNavbar /><div className="h-16" />
 
-      <main className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:py-12 lg:grid-cols-[minmax(0,720px)_240px]">
-      <article className="w-full max-w-[720px]">
+      <main id="main-content" tabIndex={-1} className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:py-12 lg:grid-cols-[minmax(0,720px)_240px]">
+      <article id="guide-article" className="min-w-0 w-full max-w-[720px]">
         {/* Meta */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {post.category && (
@@ -657,8 +624,8 @@ function GuideArticlePage() {
 
         {/* Content with auto internal links */}
         <div
-          className="prose-custom"
-          dangerouslySetInnerHTML={{ __html: articleIntroHtml }}
+          id="guide-article-content" className="prose-custom"
+          dangerouslySetInnerHTML={{ __html: renderedArticleHtml }}
           onMouseDownCapture={(e) => handleProseAffiliateClick(e, post.slug)}
           onAuxClickCapture={(e) => handleProseAffiliateClick(e, post.slug)}
           onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
@@ -666,37 +633,20 @@ function GuideArticlePage() {
 
         {digitalGuideAudienceForArticle(post.slug) ? (
           <DigitalGuideCard audience={digitalGuideAudienceForArticle(post.slug)} placement="blog_article" />
-        ) : !isAuthenticated && <ArticleCta category={post.category} variant="inline" />}
-
-        {articleRestHtml && (
-          <div
-            className="prose-custom"
-            dangerouslySetInnerHTML={{ __html: articleRestHtml }}
-            onMouseDownCapture={(e) => handleProseAffiliateClick(e, post.slug)}
-            onAuxClickCapture={(e) => handleProseAffiliateClick(e, post.slug)}
-            onContextMenuCapture={(e) => handleProseAffiliateClick(e, post.slug)}
-          />
-        )}
-
-        {/* Kontextuell produktbox – matchar mot hela artikeltexten */}
-        {showAds && allowsAutomaticProductPlacements(post.slug) && <AffiliateProductBox
-          slug={post.slug}
-          title={post.title}
-          content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
-        />}
+        ) : null}
 
         {/* Rekommenderade produkter – bara på köp-intent-artiklar med tillräckligt många matchningar */}
         {showAds && allowsAutomaticProductPlacements(post.slug) && <RecommendedProducts
           slug={post.slug}
           title={post.title}
-          content={`${post.excerpt || ''} ${articleIntroHtml || ''} ${articleRestHtml || ''}`}
+          content={`${post.excerpt || ''} ${renderedArticleHtml || ''}`}
           category={post.category}
           tags={post.tags}
           excerpt={post.excerpt}
         />}
 
         {/* Roterande Bonden.se-banner – 25% av artiklarna får ingen, resten fördelas jämnt */}
-        {showAds && <AffiliateBannerRotator slug={post.slug} />}
+
 
         {/* Tags + Share */}
         {post.tags && post.tags.length > 0 && (
@@ -733,7 +683,7 @@ function GuideArticlePage() {
                 ? 'AI-assisterad originalguide, skriven med ChatGPT. Arbetsmallen är ett redaktionellt förslag.'
                 : 'Praktiska guider om hönsskötsel, ägg, foder och hållbart liv på landet.'}
             </p>
-            <p className="text-[11px] text-muted-foreground/80 mt-2">
+            <p className="text-[11px] text-muted-foreground mt-2">
               {post.published_at && (
                 <>Publicerad {new Date(post.published_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric' })}</>
               )}
@@ -773,7 +723,8 @@ function GuideArticlePage() {
             return { ...p, score };
           });
           scored.sort((a, b) => b.score - a.score || (new Date(b.published_at || 0).getTime() - new Date(a.published_at || 0).getTime()));
-          const related = scored.slice(0, 3);
+          const seenImages = new Set<string>();
+          const related = scored.filter(p => { const image = heroForPost(p); if (seenImages.has(image)) return false; seenImages.add(image); return true; }).slice(0, 3);
 
           return (
             <div className="mt-14 pt-8 border-t border-border/50">
@@ -784,9 +735,9 @@ function GuideArticlePage() {
                 {related.map(r => (
                   <Link key={r.id} to={`/blogg/${r.slug}`} className="group">
                     <div className="rounded-xl border border-border/50 overflow-hidden hover:shadow-md transition-all duration-300 h-full bg-card">
-                      {(r.feature_image_url || r.cover_image_url) ? (
+                      {heroForPost(r) ? (
                         <div className="aspect-video overflow-hidden">
-                          <img src={r.feature_image_url || r.cover_image_url || ''} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                          <img src={heroForPost(r)} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                         </div>
                       ) : (
                         <div className="aspect-video bg-gradient-to-br from-primary/8 to-accent/8 flex items-center justify-center">
@@ -811,25 +762,7 @@ function GuideArticlePage() {
       </article>
 
 
-      {(toc.length > 0 || !isAuthenticated) && (
-        <aside className="hidden lg:block">
-          <div className="sticky top-24 space-y-4">
-            {toc.length > 0 && (
-              <nav className="rounded-2xl border border-border/50 bg-card/70 p-4" aria-label="Innehållsförteckning">
-                <p className="mb-3 text-xs font-medium uppercase text-muted-foreground">Innehåll</p>
-                <ol className="space-y-2 text-sm">
-                  {toc.map(item => (
-                    <li key={item.id} className={item.level === 3 ? 'pl-3' : ''}>
-                      <a href={`#${item.id}`} className="text-muted-foreground transition-colors hover:text-primary">{item.text}</a>
-                    </li>
-                  ))}
-                </ol>
-              </nav>
-            )}
-            {!isAuthenticated && <StickySidebarCta />}
-          </div>
-        </aside>
-      )}
+      <div className="order-first lg:order-last min-w-0 lg:sticky lg:top-24 self-start"><ContentToc target="#guide-article-content" /></div>
       </main>
 
       {/* Footer */}

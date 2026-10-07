@@ -1,3 +1,6 @@
+import ContentToc from '@/components/ContentToc';
+import { subjectImage } from '@/lib/breedImage';
+import SubjectImage from '@/components/SubjectImage';
 import React, { lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
@@ -69,6 +72,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
     jsonLd: page ? [articleJsonLd, faqJsonLd] : [],
   });
 
+  const breedImage = subjectImage(activeSlug);
   const breedRate = page?.breedName ? getBreedLayingRate(page.breedName) : null;
   const hasBreedRate = !!breedRate && breedRate !== DEFAULT_BREED_RATE;
   const registerCta = contextualRegisterCtaForSlug(activeSlug);
@@ -83,12 +87,12 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
   }
 
   return (
-    <main id="main-content" className="min-h-dvh bg-background overflow-x-hidden">
+    <main id="main-content" className="min-h-dvh bg-background overflow-x-clip">
       <LandingNavbar />
 
       {/* Hero */}
       <section
-        className="relative pt-24 pb-12 sm:pt-32 sm:pb-16"
+        className="relative pt-24 pb-6 sm:pt-28 sm:pb-8"
         style={{ background: 'linear-gradient(135deg, #f5f0e8 0%, #eef5ec 55%, #f5f0e8 100%)' }}
       >
         <div className="container max-w-4xl mx-auto px-5 sm:px-6">
@@ -97,6 +101,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
             <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl leading-[1.07] text-foreground mb-6">
               {page.h1}
             </h1>
+            {breedImage && <SubjectImage image={breedImage} alt={page.breedName || page.h1} />}
             {page.intro.map((p, i) => (
               <p key={i} className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-4 max-w-3xl">
                 {p}
@@ -110,16 +115,16 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
       {hasBreedRate && breedRate && (
         <section className="py-6 bg-background">
           <div className="container max-w-4xl mx-auto px-5 sm:px-6">
-            <Card className="border-primary/20 bg-primary/5">
+            <Card className="max-w-2xl border-primary/20 bg-primary/5">
               <CardContent className="p-5 sm:p-6">
                 <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-primary/80 font-medium">Typisk värpning</div>
+                    <div className="text-xs uppercase tracking-wide text-primary font-medium">Typisk värpning</div>
                     <div className="text-2xl font-serif text-foreground">{breedRate.typical}%</div>
                     <div className="text-xs text-muted-foreground">värpprocent (ägg per höna och dag × 100)</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-primary/80 font-medium">Typiskt intervall</div>
+                    <div className="text-xs uppercase tracking-wide text-primary font-medium">Typiskt intervall</div>
                     <div className="text-lg text-foreground">{breedRate.min}–{breedRate.max}%</div>
                     <div className="text-xs text-muted-foreground">för hobbyflock under värpsäsong</div>
                   </div>
@@ -133,29 +138,11 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
         </section>
       )}
 
-      {/* Innehållsförteckning */}
-      <section className="py-8 bg-background">
-        <div className="container max-w-4xl mx-auto px-5 sm:px-6">
-          <Card className="border-border bg-card/60">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <BookOpen className="h-5 w-5 text-primary" />
-                <h2 className="font-serif text-lg text-foreground">I den här guiden</h2>
-              </div>
-              <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
-                {page.toc.map((item) => (
-                  <li key={item} className="text-muted-foreground">— {item}</li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
+      <div className="container max-w-6xl mx-auto grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem] items-start">
+      <div id="breed-content" className="min-w-0">
       {/* Sektioner */}
-      <section className="py-10 sm:py-14 bg-background">
-        <div className="container max-w-3xl mx-auto px-5 sm:px-6 space-y-12">
-          <DigitalGuideCard audience="breed" placement="breed_guide" />
+      <section className="py-6 bg-background">
+        <div className="container max-w-3xl mx-auto px-5 sm:px-6 space-y-8">
           {page.sections.map((section, idx) => (
             <motion.article key={section.heading} {...fadeUp(idx * 0.04)}>
               <h2 className="font-serif text-2xl sm:text-3xl text-foreground mb-4 leading-tight">
@@ -172,7 +159,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
                     {section.bullets.map((b) => (
                       <li key={b} className="flex gap-2 text-foreground/85 text-base">
                         <span className="text-primary mt-1">•</span>
-                        <span>{b}</span>
+                        <span>{b.includes('Läs mer: /honsraser/') ? <>{b.split('Läs mer:')[0]}<a className="text-primary underline" href={b.split('Läs mer: ')[1]}>Läs mer om {b.split(' – ')[0]}</a></> : b}</span>
                       </li>
                     ))}
                   </ul>
@@ -196,8 +183,8 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
                 Riktvärden för vanliga hönsraser. Värpning och vikt varierar mellan linjer och uppfödare.
               </p>
             </motion.div>
-            <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
-              <table className="w-full text-sm">
+            <div tabIndex={0} role="region" aria-label="Jämförelsetabell, rulla i sidled" className="table-scroll rounded-2xl border border-border bg-card shadow-sm">
+              <table className="w-full min-w-[760px] text-sm">
                 <thead className="bg-muted/40 text-foreground">
                   <tr>
                     <th className="text-left p-3 font-medium">Ras</th>
@@ -264,6 +251,8 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
         </div>
       </section>
 
+      </div><div className="order-first lg:order-last min-w-0 lg:sticky lg:top-24"><ContentToc target="#breed-content" /></div></div>
+      <div className="container max-w-3xl mx-auto px-5"><DigitalGuideCard audience="breed" placement="breed_guide" /></div>
       {/* Related */}
       <section className="py-10 bg-background">
         <div className="container max-w-4xl mx-auto px-5 sm:px-6">

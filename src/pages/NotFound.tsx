@@ -1,3 +1,5 @@
+import LandingNavbar from '@/components/LandingNavbar';
+import LandingFooter from '@/components/LandingFooter';
 import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import { useSeo } from "@/hooks/useSeo";
@@ -19,7 +21,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-muted">
+    <><LandingNavbar /><main id="main-content" tabIndex={-1} className="flex min-h-dvh items-center justify-center bg-muted">
       <div className="text-center max-w-md px-6">
         <p className="text-6xl mb-4">🐔</p>
         <h1 className="mb-2 text-4xl font-serif font-bold text-foreground">404</h1>
@@ -38,7 +40,7 @@ const NotFound = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </main><LandingFooter /></>
   );
 };
 
