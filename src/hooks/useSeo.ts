@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import { SeoPrerenderContext } from './seo-prerender-context';
 
 const BASE = 'https://honsgarden.se';
 const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const NOINDEX_ROBOTS = 'noindex, nofollow';
 
-interface SeoOptions {
+export interface SeoOptions {
   title: string;
   description: string;
   path: string;
@@ -42,6 +43,8 @@ export function useSeo({
   jsonLd,
   articleMeta,
 }: SeoOptions) {
+  const collector = useContext(SeoPrerenderContext);
+  if (collector) Object.assign(collector, { title, description, path, ogType, ogImage, ogImageAlt, noindex, jsonLd, articleMeta });
   useEffect(() => {
     const fullUrl = `${BASE}${path}`;
 

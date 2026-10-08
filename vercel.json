@@ -6,299 +6,271 @@
   "rewrites": [
     {
       "source": "/priser",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/s/bergs-agg",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/funktioner/agda-ai",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/funktioner/statistik",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/funktioner/vader",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/funktioner/community",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/funktioner/rapporter",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/app-for-honsagare",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/agglogg",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/honskalender",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/foderkostnad-hons",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/klackningskalender",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/borja-med-hons",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/honsraser",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/honsraser-lista",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/salja-agg",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/karta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/karta/bekrafta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/demo",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/s/agg",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/login",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/auth/confirm",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/auth/connect",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/delete-account",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/terms",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/integritet",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/reset-password",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/om-oss",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/verktyg/aggkalkylator",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/verktyg/vad-kostar-hons",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/verktyg/aggregler-vagvisare",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/verktyg/klackningskalkylator",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/mina-forsta-hons",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/mina-forsta-hons/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/mina-forsta-hons/hamta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/vinterklar-honsgard",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/vinterklar-honsgard/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/vinterklar-honsgard/hamta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/aggbodens-saljpaket",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/aggbodens-saljpaket/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/aggbodens-saljpaket/hamta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/fran-honsgard-till-aggbod",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/fran-honsgard-till-aggbod/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/fran-honsgard-till-aggbod/hamta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/klackdagboken",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/klackdagboken/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/klackdagboken/hamta",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/registrera-hons-jordbruksverket",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/guider/salja-agg-regler",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/blogg",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/marknad",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/marknad/ny",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/butik",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/butik/tack",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/butik/villkor",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/butik/angra",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/honsraser/:slug",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/salja-agg/:ort",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/karta/hantera/:token",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/s/:slug",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/r/:token",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/avboka/:token",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/bestallning/:token",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/inbjudan/:token",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/guider/:slug",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/blogg/kategori/:category",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/blogg/tagg/:tag",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/blogg/:slug",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/marknad/k/:kategori",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/marknad/:slug",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/butik/:slug",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/app",
-      "destination": "/index.html"
+      "destination": "/app.html"
     },
     {
       "source": "/app/:path*",
-      "destination": "/index.html"
+      "destination": "/app.html"
     }
   ],
   "redirects": [

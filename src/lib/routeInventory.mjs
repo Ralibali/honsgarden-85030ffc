@@ -184,13 +184,15 @@ export function buildVercelRewrites() {
   const rewrites = [];
   for (const route of STATIC_PUBLIC_ROUTES) {
     if (route === '/') continue; // served from dist/index.html by the filesystem
-    rewrites.push({ source: route, destination: '/index.html' });
+    rewrites.push({ source: route, destination: '/app.html' });
   }
   for (const route of DYNAMIC_PUBLIC_ROUTES) {
-    rewrites.push({ source: route.pattern, destination: '/index.html' });
+    // Content slugs must exist in the build. Unknown slugs fall through to HTTP 404.
+    if (/^\/(?:blogg|honsraser|salja-agg|guider)\//.test(route.pattern) || route.pattern === '/marknad/k/:kategori') continue;
+    rewrites.push({ source: route.pattern, destination: '/app.html' });
   }
   for (const route of APP_SHELL_ROUTES) {
-    rewrites.push({ source: route.pattern, destination: '/index.html' });
+    rewrites.push({ source: route.pattern, destination: '/app.html' });
   }
   return rewrites;
 }
