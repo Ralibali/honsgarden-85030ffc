@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20261006-planerat-eller-genomfort-flockjournal",
+  "author": "ChatGPT",
+  "status": "ready",
+  "written_at": "2026-10-06T07:48:50.887546+00:00",
+  "sources_checked_at": "2026-10-08T07:20:27.247238+00:00",
+  "slug": "planerat-eller-genomfort-flockjournal",
+  "title": "Skilj planerade uppgifter från genomförda i flockjournalen",
+  "description": "Gör det tydligt vad som är planerat, vad som faktiskt hände och vad som fortfarande är okänt. En enkel dokumentationsrutin för hönsgården.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Dokumentera skillnaden mellan planerad och faktiskt utförd vardagsuppgift, utan att en kalendernotering blir ett påstått genomförande.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>En notering om att något ska göras berättar inte att det blev gjort. När kalender, komihåglista och flockjournal används tillsammans behöver skillnaden synas. Annars kan en planerad uppgift senare se ut som en observation, särskilt när någon annan tar över anteckningarna.</p><p>Börja med en vanlig uppgift i er egen vardag. Guiden handlar om hur ni beskriver plan och händelse. Den anger inte vilka skötselåtgärder som behövs, hur ofta de ska utföras eller vilka krav som gäller för just er djurhållning.</p><h2>Skriv planen som en avsikt</h2><p>Använd ord som planerat, ska kontrolleras eller väntar på besked när uppgiften ännu inte är genomförd. Skriv datumet ni tänker göra den och vem som följer upp. Om en anteckning bara säger en åtgärd och ett datum går det annars inte att förstå om raden beskriver dåtid eller framtid.</p><p>Ett påhittat exempel är: ”Planerat till lördag: gå igenom utrustningslistan. Kim följer upp.” Texten beskriver ett kommande arbete. Den säger ingenting om listans skick eller om genomgången redan har skett. Behåll den skillnaden även om planeringen flyttas.</p><h2>Anteckna genomförandet när det är känt</h2><p>När uppgiften är gjord, notera det verkliga datumet och vad som faktiskt utfördes. Om bara en del blev klar ska den delen framgå. Skriv exempelvis att två av tre förvaringsplatser gick att kontrollera och att den sista återstår, i stället för att markera hela uppgiften som färdig.</p><p>Skilj också händelsedatum från anteckningsdatum när uppgiften förs in senare. Uppgiften kan ha utförts på söndagen men skrivits in på måndagen. Låt båda tidpunkterna vara begripliga om skillnaden behövs för att följa förloppet.</p><h2>Låt en utebliven uppgift vara synlig</h2><p>Om arbetet inte blev av behöver planen få ett nytt besked. Skriv att den flyttats, avbrutits eller fortfarande väntar på kontroll. Ett tomt fält kan annars betyda både ”inte utfört” och ”ingen har hunnit skriva”. Välj ord som gör skillnaden tydlig för nästa person.</p><p>Ange orsaken bara när den är känd och relevant. Om ni inte vet om någon gjorde uppgiften, skriv att genomförandet behöver bekräftas. Be den berörda personen om underlaget. Fyll inte i ett sannolikt datum för att stänga raden.</p><h2>Använd fyra frågor vid avstämningen</h2><p>Gå igenom vad som var planerat, vad som faktiskt hände, vilket underlag som visar det och vad som återstår. En kort rad med svar på dessa frågor kan räcka. Lägg till ansvarig för nästa steg när det fortfarande finns en öppen punkt.</p><p>Om en tidigare rad blev fel, använd en <a href=\"/blogg/ratta-flockanteckning-behall-sammanhang\">tydlig rättelse i flockjournalen</a>. Förklara ändringen i stället för att låta den gamla planen förvandlas till en ny historik. Vid överlämning bör nästa person kunna skilja färdiga anteckningar från kommande uppgifter.</p><h2>Prova rutinen på ett enda exempel</h2><p>Välj en avslutad uppgift och låt någon annan läsa den utan muntlig förklaring. Kan personen förstå vad som planerades och vad som utfördes? Om svaret är oklart, förbättra orden innan ni ändrar alla äldre anteckningar.</p><p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> när du ser över hur vardagens uppgifter presenteras. AI-assisterad originalguide med en manuell dokumentationsrutin. Texten utlovar ingen automatisk kontroll av genomförda uppgifter eller särskild statusfunktion i appen.</p>",
+  "published_at": "2026-10-08T07:20:27.247238+00:00",
+  "quality_checked_at": "2026-10-08T07:20:27.247238+00:00"
+}
