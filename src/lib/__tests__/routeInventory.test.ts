@@ -113,10 +113,14 @@ describe('vercel.json sync', () => {
     expect(vercel.redirects).toEqual(buildVercelRedirects());
   });
 
-  it('rewrites only ever target /index.html', () => {
+  it('fallbacks use a separate noindex app shell', () => {
     for (const rewrite of vercel.rewrites) {
-      expect(rewrite.destination).toBe('/index.html');
+      expect(rewrite.destination).toBe('/app.html');
     }
+  });
+
+  it('does not rewrite unknown blog or breed slugs to the app shell', () => {
+    expect(vercel.rewrites.some((r: { source: string }) => r.source === '/blogg/:slug' || r.source === '/honsraser/:slug')).toBe(false);
   });
 
   it('exposes a static 404 page for unmatched paths', () => {
