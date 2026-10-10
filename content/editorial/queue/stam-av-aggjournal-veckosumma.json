@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20261010-stam-av-aggjournal-veckosumma",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-10-10T08:50:49.988416+00:00",
+  "sources_checked_at": "2026-10-10T08:50:49.988416+00:00",
+  "slug": "stam-av-aggjournal-veckosumma",
+  "title": "Stäm av äggjournalens veckosumma utan att ändra historiken",
+  "description": "Kontrollera datum, grupper och rättelser när veckans äggsumma inte verkar stämma. En manuell avstämning som hjälper dig hitta skillnaden.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Felsöka en skillnad mellan dagliga ägganteckningar och en veckosumma genom avgränsning och avstämning, inte analysera hönsens varpning.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>Veckosumman ser oväntad ut, men innan du drar slutsatser om flocken behöver du kontrollera vad som faktiskt har räknats med. En anteckning kan avse en annan grupp, ett annat datum eller en rättelse som redan ingår. Börja därför med underlaget och skilj en räknefråga från en fråga om hönsens produktion.</p><p>Den här mallen gäller en manuell avstämning av anteckningar. Den förklarar inte varför hönor värper mer eller mindre och ersätter inte en bedömning av djurens hälsa. Målet är att kunna beskriva hur en summa blev till och vad som fortfarande är oklart.</p><h2>Bestäm exakt vilken vecka och grupp du jämför</h2><p>Skriv startdatum och slutdatum med årtal. Ange också vilken flock eller grupp som ska ingå. Undvik att jämföra en kalendervecka med de senaste sju dagarna utan att först kontrollera datumen. Två korrekta sammanställningar kan ge olika resultat om de omfattar olika dagar.</p><p>Kontrollera om någon grupp bytt namn eller plats under perioden. Beskriv hur den hanteras i just denna avstämning, så att samma grupp inte råkar räknas två gånger. Håll en sådan förklaring bredvid sammanställningen i stället för att ändra äldre gruppnamn enbart för att få veckans lista att se enhetlig ut.</p><h2>Läs en dag i taget innan du räknar om</h2><p>Gör en arbetskopia där varje rad innehåller datum, grupp, antecknat antal och hänvisning till originalet. Lämna okända uppgifter som okända. En tom dag betyder inte automatiskt att inga ägg samlades in; den kan också betyda att någon ännu inte har fört in uppgiften.</p><p>Skriv en separat fråga för varje oklar rad. Om två personer har antecknat samma insamling behöver ni först avgöra vad raderna beskriver. Guiden om att <a href=\"/blogg/undvik-dubbelregistrering-agg\">undvika dubbelregistrering av ägg</a> kan hjälpa med själva rutinen, men ta inte bort en rad förrän sambandet är bekräftat.</p><h2>Skilj insamlat antal från andra mängder</h2><p>En anteckning om sålda, använda eller flyttade ägg behöver inte vara en anteckning om dagens insamling. Skriv vilken mängd varje kolumn avser. Använd samma enhet när du summerar och kontrollera om ett tal beskriver en enskild insamling eller en redan hopräknad dag.</p><p>Ett påhittat exempel är att en rad säger sex insamlade ägg och nästa säger sex ägg packade till ett annat ändamål. De två sexorna ska inte automatiskt summeras som tolv insamlade. Läs sammanhanget och fråga den som antecknat om betydelsen fortfarande är oklar. Räkna bara uppgifter som hör till den avgränsning du valt.</p><h2>Dokumentera skillnaden och avsluta avstämningen</h2><p>Räkna veckans relevanta dagsvärden och jämför med den tidigare summan. Skriv vilka rader som förklarar en eventuell skillnad. Om en rättelse behövs, bevara vad som ändrades och varför. En ny totalsiffra utan förklaring gör nästa kontroll svårare och kan dölja att samma fråga återkommer.</p><p>Avsluta med en kort rad: period, grupp, avstämd summa, kvarstående frågor och datum för kontrollen. Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> när du ser över hur uppgifterna hålls samlade. AI-assisterad originalguide med en manuell avstämningsmall; den utlovar ingen automatisk kontroll eller särskild veckorapport i produkten.</p>",
+  "not_before": "2026-10-12"
+}
