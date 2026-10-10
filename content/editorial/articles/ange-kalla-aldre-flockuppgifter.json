@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20261008-ange-kalla-aldre-flockuppgifter",
+  "author": "ChatGPT",
+  "status": "ready",
+  "written_at": "2026-10-08T07:55:27.143533+00:00",
+  "sources_checked_at": "2026-10-10T08:12:05.798291+00:00",
+  "slug": "ange-kalla-aldre-flockuppgifter",
+  "title": "Ange källa när äldre flockuppgifter förs in i journalen",
+  "description": "Bevara skillnaden mellan egna observationer, gamla anteckningar och muntliga uppgifter när du kompletterar flockjournalen i efterhand.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Dokumentera ursprung och osäkerhet i äldre flockuppgifter som förs in i efterhand, utan att återgivna uppgifter blir egna observationer.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>En äldre uppgift kan vara användbar även när du inte själv såg det som hände. Den kan komma från en tidigare ägare, en kalender eller en anteckning som hittas senare. När uppgiften förs in i flockjournalen behöver läsaren kunna förstå både vad den beskriver och varifrån den kommer.</p><p>Börja med en avgränsad komplettering. Den här guiden handlar om att hålla ordning på källor och datum i vardagsanteckningar. Den avgör inte vilka uppgifter som är obligatoriska eller hur en medicinsk bedömning ska dokumenteras. Sådana frågor behöver hanteras utifrån rätt anvisningar för situationen.</p><h2>Spara uppgiften tillsammans med dess ursprung</h2><p>Skriv om underlaget är en egen anteckning, ett foto, ett dokument eller ett besked från någon annan. Ange en begriplig hänvisning som gör att du kan hitta tillbaka till underlaget. Om du arbetar från en kopia är det bra att också ange var originalet finns, när det är känt.</p><p>Återge bara det källan faktiskt säger. En bild av en grupp höns visar inte automatiskt vilka individer som senare flyttade till en annan plats. Ett filnamn eller ett minne kan ge en ledtråd, men ska inte ensam förvandlas till ett säkert datum eller en säker identitet.</p><h2>Skilj händelsedatum från datumet du skriver</h2><p>Anteckna när händelsen enligt källan inträffade och när du lade till uppgiften. Om endast månad eller år är känt, skriv den precisionen. Välj inte en viss dag bara för att göra uppgiften komplett i din egen sammanställning.</p><p>Ett påhittat exempel är: ”Enligt anteckning i den tidigare pärmen flyttades gruppen under april. Exakt dag framgår inte. Uppgiften fördes över den 8 oktober.” Då går det att förstå varför informationen kommer in senare och vilka delar som fortfarande saknar ett säkert besked.</p><h2>Håll återgivning och egen tolkning åtskilda</h2><p>Skriv först vad källan uppger. Lägg en eventuell egen tolkning i en separat mening och markera den som en tolkning. Om ett gammalt namn kan motsvara två olika individer behöver den osäkerheten följa med uppgiften tills kopplingen går att kontrollera.</p><p>Försök inte jämka ihop motstridiga källor genom att välja ett mellanting. Skriv vad respektive underlag säger och vilken fråga som behöver redas ut. Det kan vara mer användbart att behålla två tydligt märkta uppgifter än att skapa en ny, obelagd version som ser entydig ut.</p><h2>Länka till underlaget utan att sprida mer än nödvändigt</h2><p>Håll hänvisningen så enkel att du kan använda den även om själva anteckningen senare kopieras till ett annat format. En begriplig dokumenttitel och en platsangivelse kan komplettera en länk. Kontrollera att hänvisningen går att förstå för den som behöver läsa journalen.</p><p>Undvik att kopiera hela privata meddelanden när en kort sakuppgift räcker. Spara underlaget där det hör hemma och följ de behörigheter som gäller där. Om ni senare skapar en <a href=\"/blogg/arkivkopia-flockjournal-lasbar\">arkivkopia av flockjournalen</a> behöver även källhänvisningarna vara läsbara.</p><h2>Kontrollera en kompletterad anteckning från början till slut</h2><p>Läs en färdig anteckning utan att samtidigt titta på originalet. Framgår händelsen, källan, tidpunkterna och osäkerheten? Be vid behov en annan berörd person säga vad raden betyder. Om svaret låter säkrare än underlaget behöver formuleringen förtydligas innan ni använder den vidare.</p><p>Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> när du ser över hur flockens uppgifter hålls samlade. AI-assisterad originalguide om en manuell dokumentationsrutin. Den beskriver inte automatisk källkontroll eller en särskild importfunktion i Hönsgården. Kontrollera alltid hur det verktyg du använder faktiskt hanterar fält och datum.</p>",
+  "published_at": "2026-10-10T08:34:57.468655+00:00",
+  "quality_checked_at": "2026-10-10T08:12:05.798291+00:00",
+  "editorial_review": {
+    "reviewed_at": "2026-10-10T08:12:05.798291+00:00",
+    "published_inventory_reviewed": 132,
+    "distinct_intent_confirmed": true,
+    "source_review": "Current main, complete published inventory and live owned product page reviewed on 10 October 2026. Manual documentation guidance; no fabricated features or outcomes.",
+    "live_verification": "Previous article passed initial HTML and browser reader flow on 10 October; new publication requires separate live verification.",
+    "publication_gate": "Use exact create-only publisher SQL and verify hash and status separately."
+  }
+}
