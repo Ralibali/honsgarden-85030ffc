@@ -77,10 +77,13 @@ function sections(html: string): Array<{ heading: string; text: string }> {
     .filter((section): section is { heading: string; text: string } => Boolean(section));
 }
 
+/** Reviewed editorial articles without automatic product placements (editorialPlacementPolicy). */
 function reviewedSlugs(): Set<string> {
   const dir = join(process.cwd(), 'content/editorial/articles');
   return new Set(readdirSync(dir).filter((file) => file.endsWith('.json'))
-    .map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')).slug));
+    .map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')))
+    .filter((article) => article.automatic_product_placements !== true)
+    .map((article) => article.slug));
 }
 
 function analyse(post: Post, catalog: SmartAffiliateProduct[], prof: Profile, reviewed: boolean) {

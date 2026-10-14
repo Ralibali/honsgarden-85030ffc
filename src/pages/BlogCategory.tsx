@@ -1,8 +1,9 @@
 import LandingNavbar from '@/components/LandingNavbar';
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
 import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
+import { BLOG_CATEGORY_META, blogCategoryLabel, canonicalBlogCategory, withBlogCategory } from '@/data/blogCategories.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -11,86 +12,29 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg, ArrowLeft } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
 
-const categoryMeta: Record<string, { label: string; title: string; description: string; ogImage: string }> = {
-  guide: {
-    label: 'Guider',
-    title: 'Guider om höns – Allt du behöver veta som hönsägare | Hönsgården',
-    description: 'Kompletta guider om höns – från att bygga hönshus till att välja rätt ras. Steg-för-steg-instruktioner för nybörjare och erfarna hönsägare.',
-    ogImage: '/blog-images/chicken-coop.jpg',
-  },
-  recension: {
-    label: 'Recensioner',
-    title: 'Produktrecensioner för hönsägare – Testat & granskat | Hönsgården',
-    description: 'Ärliga recensioner av produkter för hönsägare. Vi testar hönshus, foder, värmelampor, äggkläckare och mer – så du slipper gissa.',
-    ogImage: '/blog-images/feed-varieties.jpg',
-  },
-  tips: {
-    label: 'Tips & tricks',
-    title: 'Tips & tricks för hönsägare – Smarta knep för hönsgården | Hönsgården',
-    description: 'Praktiska tips och smarta knep för att sköta dina höns bättre. Spara tid, pengar och håll flocken frisk.',
-    ogImage: '/blog-images/hens-feeding.jpg',
-  },
-  halsa: {
-    label: 'Hälsa',
-    title: 'Hönshälsa – Sjukdomar, behandling & förebyggande | Hönsgården',
-    description: 'Allt om hönshälsa: vanliga sjukdomar, symptom, behandling och förebyggande åtgärder. Håll din flock frisk och glad.',
-    ogImage: '/blog-images/hen-health-check.jpg',
-  },
-  nyborjare: {
-    label: 'Nybörjare',
-    title: 'Börja med höns – Komplett nybörjarguide | Hönsgården',
-    description: 'Ska du skaffa höns? Här hittar du allt en nybörjare behöver veta – från val av ras till bygge av hönshus och daglig skötsel.',
-    ogImage: '/blog-images/baby-chicks.jpg',
-  },
-  raser: {
-    label: 'Raser',
-    title: 'Hönsraser i Sverige – Jämförelser & guider | Hönsgården',
-    description: 'Jämför hönsraser för svenskt klimat: värpning, temperament, vinterhärdighet och pris för hobbyhönsägare.',
-    ogImage: '/blog-images/chicken-breeds.jpg',
-  },
-  tradgard: {
-    label: 'Trädgård & odling',
-    title: 'Trädgård & odling – Tips för självhushåll | Hönsgården',
-    description: 'Odla grönsaker, kompostera med höns och skapa en produktiv trädgård. Guider för dig som kombinerar höns med odling.',
-    ogImage: '/blog-images/spring-garden.jpg',
-  },
-  hem: {
-    label: 'Hem & hållbarhet',
-    title: 'Hem & hållbarhet – Hållbart boende med höns | Hönsgården',
-    description: 'Tips för ett hållbart hem med höns. Kompostering, självhushåll och smarta lösningar för den miljömedvetna hönsägaren.',
-    ogImage: '/blog-images/farm-kitchen.jpg',
-  },
-  friluftsliv: {
-    label: 'Friluftsliv & natur',
-    title: 'Friluftsliv & natur – Utomhuslivet med höns | Hönsgården',
-    description: 'Friluftsliv, naturupplevelser och livet utomhus. Guider för dig som älskar naturen och lantlivet.',
-    ogImage: '/blog-images/sunset-farm.jpg',
-  },
-};
-
-const categoryLabels: Record<string, string> = {
-  guide: 'Guide', recension: 'Recension', tips: 'Tips & tricks', halsa: 'Hälsa',
-  nyborjare: 'Nybörjare', raser: 'Raser', tradgard: 'Trädgård & odling', hem: 'Hem & hållbarhet', friluftsliv: 'Friluftsliv & natur',
-};
-
 export default function BlogCategory() {
   const { category } = useParams<{ category: string }>();
-  const meta = categoryMeta[category || ''];
+  const meta = BLOG_CATEGORY_META[category || ''];
+  // "Raser", "hälsa" … are spellings of an existing category.
+  const canonical = canonicalBlogCategory(category);
 
-  const { data: posts = [], isLoading, isSuccess } = useQuery({
-    queryKey: ['blog-posts-category', category],
+  // The category in the database is free text, so the mapping to a category
+  // page happens here (blogCategories.mjs), not in the query.
+  const { data: allPosts = [], isLoading, isSuccess } = useQuery({
+    queryKey: ['public-blog-posts-by-category'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('blog_posts')
         .select('id, title, slug, excerpt, cover_image_url, feature_image_url, category, tags, published_at, reading_time_minutes')
         .eq('is_published', true)
-        .eq('category', category!)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return withoutConsolidatedPosts(data ?? []);
+      return withoutConsolidatedPosts(data ?? []).map(withBlogCategory);
     },
-    enabled: !!category,
+    enabled: !!meta,
   });
+  const posts = allPosts.filter((post) => post.category === category);
+  const categories = Object.entries(BLOG_CATEGORY_META).filter(([key]) => key === category || allPosts.some((post) => post.category === key));
 
   // Only a confirmed empty result; a failed fetch must not noindex the page.
   const isEmpty = isSuccess && posts.length === 0;
@@ -123,6 +67,8 @@ export default function BlogCategory() {
       },
     ],
   });
+
+  if (!meta && canonical) return <Navigate replace to={`/blogg/kategori/${canonical}`} />;
 
   if (!meta) {
     return (
@@ -176,7 +122,7 @@ export default function BlogCategory() {
 
         {/* Category navigation */}
         <nav aria-label="Kategorier" className="flex flex-wrap justify-center gap-2 mb-10">
-          {Object.entries(categoryMeta).map(([key, val]) => (
+          {categories.map(([key, val]) => (
             <Link key={key} to={`/blogg/kategori/${key}`}>
               <Badge
                 variant={key === category ? 'default' : 'secondary'}
@@ -218,7 +164,7 @@ export default function BlogCategory() {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="secondary" className="text-[9px]">
-                        {categoryLabels[post.category || ''] || post.category}
+                        {blogCategoryLabel(post.category) || post.category}
                       </Badge>
                       {post.published_at && (
                         <span className="text-[10px] text-muted-foreground">

@@ -3,6 +3,7 @@ import BlogConversionPopup from '@/components/blog/BlogConversionPopup';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { useSeo } from '@/hooks/useSeo';
 import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
+import { BLOG_CATEGORY_META, blogCategoryLabel, withBlogCategory } from '@/data/blogCategories.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, Navigate, useLocation } from 'react-router-dom';
@@ -13,22 +14,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg } from 'lucide-react';
 import DigitalProductShelf from '@/components/blog/DigitalProductShelf';
 
-const categoryLabels: Record<string, string> = {
-  guide: 'Guide',
-  recension: 'Recension',
-  tips: 'Tips & tricks',
-  halsa: 'Hälsa',
-  nyborjare: 'Nybörjare',
-  raser: 'Raser',
-  tradgard: 'Trädgård & odling',
-  hem: 'Hem & hållbarhet',
-  friluftsliv: 'Friluftsliv & natur',
-};
-
 export default function Guides() {
   const legacyTarget = legacyBlogTarget(useLocation().search);
   useSeo({
-    title: 'Blogg om höns – Guider, recensioner & tips | Hönsgården',
+    title: 'Blogg om höns – Guider, köpguider & tips | Hönsgården',
     description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.',
     path: '/blogg',
     ogImage: '/blog-images/hens-garden.jpg',
@@ -37,8 +26,8 @@ export default function Guides() {
       {
         '@type': 'CollectionPage',
         '@id': 'https://honsgarden.se/blogg',
-        name: 'Bloggen – Guider, recensioner & tips om höns',
-        description: 'Expertguider, produktrecensioner och tips om höns, hönshus, foder och hälsa.',
+        name: 'Bloggen – Guider, köpguider & tips om höns',
+        description: 'Guider, köpguider och tips om höns, hönshus, foder och hälsa.',
         url: 'https://honsgarden.se/blogg',
         isPartOf: { '@id': 'https://honsgarden.se/#website' },
         inLanguage: 'sv-SE',
@@ -62,9 +51,11 @@ export default function Guides() {
         .eq('is_published', true)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return withoutConsolidatedPosts(data ?? []);
+      return withoutConsolidatedPosts(data ?? []).map(withBlogCategory);
     },
   });
+  // Only categories that have articles; an empty category page is noindexed.
+  const categories = Object.entries(BLOG_CATEGORY_META).filter(([key]) => posts.some((post) => post.category === key));
 
   if (legacyTarget) return <Navigate replace to={legacyTarget} />;
 
@@ -103,7 +94,7 @@ export default function Guides() {
             Höns, hem, trädgård & friluftsliv
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Guider, recensioner och tips för dig som älskar höns, hemmet, trädgården och livet utomhus. Vi testar produkter och delar med oss av vår kunskap.
+            Guider, köpguider och tips för dig som har höns – från ras och hönshus till foder, hälsa och vardagens rutiner.
           </p>
         </div>
 
@@ -111,7 +102,7 @@ export default function Guides() {
 
         {/* Category navigation */}
         <nav aria-label="Kategorier" className="flex flex-wrap justify-center gap-2 mb-10">
-          {Object.entries(categoryLabels).map(([key, label]) => (
+          {categories.map(([key, { label }]) => (
             <Link key={key} to={`/blogg/kategori/${key}`}>
               <Badge variant="secondary" className="cursor-pointer text-xs hover:bg-primary hover:text-primary-foreground transition-colors">
                 {label}
@@ -151,7 +142,7 @@ export default function Guides() {
                     <div className="flex items-center gap-2 flex-wrap">
                       {post.category && (
                         <Badge variant="secondary" className="text-[9px]">
-                          {categoryLabels[post.category] || post.category}
+                          {blogCategoryLabel(post.category) || post.category}
                         </Badge>
                       )}
                       {post.published_at && (
