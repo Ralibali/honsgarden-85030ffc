@@ -34,7 +34,7 @@
     "audit:urls": "node scripts/audit-urls.mjs",
     "audit:urls:check": "node scripts/audit-urls.mjs --check",
     "audit:perf:check": "node scripts/perf-budget.mjs --check",
-    "editorial:check": "node scripts/editorial-publisher.mjs check && node --test scripts/editorial-publisher.test.mjs"
+    "editorial:check": "node scripts/editorial-publisher.mjs check && node --test scripts/editorial-publisher.test.mjs && node scripts/editorial-update.mjs check && node --test scripts/editorial-update.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

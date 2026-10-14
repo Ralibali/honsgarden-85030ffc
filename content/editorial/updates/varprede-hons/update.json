@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "slug": "varprede-hons",
+  "previous_sha256": "66308a7e2e3acd14b01657fbae3de5a2c0a01da5746d299be9dd0f2b72c55ad4",
+  "exported_at": "2026-10-14T13:30:26Z",
+  "export_run": "https://github.com/Ralibali/honsgarden-85030ffc/actions/runs/38572099733",
+  "reason": "Artikeln var tunn (437 ord), hade \"bäst i test\" i metatiteln utan något test och påhittade erfarenheter (\"Jag har byggt många reden\"). Utökad med mått per storlek på höns, antal reden per flock, placering, typer av reden, strö, kvalster och golvägg.",
+  "author": "Claude",
+  "quality_checked_at": "2026-10-14T13:48:00.000Z",
+  "source_urls": [
+    "https://www.lansstyrelsen.se/vastmanland/djur/skota-visa-behandla-eller-transportera-djur/hons-i-hobbybesattning.html"
+  ],
+  "previous": {
+    "title": "Värprede till höns – mått, placering och tips för att hönsen faktiskt ska använda dem",
+    "meta_title": "Värprede till höns – mått, placering, bäst i test-tips och hur du får rena ägg i vardagen",
+    "meta_description": "En erfaren guide om värpreden till höns – rätt mått, placering, antal och vilka typer av reden som brukar fungera bäst hemma.",
+    "excerpt": "En erfaren guide om värpreden till höns – rätt mått, placering, antal och vilka typer av reden som brukar fungera bäst hemma.",
+    "tags": [
+      "värprede till höns",
+      "bästa värpredet",
+      "äggsamlande rede",
+      "rena ägg",
+      "reden hönshus"
+    ]
+  },
+  "next": {
+    "title": "Värprede till höns – mått, placering och tips för att hönsen faktiskt ska använda dem",
+    "meta_title": "Värprede till höns – mått, antal, placering och val av modell",
+    "meta_description": "Hur stort ska värpredet vara, hur många behövs och var ska det sitta? Mått, antal per flock, strö och äggsamlande reden – så får du rena ägg.",
+    "excerpt": "Rätt mått, antal och placering på värpredena ger renare ägg, färre ägg på golvet och lugnare hönor. Så väljer, bygger och placerar du värpreden.",
+    "tags": [
+      "värprede till höns",
+      "värpbo",
+      "äggsamlande rede",
+      "rena ägg",
+      "reden hönshus"
+    ]
+  }
+}

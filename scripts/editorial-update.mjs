@@ -24,12 +24,14 @@ const window = new JSDOM('').window;
 // Claims the site cannot back up: no own tests, no invented years of experience.
 const UNSUPPORTED_CLAIMS = /\b(?:jag|vi) har (?:testat|provat)\b|bäst i test|testvinnare|erfaren uppfödare|mina erfarenheter|efter \d+\+? år/i;
 
-const isMerchantHost = (hostname) => SHOP_PROGRAMS.some((program) => program.sitewide && program.isNakedHost(hostname));
+// Naked links to these merchants become tracked affiliate links when rendered
+// (adtractionShopLinks), on every article or only on the program's own slugs.
+const isMerchantHost = (hostname, slug) => SHOP_PROGRAMS.some((program) =>
+  (program.sitewide || program.slugs.includes(slug)) && program.isNakedHost(hostname));
 
+// Tags count as word breaks ("</p><h2>" separates two words), as in the coverage report.
 export function wordCount(html) {
-  const body = window.document.createElement('div');
-  body.innerHTML = html;
-  return body.textContent.trim().split(/\s+/).filter(Boolean).length;
+  return html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length;
 }
 
 export function validateUpdate({ slug, meta, previous, next }, config, now = new Date()) {
@@ -77,7 +79,7 @@ export function validateUpdate({ slug, meta, previous, next }, config, now = new
     const url = new URL(href, config.origin);
     if (url.protocol !== 'https:' || url.username || url.password) fail(`unsafe link: ${href}`);
     if (url.origin === config.origin) { internal += 1; continue; }
-    if (isMerchantHost(url.hostname)) continue;
+    if (isMerchantHost(url.hostname, slug)) continue;
     if (!meta.source_urls.includes(url.href)) fail(`external link not in source_urls: ${url.href}`);
   }
   if (internal < 2) fail('link to at least two relevant pages on the site');
@@ -155,7 +157,8 @@ export async function readUpdate(slug, root = UPDATES_DIR) {
   const [meta, previous, next] = await Promise.all([
     readFile(join(folder, 'update.json'), 'utf8').then(JSON.parse),
     readFile(join(folder, 'previous.html'), 'utf8'),
-    readFile(join(folder, 'next.html'), 'utf8'),
+    // An editor's trailing newline is not part of the article.
+    readFile(join(folder, 'next.html'), 'utf8').then((html) => html.replace(/\s+$/, '')),
   ]);
   return { slug, meta, previous, next };
 }

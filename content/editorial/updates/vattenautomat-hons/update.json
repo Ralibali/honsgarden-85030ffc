@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "slug": "vattenautomat-hons",
+  "previous_sha256": "c400c9c57f1f078bf9989d9158ef6c47ca53162800222386c0a926f7560925eb",
+  "exported_at": "2026-10-14T13:30:26Z",
+  "export_run": "https://github.com/Ralibali/honsgarden-85030ffc/actions/runs/38572099733",
+  "reason": "Artikeln var tunn (534 ord) och innehöll påhittade förstahandserfarenheter (\"Jag har testat de flesta sorter\", \"efter 10+ år\") och ett ostött hälsopåstående om äppelcidervinäger. Utökad med tabell för vattenbehov per flockstorlek, typer, vinterlösningar, smittskydd, köpchecklista och källor.",
+  "author": "Claude",
+  "quality_checked_at": "2026-10-14T13:48:00.000Z",
+  "source_urls": [
+    "https://www.mypetchicken.com/blogs/faqs/how-much-water-do-chickens-drink-per-day",
+    "https://www.brandskyddsforeningen.se/globalassets/lbk/brandskydd---ditt-ansvar-2016-okt-a4.pdf",
+    "https://www2.jordbruksverket.se/download/18.23c5ab931592456319b16d95/1482390118718/ovr127v3.pdf"
+  ],
+  "previous": {
+    "title": "Vattenautomat till höns – välj rätt och slipp byta vatten varje dag",
+    "meta_title": "Vattenautomat till höns – välj rätt och slipp byta vatten varje dag",
+    "meta_description": "Allt om vattenautomater till höns – vilken typ som passar din flock, hur du förhindrar frysning på vintern och hur du håller den ren. Tips från en erfaren uppfödare.",
+    "excerpt": "Vatten är det viktigaste du ger dina höns. En bra vattenautomat sparar tid, förbättrar hygienen och håller flocken frisk.",
+    "tags": [
+      "vattenautomat höns",
+      "höns vatten",
+      "nippelvatten höns",
+      "hönshus utrustning",
+      "höns vinter vatten",
+      "höns dricksvatten"
+    ]
+  },
+  "next": {
+    "title": "Vattenautomat till höns – välj rätt och slipp byta vatten varje dag",
+    "meta_title": "Vattenautomat till höns – välj rätt och slipp byta vatten varje dag",
+    "meta_description": "Vilken vattenautomat passar flocken? Jämför plast, galvaniserat, nippel och kopp, räkna rätt storlek och håll vattnet rent och isfritt på vintern.",
+    "excerpt": "Vatten är det viktigaste du ger dina höns. Så väljer du vattenautomat efter flockens storlek, håller vattnet rent och slipper isbitar på vintern.",
+    "tags": [
+      "vattenautomat höns",
+      "höns vatten",
+      "nippelvatten höns",
+      "hönshus utrustning",
+      "höns vinter vatten",
+      "höns dricksvatten"
+    ]
+  }
+}
