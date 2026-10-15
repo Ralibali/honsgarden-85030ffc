@@ -68,13 +68,13 @@ export default function CookieConsent() {
           </label>
         </div>
         <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-          <Button onClick={() => save(true, true)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
+          <Button onClick={() => save(true, true)} variant="outline" size="sm" className="min-h-11 h-auto whitespace-normal leading-tight px-2 text-xs sm:text-sm">
             Acceptera alla
           </Button>
-          <Button onClick={() => save(analytics, ads)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
+          <Button onClick={() => save(analytics, ads)} variant="outline" size="sm" className="min-h-11 h-auto whitespace-normal leading-tight px-2 text-xs sm:text-sm">
             Spara val
           </Button>
-          <Button onClick={() => save(false, false)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
+          <Button onClick={() => save(false, false)} variant="outline" size="sm" className="min-h-11 h-auto whitespace-normal leading-tight px-2 text-xs sm:text-sm">
             Endast nödvändiga
           </Button>
         </div>
