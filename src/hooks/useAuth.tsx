@@ -368,7 +368,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       options: { data: { name, ...(meta ?? {}) }, emailRedirectTo: 'https://honsgarden.se/auth/confirm' },
     });
     if (error) throw new Error(error.message);
-    // Meta returns a user without identities for an already-registered email; not a new account.
+    // Auth returns a user without identities for an already-registered email; not a new account.
     if (data.user && (data.user.identities?.length ?? 0) > 0) {
       void import('@/lib/metaPixel').then((m) => m.trackCompleteRegistration()).catch(() => {});
     }
