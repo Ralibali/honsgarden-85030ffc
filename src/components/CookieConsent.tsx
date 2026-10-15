@@ -1,6 +1,7 @@
 import { useBottomInset } from '@/hooks/useBottomInset';
 import { readPrivacyConsent, storePrivacyConsent } from '@/lib/privacyConsent';
 import { setAnalyticsConsent } from '@/lib/ga4Runtime';
+import { initMetaPixel, readAdsConsent, storeAdsConsent } from '@/lib/metaPixel';
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Cookie } from 'lucide-react';
@@ -9,25 +10,28 @@ const CONSENT_KEY = 'honsgarden_ga4_consent_v2';
 
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
+  const [ads, setAds] = useState(false);
   const bannerRef = useBottomInset(visible);
 
   useEffect(() => {
-    const consent = readPrivacyConsent(CONSENT_KEY);
-    if (!consent) {
+    initMetaPixel();
+    const a = readPrivacyConsent(CONSENT_KEY);
+    const m = readAdsConsent();
+    setAnalytics(a?.analytics ?? false);
+    setAds(m?.ads ?? false);
+    if (!a || !m) {
       const t = setTimeout(() => setVisible(true), 1200);
       return () => clearTimeout(t);
     }
   }, []);
 
-  const accept = () => {
-    storePrivacyConsent(CONSENT_KEY, true);
-    setAnalyticsConsent(true);
-    setVisible(false);
-  };
-
-  const decline = () => {
-    storePrivacyConsent(CONSENT_KEY, false);
-    setAnalyticsConsent(false);
+  const save = (nextAnalytics: boolean, nextAds: boolean) => {
+    storePrivacyConsent(CONSENT_KEY, nextAnalytics);
+    setAnalyticsConsent(nextAnalytics);
+    storeAdsConsent(nextAds);
+    setAnalytics(nextAnalytics);
+    setAds(nextAds);
     setVisible(false);
   };
 
@@ -46,18 +50,31 @@ export default function CookieConsent() {
             <Cookie className="h-4.5 w-4.5 text-primary" />
           </div>
           <div>
-            <p className="text-xs sm:text-sm font-medium text-foreground">Cookies och statistik 🍪</p>
+            <p className="text-xs sm:text-sm font-medium text-foreground">Cookies och mätning</p>
             <p className="text-[11px] sm:text-xs text-muted-foreground leading-snug sm:leading-relaxed mt-0.5">
-              Hönsgården fungerar med nödvändiga cookies. Om du accepterar använder vi Google Analytics 4 för statistik om hur webbplatsen används.{' '}
-              <a href="/integritet" className="text-primary underline">Läs mer om hur vi använder cookies</a>
+              Hönsgården fungerar med nödvändiga cookies. Du väljer själv om vi får använda Google Analytics 4 för statistik och Meta Pixel för att mäta om våra annonser på Facebook och Instagram leder till nya konton. Du kan ändra dig när som helst under Cookieinställningar.{' '}
+              <a href="/integritet" className="text-primary underline">Läs mer</a>
             </p>
           </div>
         </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          <Button onClick={accept} variant="outline" size="sm" className="flex-1 min-h-11 text-xs sm:text-sm">
-            Acceptera statistik
+        <div className="space-y-1.5 mb-2 sm:mb-3">
+          <label className="flex items-center gap-2 text-xs sm:text-sm text-foreground min-h-9">
+            <input type="checkbox" className="h-4 w-4 accent-primary" checked={analytics} onChange={(e) => setAnalytics(e.target.checked)} />
+            Statistik (Google Analytics 4)
+          </label>
+          <label className="flex items-center gap-2 text-xs sm:text-sm text-foreground min-h-9">
+            <input type="checkbox" className="h-4 w-4 accent-primary" checked={ads} onChange={(e) => setAds(e.target.checked)} />
+            Annonsmätning (Meta, Facebook och Instagram)
+          </label>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          <Button onClick={() => save(true, true)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
+            Acceptera alla
           </Button>
-          <Button onClick={decline} variant="outline" size="sm" className="flex-1 min-h-11 text-xs sm:text-sm">
+          <Button onClick={() => save(analytics, ads)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
+            Spara val
+          </Button>
+          <Button onClick={() => save(false, false)} variant="outline" size="sm" className="min-h-11 text-xs sm:text-sm">
             Endast nödvändiga
           </Button>
         </div>
@@ -65,4 +82,3 @@ export default function CookieConsent() {
     </div>
   );
 }
-

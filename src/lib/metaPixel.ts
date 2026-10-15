@@ -88,11 +88,18 @@ export function trackCompleteRegistration(): void {
 }
 
 /** Boot on page load and follow changes made in other tabs. */
+let booted = false;
 export function initMetaPixel(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || booted) return;
+  booted = true;
   if (adsAllowed()) load();
   lastPath = window.location.pathname;
   window.addEventListener('storage', (e) => {
     if (e.key === ADS_CONSENT_KEY) applyAdsConsent(parseAdsConsent(e.newValue)?.ads === true);
   });
+  // SPA navigation: count page views on route changes (only when allowed).
+  const onNav = () => setTimeout(() => trackMetaPageView(window.location.pathname), 0);
+  const push = history.pushState.bind(history);
+  history.pushState = (...args: Parameters<History['pushState']>) => { push(...args); onNav(); };
+  window.addEventListener('popstate', onNav);
 }

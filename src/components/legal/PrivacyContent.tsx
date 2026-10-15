@@ -75,6 +75,7 @@ export function PrivacyContentSv() {
         </thead>
         <tbody>
           <tr className="border-b border-border/30"><td className="py-2 pr-4">Google Analytics 4</td><td className="py-2 pr-4">Statistik efter samtycke / Analytics after consent</td></tr>
+          <tr className="border-b border-border/30"><td className="py-2 pr-4">Meta Platforms Ireland (Meta Pixel)</td><td className="py-2 pr-4">Annonsmätning efter samtycke / Ad measurement after consent</td></tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Lovable Cloud (Supabase)</td>
             <td className="py-2 pr-4">Databas, autentisering, backend-funktioner</td>
@@ -124,6 +125,7 @@ export function PrivacyContentSv() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Valfria cookies (kräver samtycke):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Analys</strong> – Google Analytics 4 från Google mäter sidvisningar och produkthändelser efter ditt samtycke. Statistikcookies används för att skilja besök åt. Du kan återkalla samtycket via Cookieinställningar</li>
+      <li><strong>Annonsmätning</strong> – Meta Pixel från Meta Platforms Ireland laddas först efter ditt samtycke. Den registrerar sidvisningar och när ett konto skapats, tillsammans med webbläsarinformation och Metas cookies (<code>_fbp</code>, <code>_fbc</code>), så att vi kan mäta och förbättra våra annonser på Facebook och Instagram. Vi skickar ingen e-post eller annan kontaktuppgift till Meta. Ditt val sparas med datum och vilken version av texten du såg. Du kan återkalla samtycket via Cookieinställningar; då stoppas mätningen direkt.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       Google kan efter samtycke skapa <code>_ga</code> och <code>_ga_*</code> som innehåller pseudonyma besöksidentifierare, normalt i upp till två år efter senaste användning. Inloggningslagring (<code>sb-*-auth-token</code>) används tills du loggar ut eller rensar den. Du tillfrågas om samtycke igen efter 365 dagar. Du kan ändra dina cookieinställningar när som helst via cookie-bannern eller i din webbläsare. Att blockera nödvändiga cookies kan påverka tjänstens funktion.
@@ -338,6 +340,7 @@ export function PrivacyContentEn() {
         </thead>
         <tbody>
           <tr className="border-b border-border/30"><td className="py-2 pr-4">Google Analytics 4</td><td className="py-2 pr-4">Statistik efter samtycke / Analytics after consent</td></tr>
+          <tr className="border-b border-border/30"><td className="py-2 pr-4">Meta Platforms Ireland (Meta Pixel)</td><td className="py-2 pr-4">Annonsmätning efter samtycke / Ad measurement after consent</td></tr>
           <tr className="border-b border-border/30">
             <td className="py-2 pr-4">Lovable Cloud (Supabase)</td>
             <td className="py-2 pr-4">Database, authentication, backend functions</td>
@@ -385,6 +388,7 @@ export function PrivacyContentEn() {
     <h3 className="font-serif text-base text-foreground mt-4 mb-1">Optional cookies (consent required):</h3>
     <ul className="text-sm text-foreground space-y-1 list-disc pl-5">
       <li><strong>Analytics</strong> — Google Analytics 4 by Google measures page views and product events after your consent. Analytics cookies distinguish visits. You can withdraw consent via Cookie settings</li>
+      <li><strong>Ad measurement</strong> — Meta Pixel by Meta Platforms Ireland loads only after your consent. It records page views and when an account is created, together with browser information and Meta cookies (<code>_fbp</code>, <code>_fbc</code>), so we can measure and improve our ads on Facebook and Instagram. We send no email or other contact details to Meta. Your choice is saved with the date and the notice version you saw. You can withdraw consent via Cookie settings; measurement stops immediately.</li>
     </ul>
     <p className="text-sm text-foreground leading-relaxed mt-2">
       After consent, Google may set <code>_ga</code> and <code>_ga_*</code> with pseudonymous visitor identifiers, usually lasting up to two years after last use. Login storage (<code>sb-*-auth-token</code>) remains until logout or clearing. Consent is requested again after 365 days. You can change your cookie settings at any time via the cookie banner or in your browser. Blocking necessary cookies may affect how the service works.
