@@ -132,7 +132,9 @@ const saljaAggJsonLdRaw = attr(
   /<script type="application\/ld\+json" id="json-ld-prerendered">([\s\S]*?)<\/script>/i,
   "prerenderad WebPage JSON-LD",
 );
-const saljaAggJsonLd = JSON.parse(saljaAggJsonLdRaw);
+const saljaAggGraph = JSON.parse(saljaAggJsonLdRaw);
+const saljaAggJsonLd = (Array.isArray(saljaAggGraph) ? saljaAggGraph : saljaAggGraph["@graph"] || [saljaAggGraph]).find(node => node["@type"] === "WebPage");
+if (!saljaAggJsonLd) throw new Error("/salja-agg saknar WebPage i JSON-LD");
 
 if (saljaAggTitle !== saljaAggSeo.title) {
   throw new Error(`/salja-agg title matchar inte useSeo: ${saljaAggTitle}`);

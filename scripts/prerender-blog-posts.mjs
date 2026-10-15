@@ -1,3 +1,5 @@
+import { createPublicRenderer } from './prerender-public-react.mjs';
+import { writeHostingPages } from './hosting-pages.mjs';
 import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { renderSeoLandingBody } from '../src/lib/prerenderSeoLanding.mjs';
 import { DIGITAL_GUIDE_COVER_PATH, DIGITAL_GUIDE_SAMPLE_PATH, digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
@@ -725,6 +727,7 @@ function noteSkipped(name, reason) {
 async function main() {
   const template = await readFile('dist/index.html', 'utf8');
   const pageTemplate = sitewideTemplate(template);
+  writeHostingPages(template, 'Hönsgården');
 
   // Write /demo before network-dependent steps so first-byte never falls
   // through to the prerendered landing shell at dist/index.html.
@@ -855,6 +858,18 @@ async function main() {
     );
   });
 
+  // These pages previously shipped only the homepage shell. Render their actual React body.
+  const renderPublic = await createPublicRenderer();
+  for (const path of ['/om-oss', '/salja-agg', '/marknad', '/verktyg/aggkalkylator', '/verktyg/vad-kostar-hons', '/verktyg/aggregler-vagvisare', '/verktyg/klackningskalkylator', '/honsraser', '/honsraser-lista', '/honsraser/dvarghons', '/honsraser/skansk-blommehona', '/integritet', '/priser']) {
+    const { html, meta } = renderPublic(path);
+    if (!meta.title || !meta.description) throw new Error(`Missing rendered metadata for ${path}`);
+    const head = buildHeadGeneric({ ...meta, path, ogImage: meta.ogImage || '/og-image.jpg' });
+    await writeRoute(path.slice(1), injectTopicBody(injectHead(pageTemplate, head), html));
+  }
+  const mapPage = STATIC_PAGES.find(page => page.path === '/karta');
+  await writeRoute('karta', injectTopicBody(injectHead(pageTemplate, buildHeadGeneric(mapPage)), `<main class="container mx-auto max-w-4xl px-5 py-20"><nav><a href="/">Hönsgården</a> · <a href="/salja-agg">Sälja ägg</a> · <a href="/marknad">Marknad</a></nav><h1>Hönskarta – hitta färska ägg nära dig</h1><p>Sök efter lokala äggsäljare, välj ort och jämför tillgänglighet och pris. Kartan och aktuella säljsidor laddas när JavaScript är aktiverat.</p><h2>Hitta en säljare</h2><p>Du kan söka på ort, använda din position eller flytta kartan. Filtrera bort slutsålda ägg och välj hur resultaten ska sorteras. Kontrollera öppettider och upphämtningsuppgifter på säljarens sida innan du åker.</p><h2>Säljer du egna ägg?</h2><p>Skapa en säljsida för din gård och låt kunderna hitta dig. Du styr vilka kontaktuppgifter och vilken plats du publicerar.</p><a href="/salja-agg">Så fungerar äggförsäljningen</a> · <a href="/guider/salja-agg-regler">Läs om regler för äggförsäljning</a><footer><a href="/integritet">Integritetspolicy</a> · <a href="/om-oss">Om Hönsgården</a></footer></main>`));
+  console.log('Rendered complete React bodies for 13 public pages, plus the map introduction.');
+
   const ortSummary = suppliedOrtSlugs ? `${suppliedOrtSlugs.size}/${orter.length} med utbud` : `${orter.length} (likviditet okänd)`;
   console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- (+ ${consolidatedPosts.length} sammanslagna → redirect) + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
 
@@ -873,9 +888,10 @@ async function main() {
 main()
   .catch((error) => {
     console.error(`⚠️ PRERENDER MISSLYCKADES: ${error?.stack || error?.message || error}`);
+    process.exitCode = 1;
   })
   .finally(() => {
-    // Prerender är progressiv förbättring – deploya alltid det redan lyckade vite-bygget.
-    process.exit(0);
+    // Never publish an incomplete public-page build.
+    process.exit(process.exitCode || 0);
   });
 

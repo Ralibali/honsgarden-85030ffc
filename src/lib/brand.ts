@@ -8,7 +8,7 @@
 export type BrandRegion = "se" | "intl";
 
 export function detectBrandRegion(hostname?: string): BrandRegion {
-  const host = (hostname ?? (typeof window === "undefined" ? "" : window.location.hostname)).toLowerCase();
+  const host = (hostname ?? (typeof window === "undefined" ? "honsgarden.se" : window.location.hostname)).toLowerCase();
   if (host === "honsgarden.se" || host.endsWith(".honsgarden.se")) return "se";
   // Stable rule for this SE project's Vercel aliases and PR previews.
   if (host === "vercel.app" || host.endsWith(".vercel.app")) return "se";
