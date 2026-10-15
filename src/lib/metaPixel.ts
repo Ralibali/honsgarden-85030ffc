@@ -38,7 +38,7 @@ function load(): void {
   if (initialized || typeof window === 'undefined') return;
   initialized = true;
   const n: Fbq = function (...args: unknown[]) {
-    if (n.callMethod) n.callMethod.apply(n, args); else n.queue!.push(args);
+    if (n.callMethod) n.callMethod(...args); else n.queue!.push(args);
   } as Fbq;
   if (!window.fbq) {
     window.fbq = n;
