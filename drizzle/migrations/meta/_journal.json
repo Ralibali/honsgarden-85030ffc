@@ -29,6 +29,13 @@
       "when": 1792070456009,
       "tag": "0003_notices_visible_with_author",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792097201585,
+      "tag": "0004_restrict_public_image_listing",
+      "breakpoints": true
     }
   ]
 }
