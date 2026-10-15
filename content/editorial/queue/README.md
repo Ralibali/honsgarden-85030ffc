@@ -8,7 +8,12 @@ Spara genomförda publiceringar med URL och content-hash i en separat publicerin
 
 ## Nästa i kön
 
-- `foderautomat-hons-valj-ratt` är skriven och klar: publicera tidigast 2026-10-16, två dagar efter `automatisk-honslucka-jamforelse`.
+Båda är skrivna och källkontrollerade och väntar bara på publiceringsdagen:
+
+1. `automatisk-honslucka-jamforelse`: tidigast 2026-10-16.
+2. `foderautomat-hons-valj-ratt`: tidigast 2026-10-18.
+
+Nya journalartiklar går inte före dessa.
 
 ## Idéer med köpavsikt (inte skrivna)
 
