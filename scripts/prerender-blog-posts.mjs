@@ -10,6 +10,7 @@ import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mj
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
+import { BLOG_CATEGORY_META, withBlogCategory } from '../src/data/blogCategories.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
 import { renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
@@ -340,7 +341,7 @@ const STATIC_PAGES = [
   { path: '/borja-med-hons', route: 'borja-med-hons', title: 'Börja med höns – praktisk guide för nya hönsägare | Hönsgården', description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
   // Same title/description as the runtime page (src/pages/Guides.tsx useSeo).
-  { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, recensioner & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
+  { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, köpguider & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
   { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? | Hönsgården', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
   // Same title/description as src/pages/StartCostCalculator.tsx useSeo.
@@ -438,17 +439,8 @@ function buildOrtPage(template, ort, ogImagePath, { noindex = false } = {}) {
   return withHead.replace('<div id="root"></div>', `<div id="root">${renderOrtCta(ort)}</div>`);
 }
 
-const CATEGORY_META = {
-  guide: { label: 'Guider', title: 'Guider om höns – Allt du behöver veta som hönsägare | Hönsgården', description: 'Kompletta guider om höns – från att bygga hönshus till att välja rätt ras. Steg-för-steg-instruktioner för nybörjare och erfarna hönsägare.', ogImage: '/blog-images/chicken-coop.jpg' },
-  recension: { label: 'Recensioner', title: 'Produktrecensioner för hönsägare – Testat & granskat | Hönsgården', description: 'Ärliga recensioner av produkter för hönsägare. Vi testar hönshus, foder, värmelampor, äggkläckare och mer.', ogImage: '/blog-images/feed-varieties.jpg' },
-  tips: { label: 'Tips & tricks', title: 'Tips & tricks för hönsägare – Smarta knep för hönsgården | Hönsgården', description: 'Praktiska tips och smarta knep för att sköta dina höns bättre. Spara tid, pengar och håll flocken frisk.', ogImage: '/blog-images/hens-feeding.jpg' },
-  halsa: { label: 'Hälsa', title: 'Hönshälsa – Sjukdomar, behandling & förebyggande | Hönsgården', description: 'Allt om hönshälsa: vanliga sjukdomar, symptom, behandling och förebyggande åtgärder. Håll din flock frisk och glad.', ogImage: '/blog-images/hen-health-check.jpg' },
-  nyborjare: { label: 'Nybörjare', title: 'Börja med höns – Komplett nybörjarguide | Hönsgården', description: 'Ska du skaffa höns? Här hittar du allt en nybörjare behöver veta – från val av ras till bygge av hönshus och daglig skötsel.', ogImage: '/blog-images/baby-chicks.jpg' },
-  raser: { label: 'Raser', title: 'Hönsraser i Sverige – Jämförelser & guider | Hönsgården', description: 'Jämför hönsraser för svenskt klimat: värpning, temperament, vinterhärdighet och pris för hobbyhönsägare.', ogImage: '/blog-images/chicken-breeds.jpg' },
-  tradgard: { label: 'Trädgård & odling', title: 'Trädgård & odling – Tips för självhushåll | Hönsgården', description: 'Odla grönsaker, kompostera med höns och skapa en produktiv trädgård.', ogImage: '/blog-images/spring-garden.jpg' },
-  hem: { label: 'Hem & hållbarhet', title: 'Hem & hållbarhet – Hållbart boende med höns | Hönsgården', description: 'Tips för ett hållbart hem med höns. Kompostering, självhushåll och smarta lösningar för den miljömedvetna hönsägaren.', ogImage: '/blog-images/farm-kitchen.jpg' },
-  friluftsliv: { label: 'Friluftsliv & natur', title: 'Friluftsliv & natur – Utomhuslivet med höns | Hönsgården', description: 'Friluftsliv, naturupplevelser och livet utomhus.', ogImage: '/blog-images/sunset-farm.jpg' },
-};
+// Labels, titles and the post → category mapping live in blogCategories.mjs.
+const CATEGORY_META = BLOG_CATEGORY_META;
 
 function buildStaticPage(template, page, { posts = [] } = {}) {
   const landing = SEO_LANDING_PAGES[page.route];
@@ -740,7 +732,7 @@ async function main() {
   const regulationSlugs = new Set(REGULATION_GUIDES.map((g) => g.slug));
 
   await runStep('fetch-posts', async () => {
-    const fetched = await fetchPosts();
+    const fetched = (await fetchPosts()).map(withBlogCategory);
     posts = withoutConsolidatedPosts(fetched);
     consolidatedPosts = fetched.filter((post) => consolidatedBlogTarget(post.slug));
   });
@@ -844,7 +836,7 @@ async function main() {
         console.warn(`[sitemap] kunde inte hämta bloggposter live: ${error?.message || error}`);
       }
     }
-    const sitemapPosts = withoutConsolidatedPosts(mergeBlogPosts(livePosts, fallbackPosts));
+    const sitemapPosts = withoutConsolidatedPosts(mergeBlogPosts(livePosts, fallbackPosts)).map(withBlogCategory);
     if (!sitemapPosts.some((post) => post.slug === 'bast-honsras-sverige')) {
       throw new Error('sitemap saknar /blogg/bast-honsras-sverige');
     }

@@ -270,6 +270,8 @@ export function injectBreedFigures(html = ''): string {
 
 /** Hero-bild per kategori för inlägg utan egen omslagsbild. */
 export const CATEGORY_HERO: Record<string, string> = {
+  utrustning: '/blog-images/chicken-coop.jpg',
+  foder: '/blog-images/feed-varieties.jpg',
   raser: '/blog-images/chicken-breeds.jpg',
   halsa: '/blog-images/hen-health-check.jpg',
   nyborjare: '/blog-images/kopa-hons.jpg',

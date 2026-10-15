@@ -77,10 +77,13 @@ function sections(html: string): Array<{ heading: string; text: string }> {
     .filter((section): section is { heading: string; text: string } => Boolean(section));
 }
 
+/** Reviewed editorial articles without automatic product placements (editorialPlacementPolicy). */
 function reviewedSlugs(): Set<string> {
   const dir = join(process.cwd(), 'content/editorial/articles');
   return new Set(readdirSync(dir).filter((file) => file.endsWith('.json'))
-    .map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')).slug));
+    .map((file) => JSON.parse(readFileSync(join(dir, file), 'utf8')))
+    .filter((article) => article.automatic_product_placements !== true)
+    .map((article) => article.slug));
 }
 
 function analyse(post: Post, catalog: SmartAffiliateProduct[], prof: Profile, reviewed: boolean) {
@@ -166,7 +169,20 @@ async function feedDiagnostics(): Promise<string[]> {
 
 const fmtLinks = (links: Record<string, number>) => Object.entries(links).map(([merchant, count]) => `${merchant}×${count}`).join(', ') || '–';
 
+/**
+ * EXPORT_SLUGS=a,b: print the full published rows (POST_JSON lines) instead of
+ * the report, so a content update can keep the exact previous text for review.
+ */
+async function exportPosts(slugs: string[]) {
+  const rows = await rest<Record<string, unknown>[]>(`blog_posts?select=*&is_published=eq.true&slug=in.(${slugs.map(encodeURIComponent).join(',')})`);
+  for (const row of rows) console.log(`POST_JSON ${JSON.stringify(row)}`);
+  const missing = slugs.filter((slug) => !rows.some((row) => row.slug === slug));
+  if (missing.length) console.log(`Saknas: ${missing.join(', ')}`);
+}
+
 async function main() {
+  const exportSlugs = (process.env.EXPORT_SLUGS ?? '').split(',').map((slug) => slug.trim()).filter(Boolean);
+  if (exportSlugs.length) return exportPosts(exportSlugs);
   const posts = withoutConsolidatedPosts(await rest<Post[]>('blog_posts?select=slug,title,excerpt,content,category,tags,published_at&is_published=eq.true&order=published_at.desc&limit=1000')) as Post[];
   const productRows = await rest<Record<string, any>[]>('affiliate_products?select=id,external_id,name,price,price_original,image_url,image_urls,product_url,affiliate_url,category,in_stock,is_active,description,short_description,specs,affiliate_advertisers(slug,name)&is_active=eq.true&limit=5000');
   const live = productRows.filter((row) => row.in_stock !== false)

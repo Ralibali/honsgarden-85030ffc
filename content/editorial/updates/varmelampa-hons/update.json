@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "slug": "varmelampa-hons",
+  "previous_sha256": "a27c24fd11d4898716f55b12de394456ae82067fac5e7ba3574e1c72028dbd38",
+  "exported_at": "2026-10-14T13:30:26Z",
+  "export_run": "https://github.com/Ralibali/honsgarden-85030ffc/actions/runs/38572099733",
+  "reason": "Artikeln innehöll påhittade erfarenheter (\"Råd från en erfaren uppfödare\", egen plattvärmare) och ostödda siffror om hönshusets temperatur och elkostnad. Omskriven med källor om brandrisk och kycklingars temperaturbehov, temperaturschema vecka för vecka, säker montering och en uträkning av elkostnaden.",
+  "author": "Claude",
+  "quality_checked_at": "2026-10-14T13:48:00.000Z",
+  "source_urls": [
+    "https://www.brandskyddsforeningen.se/globalassets/lbk/brandskydd---ditt-ansvar-2016-okt-a4.pdf",
+    "https://gov.mb.ca/agriculture/livestock/poultry/brooding-temperatures-for-small-poultry-flocks.html"
+  ],
+  "previous": {
+    "title": "Värmelampa till höns – vad du behöver veta om värme i hönshuset",
+    "meta_title": "Värmelampa till höns – vad du behöver veta om värme i hönshuset",
+    "meta_description": "Behöver höns värmelampa? Lär dig när det är nödvändigt, vilket alternativ som är säkrast och hur du undviker de vanligaste misstagen. Råd från en erfaren uppfödare.",
+    "excerpt": "Behöver höns värmelampa? Lär dig när det är nödvändigt, vilket alternativ som är säkrast och hur du undviker de vanligaste misstagen.",
+    "tags": [
+      "värmelampa höns",
+      "höns vinter",
+      "uppvärmning hönshus",
+      "höns kyla",
+      "plattvärmare höns",
+      "hönshus temperatur"
+    ]
+  },
+  "next": {
+    "title": "Värmelampa till höns – vad du behöver veta om värme i hönshuset",
+    "meta_title": "Värmelampa till höns – vad du behöver veta om värme i hönshuset",
+    "meta_description": "Behöver höns värmelampa? När värme behövs, vilka alternativ som är säkrast och hur du minskar brandrisken. Med temperaturschema för kycklingar.",
+    "excerpt": "Behöver höns värmelampa? När värme behövs, vilka alternativ som är säkrast, hur du monterar dem och vilken temperatur kycklingar behöver vecka för vecka.",
+    "tags": [
+      "värmelampa höns",
+      "höns vinter",
+      "uppvärmning hönshus",
+      "höns kyla",
+      "plattvärmare höns",
+      "hönshus temperatur"
+    ]
+  }
+}

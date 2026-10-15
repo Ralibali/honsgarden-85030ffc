@@ -3,6 +3,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSeo } from '@/hooks/useSeo';
 import { withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
+import { blogCategoryLabel, withBlogCategory } from '@/data/blogCategories.mjs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
@@ -11,11 +12,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, BookOpen, Loader2, Egg, ArrowLeft, Tag } from 'lucide-react';
 import VisitorWelcomePopup from '@/components/VisitorWelcomePopup';
 import { TAG_MIN_POSTS } from '@/lib/sitemapPolicy';
-
-const categoryLabels: Record<string, string> = {
-  guide: 'Guide', recension: 'Recension', tips: 'Tips & tricks', halsa: 'Hälsa',
-  nyborjare: 'Nybörjare', raser: 'Raser', tradgard: 'Trädgård & odling', hem: 'Hem & hållbarhet', friluftsliv: 'Friluftsliv & natur',
-};
 
 export default function BlogTag() {
   const { tag } = useParams<{ tag: string }>();
@@ -32,7 +28,7 @@ export default function BlogTag() {
         .contains('tags', [decodedTag])
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return withoutConsolidatedPosts(data ?? []);
+      return withoutConsolidatedPosts(data ?? []).map(withBlogCategory);
     },
     enabled: !!tag,
   });
@@ -159,9 +155,11 @@ export default function BlogTag() {
                   )}
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="text-[9px]">
-                        {categoryLabels[post.category || ''] || post.category}
-                      </Badge>
+                      {post.category && (
+                        <Badge variant="secondary" className="text-[9px]">
+                          {blogCategoryLabel(post.category) || post.category}
+                        </Badge>
+                      )}
                       {post.published_at && (
                         <span className="text-[10px] text-muted-foreground">
                           {new Date(post.published_at).toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' })}

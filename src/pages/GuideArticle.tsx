@@ -29,6 +29,7 @@ import { documentTitleForPath } from '@/lib/prerenderTopicPages';
 import { allowsAutomaticProductPlacements, isReviewedEditorialArticle } from '@/lib/editorialPlacementPolicy';
 import { extractFaqPairs, faqPageJsonLd } from '@/lib/prerenderBlogHub.mjs';
 import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '@/data/blogConsolidation.mjs';
+import { blogCategoryLabel, withBlogCategory } from '@/data/blogCategories.mjs';
 const BlogComments = lazy(() => import('@/components/BlogComments'));
 
 /**
@@ -69,18 +70,6 @@ function handleProseAffiliateClick(
     href,
   });
 }
-
-const categoryLabels: Record<string, string> = {
-  guide: 'Guide',
-  recension: 'Recension',
-  tips: 'Tips & tricks',
-  halsa: 'Hälsa',
-  nyborjare: 'Nybörjare',
-  raser: 'Raser',
-  tradgard: 'Trädgård & odling',
-  hem: 'Hem & hållbarhet',
-  friluftsliv: 'Friluftsliv & natur',
-};
 
 /** Sanitize and render content – supports both raw HTML and Markdown */
 function renderContent(
@@ -233,7 +222,7 @@ function GuideArticlePage() {
         .select('display_name')
         .eq('user_id', data.author_id)
         .single();
-      return { ...data, author_name: profile?.display_name || 'Hönsgården' };
+      return withBlogCategory({ ...data, author_name: profile?.display_name || 'Hönsgården' });
     },
     enabled: !!slug,
   });
@@ -248,7 +237,7 @@ function GuideArticlePage() {
         .eq('is_published', true)
         .order('published_at', { ascending: false });
       if (error) throw error;
-      return withoutConsolidatedPosts(data ?? []);
+      return withoutConsolidatedPosts(data ?? []).map(withBlogCategory);
     },
   });
 
@@ -364,7 +353,7 @@ function GuideArticlePage() {
     if (post.published_at) setMeta('property', 'article:published_time', post.published_at);
     if (post.updated_at) setMeta('property', 'article:modified_time', post.updated_at);
     setMeta('property', 'article:author', 'Hönsgården');
-    if (post.category) setMeta('property', 'article:section', post.category);
+    if (post.category) setMeta('property', 'article:section', blogCategoryLabel(post.category) || post.category);
     if (post.tags) {
       post.tags.forEach((tag: string) => {
         const el = document.createElement('meta');
@@ -420,7 +409,7 @@ function GuideArticlePage() {
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Hem', item: BASE },
           { '@type': 'ListItem', position: 2, name: 'Blogg', item: `${BASE}/blogg` },
-          ...(post.category ? [{ '@type': 'ListItem', position: 3, name: categoryLabels[post.category] || post.category, item: `${BASE}/blogg/kategori/${post.category}` }] : []),
+          ...(post.category ? [{ '@type': 'ListItem', position: 3, name: blogCategoryLabel(post.category) || post.category, item: `${BASE}/blogg/kategori/${post.category}` }] : []),
           { '@type': 'ListItem', position: post.category ? 4 : 3, name: post.title, item: fullUrl },
         ],
       },
@@ -443,7 +432,7 @@ function GuideArticlePage() {
     let match;
 
     // Extract HowTo schema from ordered lists in guide/nyborjare category
-    if (post.category === 'guide' || post.category === 'nyborjare' || post.category === 'tips') {
+    if (['guide', 'nyborjare', 'tips', 'utrustning', 'foder'].includes(post.category)) {
       // Look for <ol> with <li> items as steps
       const olRegex = /<ol[^>]*>([\s\S]*?)<\/ol>/gi;
       let olMatch;
@@ -571,7 +560,7 @@ function GuideArticlePage() {
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {post.category && (
             <Badge variant="secondary" className="text-[10px]">
-              {categoryLabels[post.category] || post.category}
+              {blogCategoryLabel(post.category) || post.category}
             </Badge>
           )}
           {post.published_at && (

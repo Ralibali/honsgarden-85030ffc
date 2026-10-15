@@ -11,6 +11,8 @@ const window = new JSDOM('').window;
 const purifier = createDOMPurify(window);
 const tags = ['p', 'h2', 'h3', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'figure', 'img', 'figcaption', 'br'];
 const attrs = ['href', 'src', 'alt', 'title', 'rel'];
+// Writers of original editorial articles (not imported text).
+export const EDITORIAL_WRITERS = ['ChatGPT', 'Claude'];
 export const hash = (value) => createHash('sha256').update(value).digest('hex');
 
 export function validateArticle(article, config, now = new Date()) {
@@ -23,7 +25,7 @@ export function validateArticle(article, config, now = new Date()) {
   if (typeof article.description !== 'string' || article.description.length < 60 || article.description.length > 180) fail('invalid description');
   if (!config.categories.includes(article.category)) fail('invalid category');
   if (!Array.isArray(article.tags) || article.tags.length > 8 || article.tags.some(t => typeof t !== 'string' || t.length > 60)) fail('invalid tags');
-  if (article.author !== 'ChatGPT' || article.status !== 'ready') fail('article must be written and checked before publication');
+  if (!EDITORIAL_WRITERS.includes(article.author) || article.status !== 'ready') fail('article must be written and checked before publication');
   if (typeof article.search_intent !== 'string' || article.search_intent.trim().length < 20) fail('search intent required');
   for (const field of ['published_at', 'sources_checked_at', 'quality_checked_at']) {
     const time = Date.parse(article[field]);
