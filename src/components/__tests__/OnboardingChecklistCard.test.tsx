@@ -77,9 +77,12 @@ describe('OnboardingChecklistCard', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/app/hens?create=hen');
   });
 
-  it('är dold om användaren stängt den tidigare', () => {
+  it('kan återöppnas efter att användaren stängt den', async () => {
     localStorage.setItem('honsgarden-onboarding-checklist-dismissed-test-user-1', '1');
-    const { container } = renderCard({ hensCount: 0, eggsCount: 0, feedRecordsCount: 0 });
-    expect(container).toBeEmptyDOMElement();
+    renderCard({ hensCount: 0, eggsCount: 0, feedRecordsCount: 0 });
+    expect(screen.queryByText('En liten sak i taget räcker')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Visa kom-igång-guiden igen' }));
+    expect(localStorage.getItem('honsgarden-onboarding-checklist-dismissed-test-user-1')).toBeNull();
+    expect(await screen.findByText('En liten sak i taget räcker')).toBeInTheDocument();
   });
 });
