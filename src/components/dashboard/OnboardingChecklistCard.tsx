@@ -15,12 +15,20 @@ import {
   Sparkles,
   ChevronDown,
   ChevronUp,
+  RotateCcw,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
-
-const DISMISS_KEY = 'honsgarden-onboarding-checklist-dismissed';
-const getDismissKey = (userId: string) => `${DISMISS_KEY}-${userId}`;
+import { trackEvent } from '@/lib/analytics';
+import {
+  claimAuroraCompleted,
+  claimAuroraStepCompleted,
+  claimAuroraViewed,
+  computeAuroraActivateState,
+  isAuroraDismissed,
+  setAuroraDismissed,
+  type AuroraStepKey,
+} from '@/lib/auroraActivate';
 
 interface Props {
   hensCount: number;
@@ -28,26 +36,52 @@ interface Props {
   feedRecordsCount: number;
 }
 
-interface Step {
-  key: string;
-  label: string;
-  description: string;
-  cta: string;
-  icon: React.ElementType;
-  done: boolean;
-  href: string;
-}
+const STEP_META: Record<AuroraStepKey, { label: string; description: string; cta: string; icon: React.ElementType; href: string }> = {
+  flock: {
+    label: 'Ge hönsgården en plats',
+    description: 'Skapa en flock, till exempel “Hönshuset”. Då får allt som händer en tydlig hemvist.',
+    cta: 'Skapa flock',
+    icon: Users,
+    href: '/app/hens?create=flock',
+  },
+  hens: {
+    label: 'Presentera dina hönor',
+    description: 'Ett namn räcker. Bilder, ras och mer kan du fylla i när du känner för det.',
+    cta: 'Lägg till höna',
+    icon: Bird,
+    href: '/app/hens?create=hen',
+  },
+  egg: {
+    label: 'Logga första ägget',
+    description: 'Här börjar Hönsgården lära känna rytmen i din flock. Det tar bara några sekunder.',
+    cta: 'Logga ägg',
+    icon: Egg,
+    href: '/app/eggs',
+  },
+  feed: {
+    label: 'Låt ekonomin bli begriplig',
+    description: 'Lägg in ett foderinköp så kan Hönsgården börja räkna på ungefärlig kostnad per ägg.',
+    cta: 'Lägg in foder',
+    icon: Wheat,
+    href: '/app/feed',
+  },
+  insights: {
+    label: 'Låt mönstren växa fram',
+    description: 'Efter några loggningar kan du börja se hur värpningen förändras från vecka till vecka.',
+    cta: 'Se insikter',
+    icon: Sparkles,
+    href: '/app/statistics',
+  },
+};
 
 export default function OnboardingChecklistCard({ hensCount, eggsCount, feedRecordsCount }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => isAuroraDismissed(user?.id));
   const [showJourney, setShowJourney] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
-      setDismissed(localStorage.getItem(getDismissKey(user.id)) === '1');
-    }
+    setDismissed(isAuroraDismissed(user?.id));
   }, [user?.id]);
 
   const { data: flocks = [] } = useQuery({
@@ -56,73 +90,57 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
     staleTime: 60_000,
   });
 
-  const steps: Step[] = useMemo(() => [
-    {
-      key: 'flock',
-      label: 'Ge hönsgården en plats',
-      description: 'Skapa en flock, till exempel “Hönshuset”. Då får allt som händer en tydlig hemvist.',
-      cta: 'Skapa flock',
-      icon: Users,
-      done: flocks.length > 0,
-      href: '/app/hens?create=flock',
-    },
-    {
-      key: 'hens',
-      label: 'Presentera dina hönor',
-      description: 'Ett namn räcker. Bilder, ras och mer kan du fylla i när du känner för det.',
-      cta: 'Lägg till höna',
-      icon: Bird,
-      done: hensCount > 0,
-      href: '/app/hens?create=hen',
-    },
-    {
-      key: 'egg',
-      label: 'Logga första ägget',
-      description: 'Här börjar Hönsgården lära känna rytmen i din flock. Det tar bara några sekunder.',
-      cta: 'Logga ägg',
-      icon: Egg,
-      done: eggsCount > 0,
-      href: '/app/eggs',
-    },
-    {
-      key: 'feed',
-      label: 'Låt ekonomin bli begriplig',
-      description: 'Lägg in ett foderinköp så kan Hönsgården börja räkna på ungefärlig kostnad per ägg.',
-      cta: 'Lägg in foder',
-      icon: Wheat,
-      done: feedRecordsCount > 0,
-      href: '/app/feed',
-    },
-    {
-      key: 'insights',
-      label: 'Låt mönstren växa fram',
-      description: 'Efter några loggningar kan du börja se hur värpningen förändras från vecka till vecka.',
-      cta: 'Se insikter',
-      icon: Sparkles,
-      done: eggsCount >= 7,
-      href: '/app/statistics',
-    },
-  ], [flocks.length, hensCount, eggsCount, feedRecordsCount]);
+  const state = useMemo(
+    () =>
+      computeAuroraActivateState({
+        flocksCount: flocks.length,
+        hensCount,
+        eggsCount,
+        feedRecordsCount,
+      }),
+    [flocks.length, hensCount, eggsCount, feedRecordsCount],
+  );
 
-  const doneCount = steps.filter((step) => step.done).length;
-  const allDone = doneCount === steps.length;
-  const nextStep = steps.find((step) => !step.done);
-  const progress = Math.round((doneCount / steps.length) * 100);
+  const steps = useMemo(
+    () => state.steps.map((s) => ({ ...s, ...STEP_META[s.key] })),
+    [state],
+  );
+  const { doneCount, allDone, progress } = state;
+  const nextStep = steps.find((s) => !s.done) ?? null;
 
+  // Analytics: viewed en gång per användare, steg/klart deduplicerat per användare.
   useEffect(() => {
-    if (allDone && !dismissed && user?.id) {
-      const timer = setTimeout(() => {
-        localStorage.setItem(getDismissKey(user.id), '1');
-        setDismissed(true);
-      }, 7000);
-      return () => clearTimeout(timer);
+    if (!user?.id) return;
+    if (claimAuroraViewed(user.id)) trackEvent('Onboarding Viewed');
+    for (const s of state.steps) {
+      if (s.done && claimAuroraStepCompleted(user.id, s.key)) {
+        trackEvent('Onboarding Step Completed', { step: s.key });
+      }
     }
-  }, [allDone, dismissed, user?.id]);
+    if (state.allDone && claimAuroraCompleted(user.id)) {
+      trackEvent('Onboarding Completed');
+    }
+  }, [user?.id, state]);
 
-  if (dismissed) return null;
+  if (dismissed) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setAuroraDismissed(user?.id, false);
+          setDismissed(false);
+        }}
+        className="first-week-journey__toggle"
+        aria-label="Visa kom-igång-guiden igen"
+      >
+        <RotateCcw className="h-4 w-4" />
+        <span>Visa kom-igång</span>
+      </button>
+    );
+  }
 
   const handleDismiss = () => {
-    if (user?.id) localStorage.setItem(getDismissKey(user.id), '1');
+    setAuroraDismissed(user?.id, true);
     setDismissed(true);
   };
 
