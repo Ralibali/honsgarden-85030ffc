@@ -67,7 +67,7 @@ const STEP_META: Record<AuroraStepKey, { label: string; description: string; cta
   },
   insights: {
     label: 'Låt mönstren växa fram',
-    description: 'Efter några loggningar kan du börja se hur värpningen förändras från vecka till vecka.',
+    description: 'Efter flera äggregistreringar kan du börja se hur värpningen förändras över tid.',
     cta: 'Se insikter',
     icon: Sparkles,
     href: '/app/statistics',
@@ -84,7 +84,7 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
     setDismissed(isAuroraDismissed(user?.id));
   }, [user?.id]);
 
-  const { data: flocks = [] } = useQuery({
+  const { data: flocks = [], isSuccess: flocksLoaded } = useQuery({
     queryKey: ['flocks'],
     queryFn: () => api.getFlocks(),
     staleTime: 60_000,
@@ -110,17 +110,24 @@ export default function OnboardingChecklistCard({ hensCount, eggsCount, feedReco
 
   // Analytics: viewed en gång per användare, steg/klart deduplicerat per användare.
   useEffect(() => {
-    if (!user?.id) return;
-    if (claimAuroraViewed(user.id)) trackEvent('Onboarding Viewed');
+    if (!user?.id || !flocksLoaded) return;
+    if (!dismissed && claimAuroraViewed(user.id)) trackEvent('Onboarding Viewed');
     for (const s of state.steps) {
       if (s.done && claimAuroraStepCompleted(user.id, s.key)) {
-        trackEvent('Onboarding Step Completed', { step: s.key });
+        const analyticsStep = {
+          flock: 'flock_created',
+          hens: 'first_hen',
+          egg: 'first_egg',
+          feed: 'feed_recorded',
+          insights: 'insights_ready',
+        } as const;
+        trackEvent('Onboarding Step Completed', { step: analyticsStep[s.key] });
       }
     }
     if (state.allDone && claimAuroraCompleted(user.id)) {
       trackEvent('Onboarding Completed');
     }
-  }, [user?.id, state]);
+  }, [user?.id, state, flocksLoaded, dismissed]);
 
   if (dismissed) {
     return (

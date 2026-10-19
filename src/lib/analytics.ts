@@ -70,6 +70,8 @@ export type AnalyticsOnboardingStep =
   | 'flock_created'
   | 'first_hen'
   | 'first_egg'
+  | 'feed_recorded'
+  | 'insights_ready'
   | 'reminder_offered'
   | 'completed';
 

@@ -198,8 +198,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const activeHens = hens.filter(isActiveHen).length;
   const pendingChores = chores.filter((chore: any) => !chore.completed).length;
   const streak = calculateStreak(eggs, now);
-  const showOnboarding = hens.length === 0 || eggs.length === 0;
-  const showStreakRescue = !showOnboarding && streak > 0 && todayEggs === 0;
+  const showStreakRescue = hens.length > 0 && eggs.length > 0 && streak > 0 && todayEggs === 0;
   const weatherText = weatherSentence(weather);
   const agdaText = agdaSentence({
     activeHens,
@@ -244,11 +243,9 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
         <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={todayRows} />
       </section>
 
-      {showOnboarding && (
-        <section className="today-v3__adaptive" aria-label="Kom igång">
-          <OnboardingChecklistCard hensCount={hens.length} eggsCount={eggs.length} feedRecordsCount={feedRecords.length} />
-        </section>
-      )}
+      <section className="today-v3__adaptive" aria-label="Kom igång">
+        <OnboardingChecklistCard hensCount={hens.length} eggsCount={eggs.length} feedRecordsCount={feedRecords.length} />
+      </section>
 
       {showStreakRescue && (
         <section className="today-v3__adaptive" aria-label="Dagens loggserie">
