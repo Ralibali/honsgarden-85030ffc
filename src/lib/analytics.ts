@@ -162,6 +162,7 @@ export type AnalyticsEventMap = {
   'First Hen Added': {
     source?: AnalyticsSource;
   };
+  'Onboarding Viewed': Record<string, never>;
   'Onboarding Step Completed': {
     step?: AnalyticsOnboardingStep;
   };
