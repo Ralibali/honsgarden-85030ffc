@@ -63,7 +63,7 @@ serve(async (req) => {
     const bundle=await readBundleAccess(supabaseClient,user.id);
     if(bundle.active) return new Response(JSON.stringify({subscribed:true,access_type:'bundle',premium_type:'bundle',subscription_end:bundle.until,can_manage_subscription:false,source:'bundle'}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
 
-    await refreshKnownGooglePurchases(supabaseClient, user.id);
+    try { await refreshKnownGooglePurchases(supabaseClient, user.id); } catch (googleError) { console.error('[check-subscription] Google Play refresh skipped', googleError instanceof Error ? googleError.message : 'unknown'); }
 
     const { data: profile, error: profileError } = await supabaseClient
       .from("profiles")

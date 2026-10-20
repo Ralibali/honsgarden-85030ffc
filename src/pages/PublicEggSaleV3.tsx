@@ -527,7 +527,7 @@ export default function PublicEggSaleV3() {
           <div className="rounded-xl border bg-white/70 p-4 space-y-2">
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Mottagare</span><strong>{sale.swishName || sale.swish}</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Belopp</span><strong className="text-green-700">{swishAmount} kr</strong></div>
-            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{receipt?.packs} × {receipt?.eggs_per_pack}-pack</strong></div>
+            <div className="flex justify-between text-sm"><span className="text-muted-foreground">Antal</span><strong>{packCount} × {sale.size}-pack</strong></div>
             <div className="flex justify-between text-sm"><span className="text-muted-foreground">Meddelande</span><strong className="truncate max-w-[140px]">{swishMsgFull}</strong></div>
           </div>
           {!isMobile && swishDeepLink && (
