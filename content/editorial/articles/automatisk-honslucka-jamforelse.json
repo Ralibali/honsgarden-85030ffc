@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "content_id": "editorial-20260920-automatisk-honslucka-jamforelse",
+  "author": "ChatGPT",
+  "status": "ready",
+  "written_at": "2026-10-14T13:40:00.000Z",
+  "not_before": "2026-10-16",
+  "sources_checked_at": "2026-10-22T19:36:11.733349+00:00",
+  "quality_checked_at": "2026-10-22T19:36:11.733349+00:00",
+  "site": "honsgarden",
+  "slug": "automatisk-honslucka-jamforelse",
+  "title": "Automatisk hönslucka: jämför styrning, mått och felhantering",
+  "description": "Jämför automatisk hönslucka med en konkret checklista för styrning, mått, ström och felhantering. Ta reda på vad som passar ditt hönshus före köp.",
+  "category": "utrustning",
+  "tags": [
+    "automatisk hönslucka",
+    "lucköppnare",
+    "hönshus",
+    "rovdjursskydd",
+    "vinter"
+  ],
+  "cover_image": "/blog-images/sunset-farm.jpg",
+  "cta_path": "/verktyg/vad-kostar-hons",
+  "search_intent": "Jämföra automatisk hönslucka inför köp med fokus på timer, ljussensor, strömförsörjning, säkerhet och nordiska förhållanden utan att påstå ett eget produkttest.",
+  "automatic_product_placements": false,
+  "source_urls": [
+    "https://www.lansstyrelsen.se/vastra-gotaland/djur/skota-visa-behandla-eller-transportera-djur/djur-som-far-illa-eller-stor.html",
+    "https://help.chickenguard.com/en/articles/8177155-chickenguard-glossary",
+    "https://help.chickenguard.com/en/articles/8116010-identifying-chickenguard-models"
+  ],
+  "editorial_review": {
+    "reviewed_at": "2026-10-22T19:36:11.733349+00:00",
+    "source_review": "Köutkastet omskrivet av ChatGPT 2026-10-22 med aktuellt lästa primärkällor. Inga egna tester, aktuella priser, generella säkerhetsgarantier eller mänsklig granskning påstås. Ingen ny affiliatelänk; automatiska placeringar avstängda tills kanal/program kontrollerats på nytt. Verktygets faktiska budgetfält verifierade i browser.",
+    "published_inventory_reviewed": 134,
+    "distinct_intent_confirmed": true,
+    "publication_gate": "Senaste original 2026-10-14; create-only-publicering, hashkontroll, bygge och verklig domän återstår."
+  },
+  "content_html": "<p>En automatisk hönslucka kan öppna och stänga på inställda villkor. Inför köpet behöver du däremot veta hur just den modellen passar hönshuset, hur fel upptäcks och vem som hjälper flocken när något stannar. Börja med dessa frågor innan du jämför pris eller tillbehör.</p>\n<p>Det här är en jämförelseguide, skriven med AI-stöd av ChatGPT. Inga produkter har testats av Hönsgården för artikeln. Tillverkaruppgifterna nedan är exempel på skillnader att kontrollera, inte ett utseende av bästa lucka.</p>\n<h2>Börja med tillsynen, inte med timern</h2>\n<p>Automatiken ersätter inte att någon ser till hönsen. <a href=\"https://www.lansstyrelsen.se/vastra-gotaland/djur/skota-visa-behandla-eller-transportera-djur/djur-som-far-illa-eller-stor.html\">Länsstyrelsens information om tillsyn</a> beskriver både att djur behöver ses till dagligen och att upptäckta behov måste åtgärdas. En lucka kan varken räkna in flocken åt dig eller avgöra om en höna behöver hjälp.</p>\n<p>Bestäm därför vem som kontrollerar att alla är inne och att öppningen verkligen är stängd. Vid resa behöver en hönsvakt kunna hantera luckan och ta hand om djuren. Skriv in modell, normal inställning och kontaktväg i <a href=\"/blogg/honsvakt-checklista-overlamning\">checklistan för hönsvakten</a>.</p>\n<h2>Jämför styrsätten på den exakta modellen</h2>\n<p>Tre användbara frågor är när luckan ska öppna, när den ska stänga och vilket villkor som vinner om tid och ljus säger olika saker. I <a href=\"https://help.chickenguard.com/en/articles/8177155-chickenguard-glossary\">ChickenGuards egen ordlista</a> betyder Timer en vald klocktid och Sensor styrning efter ljusnivå. Deras LUX+-läge kombinerar ljusstyrd stängning med en reservtid. Dessa namn och funktioner gäller tillverkarens modeller; anta inte att andra märken använder samma logik.</p>\n<ul>\n<li><strong>Fast tid:</strong> skriv upp vem som kontrollerar och ändrar inställningen när flockens rutiner eller dagsljuset förändras.</li>\n<li><strong>Ljusstyrning:</strong> kontrollera i manualen var sensorn ska sitta och hur gränsvärdet ställs in på din plats.</li>\n<li><strong>Kombinerad styrning:</strong> be säljaren förklara med ett konkret exempel vad som händer om det fortfarande är ljust vid den valda stängningstiden.</li>\n</ul>\n<p>Välj ett styrsätt du och hönsvakten kan förstå och kontrollera. Fler inställningar är inte i sig ett bevis på att luckan passar bättre.</p>\n<h2>Kontrollera mått, montering och vad paketet innehåller</h2>\n<p>Gör en enkel skiss över öppningen och utrymmet runt den. Notera bredd, höjd, fri rörelseväg och var du kan läsa displayen. För en separat öppnare behöver du också jämföra befintlig lucka med tillverkarens krav på bland annat vikt och montering.</p>\n<p><a href=\"https://help.chickenguard.com/en/articles/8116010-identifying-chickenguard-models\">ChickenGuards modellöversikt</a> skiljer exempelvis mellan kompletta All-in-One-enheter och separata öppnare. Den visar också att tillbehör och strömanslutningar varierar mellan modeller. Kontrollera produktens fullständiga modellnamn, inte bara varumärket eller en bild i butiken.</p>\n<ol>\n<li>Be om manualen till exakt modell och version.</li>\n<li>Markera vilka delar som ingår: lucka, skenor, öppnare, infästning och strömförsörjning.</li>\n<li>Jämför måtten med skissen och flockens behov av passage.</li>\n<li>Fråga hur du får åtkomst för rengöring, batteribyte och manuell hantering.</li>\n</ol>\n<h2>Ta reda på vad som händer när något går fel</h2>\n<p>Skriv en rad för varje situation: strömmen försvinner, luckan möter ett hinder, batteriet behöver bytas eller inställningarna återställs. Be säljaren hänvisa till rätt avsnitt i manualen och ange om luckan stannar, försöker igen eller kräver en åtgärd.</p>\n<p>ChickenGuards ordlista beskriver till exempel hur vissa All-in-One-enheter reagerar på ett hinder med stopp, nya försök och ett felmeddelande. Det är ett modellspecifikt förlopp. Fråga också hur felet syns för den som sköter dina höns. Ett meddelande på en display hjälper först när någon ser det och kan agera.</p>\n<p>Följ manualens provningsmetod och håll djuren borta från rörelseområdet under provningen. Använd aldrig en höna för att testa ett skydd. Dokumentera hur luckan hanteras manuellt utan att gissa eller ändra serviceinställningar.</p>\n<h2>Gör en plan för placering, väder och ström</h2>\n<p>Begär modellens angivna användningsmiljö, temperaturintervall och skötselråd. Fråga vilka delar som måste skyddas mot nederbörd, hur rörelsevägen hålls fri och vilka batterier eller nätadaptrar som är godkända. Utgå från instruktionerna för hela installationen, inte bara ett påstående om att motorn klarar kyla.</p>\n<p>Om du jämför solcell, batteri och nätanslutning: skriv ner vad som ingår, vad som behöver köpas till och hur reservrutinen ser ut. Lämna okända uppgifter som frågor till säljaren. Rangordna inte alternativen som driftsäkrare utan underlag för den aktuella modellen och platsen.</p>\n<h2>Samla beslutsunderlaget före beställning</h2>\n<p>Jämför två eller tre alternativ med samma sex rubriker: mått, styrning, ström, felhantering, skötsel och total kostnad. Lägg till en kolumn för manualens sidnummer eller säljarens skriftliga svar. Ett tomt fält visar vad du behöver reda ut innan du väljer.</p>\n<p>Ta med tillbehör och eventuell montering i din egen budget. I <a href=\"/verktyg/vad-kostar-hons\">Hönsgårdens verktyg Vad kostar höns?</a> kan du ändra beloppen för utrustning och övriga startkostnader. Använd dina egna offerter eller kontrollerade butiksuppgifter; kalkylatorns exempel är inte ett pris på en viss lucka.</p>\n<p>Efter installationen kontrollerar du öppning och stängning på plats enligt manualen och följer hur flocken använder passagen. Behåll sedan en tydlig tillsyns- och felrutin. Det är kombinationen av passande utrustning och fungerande skötsel som ska styra köpet.</p>",
+  "published_at": "2026-10-22T19:36:11.733349+00:00"
+}
