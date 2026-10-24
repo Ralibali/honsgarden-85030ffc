@@ -53,6 +53,15 @@ for (const file of walkHtml(DIST)) {
   const isNoindex = /noindex/i.test(robotsContent);
   if (isNoindex) noindexUrls.add(url);
 
+  const canonicalMatches = [...html.matchAll(/<link rel="canonical" href="([^"]+)"/g)].map((m) => m[1]);
+  // Appskalet delas av dynamiska/inloggade URL:er. Det får varken indexeras
+  // eller ärva en canonical från startsidan innan klienten har valt sin route.
+  if (file === join(DIST, 'app.html')) {
+    if (!isNoindex) violations.push({ type: 'app_shell_indexable', url, detail: 'appskal utan noindex' });
+    if (canonicalMatches.length !== 0) violations.push({ type: 'app_shell_canonical', url, detail: 'delat appskal har fast canonical' });
+    continue;
+  }
+
   // Redirect-stubbar (/guider/* legacy, diakritik-stubbar i public/) är medvetna:
   // noindex + meta refresh + canonical mot målet. De är inte kanoniska sidor.
   const isRedirectStub = /http-equiv="refresh"/.test(html);
@@ -63,7 +72,6 @@ for (const file of walkHtml(DIST)) {
     continue;
   }
 
-  const canonicalMatches = [...html.matchAll(/<link rel="canonical" href="([^"]+)"/g)].map((m) => m[1]);
   if (canonicalMatches.length !== 1) {
     violations.push({ type: 'canonical_count', url, detail: `${canonicalMatches.length} canonicals` });
   } else {

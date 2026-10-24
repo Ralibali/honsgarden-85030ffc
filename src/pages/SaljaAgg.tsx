@@ -156,9 +156,9 @@ const jsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Sälj ägg lokalt – skapa din egen säljsida med Hönsgården',
+    name: 'Sälja ägg lokalt med Swish – gratis säljsida | Hönsgården',
     description:
-      'Sälj ägg från egna höns med Swish-betalning, bokningssystem och kundlista. Skapa en gratis säljsida på 2 minuter.',
+      'Sälja ägg från egna höns? Skapa en gratis säljsida med bokning och Swish-betalning på 2 minuter. Få stamkunder, hantera lager och äggförsäljning enkelt med Hönsgården.',
     url: 'https://honsgarden.se/salja-agg',
     inLanguage: 'sv-SE',
   },
