@@ -8,7 +8,7 @@ Spara genomförda publiceringar med URL och content-hash i en separat publicerin
 
 ## Nästa i kön
 
-Nästa utkast är `foderautomat-hons-valj-ratt`. Det är omarbetat 2026-10-22 och saknar publiceringsdatum. Tidigaste möjliga publiceringsdag är 2026-10-24 om hönsluckeguiden publiceras 2026-10-22. Kontrollera den verkliga senaste publiceringen före användning. Nya journalartiklar går inte före denna köpguide.
+Nästa utkast är `foderforvaring-hons-jamfor-behallare`. Det är skrivet 2026-10-24 och saknar publiceringsdatum. Tidigast 2026-10-26 och minst två kalenderdagar efter föregående verkliga originalpublicering. Kontrollera inventering, källor och produkt igen. Nya journalartiklar går inte före denna köpguide.
 
 ## Idéer med köpavsikt (inte skrivna)
 
