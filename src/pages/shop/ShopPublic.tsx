@@ -14,8 +14,7 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { formatSek } from '@/lib/shopCart';
-
-type SortKey = 'featured' | 'price_asc' | 'price_desc' | 'newest';
+import { searchShopProducts, shopSearchSuggestions, type ShopSort } from '@/lib/shop/search';
 
 export default function ShopPublic() {
   const { data: products, isLoading } = useShopProducts();
@@ -26,7 +25,7 @@ export default function ShopPublic() {
   const [cartOpen, setCartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('all');
-  const [sort, setSort] = useState<SortKey>('featured');
+  const [sort, setSort] = useState<ShopSort>('featured');
 
   useEffect(() => { saveCart(cart); }, [cart]);
 
@@ -50,19 +49,9 @@ export default function ShopPublic() {
   }, [products]);
 
   const filtered = useMemo(() => {
-    let list = [...(products ?? [])];
-    const q = query.trim().toLowerCase();
-    if (q) list = list.filter((p) => (p.name + ' ' + p.description).toLowerCase().includes(q));
-    if (category !== 'all') list = list.filter((p) => p.category === category);
-    switch (sort) {
-      case 'price_asc': list.sort((a, b) => a.price_ore - b.price_ore); break;
-      case 'price_desc': list.sort((a, b) => b.price_ore - a.price_ore); break;
-      case 'newest': list.sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0)); break;
-      default:
-        list.sort((a, b) => Number(b.featured) - Number(a.featured) || (a.sort_order ?? 0) - (b.sort_order ?? 0));
-    }
-    return list;
+    return searchShopProducts(products ?? [], query, category, sort);
   }, [products, query, category, sort]);
+  const suggestions = useMemo(() => shopSearchSuggestions(products ?? [], category), [products, category]);
 
   const cartTotalOre = useMemo(() => {
     return cart.reduce((sum, item) => {
@@ -175,7 +164,7 @@ export default function ShopPublic() {
               ))}
             </nav>
 
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <Select value={sort} onValueChange={(v) => setSort(v as ShopSort)}>
               <SelectTrigger
                 className="w-[200px] border-none bg-secondary/50 rounded-sm text-xs uppercase tracking-widest font-semibold focus:ring-1 focus:ring-primary"
                 aria-label="Sortering"
@@ -203,10 +192,20 @@ export default function ShopPublic() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 px-4">
-            <div className="text-6xl mb-4" aria-hidden>🥚</div>
-            <h2 className="font-playfair text-2xl mb-2">Inga produkter matchade</h2>
-            <p className="text-muted-foreground">Prova en annan kategori eller sökterm.</p>
+          <div className="text-center py-20 px-4 space-y-4" role="status" aria-live="polite">
+            <Search className="h-10 w-10 mx-auto text-muted-foreground" aria-hidden />
+            <h2 className="font-playfair text-2xl">Inga produkter matchade</h2>
+            <p className="text-muted-foreground">{category === 'all' ? 'Prova ett kortare sökord.' : `Inga träffar i ${category}. Prova alla kategorier eller ett kortare sökord.`}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {suggestions.map((name) => (
+                <Button key={name} variant="outline" className="h-auto min-h-11 max-w-full whitespace-normal break-words" onClick={() => setQuery(name)}>{name}</Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              {query && <Button variant="ghost" className="min-h-11" onClick={() => setQuery('')}>Rensa sökning</Button>}
+              {category !== 'all' && <Button variant="outline" className="min-h-11" onClick={() => setCategory('all')}>Alla kategorier</Button>}
+              <Button variant="ghost" className="min-h-11" onClick={() => { setQuery(''); setCategory('all'); }}>Visa alla produkter</Button>
+            </div>
           </div>
         ) : (
           <>
