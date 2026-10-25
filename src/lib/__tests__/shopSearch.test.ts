@@ -11,8 +11,7 @@ describe('SearchLift shop relevance', () => {
     expect(searchShopProducts([product('Värprede')], 'varprede')).toHaveLength(1);
   });
   it.each([['hönsfoder', 'Foder'], ['foder', 'Hönsfoder'], ['rede', 'Värprede'],
-    ['värprede', 'Rede'], ['vattenautomat', 'Vattenbehållare'], ['vattenbehållare', 'Vattenautomat']])
-  ('matches synonym %s to %s', (query, name) => {
+    ['värprede', 'Rede'], ['vattenautomat', 'Vattenbehållare'], ['vattenbehållare', 'Vattenautomat']])('matches synonym %s to %s', (query, name) => {
     expect(searchShopProducts([product(name)], query).map((p) => p.name)).toEqual([name]);
   });
   it('ranks name ahead of category ahead of description, regardless of featured', () => {
