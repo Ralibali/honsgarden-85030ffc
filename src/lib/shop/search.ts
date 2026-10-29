@@ -31,6 +31,8 @@ function matchQuality(field: string, token: string): number {
   for (const alias of alternatives(token)) {
     if (words.includes(alias)) best = Math.max(best, alias === token ? 3 : 2);
     else if (words.some((word) => word.startsWith(alias))) best = Math.max(best, 1);
+    // Swedish compounds: "kartong" matches "äggkartong", "foder" matches "kycklingfoder".
+    else if (words.some((word) => word.includes(alias))) best = Math.max(best, 0.5);
   }
   return best;
 }
