@@ -14,6 +14,13 @@ describe('SearchLift shop relevance', () => {
     ['värprede', 'Rede'], ['vattenautomat', 'Vattenbehållare'], ['vattenbehållare', 'Vattenautomat']])('matches synonym %s to %s', (query, name) => {
     expect(searchShopProducts([product(name)], query).map((p) => p.name)).toEqual([name]);
   });
+  it('matches words inside Swedish compound names, ranked after prefixes', () => {
+    expect(searchShopProducts([product('Äggkartong')], 'kartong')).toHaveLength(1);
+    expect(searchShopProducts([product('Vattenautomat')], 'automat')).toHaveLength(1);
+    expect(searchShopProducts([product('Kycklingfoder')], 'foder')).toHaveLength(1);
+    expect(searchShopProducts([product('Foder'), product('Kycklingfoder')], 'foder').map((p) => p.name))
+      .toEqual(['Foder', 'Kycklingfoder']);
+  });
   it('ranks name ahead of category ahead of description, regardless of featured', () => {
     const rows = [product('C', { description: 'foder', featured: true }),
       product('B', { category: 'Foder' }), product('Foder')];
