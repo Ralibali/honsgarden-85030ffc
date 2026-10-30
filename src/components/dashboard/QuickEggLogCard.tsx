@@ -2,7 +2,7 @@ import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Minus, Egg, Loader2, ChevronRight } from 'lucide-react';
+import { Plus, Minus, Egg, Loader2, ChevronRight, Check, Moon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { hapticTap, hapticSuccess } from '@/lib/haptics';
@@ -16,9 +16,13 @@ import type { EggLog } from '@/lib/api';
 interface Props {
   todayEggs: number;
   todayEggRowIds: string[];
+  /** Sant när dagen har någon registrering – även en äggfri (0 ägg). */
+  loggedToday?: boolean;
+  /** Visa "Inga ägg idag" (bara meningsfullt när det finns hönor). */
+  allowZeroDay?: boolean;
 }
 
-export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
+export default function QuickEggLogCard({ todayEggs, todayEggRowIds, loggedToday = todayEggs > 0, allowZeroDay = false }: Props) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -39,6 +43,23 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
       hapticSuccess();
       setJustLogged(true);
       window.setTimeout(() => setJustLogged(false), 700);
+    },
+    onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
+    onSettled: () => setBusy(false),
+  });
+
+  // "Inga ägg idag": en registrering med 0 ägg. Håller streaken och veckoringen
+  // vid liv när hönorna pausar, och gör att statistiken slipper gissa.
+  const logZero = useMutation({
+    mutationFn: async () => saveEggLog(user?.id, { date: todayLocal(), count: 0, analytics_source: 'quick_log_card' }, api.createEggRecord),
+    onSuccess: (result) => {
+      if ('__offline' in result) {
+        queryClient.setQueryData<EggLog[]>(['eggs'], old => [{ ...result, id: `pending-${result.client_id}`, user_id: user!.id, created_at: new Date().toISOString(), hen_id: null, flock_id: null, notes: null, weather: null, pending: true } as EggLog, ...(old ?? [])]);
+      } else {
+        void invalidateEggQueries(queryClient);
+      }
+      hapticSuccess();
+      toast({ title: 'Äggfri dag registrerad 🌙', description: 'Dagen räknas i din streak – det är helt normalt med uppehåll.' });
     },
     onError: (err: Error) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
     onSettled: () => setBusy(false),
@@ -114,7 +135,26 @@ export default function QuickEggLogCard({ todayEggs, todayEggRowIds }: Props) {
             {busy && addOne.isPending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-7 w-7" />}
           </Button>
         </div>
-        <a href="/app/eggs?log=1" className="flex min-h-11 items-center justify-center pb-3 text-sm font-medium text-primary underline underline-offset-4">Logga en annan dag</a>
+        {todayEggs === 0 && loggedToday ? (
+          <p className="flex min-h-11 items-center justify-center gap-1.5 px-4 pb-3 text-center text-sm text-muted-foreground" data-testid="zero-day-logged">
+            <Check className="h-4 w-4 text-success" aria-hidden="true" />
+            Äggfri dag registrerad – streaken lever.
+          </p>
+        ) : null}
+        <div className="flex min-h-11 flex-wrap items-center justify-center gap-x-5 gap-y-1 px-4 pb-3 text-sm font-medium">
+          {allowZeroDay && todayEggs === 0 && !loggedToday && (
+            <button
+              type="button"
+              onClick={() => { hapticTap(); setBusy(true); logZero.mutate(); }}
+              disabled={busy}
+              className="inline-flex min-h-11 items-center gap-1.5 text-muted-foreground underline underline-offset-4 disabled:opacity-60"
+            >
+              {busy && logZero.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+              Inga ägg idag
+            </button>
+          )}
+          <a href="/app/eggs?log=1" className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">Logga en annan dag</a>
+        </div>
       </CardContent>
     </Card>
   );

@@ -4,6 +4,8 @@ import { Flame, ArrowRight } from 'lucide-react';
 interface StreakRescueCardProps {
   streak: number;
   todayEggs: number;
+  /** Sant när dagen har en registrering – även "Inga ägg idag". */
+  loggedToday?: boolean;
   /** scrolla/fokusera på snabbloggen om den finns */
   onLogClick?: () => void;
 }
@@ -13,8 +15,8 @@ interface StreakRescueCardProps {
  * inte loggat dagens ägg ännu. Skapar ett mjukt "nu gäller det"-moment
  * som driver den dagliga loggningsloopen.
  */
-export default function StreakRescueCard({ streak, todayEggs, onLogClick }: StreakRescueCardProps) {
-  const atRisk = streak >= 2 && todayEggs === 0;
+export default function StreakRescueCard({ streak, todayEggs, loggedToday, onLogClick }: StreakRescueCardProps) {
+  const atRisk = streak >= 2 && !(loggedToday ?? todayEggs > 0);
 
   const handleClick = () => {
     if (onLogClick) {
@@ -51,7 +53,7 @@ export default function StreakRescueCard({ streak, todayEggs, onLogClick }: Stre
                   {streak} dagar i rad – låt inte streaken slockna!
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Logga dagens ägg innan midnatt så lever den vidare.
+                  Logga dagens ägg innan midnatt – inga ägg idag räknas också.
                 </p>
               </div>
               <span className="flex items-center gap-1 text-xs font-semibold text-warning shrink-0 group-hover:translate-x-0.5 transition-transform">

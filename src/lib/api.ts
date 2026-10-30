@@ -1,7 +1,8 @@
 import { withRequestTimeout } from '@/lib/requestTimeout';
 import { isActiveHen, isLayingHen } from '@/lib/farmMetrics';
 import { supabase } from '@/integrations/supabase/client';
-import { todayLocal, localCalendarDate } from '@/lib/datetime';
+import { todayLocal } from '@/lib/datetime';
+import { computeLogStreak } from '@/lib/logStreak';
 import { format, subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { resolveFlockIdForHenCreate } from '@/lib/flockSelection';
@@ -892,22 +893,10 @@ export async function touchStreak() {
 }
 
 function calculateStreakFromEggs(eggs: EggLog[]): number {
-  // Använd användarens LOKALA kalenderdag så att en logg strax efter midnatt
-  // (t.ex. 00:15 svensk tid) inte hamnar på "gårdagens" UTC-datum och därmed
-  // bryter streaken orättvist.
-  const todayStr = todayLocal();
-  const today = new Date(`${todayStr}T12:00:00`); // mitten av dagen – undvik DST-kanter
-  let streak = 0;
-  for (let i = 0; i < 365; i++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const dateStr = localCalendarDate(d);
-    const hasEggs = eggs.some(e => e.date === dateStr && e.count > 0);
-    if (hasEggs) streak++;
-    else if (i > 0) break;
-    else continue;
-  }
-  return streak;
+  // Loggade dagar räknas – även "Inga ägg idag" (0 ägg) – så att vinterns
+  // värpuppehåll inte släcker streaken. Användarens LOKALA kalenderdag
+  // används så att en logg strax efter midnatt hamnar på rätt dag.
+  return computeLogStreak(eggs, todayLocal()).current;
 }
 
 // ==================== STATISTICS INSIGHTS (real) ====================

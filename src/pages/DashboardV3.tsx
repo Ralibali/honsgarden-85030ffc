@@ -15,7 +15,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import { api, type EggLog } from '@/lib/api';
+import { api } from '@/lib/api';
 import { localCalendarDate } from '@/lib/datetime';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTitle } from '@/hooks/usePageTitle';
@@ -27,6 +27,8 @@ import TrialExpiryBanner from '@/components/TrialExpiryBanner';
 import DiaryCard from '@/components/diary/DiaryCard';
 import FarmPulseCard from '@/components/dashboard/FarmPulseCard';
 import TodayChoresInline from '@/components/dashboard/TodayChoresInline';
+import WeekRingCard from '@/components/dashboard/WeekRingCard';
+import { computeLogStreak, computeWeekProgress } from '@/lib/logStreak';
 import { buildFarmPulse, computeMonthPace } from '@/lib/farmPulse';
 import { computeFeedForecast } from '@/lib/feedForecast';
 import { getSeasonalMode, trackSeasonalModeIfChanged } from '@/lib/seasonalMode';
@@ -53,19 +55,6 @@ function formatDate(date: Date) {
     month: 'long',
   }).format(date);
   return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function calculateStreak(eggs: EggLog[], now: Date) {
-  let streak = 0;
-  for (let i = 0; i < 365; i += 1) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dateKey = localCalendarDate(date, Intl.DateTimeFormat().resolvedOptions().timeZone);
-    const hasEggs = eggs.some((egg) => egg.date === dateKey && (egg.count || 0) > 0);
-    if (hasEggs) streak += 1;
-    else if (i > 0) break;
-  }
-  return streak;
 }
 
 async function fetchLocalWeather(settings?: WeatherSettings | null): Promise<WeatherSnapshot | null> {
@@ -214,8 +203,11 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
 
   const activeHens = hens.filter(isActiveHen).length;
   const pendingChores = chores.filter((chore: any) => !chore.completed).length;
-  const streak = calculateStreak(eggs, now);
-  const showStreakRescue = hens.length > 0 && eggs.length > 0 && streak > 0 && todayEggs === 0;
+  const streakInfo = useMemo(() => computeLogStreak(eggs, todayKey), [eggs, todayKey]);
+  const streak = streakInfo.current;
+  const loggedToday = streakInfo.loggedToday;
+  const weekProgress = useMemo(() => computeWeekProgress(eggs, todayKey), [eggs, todayKey]);
+  const showStreakRescue = hens.length > 0 && eggs.length > 0 && streak > 0 && !loggedToday;
   const weatherText = weatherSentence(weather);
   const season = getSeasonalMode(now);
   const feedForecast = useMemo(() => computeFeedForecast(feedRecords, eggs, todayKey), [feedRecords, eggs, todayKey]);
@@ -274,10 +266,14 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
       </section>
 
       <section className="today-v3__egg" aria-label="Logga dagens ägg">
-        <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={todayRows} />
+        <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={todayRows} loggedToday={loggedToday} allowZeroDay={activeHens > 0} />
       </section>
 
       <FarmPulseCard items={pulseItems} reminders={openReminders} seasonKey={seasonKey} />
+
+      {weekProgress && activeHens > 0 && eggs.length > 0 && (
+        <WeekRingCard week={weekProgress} streak={streak} winter={season === 'winter'} demo={demo} />
+      )}
 
       <section className="today-v3__adaptive" aria-label="Kom igång">
         <OnboardingChecklistCard hensCount={hens.length} eggsCount={eggs.length} feedRecordsCount={feedRecords.length} />
@@ -285,7 +281,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
 
       {showStreakRescue && (
         <section className="today-v3__adaptive" aria-label="Dagens loggserie">
-          <StreakRescueCard streak={streak} todayEggs={todayEggs} />
+          <StreakRescueCard streak={streak} todayEggs={todayEggs} loggedToday={loggedToday} />
         </section>
       )}
 

@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       if (eggCount && eggCount > 0) { skipped++; continue; }
 
       // Compute streak anchored from yesterday (we already know nothing is logged today).
-      // Look back 30 days max — same logic as calculateStreakFromEggs in src/lib/api.ts.
+      // Look back 30 days max — same rule as computeLogStreak in src/lib/logStreak.ts.
       const stockholmDate = (offset: number) => {
         const local = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Stockholm" }));
         local.setDate(local.getDate() - offset);
@@ -91,10 +91,12 @@ Deno.serve(async (req) => {
         const cur = dayMap.get(row.date) ?? 0;
         dayMap.set(row.date, cur + Number(row.count ?? 0));
       });
+      // Loggade dagar räknas – även äggfria registreringar (0 ägg) – samma
+      // regel som computeLogStreak i src/lib/logStreak.ts.
       let streak = 0;
       for (let i = 1; i <= 365; i++) {
         const ds = stockholmDate(i);
-        if ((dayMap.get(ds) ?? 0) > 0) streak++;
+        if (dayMap.has(ds)) streak++;
         else break;
       }
 
@@ -115,7 +117,7 @@ Deno.serve(async (req) => {
               ? `🔥 ${streak} ${streak === 1 ? "dag" : "dagar"} i rad – håll den vid liv`
               : "🥚 Dags att räkna dagens ägg";
           const body = streak >= 3
-            ? "Logga dagens ägg innan midnatt så lever den vidare."
+            ? "Logga dagens ägg innan midnatt så lever den vidare – inga ägg idag räknas också."
             : "Det tar 10 sekunder – logga dagens ägg innan kvällen är slut.";
           await supabase.functions.invoke("send-push", {
             body: {
