@@ -91,6 +91,13 @@ export default function FarmPulseCard({ items, reminders, seasonKey }: Props) {
     writeScoped(user?.id, DISMISS_KEY, JSON.stringify(next));
   };
 
+  const openItem = (item: PulseItem) => {
+    if (!item.href) return;
+    trackEvent('Farm Pulse Opened', { kind: item.kind });
+    if (item.href.startsWith('/app')) navigate(item.href);
+    else window.location.assign(item.href);
+  };
+
   const urgentCount = visible.filter((item) => item.tone === 'urgent').length;
 
   return (
@@ -112,6 +119,16 @@ export default function FarmPulseCard({ items, reminders, seasonKey }: Props) {
               <span className="today-v3__line-copy">
                 <strong>{item.title}</strong>
                 <small className="!whitespace-normal">{item.detail}</small>
+                {canDismiss && item.href && (
+                  // Rader som kan döljas har två knappar – länken läggs under texten så den får plats.
+                  <button
+                    type="button"
+                    onClick={() => openItem(item)}
+                    className="mt-0.5 inline-flex min-h-8 items-center gap-0.5 self-start text-xs font-semibold text-primary"
+                  >
+                    {item.ctaLabel ?? 'Öppna'} <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </span>
               {item.reminderId ? (
                 <button
@@ -124,14 +141,10 @@ export default function FarmPulseCard({ items, reminders, seasonKey }: Props) {
                   {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                   Klar
                 </button>
-              ) : item.href ? (
+              ) : item.href && !canDismiss ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    trackEvent('Farm Pulse Opened', { kind: item.kind });
-                    if (item.href!.startsWith('/app')) navigate(item.href!);
-                    else window.location.assign(item.href!);
-                  }}
+                  onClick={() => openItem(item)}
                   className="inline-flex h-10 shrink-0 items-center gap-0.5 rounded-full px-2 text-xs font-semibold text-primary transition active:scale-95"
                 >
                   {item.ctaLabel ?? 'Öppna'} <ChevronRight className="h-4 w-4" />
