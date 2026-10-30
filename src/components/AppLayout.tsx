@@ -1,4 +1,6 @@
 import React, { Suspense, useEffect } from 'react';
+// Appens stilar laddas med appen – publika sidor slipper dem (se styles/app-shell.css).
+import '@/styles/app-shell.css';
 import { Outlet, useLocation } from 'react-router-dom';
 import PullToRefresh from '@/components/PullToRefresh';
 import { AppSidebar } from './AppSidebar';

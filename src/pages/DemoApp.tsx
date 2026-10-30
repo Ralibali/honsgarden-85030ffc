@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+// Appens stilar laddas med appen – publika sidor slipper dem (se styles/app-shell.css).
+import '@/styles/app-shell.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Lock } from 'lucide-react';

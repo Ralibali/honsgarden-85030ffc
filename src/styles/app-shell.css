@@ -1,0 +1,35 @@
+/*
+ * Den inloggade appens stilar.
+ *
+ * Laddas av AppLayout (alla /app-sidor) och DemoApp (/demo) i stället för
+ * globalt i main.tsx, så att publika sidor – startsidan, bloggen, rasguiderna,
+ * priser och login – slipper ladda och tolka CSS de aldrig använder.
+ * Uppmätt med regelanvändning i Chromium på 22 publika rutter i mobil- och
+ * desktopbredd: ingen regel i de här filerna användes där.
+ *
+ * Ordningen är exakt densamma som tidigare i main.tsx. De globala filerna
+ * (index, mobile, atmosphere-v6, home-v3, app-fonts) laddas fortfarande
+ * först; atmosphere-v6 riktar sig mot landningssidans hero, cookiearket och
+ * :root-variabler som de här filerna inte rör, och home-v3 är begränsad till
+ * .hg-home-v3 – därför påverkas inte kaskaden av att de här laddas efteråt.
+ *
+ * Lägg nya app-stilar här (eller i komponenten), inte i main.tsx.
+ */
+@import "../honsgarden-app-v2.css";
+@import "../honsgarden-core-v3.css";
+@import "../honsgarden-yard-v3.css";
+@import "../honsgarden-egg-v3.css";
+@import "../honsgarden-delight-v4.css";
+@import "../honsgarden-sales-v4.css";
+@import "../honsgarden-agda-v4.css";
+@import "../honsgarden-insights-v4.css";
+@import "../honsgarden-conversion-v5.css";
+@import "../honsgarden-routines-v5.css";
+@import "../honsgarden-settings-v5.css";
+@import "../honsgarden-mobile-v5.css";
+@import "../honsgarden-today-v7.css";
+@import "../honsgarden-today-v8.css";
+@import "../honsgarden-egg-v8.css";
+@import "../honsgarden-flock-v9.css";
+@import "../honsgarden-eggbook-v10.css";
+@import "../honsgarden-app-polish.css";
