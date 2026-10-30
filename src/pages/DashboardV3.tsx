@@ -28,6 +28,11 @@ import DiaryCard from '@/components/diary/DiaryCard';
 import FarmPulseCard from '@/components/dashboard/FarmPulseCard';
 import TodayChoresInline from '@/components/dashboard/TodayChoresInline';
 import WeekRingCard from '@/components/dashboard/WeekRingCard';
+import MonthRecapCard from '@/components/dashboard/MonthRecapCard';
+import WeekInsightLine from '@/components/dashboard/WeekInsightLine';
+import { computeMonthRecap, isRecapWindow } from '@/lib/monthRecap';
+import { buildPremiumInsights } from '@/lib/premiumInsights';
+import { hasCapability } from '@/lib/entitlements';
 import { computeLogStreak, computeWeekProgress } from '@/lib/logStreak';
 import { buildFarmPulse, computeMonthPace } from '@/lib/farmPulse';
 import { computeFeedForecast } from '@/lib/feedForecast';
@@ -221,6 +226,18 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     eggs,
   }), [todayKey, season, openReminders, feedForecast, hatchings, eggs]);
   const monthPace = useMemo(() => computeMonthPace(eggs, todayKey), [eggs, todayKey]);
+  const isPlusUser = user?.subscription_status === 'premium';
+  const canSeeInsights = isPlusUser || hasCapability(user?.premium_type ?? null, 'advanced_analytics');
+  const canDownloadReports = isPlusUser || hasCapability(user?.premium_type ?? null, 'reports');
+  // Insikterna räknas för alla: Plus ser dem, gratis ser vilken sorts insikt som väntar.
+  const weekInsights = useMemo(
+    () => buildPremiumInsights(eggs, hens, feedRecords.map((f) => ({ date: f.date, cost_sek: f.cost })), todayKey),
+    [eggs, hens, feedRecords, todayKey],
+  );
+  const monthRecap = useMemo(
+    () => (isRecapWindow(todayKey) ? computeMonthRecap(eggs, hens, todayKey) : null),
+    [eggs, hens, todayKey],
+  );
   const seasonKey = `${season}-${season === 'winter' && now.getMonth() <= 2 ? now.getFullYear() - 1 : now.getFullYear()}`;
 
   useEffect(() => {
@@ -273,6 +290,10 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
 
       {weekProgress && activeHens > 0 && eggs.length > 0 && (
         <WeekRingCard week={weekProgress} streak={streak} winter={season === 'winter'} demo={demo} />
+      )}
+
+      {monthRecap && (
+        <MonthRecapCard recap={monthRecap} eggs={eggs} hens={hens} isPlus={canDownloadReports} demo={demo} />
       )}
 
       <section className="today-v3__adaptive" aria-label="Kom igång">
@@ -345,6 +366,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
               </span>
             </p>
           )}
+          <WeekInsightLine insights={weekInsights} isPlus={canSeeInsights} demo={demo} />
         </section>
       )}
 
