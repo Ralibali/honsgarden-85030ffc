@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,8 @@ import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 import PageHeader from '@/components/PageHeader';
+import { computeFeedForecast } from '@/lib/feedForecast';
+import { shortSvDate } from '@/lib/farmPulse';
 
 const FEED_CATEGORIES: { value: string; label: string }[] = [
   { value: 'layer', label: 'Värphönsfoder' },
@@ -39,28 +41,32 @@ export default function Feed() {
   const [newKg, setNewKg] = useState('');
   const [newBrand, setNewBrand] = useState('');
   const [newCategory, setNewCategory] = useState<string>('');
+  const [newDate, setNewDate] = useState<string>(() => todayLocal());
 
   const { data: feedRecords = [], isLoading } = useQuery({
     queryKey: ['feed'],
     queryFn: () => api.getFeedRecords(),
   });
 
-  const { data: feedStats } = useQuery({
-    queryKey: ['feed-stats'],
-    queryFn: () => api.getFeedStatistics().catch(() => null),
+  const { data: eggs = [] } = useQuery({
+    queryKey: ['eggs'],
+    queryFn: () => api.getEggs(),
+    staleTime: 60_000,
   });
 
-  const { data: feedInventory } = useQuery({
-    queryKey: ['feed-inventory'],
-    queryFn: () => api.getFeedInventory().catch(() => null),
-  });
+  const today = todayLocal();
+  const forecast = useMemo(() => computeFeedForecast(feedRecords, eggs, today), [feedRecords, eggs, today]);
+
+  const invalidateFeed = () => {
+    for (const key of ['feed', 'feed-records', 'feed-stats', 'feed-inventory']) {
+      void queryClient.invalidateQueries({ queryKey: [key] });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.createFeedRecord(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
-      queryClient.invalidateQueries({ queryKey: ['feed-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['feed-inventory'] });
+      invalidateFeed();
       toast({ title: 'Foderinköpet är sparat 🌾' });
       setOpen(false);
       setNewType('');
@@ -68,6 +74,7 @@ export default function Feed() {
       setNewKg('');
       setNewBrand('');
       setNewCategory('');
+      setNewDate(todayLocal());
     },
     onError: () => toast({
       title: 'Något gick fel',
@@ -79,9 +86,7 @@ export default function Feed() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api.deleteFeedRecord(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feed'] });
-      queryClient.invalidateQueries({ queryKey: ['feed-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['feed-inventory'] });
+      invalidateFeed();
       toast({ title: 'Foderinköpet är borttaget' });
     },
   });
@@ -92,17 +97,16 @@ export default function Feed() {
       feed_type: newType,
       cost: Number(newCost),
       amount_kg: Number(newKg) || 0,
-      date: todayLocal(),
+      date: newDate && newDate <= todayLocal() ? newDate : todayLocal(),
       brand: newBrand || null,
       feed_category: newCategory || null,
     } as any);
   };
 
-  const totalCost = Number(feedStats?.total_cost || feedRecords.reduce((sum: number, record: any) => sum + (record.cost || 0), 0));
-  const totalKg = Number(feedStats?.total_kg || feedRecords.reduce((sum: number, record: any) => sum + (record.amount_kg || 0), 0));
-  const costPerEgg = Number(feedStats?.cost_per_egg || 0);
-  const totalEggs = Number(feedStats?.total_eggs || 0);
-  const daysRemaining = Number(feedInventory?.days_remaining || 0);
+  const totalCost = feedRecords.reduce((sum, record) => sum + (Number(record.cost) || 0), 0);
+  const totalKg = feedRecords.reduce((sum, record) => sum + (Number(record.amount_kg) || 0), 0);
+  const costPerEgg = forecast.costPerEgg ?? 0;
+  const hasRunway = forecast.confidence !== 'none' && !forecast.stale && forecast.daysLeft !== null;
 
   if (isLoading) {
     return (
@@ -161,6 +165,10 @@ export default function Feed() {
                   </Select>
                 </div>
               </div>
+              <div>
+                <label className="data-label mb-1.5 block" htmlFor="feed-date">Inköpsdatum</label>
+                <Input id="feed-date" className="rounded-xl h-11" type="date" max={todayLocal()} value={newDate} onChange={(event) => setNewDate(event.target.value)} />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="data-label mb-1.5 block">Pris</label>
@@ -172,7 +180,7 @@ export default function Feed() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Det räcker med beskrivning och pris. Vikt, märke och fodertyp gör jämförelserna bättre senare.
+                Det räcker med beskrivning och pris. Med vikten kan Hönsgården räkna ut hur länge fodret räcker – lägg gärna in äldre inköp med rätt datum.
               </p>
               <Button className="w-full h-11 rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newType || !newCost}>
                 {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
@@ -206,9 +214,18 @@ export default function Feed() {
                         : `${formatKr(totalCost)} loggat i foder hittills`}
                     </h2>
                     <p className="text-sm text-muted-foreground leading-relaxed mt-2">
-                      {totalKg > 0 ? `Du har loggat ${totalKg.toLocaleString('sv-SE')} kg foder` : 'Du har börjat bygga din foderhistorik'}
-                      {totalEggs > 0 ? ` tillsammans med ${totalEggs.toLocaleString('sv-SE')} ägg.` : '.'}
-                      {daysRemaining > 0 ? ` Med nuvarande takt ser lagret ut att räcka ungefär ${daysRemaining} dagar till.` : ''}
+                      {costPerEgg > 0
+                        ? `Räknat på ${forecast.costPeriodEggs.toLocaleString('sv-SE')} ägg och ${formatKr(forecast.costPeriodSek)} i foder ${forecast.costBasis === 'between_purchases' ? 'mellan första och senaste inköpet' : 'sedan första inköpet'}.`
+                        : totalKg > 0 ? `Du har loggat ${totalKg.toLocaleString('sv-SE')} kg foder.` : 'Du har börjat bygga din foderhistorik.'}
+                    </p>
+                    <p className="text-sm text-foreground leading-relaxed mt-2" data-testid="feed-runway">
+                      {hasRunway
+                        ? forecast.daysLeft! > 0
+                          ? `Med er takt, ca ${forecast.kgPerDay!.toLocaleString('sv-SE', { maximumFractionDigits: 2 })} kg om dygnet, räcker fodret ungefär ${forecast.daysLeft} dagar till – köp nytt omkring ${shortSvDate(forecast.runOutDate!)}.`
+                          : `Med er takt kan fodret vara slut nu. Har du köpt nytt? Lägg in inköpet så räknar vi om.`
+                        : forecast.lastPurchaseDate
+                          ? 'Lägg in nästa inköp när det blir dags, så räknar Hönsgården ut hur länge en säck räcker hos er.'
+                          : 'Ange vikt på inköpen så kan Hönsgården räkna ut hur länge fodret räcker.'}
                     </p>
                   </div>
                 </div>
@@ -218,7 +235,7 @@ export default function Feed() {
             <div className="feed-journal__facts grid grid-cols-1 sm:grid-cols-3 gap-3">
               <FeedFact icon={Package} value={totalKg > 0 ? `${totalKg.toLocaleString('sv-SE')} kg` : '–'} label="foder loggat" text="Ger en bild av hur mycket som faktiskt går åt." />
               <FeedFact icon={Calculator} value={formatKr(totalCost)} label="lagt på foder" text="Summan av inköpen du har sparat här." />
-              <FeedFact icon={Egg} value={costPerEgg > 0 ? formatKr(costPerEgg) : '–'} label="per ägg" text={costPerEgg > 0 ? 'En enkel uppskattning utifrån foder och loggade ägg.' : 'Visas när det finns tillräckligt med äggdata.'} />
+              <FeedFact icon={Egg} value={costPerEgg > 0 ? formatKr(costPerEgg) : '–'} label="per ägg" text={costPerEgg > 0 ? 'Fodret som gått åt delat med äggen under samma period.' : 'Visas när minst 20 ägg är loggade sedan första inköpet.'} />
             </div>
 
             <Card className="feed-journal__history overflow-hidden">

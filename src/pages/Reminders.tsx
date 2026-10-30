@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { completeReminder, fetchReminders, REMINDERS_QUERY_KEY } from '@/lib/reminderSchedule';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,18 +64,6 @@ function daysUntil(dateStr: string) {
   return Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function addToDate(dateStr: string, recurrence: Recurrence): string {
-  const d = new Date(dateStr);
-  switch (recurrence) {
-    case 'daily': d.setDate(d.getDate() + 1); break;
-    case 'weekly': d.setDate(d.getDate() + 7); break;
-    case 'monthly': d.setMonth(d.getMonth() + 1); break;
-    case 'quarterly': d.setMonth(d.getMonth() + 3); break;
-    case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
-    default: return dateStr;
-  }
-  return d.toISOString().split('T')[0];
-}
 
 export default function Reminders() {
   const queryClient = useQueryClient();
@@ -92,16 +81,8 @@ export default function Reminders() {
   const { data: flocks = [] } = useQuery({ queryKey: ['flocks'], queryFn: () => api.getFlocks(), staleTime: 60_000 });
 
   const { data: reminders = [], isLoading } = useQuery<ReminderRow[]>({
-    queryKey: ['reminders'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reminders')
-        .select('*')
-        .neq('status', 'archived')
-        .order('due_date', { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as ReminderRow[];
-    },
+    queryKey: REMINDERS_QUERY_KEY,
+    queryFn: () => fetchReminders<ReminderRow>(),
   });
 
   const upcoming = useMemo(
@@ -147,25 +128,9 @@ export default function Reminders() {
           .eq('id', r.id);
         if (error) throw error;
       } else {
-        // Mark done. If recurring, also insert next occurrence.
-        const { error } = await supabase.from('reminders')
-          .update({ status: 'done', completed_at: new Date().toISOString() })
-          .eq('id', r.id);
-        if (error) throw error;
-        if (r.recurrence !== 'none' && user?.id) {
-          const nextDate = addToDate(r.due_date, r.recurrence);
-          await supabase.from('reminders').insert({
-            user_id: user.id,
-            title: r.title,
-            notes: r.notes,
-            reminder_type: r.reminder_type,
-            recurrence: r.recurrence,
-            due_date: nextDate,
-            status: 'upcoming',
-            hen_id: r.hen_id,
-            flock_id: r.flock_id,
-          });
-        }
+        // Markera som klar; återkommande påminnelser får nästa tillfälle.
+        if (!user?.id) throw new Error('Ej inloggad');
+        await completeReminder(r, user.id);
       }
     },
     onSuccess: () => {
