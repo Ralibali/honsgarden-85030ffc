@@ -25,6 +25,12 @@ import OnboardingChecklistCard from '@/components/dashboard/OnboardingChecklistC
 import StreakRescueCard from '@/components/dashboard/StreakRescueCard';
 import TrialExpiryBanner from '@/components/TrialExpiryBanner';
 import DiaryCard from '@/components/diary/DiaryCard';
+import FarmPulseCard from '@/components/dashboard/FarmPulseCard';
+import TodayChoresInline from '@/components/dashboard/TodayChoresInline';
+import { buildFarmPulse, computeMonthPace } from '@/lib/farmPulse';
+import { computeFeedForecast } from '@/lib/feedForecast';
+import { getSeasonalMode, trackSeasonalModeIfChanged } from '@/lib/seasonalMode';
+import { fetchReminders, isOpenReminder, REMINDERS_QUERY_KEY, type ReminderLike } from '@/lib/reminderSchedule';
 
 type WeatherSnapshot = {
   temperature: number;
@@ -144,6 +150,17 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
     queryKey: ['feed-records'],
     queryFn: () => api.getFeedRecords(),
   });
+  const { data: hatchings = [] } = useQuery({
+    queryKey: ['hatchings'],
+    queryFn: () => api.getHatchings(),
+    staleTime: 60_000,
+  });
+  const { data: reminders = [] } = useQuery({
+    queryKey: REMINDERS_QUERY_KEY,
+    queryFn: () => fetchReminders<ReminderLike>(),
+    enabled: !demo,
+    staleTime: 60_000,
+  });
   const settingsQuery = useQuery({ queryKey: ['coop-settings'], queryFn: () => api.getCoopSettings(), enabled: !demo });
   const { data: weather, isLoading: weatherLoading } = useQuery({
     queryKey: ['dashboard-local-weather', user?.id, settingsQuery.data?.city, settingsQuery.data?.postal_code],
@@ -200,6 +217,23 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const streak = calculateStreak(eggs, now);
   const showStreakRescue = hens.length > 0 && eggs.length > 0 && streak > 0 && todayEggs === 0;
   const weatherText = weatherSentence(weather);
+  const season = getSeasonalMode(now);
+  const feedForecast = useMemo(() => computeFeedForecast(feedRecords, eggs, todayKey), [feedRecords, eggs, todayKey]);
+  const openReminders = useMemo(() => reminders.filter((r) => isOpenReminder(r.status)), [reminders]);
+  const pulseItems = useMemo(() => buildFarmPulse({
+    todayIso: todayKey,
+    season,
+    reminders: openReminders,
+    feed: feedForecast,
+    hatchings,
+    eggs,
+  }), [todayKey, season, openReminders, feedForecast, hatchings, eggs]);
+  const monthPace = useMemo(() => computeMonthPace(eggs, todayKey), [eggs, todayKey]);
+  const seasonKey = `${season}-${season === 'winter' && now.getMonth() <= 2 ? now.getFullYear() - 1 : now.getFullYear()}`;
+
+  useEffect(() => {
+    if (!demo) trackSeasonalModeIfChanged(season);
+  }, [demo, season]);
   const agdaText = agdaSentence({
     activeHens,
     todayEggs,
@@ -243,6 +277,8 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
         <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={todayRows} />
       </section>
 
+      <FarmPulseCard items={pulseItems} reminders={openReminders} seasonKey={seasonKey} />
+
       <section className="today-v3__adaptive" aria-label="Kom igång">
         <OnboardingChecklistCard hensCount={hens.length} eggsCount={eggs.length} feedRecordsCount={feedRecords.length} />
       </section>
@@ -281,6 +317,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
             </div>
           )}
         </div>
+        <TodayChoresInline chores={chores} />
       </section>
 
       <DiaryCard demo={demo} />
@@ -303,6 +340,15 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
               {previousWeekEggs === 0 ? <>Fortsätt logga så börjar vi snart kunna jämföra veckorna.</> : weekDelta > 0 ? <><TrendingUp className="h-4 w-4" /> {weekDelta} fler än perioden innan</> : weekDelta < 0 ? <><TrendingDown className="h-4 w-4" /> {Math.abs(weekDelta)} färre än perioden innan</> : <>Precis samma nivå som perioden innan.</>}
             </p>
           </div>
+          {monthPace && monthPace.soFar > 0 && (
+            <p className="mt-3 flex items-center gap-2 px-1 text-sm text-muted-foreground" data-testid="month-pace">
+              <CalendarCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="font-semibold text-foreground">{monthPace.monthLabel.charAt(0).toUpperCase() + monthPace.monthLabel.slice(1)}: {monthPace.soFar} ägg hittills</strong>
+                {monthPace.projected !== null && monthPace.projected > monthPace.soFar ? ` · takten pekar mot ca ${monthPace.projected}` : ''}
+              </span>
+            </p>
+          )}
         </section>
       )}
 

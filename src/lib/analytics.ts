@@ -202,6 +202,14 @@ export type AnalyticsEventMap = {
     program: AnalyticsOutboundProgram;
     page: AnalyticsOutboundPage;
   };
+  /* Idag-vyn: Gårdens läge och sysslor (låg kardinalitet, ingen PII). */
+  'Farm Pulse Opened': {
+    kind: 'reminder' | 'reminders' | 'feed' | 'hatching' | 'production' | 'season';
+  };
+  'Farm Pulse Reminder Completed': {
+    recurring: 'yes' | 'no';
+  };
+  'Today Chore Completed': Record<string, never>;
 };
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;
