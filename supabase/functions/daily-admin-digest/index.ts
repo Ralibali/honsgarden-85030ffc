@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
     ${premiumRows}
   </table>` : ""}
 
-  <a href="https://honsgarden.lovable.app/app/admin" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; font-weight: 600; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">
+  <a href="https://honsgarden.se/app/admin" style="background-color: hsl(142,32%,34%); color: hsl(35,32%,97%); font-size: 14px; font-weight: 600; border-radius: 14px; padding: 12px 24px; text-decoration: none; display: inline-block;">
     Öppna adminpanelen →
   </a>
 

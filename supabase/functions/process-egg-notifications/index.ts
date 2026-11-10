@@ -6,7 +6,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
-const APP_BASE = 'https://honsgarden.lovable.app';
+const APP_BASE = 'https://honsgarden.se';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
