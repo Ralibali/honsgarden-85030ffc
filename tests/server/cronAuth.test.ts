@@ -1,6 +1,7 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { cronRequestAllowed } from '../../../supabase/functions/_shared/cronAuth';
+import { cronRequestAllowed } from '../../supabase/functions/_shared/cronAuth';
 
 const secrets = { cronSecret: 'cron-secret-value', serviceRoleKey: 'service-role-key-value' };
 const headers = (init: Record<string, string>) => new Headers(init);
