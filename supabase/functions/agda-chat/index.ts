@@ -308,7 +308,7 @@ serve(async (req) => {
     const health = healthRes.data ?? [];
     const feed = feedRes.data ?? [];
     const totalEggs = eggs.reduce((sum: number, egg: any) => sum + (egg.count || 0), 0);
-    const activeHens = hens.filter((hen: any) => hen.is_active).length;
+    const activeHens = hens.filter((hen: any) => hen.is_active && hen.hen_type !== "rooster").length;
     const proactiveInsights = buildProactiveInsights(hens, eggs, health);
 
     // ---- Rikare datakontext: per-höna-vecka, veckojämförelse, dagsljus, väder ----
@@ -404,7 +404,7 @@ ANVÄNDARENS DATA:
 - Ägg per höna senaste 7 dygnen: ${perHenText || "Inga ägg registrerade per höna"}.
 - Veckojämförelse: ${eggs7} ägg senaste 7 dygnen (inkl. pågående idag) mot ${eggsPrev7} föregående 7 dygn${weekDelta !== null ? ` (${weekDelta >= 0 ? "+" : ""}${weekDelta} %)` : ""}.
 - Snitt: ${eggsAvgPerDay} ägg per kalenderdag (sedan första loggen, max 90 dagar).
-- Senaste 90 loggar: ${totalEggs} ägg totalt.
+- Senaste 90 kalenderdagarna: ${totalEggs} ägg totalt.
 - Hälsonoteringar: ${health.length > 0 ? health.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.type} – ${entry.description}`).join("; ") : "Inga"}.
 - Foderdata: ${feed.length > 0 ? feed.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.feed_type || "okänt"} ${entry.amount_kg || "?"} kg`).join("; ") : "Ingen foderdata"}.${daylightText}${weatherText}
 ${proactiveInsights}
@@ -435,7 +435,7 @@ ${KNOWLEDGE_BASE}`;
     if (insertError) return jsonResponse({ error: "Kunde inte registrera AI-användningen" }, 503);
     logId = inserted?.id ?? null;
 
-    const ai = await callAiStream({ model, messages, maxTokens: 1_000, temperature: 0.5 });
+    const ai = await callAiStream({ model, messages, maxTokens: 1_000, temperature: 0.5 }, req.signal);
 
     if (!ai.ok) {
       if (logId) {
@@ -495,7 +495,7 @@ ${KNOWLEDGE_BASE}`;
       },
     });
 
-    return new Response(ai.body.pipeThrough(transform), {
+    return new Response(ai.body.pipeThrough(transform, { signal: req.signal }), {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",

@@ -166,11 +166,14 @@ function ReportsInner() {
 
   // Reports list (RLS filters to farms the user is a member of)
   const { data: reports = [], isLoading } = useQuery<ReportRow[]>({
-    queryKey: ['generated-reports'],
+    queryKey: ['generated-reports', user?.id],
+    enabled: !!user,
     queryFn: async () => {
+      const { data: memberships, error: memberError } = await supabase.from('farm_members').select('farm_id').eq('user_id', user!.id);
+      if (memberError) throw memberError;
       const { data, error } = await supabase
         .from('generated_reports')
-        .select('*')
+        .select('*').in('farm_id', (memberships ?? []).map(m => m.farm_id))
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as ReportRow[];

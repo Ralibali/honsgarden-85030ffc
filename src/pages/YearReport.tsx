@@ -24,7 +24,7 @@ function longestStreakInYear(eggsByDate: Record<string, number>, year: number): 
   let cur = 0;
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const key = format(d, 'yyyy-MM-dd');
-    if (Object.hasOwn(eggsByDate, key)) {
+    if (eggsByDate[key] !== undefined) {
       cur++;
       if (cur > best) best = cur;
     } else {

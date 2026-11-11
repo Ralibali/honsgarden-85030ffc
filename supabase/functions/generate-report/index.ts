@@ -156,16 +156,7 @@ Deno.serve(async (req) => {
     const periodStart = input.period_start;
     const periodEnd = input.period_end;
 
-    const [
-      { data: eggs },
-      { data: feed },
-      { data: txns },
-      { data: health },
-      { data: hens },
-      { data: hatchSessions },
-      { data: pairs },
-      { data: deaths },
-    ] = await Promise.all([
+    const results = await Promise.all([
       selectAll(() =>
         admin
           .from("egg_logs")
@@ -231,6 +222,17 @@ Deno.serve(async (req) => {
           .order("id"),
       ),
     ]);
+    for (const result of results) if (result.error) throw new Error(result.error.message);
+    const [
+      { data: eggs },
+      { data: feed },
+      { data: txns },
+      { data: health },
+      { data: hens },
+      { data: hatchSessions },
+      { data: pairs },
+      { data: deaths },
+    ] = results;
 
     const pdfBytes = await buildPdf({
       title,
