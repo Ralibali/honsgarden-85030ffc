@@ -112,7 +112,8 @@ function SmartFarmReportContent() {
     return { weekEggs, prevWeekEggs, diff, activeHens, completedTasks, totalTasks, salesValue, salesPacks, activeListings, manualCount: weekManual.length, weekBookings: weekBookings.length, feedCostPerEgg, insights };
   }, [eggs, hens, chores, feedStats, bookings, manualSales, listings, weekStart, prevStart]);
 
-  const plainReport = `Smart gårdsrapport – ${weekLabel}\n\n🥚 Ägg denna vecka: ${report.weekEggs}\n${report.diff >= 0 ? '📈' : '📉'} Skillnad mot förra veckan: ${report.diff >= 0 ? '+' : ''}${report.diff}\n🐔 Aktiva hönor: ${report.activeHens}\n🌾 Foderkostnad/ägg: ${report.feedCostPerEgg !== null ? Number(report.feedCostPerEgg).toFixed(2) + ' kr' : 'saknas'}\n💰 Agdas Bod denna vecka: ${kr(report.salesValue)} (${report.salesPacks} kartor)\n✅ Uppgifter: ${report.completedTasks}/${report.totalTasks}\n\nAgdas rekommendationer:\n${report.insights.map((i) => `• ${i}`).join('\n')}`;
+  const manualLabel = report.manualCount + (report.manualCount === 1 ? ' manuell försäljning' : ' manuella försäljningar');
+  const plainReport = `Smart gårdsrapport – ${weekLabel}\n\n🥚 Ägg denna vecka: ${report.weekEggs}\n${report.diff >= 0 ? '📈' : '📉'} Skillnad mot förra veckan: ${report.diff >= 0 ? '+' : ''}${report.diff}\n🐔 Aktiva hönor: ${report.activeHens}\n🌾 Foderkostnad/ägg: ${report.feedCostPerEgg !== null ? Number(report.feedCostPerEgg).toFixed(2) + ' kr' : 'saknas'}\n💰 Agdas Bod denna vecka: ${kr(report.salesValue)} (${report.salesPacks} kartor, ${manualLabel})\n✅ Uppgifter: ${report.completedTasks}/${report.totalTasks}\n\nAgdas rekommendationer:\n${report.insights.map((i) => `• ${i}`).join('\n')}`;
   const actions = [
     { title: 'Logga ägg', text: 'Fyll på rapporten med aktuell produktion.', path: '/app/eggs', icon: Egg, show: report.weekEggs === 0 },
     { title: 'Lägg till foder', text: 'Räkna ut kostnad per ägg.', path: '/app/feed', icon: Wheat, show: !feedStats?.record_count },
@@ -132,7 +133,7 @@ function SmartFarmReportContent() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Metric icon={Egg} label="Ägg denna vecka" value={report.weekEggs} sub={`${report.diff >= 0 ? '+' : ''}${report.diff} mot förra veckan`} trend={report.diff} />
         <Metric icon={Bird} label="Aktiva hönor" value={report.activeHens} sub="i flocken" />
-        <Metric icon={Wallet} label="Agdas Bod" value={kr(report.salesValue)} sub={`${report.salesPacks} kartor · ${report.weekBookings} bokningar · ${report.manualCount} manuella`} />
+        <Metric icon={Wallet} label="Agdas Bod" value={kr(report.salesValue)} sub={`${report.salesPacks} kartor · ${report.weekBookings} bokningar · ${manualLabel}`} />
         <Metric icon={CheckCircle2} label="Uppgifter" value={`${report.completedTasks}/${report.totalTasks}`} sub="avklarade rutiner" />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">

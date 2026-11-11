@@ -509,7 +509,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Veckorapport via mejl</p>
                   <p className="text-xs text-muted-foreground">Få en sammanfattning varje måndag med ägg, sysslor & tips</p>
-                  {!isPremium && <p className="text-[10px] text-warning mt-0.5">Kräver Premium</p>}
+                  {!isPremium && <p className="text-[10px] text-warning mt-0.5">Kräver Hönsgården Plus</p>}
                 </div>
               </div>
               <Switch

@@ -617,7 +617,11 @@ export default function Hens() {
                 <div className="mb-3" onClick={(e) => e.stopPropagation()}>
                   <Select
                     value={hen.flock_id || 'none'}
+                    disabled={updateHenMutation.isPending}
                     onValueChange={(v) => {
+                      const destination = flocks.find(f => f.id === v)?.name;
+                      const prompt = destination ? `Flytta ${hen.name} till ${destination}?` : `Ta bort ${hen.name} ur flocken?`;
+                      if (!window.confirm(prompt)) return;
                       updateHenMutation.mutate({
                         id: hen.id,
                         data: { flock_id: v === 'none' ? null : v },

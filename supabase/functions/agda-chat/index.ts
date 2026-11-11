@@ -1,5 +1,4 @@
 import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiStream } from "../_shared/ai.ts";
 import { selectAll } from "../_shared/selectAll.ts";
@@ -203,7 +202,7 @@ function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string
     : "";
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 

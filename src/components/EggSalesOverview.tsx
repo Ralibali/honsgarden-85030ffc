@@ -179,7 +179,7 @@ export default function EggSalesOverview() {
             <p className="data-label">Så går det i Äggboden</p>
             <h1 className="font-serif text-2xl sm:text-3xl text-foreground mt-1">Din lilla äggförsäljning, på ett ställe</h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2">
-              De senaste 30 dagarna har du haft <strong className="text-foreground">{current.bookings} bokningar</strong> och registrerat <strong>{current.manual} manuella försäljningar ({current.eggs} ägg)</strong>. Bokningarna omfattar <strong className="text-foreground">{current.packs} kartor</strong>. Sammanlagt värde är <strong className="text-foreground">{formatKr(current.value)}</strong>.
+              De senaste 30 dagarna har du haft <strong className="text-foreground">{current.bookings} {current.bookings === 1 ? 'bokning' : 'bokningar'}</strong> och registrerat <strong>{current.manual} {current.manual === 1 ? 'manuell försäljning' : 'manuella försäljningar'} ({current.eggs} ägg)</strong>. Bokningarna omfattar <strong className="text-foreground">{current.packs} {current.packs === 1 ? 'karta' : 'kartor'}</strong>. Sammanlagt värde är <strong className="text-foreground">{formatKr(current.value)}</strong>.
             </p>
           </div>
           <div className={`egg-shop-change ${valueChange > 0 ? 'is-up' : valueChange < 0 ? 'is-down' : ''}`}>
