@@ -208,3 +208,172 @@
   35% { opacity: .9; transform: translateY(-9px) rotate(9deg) scale(1.18); }
   100% { opacity: .42; transform: translateY(0) rotate(-11deg) scale(1); }
 }
+
+/* Äggkartongen: ett fack per ägg, så att varje tryck syns direkt. */
+.egg-counter-v3__count strong.is-popping {
+  display: inline-block;
+  animation: egg-counter-pop .32s cubic-bezier(.18,.8,.22,1);
+}
+
+.egg-carton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 16px;
+}
+
+.egg-carton__tray {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  padding: 9px;
+  border-radius: 18px;
+  background: rgba(120, 98, 58, .10);
+  box-shadow: inset 0 1px 2px rgba(59, 59, 43, .10);
+}
+
+.egg-carton__slot {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(120, 98, 58, .12);
+  box-shadow: inset 0 2px 3px rgba(59, 59, 43, .12);
+}
+
+.egg-carton__slot.is-filled {
+  border-radius: 50% 50% 50% 50% / 60% 60% 42% 42%;
+  background: radial-gradient(circle at 34% 28%, #fffdf6 0%, #f3e2c1 46%, #d9bd8b 100%);
+  box-shadow: 0 3px 6px rgba(92, 70, 30, .22);
+  animation: egg-carton-drop .34s cubic-bezier(.2,.9,.25,1.25);
+}
+
+.egg-carton__more {
+  color: #6b5a34;
+  font-size: .85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Flocken: tryck på hönan som värpt. */
+.egg-flock {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0 14px 12px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.egg-flock::-webkit-scrollbar { display: none; }
+
+.egg-flock__hen {
+  display: flex;
+  width: 68px;
+  min-height: 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: #3d4a3f;
+  cursor: pointer;
+  transition: transform .12s ease, background-color .12s ease;
+}
+
+.egg-flock__hen:active { transform: scale(.92); background: rgba(49, 93, 63, .08); }
+.egg-flock__hen:focus-visible { outline: 2px solid #315d3f; outline-offset: 2px; }
+
+.egg-flock__avatar {
+  position: relative;
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .7);
+  box-shadow: 0 0 0 2px rgba(71, 82, 67, .14);
+  font-size: 1.5rem;
+}
+
+.egg-flock__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.egg-flock__hen.has-laid .egg-flock__avatar { box-shadow: 0 0 0 2.5px #315d3f; }
+
+.egg-flock__badge {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  display: grid;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 999px;
+  background: #315d3f;
+  color: #fffaf0;
+  font-size: .72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  animation: egg-carton-drop .3s cubic-bezier(.2,.9,.25,1.25);
+}
+
+.egg-flock__name {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: .74rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.egg-counter-v3__summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 18px 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(49, 93, 63, .09);
+  color: #254a32;
+  font-size: .9rem;
+  font-weight: 600;
+  text-align: center;
+  animation: egg-summary-in .3s ease-out;
+}
+
+.dark .egg-carton__tray { background: rgba(255, 244, 214, .07); }
+.dark .egg-carton__slot:not(.is-filled) { background: rgba(255, 244, 214, .08); }
+.dark .egg-carton__more,
+.dark .egg-flock__hen { color: #e6dcc6; }
+.dark .egg-flock__avatar { background: rgba(255, 255, 255, .08); box-shadow: 0 0 0 2px rgba(255, 244, 214, .16); }
+.dark .egg-flock__hen.has-laid .egg-flock__avatar { box-shadow: 0 0 0 2.5px #7fb58f; }
+.dark .egg-flock__badge { background: #7fb58f; color: #14241a; }
+.dark .egg-counter-v3__summary { background: rgba(127, 181, 143, .14); color: #cfe6d5; }
+
+@keyframes egg-carton-drop {
+  0% { transform: translateY(-14px) scale(.6); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes egg-summary-in {
+  0% { transform: translateY(6px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .egg-carton *,
+  .egg-flock *,
+  .egg-counter-v3__summary {
+    animation: none !important;
+    transition: none !important;
+  }
+}
