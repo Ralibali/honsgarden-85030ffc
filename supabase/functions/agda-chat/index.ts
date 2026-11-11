@@ -1,5 +1,4 @@
 import { readBundleAccess } from '../_shared/bundleEntitlement.ts';
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAiStream } from "../_shared/ai.ts";
 import { selectAll } from "../_shared/selectAll.ts";
@@ -203,7 +202,7 @@ function buildProactiveInsights(hens: any[], eggs: any[], health: any[]): string
     : "";
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
@@ -283,16 +282,19 @@ serve(async (req) => {
     }
     const history = normalizeHistory(requestBody?.history);
 
+    const { data: members, error: membershipError } = await supabase.rpc("get_farm_user_ids", { _uid: user.id });
+    if (membershipError) return jsonResponse({ error: "Kunde inte läsa gårdens medlemmar" }, 503);
+    const owners = [...new Set([user.id, ...(members ?? [])])];
     const [hensRes, eggsRes, healthRes, feedRes, coopRes, weatherRes] = await Promise.all([
-      selectAll(() => supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").order("id")),
+      selectAll(() => supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").in("user_id", owners).order("id")),
       // 90 kalenderdagar, inte 90 rader: gårdar som loggar per höna har många rader per dag.
-      selectAll(() => supabase.from("egg_logs").select("date, count, hen_id").gte("date", dayKeyOffset(89))
+      selectAll(() => supabase.from("egg_logs").select("date, count, hen_id").in("user_id", owners).gte("date", dayKeyOffset(89))
         .order("date", { ascending: false }).order("id")),
-      supabase.from("health_logs").select("date, type, description, hen_id").order("date", { ascending: false }).limit(30),
-      supabase.from("feed_records").select("date, feed_type, amount_kg, cost").order("date", { ascending: false }).limit(30),
+      supabase.from("health_logs").select("date, type, description, hen_id").in("user_id", owners).order("date", { ascending: false }).limit(30),
+      supabase.from("feed_records").select("date, feed_type, amount_kg, cost").in("user_id", owners).order("date", { ascending: false }).limit(30),
       // Valfria kontextkällor – fel här ska aldrig stoppa svaret
-      supabase.from("coop_settings").select("latitude").limit(1).maybeSingle(),
-      supabase.from("weather_advice_cache").select("cache_date, weather_snapshot")
+      supabase.from("coop_settings").select("latitude").eq("user_id", user.id).limit(1).maybeSingle(),
+      supabase.from("weather_advice_cache").select("cache_date, weather_snapshot").eq("user_id", user.id)
         .gte("cache_date", dayKeyOffset(6)).order("cache_date", { ascending: false }),
     ]);
 
@@ -305,7 +307,7 @@ serve(async (req) => {
     const health = healthRes.data ?? [];
     const feed = feedRes.data ?? [];
     const totalEggs = eggs.reduce((sum: number, egg: any) => sum + (egg.count || 0), 0);
-    const activeHens = hens.filter((hen: any) => hen.is_active).length;
+    const activeHens = hens.filter((hen: any) => hen.is_active && hen.hen_type !== "rooster").length;
     const proactiveInsights = buildProactiveInsights(hens, eggs, health);
 
     // ---- Rikare datakontext: per-höna-vecka, veckojämförelse, dagsljus, väder ----
@@ -401,7 +403,7 @@ ANVÄNDARENS DATA:
 - Ägg per höna senaste 7 dygnen: ${perHenText || "Inga ägg registrerade per höna"}.
 - Veckojämförelse: ${eggs7} ägg senaste 7 dygnen (inkl. pågående idag) mot ${eggsPrev7} föregående 7 dygn${weekDelta !== null ? ` (${weekDelta >= 0 ? "+" : ""}${weekDelta} %)` : ""}.
 - Snitt: ${eggsAvgPerDay} ägg per kalenderdag (sedan första loggen, max 90 dagar).
-- Senaste 90 loggar: ${totalEggs} ägg totalt.
+- Senaste 90 kalenderdagarna: ${totalEggs} ägg totalt.
 - Hälsonoteringar: ${health.length > 0 ? health.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.type} – ${entry.description}`).join("; ") : "Inga"}.
 - Foderdata: ${feed.length > 0 ? feed.slice(0, 8).map((entry: any) => `${entry.date}: ${entry.feed_type || "okänt"} ${entry.amount_kg || "?"} kg`).join("; ") : "Ingen foderdata"}.${daylightText}${weatherText}
 ${proactiveInsights}
@@ -432,7 +434,7 @@ ${KNOWLEDGE_BASE}`;
     if (insertError) return jsonResponse({ error: "Kunde inte registrera AI-användningen" }, 503);
     logId = inserted?.id ?? null;
 
-    const ai = await callAiStream({ model, messages, maxTokens: 1_000, temperature: 0.5 });
+    const ai = await callAiStream({ model, messages, maxTokens: 1_000, temperature: 0.5 }, req.signal);
 
     if (!ai.ok) {
       if (logId) {
@@ -492,11 +494,12 @@ ${KNOWLEDGE_BASE}`;
       },
     });
 
-    return new Response(ai.body.pipeThrough(transform), {
+    return new Response(ai.body.pipeThrough(transform, { signal: req.signal }), {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
         // Kvarvarande månadskvot efter detta anrop – frontend visar en diskret räknare
+        "Access-Control-Expose-Headers": "X-Agda-Remaining",
         "X-Agda-Remaining": String(Math.max(0, monthlyLimit - (monthlyUsage ?? 0) - 1)),
       },
     });

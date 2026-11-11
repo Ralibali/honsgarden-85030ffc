@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { getEggs, updateEggRecord } from '@/lib/api';
 
 const db = vi.hoisted(() => ({ from: vi.fn(), getSession: vi.fn() }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: db.from, auth: { getSession: db.getSession } } }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: () => ({ abortSignal: () => Promise.resolve({data: ['editor'], error: null}) }), from: db.from, auth: { getSession: db.getSession } } }));
 vi.mock('@/lib/offlineQueue', () => ({ getQueue: () => [], loadQueue: vi.fn() }));
 
 const original = { id: 'saved-egg', date: '2026-08-01', count: 8 };
@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
   db.getSession.mockResolvedValue({ data: { session: { user: { id: 'editor' } } } });
-  query = Object.fromEntries(['update', 'eq', 'select', 'order', 'range', 'maybeSingle'].map((name) => [name, vi.fn()]));
+  query = Object.fromEntries(['update', 'eq', 'in', 'select', 'order', 'range', 'maybeSingle'].map((name) => [name, vi.fn()]));
   Object.values(query).forEach((fn) => fn.mockReturnValue(query));
   db.from.mockReturnValue(query);
 });

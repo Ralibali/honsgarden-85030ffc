@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,11 +37,11 @@ export default function SetParentsDialog({ open, onOpenChange, henId, currentMot
   }, [currentMotherId, currentFatherId, currentMotherName, currentFatherName, open]);
 
   const { data: candidates = [] } = useQuery({
-    queryKey: ['hens-parent-candidates'],
+    queryKey: ['hens-parent-candidates', henId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hens')
-        .select('id, name, breed, hen_type, birth_date')
+        .select('id, name, breed, hen_type, birth_date').in('user_id', await getFarmUserIds())
         .neq('id', henId)
         .order('name');
       if (error) throw error;

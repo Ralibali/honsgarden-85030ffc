@@ -1,3 +1,4 @@
+import { useAuth } from '@/hooks/useAuth';
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -43,6 +44,9 @@ function makeTitle(content: string) {
 
 export default function Community() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
@@ -123,6 +127,22 @@ export default function Community() {
     onError: (error: any) => {
       toast({ title: 'Kunde inte publicera', description: error.message, variant: 'destructive' });
     },
+  });
+
+  const changeOwnPost = useMutation({
+    mutationFn: async ({ id, content }: { id: string; content?: string }) => {
+      if (!user) throw new Error('Du behöver vara inloggad.');
+      const table = supabase.from('community_posts');
+      const action = content === undefined ? table.delete() : table.update({ title: makeTitle(content), content });
+      const { data, error } = await action.eq('id', id).eq('user_id', user.id).select('id').maybeSingle();
+      if (error || !data) throw new Error('Inlägget kunde inte ändras. Ladda om och försök igen.');
+    },
+    onSuccess: (_, { content }) => {
+      setEditing(null);
+      void queryClient.invalidateQueries({ queryKey: ['community-posts'] });
+      toast({ title: content === undefined ? 'Inlägget är borttaget' : 'Inlägget är uppdaterat' });
+    },
+    onError: (error: Error) => toast({ title: error.message, variant: 'destructive' }),
   });
 
   const toggleLike = useMutation({
@@ -274,9 +294,22 @@ export default function Community() {
                   {post.content}
                 </p>
 
+                {post.user_id === user?.id && (editing === post.id ? (
+                  <div className="mb-3 space-y-2">
+                    <Textarea aria-label="Redigera inlägget" value={draft} onChange={e => setDraft(e.target.value)} maxLength={2000} />
+                    <Button size="sm" disabled={draft.trim().length < 5 || changeOwnPost.isPending} onClick={() => changeOwnPost.mutate({ id: post.id, content: draft.trim() })}>Spara</Button>{' '}
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>Avbryt</Button>
+                  </div>
+                ) : <div className="mb-3 flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(post.id); setDraft(post.content); }}>Redigera</Button>
+                  <Button size="sm" variant="ghost" disabled={changeOwnPost.isPending} onClick={() => {
+                    if (window.confirm('Ta bort ditt inlägg?')) changeOwnPost.mutate({ id: post.id });
+                  }}>Ta bort</Button>
+                </div>)}
                 <div className="flex items-center gap-4 pt-3 border-t border-border">
                   <button
                     className={`flex items-center gap-1.5 text-sm transition-colors ${post.liked ? 'text-primary' : 'text-muted-foreground hover:text-primary'}`}
+                    aria-label={post.liked ? "Ta bort gillning" : "Gilla inlägget"} aria-pressed={post.liked}
                     onClick={() => toggleLike.mutate(post)}
                   >
                     <Heart className={`h-4 w-4 ${post.liked ? 'fill-current' : ''}`} />

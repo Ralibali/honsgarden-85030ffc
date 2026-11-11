@@ -37,6 +37,7 @@ export const SWEDISH_HEADER_MAPS: Record<string, Record<string, string>> = {
   egg_logs: {
     id: "ID",
     hen_id: "Höna",
+    date: "Datum",
     logged_date: "Datum",
     count: "Antal",
     notes: "Anteckningar",

@@ -1,3 +1,4 @@
+import { isActiveHen } from '@/lib/farmMetrics';
 import { GardenHensCycle } from '../../packages/app-foundation/src/GardenHensCycle';
 import LinkedApps from '@/components/LinkedApps';
 import React, { useState, useEffect } from 'react';
@@ -107,7 +108,9 @@ export default function SettingsPage() {
   });
 
   const [coopName, setCoopName] = useState('');
-  const [henCount, setHenCount] = useState('');
+  const { data: hens } = useQuery({ queryKey: ['hens'], queryFn: api.getHens });
+  const [editedHenCount, setHenCount] = useState<string | null>(null);
+  const henCount = editedHenCount ?? (hens ? String(hens.filter(isActiveHen).length) : '');
   const [location, setLocation] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [city, setCity] = useState('');
@@ -125,7 +128,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (coopSettings) {
       setCoopName(coopSettings.coop_name || '');
-      setHenCount(String(coopSettings.hen_count || ''));
       setLocation(coopSettings.location || '');
       setPostalCode((coopSettings as any).postal_code || '');
       setCity((coopSettings as any).city || '');
@@ -221,6 +223,7 @@ export default function SettingsPage() {
       }
     },
     onSuccess: () => {
+      setHenCount(null);
       queryClient.invalidateQueries({ queryKey: ['coop-settings'] });
       queryClient.invalidateQueries({ queryKey: ['weather-full'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-local-weather'] });
@@ -419,7 +422,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <Label className="text-muted-foreground">Antal hönor</Label>
-              <Input type="number" value={henCount} onChange={(e) => setHenCount(e.target.value)} placeholder="0" className="mt-1.5 h-11 rounded-xl" />
+              <Input type="number" value={henCount} onChange={(e) => setHenCount(e.target.value)} min={0} disabled={!hens} placeholder="Hämtar…" className="mt-1.5 h-11 rounded-xl" />
             </div>
             <div>
               <Label className="text-muted-foreground">Platsbeskrivning</Label>
@@ -437,7 +440,7 @@ export default function SettingsPage() {
               <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Gårdens postort" className="mt-1.5 h-11 rounded-xl" />
             </div>
           </div>
-          <Button onClick={() => saveCoopMutation.mutate({ coop_name: coopName, hen_count: Number(henCount) || 0, location: location || null, postal_code: postalCode || null, city: city || null } as any)} disabled={saveCoopMutation.isPending} className="rounded-xl">
+          <Button onClick={() => saveCoopMutation.mutate({ coop_name: coopName, ...(editedHenCount !== null ? { hen_count: Number(editedHenCount) || 0 } : {}), location: location || null, postal_code: postalCode || null, city: city || null } as any)} disabled={saveCoopMutation.isPending} className="rounded-xl">
             {saveCoopMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Spara gårdsinställningar
           </Button>
@@ -506,7 +509,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-foreground">Veckorapport via mejl</p>
                   <p className="text-xs text-muted-foreground">Få en sammanfattning varje måndag med ägg, sysslor & tips</p>
-                  {!isPremium && <p className="text-[10px] text-warning mt-0.5">Kräver Premium</p>}
+                  {!isPremium && <p className="text-[10px] text-warning mt-0.5">Kräver Hönsgården Plus</p>}
                 </div>
               </div>
               <Switch

@@ -3,9 +3,7 @@ import { NEW_DIGITAL_PRODUCTS } from './lib/digitalProducts';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient } from "@tanstack/react-query";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import FarmQueryProvider from '@/components/FarmQueryProvider';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { isNativePlatform } from '@/lib/nativePlatform';
@@ -126,22 +124,6 @@ const GuiderRedirect = () => {
   return <Navigate to={target} replace />;
 };
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60_000,
-      refetchOnWindowFocus: false,
-      retry: 1,
-      gcTime: 24 * 60 * 60 * 1000, // 24h for persistence to work
-    },
-  },
-});
-
-const PERSISTED_KEYS = new Set(['eggs', 'hens', 'flocks']);
-const persister = typeof window !== 'undefined'
-  ? createSyncStoragePersister({ storage: window.localStorage, key: 'honsgarden_rq_cache_v1' })
-  : undefined;
-
 const LoadingFallback = () => <SuspenseFallback fullScreen />;
 
 
@@ -150,20 +132,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) return <LoadingFallback />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
-}
-
-function CacheClearer() {
-  const { user } = useAuth();
-  const prevUserId = React.useRef<string | null>(user?.id ?? null);
-
-  React.useEffect(() => {
-    if (user?.id !== prevUserId.current) {
-      queryClient.clear();
-      prevUserId.current = user?.id ?? null;
-    }
-  }, [user?.id]);
-
-  return null;
 }
 
 function PageTracker() {
@@ -304,35 +272,26 @@ const AppRoutes = () => (
   </BrowserRouter>
 );
 
+function AccountApp() {
+  const { user } = useAuth();
+  return (
+    <FarmQueryProvider accountId={user?.id}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppRoutes />
+        <CookieConsent />
+      </TooltipProvider>
+    </FarmQueryProvider>
+  );
+}
+
 const App = () => (
   <ErrorBoundary>
     <HelmetProvider>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{
-          persister: persister!,
-          maxAge: 24 * 60 * 60 * 1000,
-          dehydrateOptions: {
-            shouldDehydrateQuery: (q) => {
-              const key = Array.isArray(q.queryKey) ? q.queryKey[0] : q.queryKey;
-              return typeof key === 'string' && PERSISTED_KEYS.has(key);
-            },
-          },
-        }}
-      >
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AuthProvider>
-            <CacheClearer />
-            <AppRoutes />
-            <CookieConsent />
-          </AuthProvider>
-        </TooltipProvider>
-      </PersistQueryClientProvider>
+      <AuthProvider><AccountApp /></AuthProvider>
     </HelmetProvider>
   </ErrorBoundary>
 );
 
 export default App;
-

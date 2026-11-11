@@ -67,7 +67,7 @@ export default function PremiumStatusCard() {
     setRefreshing(true);
     try {
       await refreshSubscription();
-      toast({ title: 'Premiumstatus uppdaterad ✅' });
+      toast({ title: 'Plus-status uppdaterad ✅' });
     } catch {
       toast({ title: 'Kunde inte uppdatera', variant: 'destructive' as any });
     } finally {
@@ -83,11 +83,11 @@ export default function PremiumStatusCard() {
     : 'border-warning/20 bg-warning/5';
 
   const label = user?.premium_type === 'bundle' ? 'Odling + Höns Plus' : isLifetime
-    ? 'Premium – Livstid'
+    ? 'Hönsgården Plus – Livstid'
     : isTrial
-    ? 'Premium – Provperiod'
+    ? 'Hönsgården Plus – Provperiod'
     : isPaid
-    ? 'Premium – Aktivt'
+    ? 'Hönsgården Plus – Aktivt'
     : 'Gratisplan';
 
   return (

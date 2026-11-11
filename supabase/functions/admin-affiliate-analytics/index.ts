@@ -1,3 +1,5 @@
+import { selectAll } from "../_shared/selectAll.ts";
+import { placementRates } from "../_shared/affiliateCtr.ts";
 // Affiliate-analys per artikel (views, impressions, klick, CTR, top produkt/annonsör).
 // Endast admin.
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -57,11 +59,12 @@ Deno.serve(async (req) => {
   );
 
   const [clicksRes, impressionsRes, viewsRes] = await Promise.all([
-    service.from("affiliate_clicks").select("slug, source, product_id, advertiser").gte("created_at", since).limit(50000),
-    service.from("affiliate_impressions").select("slug, product_id, advertiser").gte("created_at", since).limit(50000),
-    service.from("page_views").select("path").gte("created_at", since).limit(50000),
+    selectAll(() => service.from("affiliate_clicks").select("slug, session_id, created_at, source, product_id, advertiser, section_title, path").gte("created_at", since).order("id")),
+    selectAll(() => service.from("affiliate_impressions").select("slug, session_id, created_at, source, product_id, advertiser, section_title, path").gte("created_at", since).order("id")),
+    selectAll(() => service.from("page_views").select("path").gte("created_at", since).order("id")),
   ]);
 
+  if ([clicksRes, impressionsRes, viewsRes].some(res => res.error)) return jsonResponse({ error: "Analysunderlaget kunde inte hämtas" }, 503);
   const clicks = clicksRes.data ?? [];
   const impressions = impressionsRes.data ?? [];
   const views = viewsRes.data ?? [];
@@ -110,10 +113,11 @@ Deno.serve(async (req) => {
     if (c.advertiser) entry.advertiserCounts[c.advertiser] = (entry.advertiserCounts[c.advertiser] || 0) + 1;
   }
 
+  const rates = placementRates(impressions, clicks, row => row.slug);
   const rows = Object.values(bySlug).map((r) => {
     const topProduct = Object.entries(r.productCounts).sort((a, b) => b[1] - a[1])[0];
     const topAdvertiser = Object.entries(r.advertiserCounts).sort((a, b) => b[1] - a[1])[0];
-    const ctr = r.views > 0 ? r.clicks / r.views : 0;
+    const ctr = rates.get(r.slug) ?? null;
     return {
       slug: r.slug,
       views: r.views,
@@ -127,7 +131,7 @@ Deno.serve(async (req) => {
   }).sort((a, b) => b.clicks - a.clicks);
 
   // "Hög trafik, låg CTR" = minst 20 visningar och CTR < 1%
-  const lowCtr = rows.filter((r) => r.views >= 20 && r.ctr < 0.01).slice(0, 20);
+  const lowCtr = rows.filter((r) => r.views >= 20 && r.ctr !== null && r.ctr < 0.01).slice(0, 20);
 
   return jsonResponse({ days, rows, low_ctr: lowCtr });
 });

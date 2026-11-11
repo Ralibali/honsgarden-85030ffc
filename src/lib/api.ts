@@ -1,3 +1,4 @@
+import { getFarmUserIds, getUserId } from '@/lib/farmScope';
 import { withRequestTimeout } from '@/lib/requestTimeout';
 import { isActiveHen, isLayingHen } from '@/lib/farmMetrics';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,29 +92,22 @@ interface AdminFeedbackItem extends Feedback {
   sender_label: string;
 }
 
-// Helper to get current user id
-async function getUserId(): Promise<string> {
-  const { data: { session } } = await withRequestTimeout(() => supabase.auth.getSession());
-  const userId = session?.user?.id;
-  if (!userId) throw new Error('Not authenticated');
-  return userId;
-}
-
 // Share concurrent reads only, scoped to the authenticated account. No stale data cache.
 const activeReads = new Map<string, Promise<unknown>>();
-async function readRows<Row>(table: string, build: () => {
+async function readRows<Row>(table: string, build: (owners: string[]) => {
   range(from: number, to: number): PromiseLike<{ data: Row[] | null; error: { message: string } | null }>;
   abortSignal?: (signal: AbortSignal) => unknown;
-}): Promise<Row[]> {
-  const userId = await getUserId();
+}, accountId?: string): Promise<Row[]> {
+  const userId = accountId ?? await getUserId();
   const key = `${userId}:${table}`;
   const existing = activeReads.get(key);
   if (existing) return existing as Promise<Row[]>;
   const request = withRequestTimeout(async (signal) => {
+    const owners = await getFarmUserIds(userId);
     const result: Row[] = [];
     for (let offset = 0; ; offset += 1000) {
       if (signal.aborted) throw new Error('Hämtningen avbröts. Försök igen.');
-      const query = build();
+      const query = build(owners);
       query.abortSignal?.(signal);
       const { data, error } = await query.range(offset, offset + 999);
       if (error) throw new Error(error.message);
@@ -128,7 +122,7 @@ async function readRows<Row>(table: string, build: () => {
 // ==================== HENS ====================
 
 export async function getHens(): Promise<Hen[]> {
-  return readRows('hens', () => supabase.from('hens').select('*').order('created_at', { ascending: false }).order('id'));
+  return readRows('hens', owners => supabase.from('hens').select('*').in('user_id', owners).order('created_at', { ascending: false }).order('id'));
 }
 
 export async function createHen(henData: HenInsert): Promise<Hen> {
@@ -156,7 +150,7 @@ export async function updateHen(id: string, henData: HenUpdate): Promise<Hen> {
   if (error) throw new Error(error.message);
   if (data) return data;
 
-  const { data: currentHen, error: fetchError } = await supabase.from('hens').select('*').eq('id', id).maybeSingle();
+  const { data: currentHen, error: fetchError } = await supabase.from('hens').select('*').in('user_id', await getFarmUserIds()).eq('id', id).maybeSingle();
   if (fetchError) throw new Error(fetchError.message);
   if (!currentHen) throw new Error('Hönan kunde inte uppdateras.');
   return currentHen;
@@ -168,10 +162,10 @@ export async function deleteHen(id: string): Promise<void> {
 }
 
 export async function getHenProfile(id: string): Promise<HenProfile> {
-  await getUserId();
-  const { data: hen, error } = await supabase.from('hens').select('*').eq('id', id).single();
+  const owners = await getFarmUserIds();
+  const { data: hen, error } = await supabase.from('hens').select('*').in('user_id', owners).eq('id', id).single();
   if (error) throw new Error(error.message);
-  const { data: healthLogs } = await selectAll(() => supabase.from('health_logs').select('*').eq('hen_id', id).order('date', { ascending: false }).order('id'));
+  const { data: healthLogs } = await selectAll(() => supabase.from('health_logs').select('*').in('user_id', owners).eq('hen_id', id).order('date', { ascending: false }).order('id'));
   return { ...hen, health_logs: healthLogs || [] };
 }
 
@@ -179,7 +173,7 @@ export async function getHenProfile(id: string): Promise<HenProfile> {
 
 export async function getEggs(): Promise<EggLog[]> {
   const userId = await getUserId();
-  const remote = await readRows('egg_logs', () => supabase.from('egg_logs').select('*').order('date', { ascending: false }).order('id'));
+  const remote = await readRows('egg_logs', owners => supabase.from('egg_logs').select('*').in('user_id', owners).order('date', { ascending: false }).order('id'), userId);
   try { await withRequestTimeout(() => loadQueue(), 2_000); } catch { /* The status banner reports local storage failures. */ }
   const ids = new Set(remote.map(row => (row as EggLog & { client_id?: string }).client_id));
   const pending = getQueue(userId).filter(row => !ids.has(row.client_id)).map(row => ({
@@ -227,7 +221,7 @@ export async function createEggRecord(record: { date: string; count: number; not
 // Returns null silently on any failure – this is "best effort" enrichment.
 export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<string, unknown> | null> {
   try {
-    const coop = await supabase.from('coop_settings').select('latitude, longitude').limit(1).maybeSingle();
+    const coop = await supabase.from('coop_settings').select('latitude, longitude').eq('user_id', await getUserId()).limit(1).maybeSingle();
     let lat = (coop.data as any)?.latitude;
     let lon = (coop.data as any)?.longitude;
     if ((!lat || !lon) && typeof navigator !== 'undefined' && navigator.geolocation) {
@@ -294,7 +288,7 @@ export async function removeOneEgg(id: string): Promise<void> {
 // ==================== FEED ====================
 
 export async function getFeedRecords(): Promise<FeedRecord[]> {
-  return readRows('feed_records', () => supabase.from('feed_records').select('*').order('date', { ascending: false }).order('id'));
+  return readRows('feed_records', owners => supabase.from('feed_records').select('*').in('user_id', owners).order('date', { ascending: false }).order('id'));
 }
 
 export async function createFeedRecord(record: FeedRecordInsert): Promise<FeedRecord> {
@@ -310,8 +304,8 @@ export async function deleteFeedRecord(id: string): Promise<void> {
 }
 
 export async function getFeedInventory() {
-  await getUserId();
-  const { data, error } = await supabase.from('feed_records').select('*').order('date', { ascending: false }).limit(50);
+  const owners = await getFarmUserIds();
+  const { data, error } = await supabase.from('feed_records').select('*').in('user_id', owners).order('date', { ascending: false }).limit(50);
   if (error) throw new Error(error.message);
   const totalKg = (data || []).reduce((sum, r) => sum + (r.amount_kg || 0), 0);
   return { total_kg: totalKg, records: data ?? [] };
@@ -329,8 +323,8 @@ export async function getFeedStatistics() {
 // ==================== HATCHING ====================
 
 export async function getHatchings(): Promise<Hatching[]> {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').order('start_date', { ascending: false }).order('id'));
+  const owners = await getFarmUserIds();
+  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').in('user_id', owners).order('start_date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -354,8 +348,8 @@ export async function deleteHatching(id: string): Promise<void> {
 }
 
 export async function getHatchingAlerts() {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').eq('status', 'incubating').order('id'));
+  const owners = await getFarmUserIds();
+  const { data, error } = await selectAll(() => supabase.from('hatchings').select('*').in('user_id', owners).eq('status', 'incubating').order('id'));
   if (error) throw new Error(error.message);
   const today = new Date();
   return (data || []).filter(h => {
@@ -368,7 +362,7 @@ export async function getHatchingAlerts() {
 // ==================== TRANSACTIONS ====================
 
 export async function getTransactions(): Promise<Transaction[]> {
-  return readRows('transactions', () => supabase.from('transactions').select('*').order('date', { ascending: false }).order('id'));
+  return readRows('transactions', owners => supabase.from('transactions').select('*').in('user_id', owners).order('date', { ascending: false }).order('id'));
 }
 
 export async function createTransaction(record: TransactionInsert): Promise<Transaction> {
@@ -386,8 +380,8 @@ export async function deleteTransaction(id: string): Promise<void> {
 // ==================== HEALTH LOGS ====================
 
 export async function getHealthLogs(): Promise<HealthLog[]> {
-  await getUserId();
-  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').order('date', { ascending: false }).order('id'));
+  const owners = await getFarmUserIds();
+  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').in('user_id', owners).order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -396,9 +390,7 @@ export async function getHealthLogs(): Promise<HealthLog[]> {
  * Page explicitly so older entries are not silently cut off by the API row limit. */
 export async function getDiaryLogs(): Promise<HealthLog[]> {
   const userId = await getUserId();
-  const { data: farmIds, error: farmError } = await supabase.rpc('get_farm_user_ids', { _uid: userId });
-  if (farmError) throw new Error(farmError.message);
-  const owners = [...new Set([userId, ...(farmIds ?? [])])];
+  const owners = await getFarmUserIds(userId);
   const entries: HealthLog[] = [];
   const pageSize = 500;
   for (let offset = 0; ; offset += pageSize) {
@@ -420,7 +412,8 @@ export async function createHealthLog(record: HealthLogInsert): Promise<HealthLo
 }
 
 export async function getHenHealthLogs(henId: string): Promise<HealthLog[]> {
-  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').eq('hen_id', henId).order('date', { ascending: false }).order('id'));
+  const owners = await getFarmUserIds();
+  const { data, error } = await selectAll(() => supabase.from('health_logs').select('*').in('user_id', owners).eq('hen_id', henId).order('date', { ascending: false }).order('id'));
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -458,10 +451,11 @@ export async function getUserFeedback(): Promise<Feedback[]> {
 
 export async function getDailyChores(): Promise<DailyChoreWithCompletion[]> {
   const userId = await getUserId();
+  const owners = await getFarmUserIds(userId);
   const today = todayLocal();
   const [chores, completions] = await Promise.all([
-    supabase.from('daily_chores').select('*').order('sort_order'),
-    selectAll(() => supabase.from('chore_completions').select('id,chore_id,user_id,created_at').eq('completed_date', today).order('id')),
+    supabase.from('daily_chores').select('*').in('user_id', owners).order('sort_order'),
+    selectAll(() => supabase.from('chore_completions').select('id,chore_id,user_id,created_at').in('user_id', owners).eq('completed_date', today).order('id')),
   ]);
   if (chores.error) throw new Error(chores.error.message);
   if (completions.error) throw new Error(completions.error.message);
@@ -525,9 +519,18 @@ export async function deleteChore(choreId: string): Promise<void> {
 
 export async function getCoopSettings(): Promise<CoopSettings> {
   const userId = await getUserId();
-  const { data, error } = await supabase.from('coop_settings').select('*').limit(1).maybeSingle();
+  const { data, error } = await supabase.from('coop_settings').select('*').eq('user_id', userId).limit(1).maybeSingle();
   if (error && error.code !== 'PGRST116') throw new Error(error.message);
   if (data) return data;
+  const { data: memberships, error: membershipError } = await supabase.from('farm_members')
+    .select('farm_id').eq('user_id', userId).order('joined_at').order('farm_id').limit(1);
+  if (membershipError) throw new Error(membershipError.message);
+  if (memberships?.length) {
+    const { data: shared, error: sharedError } = await supabase.from('coop_settings')
+      .select('*').eq('id', memberships[0].farm_id).single();
+    if (sharedError) throw new Error(sharedError.message);
+    return shared;
+  }
   const { data: newData, error: insertError } = await supabase
     .from('coop_settings')
     .insert({ user_id: userId })
@@ -575,7 +578,7 @@ export async function updateCoopSettings(settings: CoopSettingsUpdate): Promise<
 // ==================== FLOCKS ====================
 
 export async function getFlocks(): Promise<Flock[]> {
-  return readRows('flocks', () => supabase.from('flocks').select('*').order('created_at', { ascending: false }).order('id'));
+  return readRows('flocks', owners => supabase.from('flocks').select('*').in('user_id', owners).order('created_at', { ascending: false }).order('id'));
 }
 
 export async function getOrCreateDefaultFlock(preferredFlockId?: string | null): Promise<Flock> {
@@ -640,13 +643,13 @@ export async function updateReminderSettings(settings: ReminderSettingsUpdate): 
 // ==================== STATISTICS (computed client-side) ====================
 
 export async function getTodayStats() {
-  await getUserId();
+  const owners = await getFarmUserIds();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, feed] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('count').eq('date', today).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('count').in('user_id', owners).eq('date', today).order('id')),
     // Endast vuxna värphöns räknas i "antal höns" som statistiken jämför mot.
-    selectAll(() => supabase.from('hens').select('id').eq('is_active', true).eq('hen_type', 'hen').order('id')),
-    selectAll(() => supabase.from('feed_records').select('amount_kg, cost').eq('date', today).order('id')),
+    selectAll(() => supabase.from('hens').select('id').in('user_id', owners).eq('is_active', true).eq('hen_type', 'hen').order('id')),
+    selectAll(() => supabase.from('feed_records').select('amount_kg, cost').in('user_id', owners).eq('date', today).order('id')),
   ]);
   const eggCount = (eggs.data || []).reduce((s, r) => s + r.count, 0);
   const henCount = (hens.data || []).length;
@@ -656,12 +659,12 @@ export async function getTodayStats() {
 }
 
 export async function getMonthStats(year: number, month: number) {
-  await getUserId();
+  const owners = await getFarmUserIds();
   const start = format(startOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
   const end = format(endOfMonth(new Date(year, month - 1)), 'yyyy-MM-dd');
-  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').gte('date', start).lte('date', end).order('date').order('id'));
-  const { data: feed } = await selectAll(() => supabase.from('feed_records').select('*').gte('date', start).lte('date', end).order('id'));
-  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').gte('date', start).lte('date', end).order('id'));
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').in('user_id', owners).gte('date', start).lte('date', end).order('date').order('id'));
+  const { data: feed } = await selectAll(() => supabase.from('feed_records').select('*').in('user_id', owners).gte('date', start).lte('date', end).order('id'));
+  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').in('user_id', owners).gte('date', start).lte('date', end).order('id'));
   return {
     eggs: eggs || [],
     feed: feed || [],
@@ -672,11 +675,11 @@ export async function getMonthStats(year: number, month: number) {
 }
 
 export async function getYearStats(year: number) {
-  await getUserId();
+  const owners = await getFarmUserIds();
   const start = format(startOfYear(new Date(year, 0)), 'yyyy-MM-dd');
   const end = format(endOfYear(new Date(year, 0)), 'yyyy-MM-dd');
-  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').gte('date', start).lte('date', end).order('id'));
-  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').gte('date', start).lte('date', end).order('id'));
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('*').in('user_id', owners).gte('date', start).lte('date', end).order('id'));
+  const { data: txns } = await selectAll(() => supabase.from('transactions').select('*').in('user_id', owners).gte('date', start).lte('date', end).order('id'));
   return {
     total_eggs: (eggs || []).reduce((s, r) => s + r.count, 0),
     transactions: txns || [],
@@ -713,19 +716,19 @@ export async function getSummaryStats() {
 }
 
 export async function getYesterdaySummary() {
-  await getUserId();
+  const owners = await getFarmUserIds();
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('count').eq('date', yesterday).order('id'));
+  const { data: eggs } = await selectAll(() => supabase.from('egg_logs').select('count').in('user_id', owners).eq('date', yesterday).order('id'));
   const eggCount = (eggs || []).reduce((s, r) => s + r.count, 0);
   return { date: yesterday, eggs: eggCount };
 }
 
 export async function getFarmToday() {
-  await getUserId();
+  const owners = await getFarmUserIds();
   const today = format(new Date(), 'yyyy-MM-dd');
   const [eggs, hens, chores] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('count').eq('date', today).order('id')),
-    selectAll(() => supabase.from('hens').select('id, name').eq('is_active', true).eq('hen_type', 'hen').order('id')),
+    selectAll(() => supabase.from('egg_logs').select('count').in('user_id', owners).eq('date', today).order('id')),
+    selectAll(() => supabase.from('hens').select('id, name').in('user_id', owners).eq('is_active', true).eq('hen_type', 'hen').order('id')),
     getDailyChores(),
   ]);
   return {
@@ -1046,12 +1049,17 @@ export async function adminCheck() {
 }
 
 export async function adminStats() {
-  const [profiles, eggs, hens] = await Promise.all([
-    supabase.from('profiles').select('id', { count: 'exact' }),
-    supabase.from('egg_logs').select('id', { count: 'exact' }),
-    supabase.from('hens').select('id', { count: 'exact' }),
+  const count = { count: 'exact', head: true } as const;
+  const [profiles, eggs, hens, premium, terms] = await Promise.all([
+    supabase.from('profiles').select('id', count),
+    supabase.from('egg_logs').select('id', count),
+    supabase.from('hens').select('id', count),
+    supabase.from('profiles').select('id', count).eq('subscription_status', 'premium'),
+    supabase.from('profiles').select('id', count).not('terms_accepted_at', 'is', null),
   ]);
-  return { user_count: profiles.count || 0, egg_records: eggs.count || 0, hen_count: hens.count || 0 };
+  for (const res of [profiles, eggs, hens, premium, terms]) if (res.error) throw res.error;
+  return { user_count: profiles.count ?? 0, egg_records: eggs.count ?? 0, hen_count: hens.count ?? 0,
+    premium_count: premium.count ?? 0, terms_count: terms.count ?? 0 };
 }
 
 export async function adminUsers(): Promise<AdminUserProfile[]> {
@@ -1426,9 +1434,10 @@ export interface ProductionForecast {
 }
 
 export async function getProductionForecast(): Promise<ProductionForecast> {
+  const owners = await getFarmUserIds();
   const [eggsRes, goalsRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('date, count').order('id')),
-    supabase.from('egg_goals').select('target_count, period, is_active').eq('is_active', true).limit(1),
+    selectAll(() => supabase.from('egg_logs').select('date, count').in('user_id', owners).order('id')),
+    supabase.from('egg_goals').select('target_count, period, is_active').in('user_id', owners).eq('is_active', true).limit(1),
   ]);
 
   const eggs = (eggsRes.data ?? []) as { date: string; count: number | null }[];
@@ -1618,9 +1627,10 @@ const COMPLETED_HATCH_STATUSES = new Set([
 ]);
 
 export async function getHatchStatistics(): Promise<HatchStatistics> {
+  const owners = await getFarmUserIds();
   const { data, error } = await supabase
     .from('hatch_sessions')
-    .select('id, name, set_date, status, eggs_set, eggs_fertile, eggs_hatched, chicks_survived_7d, actual_hatch_date')
+    .select('id, name, set_date, status, eggs_set, eggs_fertile, eggs_hatched, chicks_survived_7d, actual_hatch_date').in('user_id', owners)
     .order('set_date', { ascending: true });
 
   if (error) throw new Error(error.message);
@@ -1715,9 +1725,10 @@ export interface FeedEfficiencyTrend {
 }
 
 export async function getFeedEfficiencyTrend(): Promise<FeedEfficiencyTrend> {
+  const owners = await getFarmUserIds();
   const [feed, eggs] = await Promise.all([
-    selectAll(() => supabase.from('feed_records').select('amount_kg, cost, feed_type, brand, date').order('id')),
-    selectAll(() => supabase.from('egg_logs').select('count, date').order('id')),
+    selectAll(() => supabase.from('feed_records').select('amount_kg, cost, feed_type, brand, date').in('user_id', owners).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('count, date').in('user_id', owners).order('id')),
   ]);
 
   const feedRows = (feed.data ?? []) as any[];
@@ -2005,10 +2016,11 @@ function extractLat(weather: any): number | null {
 }
 
 export async function getDaylightTempAnalysis(): Promise<DaylightTempAnalysis> {
+  const owners = await getFarmUserIds();
   const [eggsRes, hensRes, coopRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('date, count, weather').order('id')),
-    selectAll(() => supabase.from('hens').select('created_at, death_date, hen_type').order('id')),
-    supabase.from('coop_settings').select('latitude').limit(1),
+    selectAll(() => supabase.from('egg_logs').select('date, count, weather').in('user_id', owners).order('id')),
+    selectAll(() => supabase.from('hens').select('created_at, death_date, hen_type').in('user_id', owners).order('id')),
+    supabase.from('coop_settings').select('latitude').in('user_id', owners).limit(1),
   ]);
 
   const eggs = (eggsRes.data ?? []) as { date: string; count: number | null; weather: any }[];
@@ -2189,7 +2201,8 @@ export interface ProductionControlData {
 }
 
 export async function getProductionControlData(windowSize: 14 | 28 = 28): Promise<ProductionControlData> {
-  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').order('id'));
+  const owners = await getFarmUserIds();
+  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').in('user_id', owners).order('id'));
   const rows = (res.data ?? []) as { date: string; count: number | null }[];
 
   if (rows.length === 0) {
@@ -2301,7 +2314,8 @@ export interface DecompositionResult {
 }
 
 export async function getDecomposition(): Promise<DecompositionResult> {
-  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').order('id'));
+  const owners = await getFarmUserIds();
+  const res = await selectAll(() => supabase.from('egg_logs').select('date, count').in('user_id', owners).order('id'));
   const rows = (res.data ?? []) as { date: string; count: number | null }[];
 
   if (rows.length === 0) {
@@ -2523,9 +2537,10 @@ export interface HenConsistencyResult {
 }
 
 export async function getHenConsistency(): Promise<HenConsistencyResult> {
+  const owners = await getFarmUserIds();
   const [logsRes, hensRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
-    selectAll(() => supabase.from('hens').select('id, name, hen_type, created_at, death_date').order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').in('user_id', owners).not('hen_id', 'is', null).order('id')),
+    selectAll(() => supabase.from('hens').select('id, name, hen_type, created_at, death_date').in('user_id', owners).order('id')),
   ]);
 
   const logs = (logsRes.data ?? []) as { hen_id: string; date: string; count: number | null }[];
@@ -2658,9 +2673,10 @@ export interface BreedingAnalysisResult {
 }
 
 export async function getBreedingValues(): Promise<BreedingAnalysisResult> {
+  const owners = await getFarmUserIds();
   const [hensRes, logsRes] = await Promise.all([
-    selectAll(() => supabase.from('hens').select('id, name, father_id, mother_id, birth_date, hen_type, death_date, created_at').order('id')),
-    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
+    selectAll(() => supabase.from('hens').select('id, name, father_id, mother_id, birth_date, hen_type, death_date, created_at').in('user_id', owners).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').in('user_id', owners).not('hen_id', 'is', null).order('id')),
   ]);
 
   const hens = (hensRes.data ?? []) as {
@@ -2844,10 +2860,11 @@ export interface CohortAnalysisResult {
 }
 
 export async function getCohortAnalysis(): Promise<CohortAnalysisResult> {
+  const owners = await getFarmUserIds();
   const [hensRes, logsRes, sessionsRes] = await Promise.all([
-    selectAll(() => supabase.from('hens').select('id, birth_date, hatch_session_id, hen_type, death_date').order('id')),
-    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').not('hen_id', 'is', null).order('id')),
-    supabase.from('hatch_sessions').select('id, name'),
+    selectAll(() => supabase.from('hens').select('id, birth_date, hatch_session_id, hen_type, death_date').in('user_id', owners).order('id')),
+    selectAll(() => supabase.from('egg_logs').select('hen_id, date, count').in('user_id', owners).not('hen_id', 'is', null).order('id')),
+    supabase.from('hatch_sessions').select('id, name').in('user_id', owners),
   ]);
 
   const hens = (hensRes.data ?? []) as {
@@ -3041,10 +3058,11 @@ function pearson(xs: number[], ys: number[]): number | null {
 }
 
 export async function getCorrelationMatrix(): Promise<CorrelationMatrixResult> {
+  const owners = await getFarmUserIds();
   const [eggsRes, feedRes, coopRes] = await Promise.all([
-    selectAll(() => supabase.from('egg_logs').select('date, count, weather').order('id')),
-    selectAll(() => supabase.from('feed_records').select('date, amount_kg').order('id')),
-    supabase.from('coop_settings').select('latitude').limit(1),
+    selectAll(() => supabase.from('egg_logs').select('date, count, weather').in('user_id', owners).order('id')),
+    selectAll(() => supabase.from('feed_records').select('date, amount_kg').in('user_id', owners).order('id')),
+    supabase.from('coop_settings').select('latitude').in('user_id', owners).limit(1),
   ]);
 
   const eggs = (eggsRes.data ?? []) as { date: string; count: number | null; weather: any }[];

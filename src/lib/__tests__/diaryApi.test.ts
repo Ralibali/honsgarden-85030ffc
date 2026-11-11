@@ -8,7 +8,7 @@ vi.mock('@/integrations/supabase/client', () => ({ supabase: {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.getSession.mockResolvedValue({ data: { session: { user: { id: 'self' } } }, error: null });
-  mocks.rpc.mockResolvedValue({ data: ['self', 'family'], error: null });
+  mocks.rpc.mockReturnValue({ abortSignal: () => Promise.resolve({ data: ['self', 'family'], error: null }) });
   const builder = { select: () => builder, eq: mocks.eq, in: mocks.owners, order: () => builder, range: mocks.range };
   mocks.eq.mockReturnValue(builder); mocks.owners.mockReturnValue(builder); mocks.from.mockReturnValue(builder);
   mocks.range.mockResolvedValue({ data: [], error: null });
@@ -30,7 +30,7 @@ describe('getDiaryLogs', () => {
     expect(mocks.range).toHaveBeenNthCalledWith(2, 500, 999);
   });
   it('fails closed when farm membership cannot be loaded', async () => {
-    mocks.rpc.mockResolvedValue({ data: null, error: { message: 'membership unavailable' } });
+    mocks.rpc.mockReturnValue({ abortSignal: () => Promise.resolve({ data: null, error: { message: 'membership unavailable' } }) });
     await expect(getDiaryLogs()).rejects.toThrow('membership unavailable');
     expect(mocks.from).not.toHaveBeenCalled();
   });

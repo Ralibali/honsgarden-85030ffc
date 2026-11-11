@@ -1,3 +1,5 @@
+import { formatCtr } from '../../../supabase/functions/_shared/affiliateCtr';
+import { useAffiliateProductNames } from '@/hooks/useAffiliateProductNames';
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -10,13 +12,14 @@ interface Row {
   views: number;
   impressions: number;
   clicks: number;
-  ctr: number;
+  ctr: number | null;
   clicks_by_source: Record<string, number>;
   top_product: { id: string; clicks: number } | null;
   top_advertiser: { name: string; clicks: number } | null;
 }
 
 export default function AffiliateAnalyticsPanel() {
+  const productName = useAffiliateProductNames();
   const [days, setDays] = useState('30');
 
   const { data, isLoading } = useQuery({
@@ -73,8 +76,8 @@ export default function AffiliateAnalyticsPanel() {
                       <td className="py-1.5 pr-3 text-right">{r.views}</td>
                       <td className="py-1.5 pr-3 text-right">{r.impressions}</td>
                       <td className="py-1.5 pr-3 text-right stat-number text-primary">{r.clicks}</td>
-                      <td className="py-1.5 pr-3 text-right">{(r.ctr * 100).toFixed(2)}%</td>
-                      <td className="py-1.5 pr-3 truncate max-w-[140px]">{r.top_product?.id ?? '—'}</td>
+                      <td className="py-1.5 pr-3 text-right">{formatCtr(r.ctr)}</td>
+                      <td className="py-1.5 pr-3 truncate max-w-[140px]">{r.top_product ? productName(r.top_product.id) : '—'}</td>
                       <td className="py-1.5 pr-3 truncate max-w-[100px]">{r.top_advertiser?.name ?? '—'}</td>
                     </tr>
                   ))}
@@ -92,7 +95,7 @@ export default function AffiliateAnalyticsPanel() {
                   {lowCtr.map((r) => (
                     <li key={r.slug} className="flex justify-between border-b border-border/40 py-1">
                       <span className="truncate">{r.slug}</span>
-                      <span className="text-muted-foreground">{r.views} vy • {(r.ctr * 100).toFixed(2)}%</span>
+                      <span className="text-muted-foreground">{r.views} vy • {formatCtr(r.ctr)}</span>
                     </li>
                   ))}
                 </ul>

@@ -95,7 +95,7 @@ function SettingsTrustContent() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-muted-foreground mb-1">Ditt medlemskap</p>
-                <h2 className="font-serif text-lg text-foreground">{isPremium ? 'Premium är aktivt' : 'Premium visas inte som aktivt'}</h2>
+                <h2 className="font-serif text-lg text-foreground">{isPremium ? 'Hönsgården Plus är aktivt' : 'Gratis medlemskap'}</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mt-1">
                   {isPremium
                     ? 'Allt ser bra ut. Om något ändå verkar låst kan du synka statusen manuellt.'
@@ -111,7 +111,7 @@ function SettingsTrustContent() {
               </Button>
               {!isPremium && (
                 <Button variant="outline" onClick={() => navigate('/app/premium')} className="rounded-xl gap-2 w-full sm:w-auto">
-                  Se Premium<ArrowRight className="h-4 w-4" />
+                  Se Hönsgården Plus<ArrowRight className="h-4 w-4" />
                 </Button>
               )}
             </div>

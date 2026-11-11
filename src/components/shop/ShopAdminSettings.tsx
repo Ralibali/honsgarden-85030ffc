@@ -67,7 +67,13 @@ const KEY_MAP: Record<keyof Settings, string> = {
 
 function readStr(v: unknown, fb: string): string {
   if (v === null || v === undefined) return fb;
-  if (typeof v === 'string') { const s = v.replace(/^"|"$/g, ''); return s === 'null' ? fb : s; }
+  if (typeof v === 'string') {
+    if (v === 'null') return fb;
+    if (v.startsWith('"')) {
+      try { const parsed = JSON.parse(v); if (typeof parsed === 'string') return parsed; } catch { /* plain text */ }
+    }
+    return v;
+  }
   return String(v);
 }
 function readNum(v: unknown, fb: number): number {
@@ -116,8 +122,8 @@ export default function ShopAdminSettings() {
         deliveryDaysMax: readNumOrNull(map.get(KEY_MAP.deliveryDaysMax)),
         companyName: readStr(map.get(KEY_MAP.companyName), ''),
         companyOrgNumber: readStr(map.get(KEY_MAP.companyOrgNumber), ''),
-        companyAddress: readStr(map.get(KEY_MAP.companyAddress), ''),
-        returnAddress: readStr(map.get(KEY_MAP.returnAddress), ''),
+        companyAddress: readStr(map.get(KEY_MAP.companyAddress), '').replace(/\\r\\n|\\n|\\r/g, '\n'),
+        returnAddress: readStr(map.get(KEY_MAP.returnAddress), '').replace(/\\r\\n|\\n|\\r/g, '\n'),
         termsReviewedAt: (() => {
           const raw = map.get(KEY_MAP.termsReviewedAt);
           const t = readStr(raw, '');
