@@ -1,3 +1,5 @@
+import { isPushOnlyRegistration } from '@/lib/pwaUpdate';
+
 export async function clearBrowserAppCaches(options: { unregisterServiceWorkers?: boolean } = {}) {
   if (typeof window === 'undefined') return;
 
@@ -13,7 +15,9 @@ export async function clearBrowserAppCaches(options: { unregisterServiceWorkers?
     tasks.push(
       navigator.serviceWorker.getRegistrations().then((registrations) => Promise.all(
         registrations.map((registration) => (
-          options.unregisterServiceWorkers
+          // Push-workern cachar ingenting, och att avregistrera den säger upp
+          // användarens push-prenumeration. Den uppdateras bara.
+          options.unregisterServiceWorkers && !isPushOnlyRegistration(registration)
             ? registration.unregister()
             : registration.update().catch(() => false)
         )),

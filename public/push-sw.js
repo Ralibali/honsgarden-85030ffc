@@ -1,4 +1,8 @@
-/* Web Push – importeras in i den Workbox-genererade service workern */
+/* Web Push.
+ * Registreras direkt av appen när användaren slår på notiser
+ * (src/lib/pushServiceWorker.ts). Filen har medvetet ingen fetch-hanterare:
+ * den cachar ingenting och kan därför aldrig servera ett gammalt app-skal.
+ * src/sw.ts importerar samma fil om en Workbox-worker byggs igen. */
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (e) { data = {}; }
