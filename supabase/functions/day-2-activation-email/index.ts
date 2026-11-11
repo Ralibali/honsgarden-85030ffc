@@ -3,7 +3,7 @@
 // logged a single egg yet. Deduped via email_send_log (one send per user).
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app/app";
+const APP_URL = "https://honsgarden.se/app";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 const LABEL = "day-2-activation";
 

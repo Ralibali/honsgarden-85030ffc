@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,7 +44,7 @@ export default function MapListingManage() {
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke("map-listing-manage", { body: { token, action, patch } });
-      if (error) throw error;
+      if (error) throw new Error(await functionErrorMessage(error, "Något gick fel"));
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as any;
     } catch (e: any) {

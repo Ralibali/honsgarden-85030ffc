@@ -3,7 +3,7 @@ import { callAi } from "../_shared/ai.ts";
 import { selectAll } from "../_shared/selectAll.ts";
 
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
-const APP_URL = "https://honsgarden.lovable.app/app";
+const APP_URL = "https://honsgarden.se/app";
 
 Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";

@@ -3,7 +3,7 @@
 // Called from CancelBooking.tsx after the cancellation RPC succeeds.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app";
+const APP_URL = "https://honsgarden.se";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {
