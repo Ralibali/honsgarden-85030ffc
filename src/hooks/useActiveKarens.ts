@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { todayLocal } from '@/lib/datetime';
@@ -19,7 +20,7 @@ export function useActiveKarens() {
       const { data, error } = await (supabase
         .from('health_events') as any)
         .select('id, title, hen_id, flock_id, egg_safe_from')
-        .gte('egg_safe_from', today)
+        .in('user_id', await getFarmUserIds()).gte('egg_safe_from', today)
         .order('egg_safe_from', { ascending: true });
       if (error) throw error;
       const t = new Date(today).getTime();

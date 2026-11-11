@@ -283,16 +283,19 @@ serve(async (req) => {
     }
     const history = normalizeHistory(requestBody?.history);
 
+    const { data: members, error: membershipError } = await supabase.rpc("get_farm_user_ids", { _uid: user.id });
+    if (membershipError) return jsonResponse({ error: "Kunde inte läsa gårdens medlemmar" }, 503);
+    const owners = [...new Set([user.id, ...(members ?? [])])];
     const [hensRes, eggsRes, healthRes, feedRes, coopRes, weatherRes] = await Promise.all([
-      selectAll(() => supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").order("id")),
+      selectAll(() => supabase.from("hens").select("id, name, breed, birth_date, is_active, hen_type").in("user_id", owners).order("id")),
       // 90 kalenderdagar, inte 90 rader: gårdar som loggar per höna har många rader per dag.
-      selectAll(() => supabase.from("egg_logs").select("date, count, hen_id").gte("date", dayKeyOffset(89))
+      selectAll(() => supabase.from("egg_logs").select("date, count, hen_id").in("user_id", owners).gte("date", dayKeyOffset(89))
         .order("date", { ascending: false }).order("id")),
-      supabase.from("health_logs").select("date, type, description, hen_id").order("date", { ascending: false }).limit(30),
-      supabase.from("feed_records").select("date, feed_type, amount_kg, cost").order("date", { ascending: false }).limit(30),
+      supabase.from("health_logs").select("date, type, description, hen_id").in("user_id", owners).order("date", { ascending: false }).limit(30),
+      supabase.from("feed_records").select("date, feed_type, amount_kg, cost").in("user_id", owners).order("date", { ascending: false }).limit(30),
       // Valfria kontextkällor – fel här ska aldrig stoppa svaret
-      supabase.from("coop_settings").select("latitude").limit(1).maybeSingle(),
-      supabase.from("weather_advice_cache").select("cache_date, weather_snapshot")
+      supabase.from("coop_settings").select("latitude").eq("user_id", user.id).limit(1).maybeSingle(),
+      supabase.from("weather_advice_cache").select("cache_date, weather_snapshot").eq("user_id", user.id)
         .gte("cache_date", dayKeyOffset(6)).order("cache_date", { ascending: false }),
     ]);
 
@@ -497,6 +500,7 @@ ${KNOWLEDGE_BASE}`;
         ...corsHeaders,
         "Content-Type": "text/event-stream",
         // Kvarvarande månadskvot efter detta anrop – frontend visar en diskret räknare
+        "Access-Control-Expose-Headers": "X-Agda-Remaining",
         "X-Agda-Remaining": String(Math.max(0, monthlyLimit - (monthlyUsage ?? 0) - 1)),
       },
     });

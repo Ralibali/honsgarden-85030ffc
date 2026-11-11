@@ -113,6 +113,7 @@ export default function AppComingSoonDialog() {
     const onSettings = window.location.pathname.startsWith('/app/settings');
     if (!standalone && !onSettings && !readScoped(userId, STORAGE_KEY) && canAutoShowInstall) {
       timer = setTimeout(() => {
+        if (window.location.pathname.startsWith('/app/settings') || document.querySelector('[role="dialog"],[role="alertdialog"],[data-state="open"][role="combobox"],form:focus-within')) return;
         setOpen(true);
         trackClick('app_coming_soon_shown', {
           elementText: 'AppComingSoonDialog',

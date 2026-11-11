@@ -250,7 +250,7 @@ export default function SeasonalCalendar() {
       {/* Egg production curve */}
       <Card className="border-border/50 shadow-sm overflow-hidden">
         <CardContent className="p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-3">Äggproduktion genom året</p>
+          <p className="text-xs font-medium text-muted-foreground mb-3">Förväntad äggproduktion genom året</p>
           <div className="flex items-end gap-1 h-20">
             {months.map((month, i) => {
               const heights = { low: 20, medium: 45, high: 70, peak: 100 };
@@ -261,7 +261,9 @@ export default function SeasonalCalendar() {
                 <button
                   key={i}
                   onClick={() => setSelectedMonth(isSelected ? null : i)}
-                  className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
+                  aria-label={month.name + " · " + eggLabels[month.eggExpectation].label}
+                  aria-pressed={isSelected}
+                  className="h-full min-w-0 flex-1 flex flex-col justify-end items-center gap-1 group cursor-pointer"
                 >
                   <motion.div
                     className={`w-full rounded-t-lg transition-colors ${

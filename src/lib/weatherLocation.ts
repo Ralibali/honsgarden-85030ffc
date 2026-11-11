@@ -2,6 +2,8 @@ import { isInternationalDomain } from '@/lib/brand';
 import { withRequestTimeout } from '@/lib/requestTimeout';
 import { reverseGeocodeCity } from '@/lib/reverseGeocode';
 
+export class FarmLocationError extends Error {}
+
 export type WeatherSettings = { city?: string | null; postal_code?: string | null };
 
 /** Saved farm location takes precedence over the device's location. Never invent a city. */
@@ -19,12 +21,12 @@ export async function resolveWeatherLocation(settings?: WeatherSettings | null) 
       const place = data.results?.find((result: { latitude?: number; longitude?: number }) => Number.isFinite(result.latitude) && Number.isFinite(result.longitude));
       if (place) return { lat: Number(place.latitude), lon: Number(place.longitude), city: String(place.name), source: 'farm' as const };
     }
-    throw new Error('Gårdens ort hittades inte. Kontrollera ort och postnummer i Inställningar.');
+    throw new FarmLocationError('Gårdens ort hittades inte. Kontrollera ort och postnummer i Inställningar.');
   }
 
   const position = await withRequestTimeout(() => new Promise<GeolocationPosition>((resolve, reject) => {
-    if (!navigator.geolocation) return reject(new Error('Fyll i gårdens ort i Inställningar för att visa rätt väder.'));
-    navigator.geolocation.getCurrentPosition(resolve, () => reject(new Error('Fyll i gårdens ort i Inställningar eller tillåt platsåtkomst för att visa rätt väder.')), { timeout: 5000, maximumAge: 10 * 60 * 1000 });
+    if (!navigator.geolocation) return reject(new FarmLocationError('Fyll i gårdens ort i Inställningar för att visa rätt väder.'));
+    navigator.geolocation.getCurrentPosition(resolve, () => reject(new FarmLocationError('Fyll i gårdens ort i Inställningar eller tillåt platsåtkomst för att visa rätt väder.')), { timeout: 5000, maximumAge: 10 * 60 * 1000 });
   }), 6_000);
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;

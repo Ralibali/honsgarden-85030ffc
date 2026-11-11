@@ -1,3 +1,4 @@
+import { FarmLocationError } from '@/lib/weatherLocation';
 import { api } from '@/lib/api';
 import { resolveWeatherLocation, type WeatherSettings } from '@/lib/weatherLocation';
 import { withRequestTimeout } from '@/lib/requestTimeout';
@@ -187,7 +188,12 @@ export default function Weather() {
         </div>
       </div>
 
-      {weatherError || settingsQuery.isError ? (
+      {weatherError instanceof FarmLocationError ? (
+        <Card><CardContent className="p-5 space-y-3">
+          <p>{weatherError.message}</p>
+          <Button asChild variant="outline"><Link to="/app/settings">Ange gårdens ort</Link></Button>
+        </CardContent></Card>
+      ) : weatherError || settingsQuery.isError ? (
         <div>
           <QueryNotice title={weatherError instanceof Error ? weatherError.message : 'Kunde inte läsa gårdens plats'} onRetry={() => { if (settingsQuery.isError) void settingsQuery.refetch(); else void refetch(); }} />
           <Link to="/app/settings" className="text-primary underline">Ändra gårdens ort i Inställningar</Link>

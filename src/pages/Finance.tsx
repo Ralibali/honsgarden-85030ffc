@@ -78,6 +78,8 @@ export default function Finance() {
   const categories = form.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const selectedCategory = categories.find(c => c.value === form.category);
   const isOther = form.category === 'other';
+  const canSave = !!form.category && !!form.date && !!(isOther ? form.customDescription : form.description).trim()
+    && Number.isFinite(Number(form.amount)) && Number(form.amount) > 0;
 
   const createMutation = useMutation({
     mutationFn: (data: any) => api.createTransaction(data),
@@ -115,7 +117,7 @@ export default function Finance() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const description = isOther ? form.customDescription : form.description;
-    if (!form.amount || !description || !form.category) return;
+    if (!canSave) return;
     createMutation.mutate({
       type: form.type,
       amount: parseFloat(form.amount),
@@ -251,7 +253,7 @@ export default function Finance() {
                       <Input className="mt-1.5" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={createMutation.isPending || !form.category}>
+                  <Button type="submit" className="w-full" disabled={createMutation.isPending || !canSave}>
                     {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Spara transaktion
                   </Button>
@@ -351,6 +353,7 @@ export default function Finance() {
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 sm:h-7 sm:w-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          aria-label="Ta bort transaktion"
                           onClick={() => deleteMutation.mutate(t.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />

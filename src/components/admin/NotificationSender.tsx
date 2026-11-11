@@ -14,6 +14,7 @@ import { sv } from 'date-fns/locale';
 export default function NotificationSender() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
 
@@ -33,6 +34,13 @@ export default function NotificationSender() {
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error('Ej inloggad');
+      if (title.includes('�') || message.includes('�')) throw new Error('Ersätt det skadade tecknet före sparning.');
+      if (editing) {
+        const { data, error } = await supabase.from('notifications').update({ title: title.trim(), message: message.trim() })
+          .eq('id', editing).select('id').single();
+        if (error || !data) throw new Error('Notisen kunde inte uppdateras.');
+        return;
+      }
       const { error } = await supabase.from('notifications').insert({
         title: title.trim(),
         message: message.trim(),
@@ -44,7 +52,8 @@ export default function NotificationSender() {
       queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
       setTitle('');
       setMessage('');
-      toast({ title: 'Notis skickad till alla användare!' });
+      toast({ title: editing ? 'Notisen är uppdaterad' : 'Notis skickad till alla användare!' });
+      setEditing(null);
     },
     onError: (err: any) => toast({ title: 'Fel', description: err.message, variant: 'destructive' }),
   });
@@ -60,7 +69,8 @@ export default function NotificationSender() {
     },
   });
 
-  const canSend = title.trim().length > 0 && message.trim().length > 0;
+  const invalidText = /[�]|[\uD800-\uDFFF]/u.test(title + message);
+  const canSend = !!title.trim() && !!message.trim() && !invalidText;
 
   return (
     <div className="space-y-4">
@@ -68,7 +78,7 @@ export default function NotificationSender() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Bell className="h-4 w-4 text-primary" />
-            Skicka notis till alla användare
+            {editing ? 'Redigera notis' : 'Skicka notis till alla användare'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -91,8 +101,10 @@ export default function NotificationSender() {
             className="w-full"
           >
             {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Skicka notis
+            {editing ? 'Spara ändring' : 'Skicka notis'}
           </Button>
+          {invalidText && <p role="alert" className="text-sm">Ett tecken är skadat. Ersätt det innan du sparar.</p>}
+          {editing && <Button variant="ghost" onClick={() => { setEditing(null); setTitle(''); setMessage(''); }}>Avbryt</Button>}
         </CardContent>
       </Card>
 
@@ -116,7 +128,9 @@ export default function NotificationSender() {
                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: sv })}
                     </p>
                   </div>
+                  <Button size="sm" variant="ghost" onClick={() => { setEditing(n.id); setTitle(n.title); setMessage(n.message); }}>Redigera</Button>
                   <Button
+                    aria-label="Ta bort notis"
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 shrink-0 text-destructive/60 hover:text-destructive"

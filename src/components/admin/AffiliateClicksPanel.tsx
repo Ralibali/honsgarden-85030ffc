@@ -1,3 +1,6 @@
+import { formatCtr, placementRates } from '../../../supabase/functions/_shared/affiliateCtr';
+import { useAffiliateProductNames } from '@/hooks/useAffiliateProductNames';
+import { selectAll } from '@/lib/selectAll';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +30,7 @@ const RANGE_HOURS: Record<Range, number> = {
 
 interface ClickRow {
   id: string;
+  session_id: string | null;
   created_at: string;
   product_id: string | null;
   banner_id: string | null;
@@ -40,6 +44,7 @@ interface ClickRow {
 
 interface ImpressionRow {
   id: string;
+  session_id: string | null;
   created_at: string;
   product_id: string | null;
   advertiser: string;
@@ -89,7 +94,7 @@ function TopList({
 }: {
   title: string;
   icon: typeof Package;
-  rows: { key: string; count: number; suffix?: string }[];
+  rows: { key: string; label?: string; count: number; suffix?: string }[];
   limit?: number;
   suffix?: string;
 }) {
@@ -111,7 +116,7 @@ function TopList({
               <div key={r.key} className="flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-xs text-foreground truncate">{r.key}</span>
+                    <span className="text-xs text-foreground truncate">{r.label ?? r.key}</span>
                     <span className="text-xs font-medium text-muted-foreground shrink-0">
                       {r.count}
                       {suffix ? ` ${suffix}` : ''} · {r.suffix ?? `${pct}%`}
@@ -148,16 +153,16 @@ function combineForCtr(
     if (!k) continue;
     clk.set(k, (clk.get(k) ?? 0) + 1);
   }
+  const rates = placementRates(impressions, clicks, keyFn);
   const keys = new Set<string>([...imp.keys(), ...clk.keys()]);
   return Array.from(keys)
     .map((key) => {
       const impressions = imp.get(key) ?? 0;
       const clicks = clk.get(key) ?? 0;
-      const ctr = impressions > 0 ? (clicks / impressions) * 100 : 0;
       return {
         key,
         count: impressions,
-        suffix: `${clicks} klick · CTR ${ctr.toFixed(1)}%`,
+        suffix: `${clicks} klick · CTR ${formatCtr(rates.get(key))}`,
       };
     })
     .sort((a, b) => b.count - a.count)
@@ -165,6 +170,7 @@ function combineForCtr(
 }
 
 export default function AffiliateClicksPanel() {
+  const productName = useAffiliateProductNames();
   const [range, setRange] = useState<Range>('7d');
 
   const since = new Date(Date.now() - RANGE_HOURS[range] * 3600 * 1000).toISOString();
@@ -172,12 +178,12 @@ export default function AffiliateClicksPanel() {
   const { data: clicks = [], isLoading: clicksLoading, refetch: refetchClicks } = useQuery({
     queryKey: ['affiliate-clicks', range],
     queryFn: async (): Promise<ClickRow[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await selectAll(() => supabase
         .from('affiliate_clicks')
-        .select('id, created_at, product_id, banner_id, advertiser, source, slug, path, section_title, href')
+        .select('id, session_id, created_at, product_id, banner_id, advertiser, source, slug, path, section_title, href')
         .gte('created_at', since)
         .order('created_at', { ascending: false })
-        .limit(5000);
+        .order('id'));
       if (error) throw error;
       return (data ?? []) as ClickRow[];
     },
@@ -186,12 +192,12 @@ export default function AffiliateClicksPanel() {
   const { data: impressions = [], isLoading: impressionsLoading, refetch: refetchImpressions } = useQuery({
     queryKey: ['affiliate-impressions', range],
     queryFn: async (): Promise<ImpressionRow[]> => {
-      const { data, error } = await supabase
+      const { data, error } = await selectAll(() => supabase
         .from('affiliate_impressions')
-        .select('id, created_at, product_id, advertiser, source, slug, path, section_title')
+        .select('id, session_id, created_at, product_id, advertiser, source, slug, path, section_title')
         .gte('created_at', since)
         .order('created_at', { ascending: false })
-        .limit(10000);
+        .order('id'));
       if (error) throw error;
       return (data ?? []) as ImpressionRow[];
     },
@@ -211,9 +217,8 @@ export default function AffiliateClicksPanel() {
     [...clicks, ...impressions].map((r) => r.slug).filter(Boolean),
   ).size;
 
-  const overallCtr = impressions.length > 0
-    ? (clicks.length / impressions.length) * 100
-    : 0;
+  const overallCtr = placementRates(impressions, clicks, () => 'all').get('all');
+  const sectionRates = placementRates(impressions, clicks, r => JSON.stringify([r.slug, r.section_title, r.product_id]));
 
   // Kombinerade vyer: visningar + klick + CTR
   const productCtr = combineForCtr(impressions, clicks, (r) => r.product_id, 20);
@@ -247,7 +252,7 @@ export default function AffiliateClicksPanel() {
         productId,
         impressions: stats.impressions,
         clicks: stats.clicks,
-        ctr: stats.impressions > 0 ? (stats.clicks / stats.impressions) * 100 : 0,
+        ctr: sectionRates.get(JSON.stringify([sectionKey.split(" · ")[0], sectionKey.split(" · ").slice(1).join(" · "), productId])),
       })),
     )
     .sort((a, b) => b.impressions - a.impressions)
@@ -294,12 +299,13 @@ export default function AffiliateClicksPanel() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <StatCard icon={Eye} label="Visningar" value={impressions.length.toLocaleString('sv-SE')} />
             <StatCard icon={MousePointerClick} label="Klick" value={clicks.length.toLocaleString('sv-SE')} />
-            <StatCard icon={Percent} label="CTR" value={`${overallCtr.toFixed(1)}%`} />
+            <StatCard icon={Percent} label="CTR" value={formatCtr(overallCtr)} />
             <StatCard icon={Package} label="Unika produkter" value={uniqueProducts} />
             <StatCard icon={Layout} label="Unika artiklar" value={uniqueSlugs} />
             <StatCard icon={TrendingUp} label="Annonsörer" value={byAdvertiser.length} />
           </div>
 
+          <p className="text-xs text-muted-foreground">CTR visar andelen uppmätta produktplaceringar som fick minst ett klick. Streck betyder att underlag saknas.</p>
           {impressions.length === 0 && clicks.length === 0 ? (
             <Card className="border-border/50">
               <CardContent className="p-8 text-center">
@@ -316,7 +322,7 @@ export default function AffiliateClicksPanel() {
                 <TopList
                   title="Toppprodukter (visningar + klick + CTR)"
                   icon={Package}
-                  rows={productCtr}
+                  rows={productCtr.map(row => ({ ...row, label: productName(row.key) }))}
                   suffix="vis."
                 />
                 <TopList
@@ -375,18 +381,18 @@ export default function AffiliateClicksPanel() {
                         <tbody>
                           {sectionProductRows.map((row) => (
                             <tr
-                              key={`${row.sectionKey}-${row.productId}`}
+                              key={`${row.sectionKey}-${productName(row.productId)}`}
                               className="border-b border-border/20 last:border-0"
                             >
                               <td className="py-2 pr-3 text-foreground truncate max-w-[260px]" title={row.sectionKey}>
                                 {row.sectionKey}
                               </td>
-                              <td className="py-2 pr-3 text-foreground truncate max-w-[200px]" title={row.productId}>
-                                {row.productId}
+                              <td className="py-2 pr-3 text-foreground truncate max-w-[200px]" title={productName(row.productId)}>
+                                {productName(row.productId)}
                               </td>
                               <td className="py-2 pr-3 text-right text-foreground">{row.impressions}</td>
                               <td className="py-2 pr-3 text-right text-foreground">{row.clicks}</td>
-                              <td className="py-2 text-right text-foreground">{row.ctr.toFixed(1)}%</td>
+                              <td className="py-2 text-right text-foreground">{formatCtr(row.ctr)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -405,7 +411,7 @@ export default function AffiliateClicksPanel() {
                     <div key={r.id} className="flex items-center justify-between gap-2 text-xs py-1.5 border-b border-border/30 last:border-0">
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-foreground truncate">
-                          {r.product_id || r.banner_id || '—'}{' '}
+                          {r.product_id ? productName(r.product_id) : r.banner_id || '—'}{' '}
                           <span className="text-muted-foreground font-normal">
                             · {r.advertiser} · {r.source}
                             {r.section_title ? ` · ${r.section_title}` : ''}

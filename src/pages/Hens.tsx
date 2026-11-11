@@ -33,7 +33,8 @@ export default function Hens() {
   const { user } = useAuth();
   const [showInactive, setShowInactive] = useState(false);
   const [tab, setTab] = useState('alla');
-  const [selectedFlock, setSelectedFlock] = useState<string | null>(null);
+  const [selectedFlock, setSelectedFlock] = useState<string | null>(() => searchParams.get('flock'));
+  const [assignHen, setAssignHen] = useState('');
   const [henSearch, setHenSearch] = useState('');
   const [visibleHenCount, setVisibleHenCount] = useState(HEN_PAGE_SIZE);
 
@@ -72,6 +73,8 @@ export default function Hens() {
   const preferredFlockName = flocks.find((flock) => flock.id === preferredFlockId)?.name;
 
   useEffect(() => {
+    const flock = searchParams.get('flock');
+    if (flock) setSelectedFlock(flock);
     const create = searchParams.get('create');
     if (create !== 'flock' && create !== 'hen') return;
     if (create === 'flock') setFlockDialogOpen(true);
@@ -503,7 +506,7 @@ export default function Hens() {
               ← Alla
             </Button>
             <Badge variant="secondary" className="rounded-lg text-[10px]">
-              {displayHens.length} medlemmar
+              {displayHens.length} {displayHens.length === 1 ? 'medlem' : 'medlemmar'}
             </Badge>
             <Button
               variant="ghost"
@@ -523,7 +526,6 @@ export default function Hens() {
 
           {/* Quick-assign unassigned hens to this flock */}
           {(() => {
-            const unassigned = filteredHens.filter((h) => !h.flock_id || h.flock_id !== selectedFlock);
             const otherHens = filteredHens.filter((h) => h.flock_id !== selectedFlock);
             if (!otherHens.length) return null;
             return (
@@ -533,16 +535,14 @@ export default function Hens() {
                     <Plus className="h-3.5 w-3.5 text-primary" />
                     Lägg till i flocken
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {otherHens.map((hen) => (
-                      <button
-                        key={hen.id}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card border border-border/50 text-[11px] text-foreground hover:border-primary hover:bg-primary/8 transition-all"
-                        onClick={() => updateHenMutation.mutate({ id: hen.id, data: { flock_id: selectedFlock } })}
-                      >
-                        {getEmoji(hen.hen_type)} {hen.name}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select aria-label="Välj höna att lägga till" value={otherHens.some(h => h.id === assignHen) ? assignHen : ''} onChange={e => setAssignHen(e.target.value)}
+                      className="min-w-0 max-w-full rounded-lg border bg-background p-2 text-sm">
+                      <option value="">Välj höna…</option>
+                      {otherHens.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+                    </select>
+                    <Button size="sm" disabled={!otherHens.some(h => h.id === assignHen) || updateHenMutation.isPending}
+                      onClick={() => updateHenMutation.mutate({ id: assignHen, data: { flock_id: selectedFlock } }, { onSuccess: () => setAssignHen('') })}>Lägg till i flocken</Button>
                   </div>
                 </CardContent>
               </Card>

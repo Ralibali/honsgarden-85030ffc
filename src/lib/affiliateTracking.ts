@@ -12,6 +12,7 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const SESSION_KEY = 'hg_aff_session';
+let transientSession: string | undefined;
 
 export type AffiliateClickSource =
   | 'product_box'
@@ -42,14 +43,14 @@ export interface AffiliateImpressionPayload {
 
 function getSessionId(): string {
   try {
-    let id = localStorage.getItem(SESSION_KEY);
+    let id = sessionStorage.getItem(SESSION_KEY);
     if (!id) {
       id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-      localStorage.setItem(SESSION_KEY, id);
+      sessionStorage.setItem(SESSION_KEY, id);
     }
     return id;
   } catch {
-    return 'no-storage';
+    return transientSession ??= `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   }
 }
 
@@ -103,6 +104,8 @@ export function trackAffiliateImpression(payload: AffiliateImpressionPayload): v
   const session = getSessionId();
   const dedupe = [
     session,
+    typeof window !== 'undefined' ? window.location.pathname : '',
+    payload.source,
     payload.slug ?? '',
     payload.section_title ?? '',
     payload.product_id ?? '',

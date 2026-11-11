@@ -134,6 +134,8 @@ function NavGroupCollapsible({
         <SidebarMenuItem key={item.titleKey}>
           <SidebarMenuButton asChild>
             <NavLink
+              aria-label={t(item.titleKey)}
+              title={collapsed ? t(item.titleKey) : undefined}
               to={item.url}
               end={item.url === '/app'}
               className="flex items-center gap-3 px-5 py-2 mx-2 rounded-xl text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent/70 transition-all duration-200"

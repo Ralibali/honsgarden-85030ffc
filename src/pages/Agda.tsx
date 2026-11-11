@@ -1,3 +1,4 @@
+import { withRequestTimeout } from '@/lib/requestTimeout';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agda-chat`;
 
 async function streamAgda({
   message,
+  signal,
   history,
   onDelta,
   onDone,
@@ -65,6 +67,7 @@ async function streamAgda({
   onCreditExhausted,
 }: {
   message: string;
+  signal: AbortSignal;
   history: ChatMessage[];
   onDelta: (text: string) => void;
   onDone: () => void;
@@ -74,14 +77,15 @@ async function streamAgda({
   onCreditExhausted?: () => void;
 }) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await withRequestTimeout(() => supabase.auth.getSession());
+    if (signal.aborted) return;
     if (!session?.access_token) {
       onError('Du måste vara inloggad för att prata med Agda');
       return;
     }
 
     const response = await fetch(CHAT_URL, {
-      method: 'POST',
+      method: 'POST', signal,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session.access_token}`,
@@ -89,9 +93,12 @@ async function streamAgda({
       body: JSON.stringify({ message, history: history.slice(-20) }),
     });
 
+    if (signal.aborted) return;
     if (!response.ok) {
       if (response.status === 429) {
-        onError('Agda har många samtal just nu. Försök igen om en liten stund! 🐔');
+        const reason = await response.json().catch(() => null);
+        if (reason?.error === 'monthly_ai_limit_reached') onQuota?.(0);
+        onError(reason?.message || 'Agda har många samtal just nu. Försök igen om en liten stund.');
         return;
       }
       if (response.status === 402) {
@@ -118,8 +125,8 @@ async function streamAgda({
       return;
     }
 
-    const remaining = Number(response.headers.get('X-Agda-Remaining'));
-    if (onQuota && Number.isFinite(remaining)) onQuota(remaining);
+    const remaining = response.headers.get('X-Agda-Remaining');
+    if (remaining !== null && /^\d+$/.test(remaining)) onQuota?.(Number(remaining));
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -169,9 +176,9 @@ async function streamAgda({
       }
     }
 
-    onDone();
+    if (!signal.aborted) onDone();
   } catch (error) {
-    onError(error instanceof Error ? error.message : 'Nätverksfel');
+    if (!signal.aborted) onError(error instanceof Error ? error.message : 'Nätverksfel');
   }
 }
 
@@ -185,6 +192,14 @@ export default function Agda() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const assistantContentRef = useRef('');
+  const activeRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => activeRequest.current?.abort(), []);
+  const cancelReply = () => {
+    activeRequest.current?.abort();
+    activeRequest.current = null;
+    setLoading(false);
+    inputRef.current?.focus();
+  };
 
   useEffect(() => {
     setMessages(loadHistory(user?.id));
@@ -226,7 +241,16 @@ export default function Agda() {
     setLoading(true);
     assistantContentRef.current = '';
 
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    const timer = setTimeout(() => {
+      if (activeRequest.current !== controller || controller.signal.aborted) return;
+      controller.abort();
+      setLoading(false);
+      toast({ title: 'Svaret tog för lång tid. Försök igen.' });
+    }, 60_000);
     await streamAgda({
+      signal: controller.signal,
       message: text.trim(),
       history: nextMessages,
       onQuota: setQuotaLeft,
@@ -280,6 +304,9 @@ export default function Agda() {
         setLoading(false);
         inputRef.current?.focus();
       },
+    }).finally(() => {
+      clearTimeout(timer);
+      if (activeRequest.current === controller) activeRequest.current = null;
     });
   }, [messages, loading]);
 
@@ -375,7 +402,7 @@ export default function Agda() {
         <div className="flex items-center gap-1.5 shrink-0">
           {quotaLeft !== null && (
             <span className={`text-[10px] font-medium px-2.5 py-1.5 rounded-full ${quotaLeft <= 10 ? 'bg-warning/15 text-warning' : 'bg-muted/50 text-muted-foreground'}`}>
-              {quotaLeft} kvar
+              {quotaLeft} {quotaLeft === 1 ? 'fråga' : 'frågor'} kvar denna månad
             </span>
           )}
           {messages.length > 0 && (
@@ -487,9 +514,9 @@ export default function Agda() {
               disabled={loading}
               autoFocus
             />
-            <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl shrink-0" disabled={!input.trim() || loading} aria-label="Skicka till Agda">
+            {loading ? <Button type="button" variant="outline" onClick={cancelReply}>Avbryt</Button> : <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl shrink-0" disabled={!input.trim() || loading} aria-label="Skicka till Agda">
               <Send className="h-4 w-4" />
-            </Button>
+            </Button>}
           </form>
           <p className="text-[10px] text-muted-foreground/60 mt-2 px-1 text-center">
             Agda kan göra misstag. Vid oro för sjukdom eller skada bör du kontakta veterinär.

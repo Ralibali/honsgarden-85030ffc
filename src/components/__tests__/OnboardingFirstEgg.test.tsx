@@ -20,7 +20,7 @@ const { eggInsert, henInsertSingle, henInsert, mockGetFlocks } = vi.hoisted(() =
 function chain(result: { data?: unknown; error?: unknown }) {
   const resolved = { data: result.data ?? null, error: result.error ?? null };
   const obj: Record<string, unknown> = {};
-  for (const m of ['select', 'eq', 'order', 'limit', 'insert', 'update']) {
+  for (const m of ['select', 'eq', 'in', 'order', 'limit', 'insert', 'update']) {
     obj[m] = vi.fn().mockReturnValue(obj);
   }
   obj.single = vi.fn().mockResolvedValue(resolved);
@@ -31,6 +31,7 @@ function chain(result: { data?: unknown; error?: unknown }) {
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
+    rpc: () => ({ abortSignal: () => Promise.resolve({ data: ['user-1'], error: null }) }),
     from: (table: string) => {
       if (table === 'profiles') return chain({ data: { preferences: {} } });
       if (table === 'hens') {

@@ -1,3 +1,4 @@
+import { getSyncedEggSales } from '@/lib/syncedProductState';
 import { bookingTotal } from '@/lib/eggSalePricing';
 import { localCalendarDate, todayLocal } from '@/lib/datetime';
 import QueryNotice from '@/components/QueryNotice';
@@ -56,7 +57,8 @@ function SmartFarmReportContent() {
 
   const { data: eggs = [], isPending: eggsLoading, isError: eggsError, refetch: reloadEggs } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
   const { data: hens = [], isPending: hensLoading, isError: hensError, refetch: reloadHens } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
-  const { data: feedStats } = useQuery({ queryKey: ['feed-stats'], queryFn: () => api.getFeedStatistics().catch(() => null) });
+  const { data: manualSales = [], isPending: manualLoading, isError: manualError, refetch: reloadSales } = useQuery({queryKey: ['egg-sales-journal'], queryFn: getSyncedEggSales});
+  const { data: feedStats, isPending: feedLoading, isError: feedError, refetch: reloadFeed } = useQuery({ queryKey: ['feed-stats'], queryFn: () => api.getFeedStatistics() });
   const { data: chores = [] } = useQuery({ queryKey: ['daily-chores'], queryFn: () => api.getDailyChores().catch(() => []) });
 
   const { data: listings = [] } = useQuery({
@@ -91,33 +93,35 @@ function SmartFarmReportContent() {
     const totalTasks = (chores as any[]).length;
     const listingById: Record<string, any> = {};
     (listings as any[]).forEach((l) => { listingById[l.id] = l; });
-    const activeBookings = (bookings as any[]).filter((b) => b.status !== 'cancelled');
+    const activeBookings = (bookings as any[]).filter((b) => b.status !== 'cancelled' && b.payment_status !== 'refunded');
     const weekBookings = activeBookings.filter((b) => b.created_at && new Date(b.created_at) >= weekStart);
-    const salesValue = weekBookings.reduce((sum, b) => sum + bookingTotal(b,listingById[b.listing_id]), 0);
+    const weekManual = manualSales.filter(sale => sale.date >= currentWeekStart && sale.date <= todayLocal());
+    const manualValue = weekManual.reduce((sum, sale) => sum + sale.amount, 0);
+    const salesValue = manualValue + weekBookings.reduce((sum, b) => sum + bookingTotal(b,listingById[b.listing_id]), 0);
     const salesPacks = weekBookings.reduce((sum, b) => sum + Number(b.packs || 0), 0);
     const activeListings = (listings as any[]).filter((l) => l.is_active !== false && !l.sold_out_manually).length;
-    const feedCostPerEgg = (feedStats as any)?.cost_per_egg || null;
+    const feedCostPerEgg = feedStats?.record_count && eggs.some(e => e.count > 0) ? feedStats.cost_per_egg : null;
     const insights: string[] = [];
     if (weekEggs === 0) insights.push('Börja med att logga veckans första ägg så kan rapporten hitta riktiga mönster.');
-    else if (diff > 0) insights.push(`Äggproduktionen är upp ${diff} ägg mot förra veckan. Det är ett fint tecken på stabil flockrytm.`);
-    else if (diff < 0) insights.push(`Äggproduktionen är ner ${Math.abs(diff)} ägg mot förra veckan. Kolla väder, ruggning, foderbyte och stress.`);
+    else if (diff > 0) insights.push(`Äggproduktionen har ökat med ${diff} ägg mot förra veckan. Det är ett fint tecken på stabil flockrytm.`);
+    else if (diff < 0) insights.push(`Äggproduktionen har minskat med ${Math.abs(diff)} ägg mot förra veckan. Kolla väder, ruggning, foderbyte och stress.`);
     else insights.push('Äggproduktionen ligger stabilt mot förra veckan. Stabilitet är också ett bra tecken.');
-    if (feedCostPerEgg) insights.push(`Din ungefärliga foderkostnad är ${Number(feedCostPerEgg).toFixed(2)} kr per ägg.`);
-    if (salesValue > 0) insights.push(`Agdas Bod har gett cirka ${kr(salesValue)} i bokningsvärde denna vecka.`);
+    if (feedCostPerEgg !== null) insights.push(`Din ungefärliga foderkostnad är ${Number(feedCostPerEgg).toFixed(2)} kr per ägg.`);
+    if (salesValue > 0) insights.push(`Agdas Bod har gett cirka ${kr(salesValue)} i registrerade försäljningar och bokningar denna vecka.`);
     if (totalTasks > 0) insights.push(`${completedTasks} av ${totalTasks} uppgifter är avklarade. Rutinerna är det som gör hönsgården enklare över tid.`);
-    return { weekEggs, prevWeekEggs, diff, activeHens, completedTasks, totalTasks, salesValue, salesPacks, activeListings, weekBookings: weekBookings.length, feedCostPerEgg, insights };
-  }, [eggs, hens, chores, feedStats, bookings, listings, weekStart, prevStart]);
+    return { weekEggs, prevWeekEggs, diff, activeHens, completedTasks, totalTasks, salesValue, salesPacks, activeListings, manualCount: weekManual.length, weekBookings: weekBookings.length, feedCostPerEgg, insights };
+  }, [eggs, hens, chores, feedStats, bookings, manualSales, listings, weekStart, prevStart]);
 
-  const plainReport = `Smart gårdsrapport – ${weekLabel}\n\n🥚 Ägg denna vecka: ${report.weekEggs}\n${report.diff >= 0 ? '📈' : '📉'} Skillnad mot förra veckan: ${report.diff >= 0 ? '+' : ''}${report.diff}\n🐔 Aktiva hönor: ${report.activeHens}\n🌾 Foderkostnad/ägg: ${report.feedCostPerEgg ? Number(report.feedCostPerEgg).toFixed(2) + ' kr' : 'saknas'}\n💰 Agdas Bod denna vecka: ${kr(report.salesValue)} (${report.salesPacks} kartor)\n✅ Uppgifter: ${report.completedTasks}/${report.totalTasks}\n\nAgdas rekommendationer:\n${report.insights.map((i) => `• ${i}`).join('\n')}`;
+  const plainReport = `Smart gårdsrapport – ${weekLabel}\n\n🥚 Ägg denna vecka: ${report.weekEggs}\n${report.diff >= 0 ? '📈' : '📉'} Skillnad mot förra veckan: ${report.diff >= 0 ? '+' : ''}${report.diff}\n🐔 Aktiva hönor: ${report.activeHens}\n🌾 Foderkostnad/ägg: ${report.feedCostPerEgg !== null ? Number(report.feedCostPerEgg).toFixed(2) + ' kr' : 'saknas'}\n💰 Agdas Bod denna vecka: ${kr(report.salesValue)} (${report.salesPacks} kartor)\n✅ Uppgifter: ${report.completedTasks}/${report.totalTasks}\n\nAgdas rekommendationer:\n${report.insights.map((i) => `• ${i}`).join('\n')}`;
   const actions = [
     { title: 'Logga ägg', text: 'Fyll på rapporten med aktuell produktion.', path: '/app/eggs', icon: Egg, show: report.weekEggs === 0 },
-    { title: 'Lägg till foder', text: 'Räkna ut kostnad per ägg.', path: '/app/feed', icon: Wheat, show: !report.feedCostPerEgg },
+    { title: 'Lägg till foder', text: 'Räkna ut kostnad per ägg.', path: '/app/feed', icon: Wheat, show: !feedStats?.record_count },
     { title: 'Öppna Agdas Bod', text: 'Sälj överskott och följ bokningar.', path: '/app/egg-sales', icon: ReceiptText, show: report.activeListings === 0 || report.salesValue === 0 },
     { title: 'Skapa uppgift', text: 'Bygg återkommande rutiner.', path: '/app/tasks', icon: Bell, show: report.totalTasks === 0 },
   ].filter((a) => a.show).slice(0, 3);
 
-  if (eggsError || hensError) return <QueryNotice title="Kunde inte läsa gårdsrapporten" onRetry={() => { void reloadEggs(); void reloadHens(); }} />;
-  if (eggsLoading || hensLoading) return <QueryNotice loading title="Hämtar gårdsrapporten…" />;
+  if (eggsError || hensError || feedError || manualError) return <QueryNotice title="Kunde inte läsa gårdsrapporten" onRetry={() => { void reloadEggs(); void reloadHens(); void reloadFeed(); void reloadSales(); }} />;
+  if (eggsLoading || hensLoading || feedLoading || manualLoading) return <QueryNotice loading title="Hämtar gårdsrapporten…" />;
 
   return (
     <div className="max-w-6xl mx-auto space-y-5 pb-8 animate-fade-in">
@@ -128,14 +132,14 @@ function SmartFarmReportContent() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Metric icon={Egg} label="Ägg denna vecka" value={report.weekEggs} sub={`${report.diff >= 0 ? '+' : ''}${report.diff} mot förra veckan`} trend={report.diff} />
         <Metric icon={Bird} label="Aktiva hönor" value={report.activeHens} sub="i flocken" />
-        <Metric icon={Wallet} label="Agdas Bod" value={kr(report.salesValue)} sub={`${report.salesPacks} kartor · ${report.weekBookings} bokningar`} />
+        <Metric icon={Wallet} label="Agdas Bod" value={kr(report.salesValue)} sub={`${report.salesPacks} kartor · ${report.weekBookings} bokningar · ${report.manualCount} manuella`} />
         <Metric icon={CheckCircle2} label="Uppgifter" value={`${report.completedTasks}/${report.totalTasks}`} sub="avklarade rutiner" />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <Card className="xl:col-span-2 border-primary/20 bg-gradient-to-br from-primary/8 via-card to-accent/5 shadow-sm"><CardContent className="p-4 sm:p-5 space-y-4"><div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><h2 className="font-serif text-lg text-foreground">Agdas smarta sammanfattning</h2></div><div className="space-y-3">{report.insights.map((insight, index) => <div key={index} className="rounded-2xl border bg-background/70 p-4 text-sm leading-relaxed text-foreground">{insight}</div>)}</div></CardContent></Card>
         <Card className="shadow-sm"><CardContent className="p-4 sm:p-5 space-y-3"><div className="flex items-center justify-between gap-2"><h2 className="font-serif text-lg text-foreground">Nästa bästa steg</h2><Badge variant="secondary">Smart</Badge></div>{actions.length === 0 ? <div className="rounded-2xl border border-success/20 bg-success/5 p-4"><p className="font-medium text-sm text-foreground">Bra jobbat!</p><p className="text-xs text-muted-foreground mt-1">Du har redan fyllt rapporten med bra data den här veckan.</p></div> : actions.map((action) => <button key={action.title} onClick={() => navigate(action.path)} className="w-full rounded-2xl border bg-card hover:bg-muted/30 p-3 text-left flex items-center gap-3 transition-colors"><div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0"><action.icon className="h-4 w-4 text-primary" /></div><div className="flex-1 min-w-0"><p className="text-sm font-medium text-foreground">{action.title}</p><p className="text-xs text-muted-foreground">{action.text}</p></div><ArrowRight className="h-4 w-4 text-muted-foreground" /></button>)}</CardContent></Card>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3"><MiniPanel icon={Wheat} title="Foder" value={report.feedCostPerEgg ? `${Number(report.feedCostPerEgg).toFixed(2)} kr/ägg` : 'Saknas'} text="Lägg in foderköp för att göra rapporten mer ekonomisk." /><MiniPanel icon={ReceiptText} title="Säljsidor" value={report.activeListings} text="Aktiva säljsidor i Agdas Bod just nu." /><MiniPanel icon={CalendarDays} title="Veckorytm" value={report.weekEggs > 0 ? 'Igång' : 'Starta'} text="Rapporten blir starkare när du loggar lite varje vecka." /></div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3"><MiniPanel icon={Wheat} title="Foder" value={report.feedCostPerEgg !== null ? `${Number(report.feedCostPerEgg).toFixed(2)} kr/ägg` : feedStats?.record_count ? kr(feedStats.total_cost) : 'Inga foderköp'} text={`${feedStats?.record_count ?? 0} registrerade foderköp`} /><MiniPanel icon={ReceiptText} title="Säljsidor" value={report.activeListings} text="Aktiva säljsidor i Agdas Bod just nu." /><MiniPanel icon={CalendarDays} title="Veckorytm" value={report.weekEggs > 0 ? 'Igång' : 'Starta'} text="Rapporten blir starkare när du loggar lite varje vecka." /></div>
     </div>
   );
 }

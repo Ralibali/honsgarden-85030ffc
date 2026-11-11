@@ -1,3 +1,4 @@
+import { withRequestTimeout } from '@/lib/requestTimeout';
 import { useState } from 'react';
 import { Bot, ExternalLink, Loader2, Search, ShieldCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -58,9 +59,9 @@ export default function CommerceAdvisorPilot() {
     setResult(null);
 
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke('commerce-advisor', {
-        body: { question: trimmed },
-      });
+      const { data, error: invokeError } = await withRequestTimeout(signal => supabase.functions.invoke('commerce-advisor', {
+        body: { question: trimmed }, signal,
+      }), 25_000);
       if (invokeError) throw invokeError;
       if (!data?.answer) throw new Error('Commerce Agent gav inget svar.');
       setResult(data as AdvisorResult);

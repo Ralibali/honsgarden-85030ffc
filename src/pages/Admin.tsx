@@ -42,6 +42,7 @@ import {
 
 export default function Admin() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('insights');
   const [userSearch, setUserSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [premiumDurations, setPremiumDurations] = useState<Record<string, string>>({});
@@ -62,13 +63,13 @@ export default function Admin() {
   const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: () => api.adminUsers(),
-    enabled: !!adminCheck?.is_admin,
+    enabled: !!adminCheck?.is_admin && ['users', 'subscriptions'].includes(activeTab),
   });
 
   const { data: feedback = [], isLoading: feedbackLoading } = useQuery({
     queryKey: ['admin-feedback'],
     queryFn: () => api.adminFeedback(),
-    enabled: !!adminCheck?.is_admin,
+    enabled: !!adminCheck?.is_admin && activeTab === 'feedback',
   });
 
   const deleteUserMutation = useMutation({
@@ -132,8 +133,6 @@ export default function Admin() {
     );
   }
 
-  const premiumCount = (users as any[]).filter((u: any) => u.subscription_status === 'premium').length;
-  const termsAcceptedCount = (users as any[]).filter((u: any) => u.terms_accepted_at).length;
 
   const filteredUsers = userSearch
     ? (users as any[]).filter((u: any) =>
@@ -210,10 +209,10 @@ export default function Admin() {
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 stagger-children">
           {[
             { icon: Users, value: stats.user_count ?? 0, label: 'Användare', color: 'text-primary', bg: 'bg-primary/8' },
-            { icon: Crown, value: premiumCount, label: 'Premium', color: 'text-warning', bg: 'bg-warning/8' },
+            { icon: Crown, value: stats.premium_count, label: 'Premium', color: 'text-warning', bg: 'bg-warning/8' },
             { icon: Egg, value: stats.egg_records ?? 0, label: 'Ägg totalt', color: 'text-accent', bg: 'bg-accent/8' },
             { icon: TrendingUp, value: stats.hen_count ?? 0, label: 'Hönor', color: 'text-success', bg: 'bg-success/8' },
-            { icon: FileCheck, value: termsAcceptedCount, label: 'Villkor godkända', color: 'text-muted-foreground', bg: 'bg-muted/60' },
+            { icon: FileCheck, value: stats.terms_count, label: 'Villkor godkända', color: 'text-muted-foreground', bg: 'bg-muted/60' },
           ].map(({ icon: Icon, value, label, color, bg }, i) => (
             <Card key={i} className="border-border/50">
               <CardContent className="p-3 text-center">
@@ -228,8 +227,8 @@ export default function Admin() {
         </div>
       )}
 
-      <Tabs defaultValue="insights" className="space-y-4">
-        <TabsList className="flex w-full flex-wrap gap-1 h-auto rounded-xl p-1">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="flex w-full max-w-full flex-nowrap justify-start overflow-x-auto gap-1 h-auto rounded-xl p-1">
           {[
             { value: 'insights', icon: Lightbulb, label: 'Insikter' },
             { value: 'revenue', icon: DollarSign, label: 'Intäkter' },

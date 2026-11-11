@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const LS_KEY = '__honsgarden_error_log';
 const MAX_ENTRIES = 50;
-const CONSENT_KEY = 'cookie-consent';
+import { hasTelemetryConsent } from './privacyTelemetry';
 const FN_TIMEOUT_MS = 2000;
 
 export type ErrorLevel = 'error' | 'warning' | 'info';
@@ -34,14 +34,6 @@ export interface ErrorPayload {
   ts: string;
 }
 
-function hasServerLogConsent(): boolean {
-  try {
-    return localStorage.getItem(CONSENT_KEY) === 'accepted';
-  } catch {
-    return false;
-  }
-}
-
 function pushToLocalBuffer(entry: ErrorPayload) {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -55,27 +47,19 @@ function pushToLocalBuffer(entry: ErrorPayload) {
 }
 
 async function postToServer(entry: ErrorPayload): Promise<void> {
-  if (!hasServerLogConsent()) return;
+  if (!hasTelemetryConsent()) return;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FN_TIMEOUT_MS);
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), FN_TIMEOUT_MS);
     // Anropa edge-funktionen via supabase-sdk. Om den inte finns returneras
     // 404 som error – vi ignorerar tyst.
     await supabase.functions.invoke('log-client-error', {
-      body: entry,
+      body: entry, signal: controller.signal,
     });
+  } catch {
+    /* best effort */
+  } finally {
     clearTimeout(timeout);
-  } catch {
-    /* best-effort – inget läcker ut till användaren */
-  }
-}
-
-async function getCurrentUserId(): Promise<string | null> {
-  try {
-    const { data } = await supabase.auth.getUser();
-    return data.user?.id ?? null;
-  } catch {
-    return null;
   }
 }
 
@@ -118,12 +102,11 @@ export async function logClientError(
     level,
     message: err.message,
     stack: err.stack,
-    url: typeof window !== 'undefined' ? window.location.href : undefined,
+    url: typeof window !== 'undefined' ? window.location.origin + window.location.pathname : undefined,
     ua: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
     buildTime: typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : undefined,
     context,
     ts: new Date().toISOString(),
-    userId: await getCurrentUserId(),
   };
 
   // 1. Alltid console för utvecklare
