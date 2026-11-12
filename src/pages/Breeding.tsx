@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import React, { useState } from 'react';
 import { todayLocal } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,7 +37,7 @@ function PairsTab() {
   const { data: hens = [] } = useQuery({
     queryKey: ['hens', 'breeding'],
     queryFn: async () => {
-      const { data } = await supabase.from('hens').select('id, name, hen_type, breed').eq('is_active', true).order('name');
+      const { data } = await supabase.from('hens').select('id, name, hen_type, breed').in('user_id', await getFarmUserIds()).eq('is_active', true).order('name');
       return data ?? [];
     },
   });
@@ -46,7 +47,7 @@ function PairsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('breeding_pairs')
-        .select('*')
+        .select('*').in('user_id', await getFarmUserIds())
         .order('start_date', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -219,7 +220,7 @@ function HatchSessionsTab() {
   const { data: pairs = [] } = useQuery({
     queryKey: ['breeding_pairs', 'min'],
     queryFn: async () => {
-      const { data } = await supabase.from('breeding_pairs').select('id, name').order('start_date', { ascending: false });
+      const { data } = await supabase.from('breeding_pairs').select('id, name').in('user_id', await getFarmUserIds()).order('start_date', { ascending: false });
       return data ?? [];
     },
   });
@@ -229,7 +230,7 @@ function HatchSessionsTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hatch_sessions')
-        .select('*, breeding_pairs:breeding_pair_id(name)')
+        .select('*, breeding_pairs:breeding_pair_id(name)').in('user_id', await getFarmUserIds())
         .order('set_date', { ascending: false });
       if (error) throw error;
       return data ?? [];

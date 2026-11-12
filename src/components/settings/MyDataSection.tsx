@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import { downloadAccountData } from '@/lib/accountExport';
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +26,7 @@ type Category = {
 
 const CATEGORIES: Category[] = [
   { key: "hens", label: "Hönor", table: "hens", headerMapKey: "hens" },
-  { key: "egg_logs", label: "Ägg", table: "egg_logs", headerMapKey: "egg_logs" },
+  { key: "egg_logs", label: "Gårdens ägg", table: "egg_logs", headerMapKey: "egg_logs" },
   { key: "health_events", label: "Hälsohändelser", table: "health_events", headerMapKey: "health_events" },
   { key: "breeding_pairs", label: "Avelspar", table: "breeding_pairs", premiumOnly: true, headerMapKey: "breeding_pairs" },
   { key: "hatch_sessions", label: "Kläckningar", table: "hatch_sessions", premiumOnly: true, headerMapKey: "hatch_sessions" },
@@ -47,6 +48,7 @@ function downloadCsv(csv: string, filename: string) {
 }
 
 async function fetchAll(table: string, userId: string): Promise<any[]> {
+  const owners = table === "egg_logs" ? await getFarmUserIds(userId) : [userId];
   const out: any[] = [];
   const pageSize = 1000;
   let from = 0;
@@ -55,7 +57,7 @@ async function fetchAll(table: string, userId: string): Promise<any[]> {
     const { data, error } = await (supabase as any)
       .from(table)
       .select("*")
-      .eq("user_id", userId)
+      .in("user_id", owners)
       .order("id")
       .range(from, from + pageSize - 1);
     if (error) throw error;

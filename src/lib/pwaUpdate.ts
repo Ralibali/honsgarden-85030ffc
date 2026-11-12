@@ -26,6 +26,29 @@ export function isPwaRegistrationDisabled(): boolean {
   return isInIframe || isPreviewHost;
 }
 
+/** Den rena push-workern. Den har ingen fetch-hanterare och cachar ingenting. */
+export const PUSH_SW_URL = '/push-sw.js';
+
+/**
+ * Sant för en registrering som bara kör push-workern.
+ *
+ * Återställningen nedan avregistrerar service workers för att bli av med ett
+ * gammalt cachat app-skal. Push-workern kan inte servera något app-skal, och
+ * att avregistrera den säger samtidigt upp användarens push-prenumeration.
+ * Den ska därför lämnas i fred.
+ */
+export function isPushOnlyRegistration(
+  registration: Pick<ServiceWorkerRegistration, 'active' | 'waiting' | 'installing'>,
+): boolean {
+  const worker = registration.active ?? registration.waiting ?? registration.installing;
+  if (!worker?.scriptURL) return false;
+  try {
+    return new URL(worker.scriptURL, window.location.origin).pathname === PUSH_SW_URL;
+  } catch {
+    return false;
+  }
+}
+
 export async function cleanupPreviewServiceWorkers() {
   if (typeof window === 'undefined' || !isPwaRegistrationDisabled()) return;
   if (!('serviceWorker' in navigator)) return;
@@ -45,7 +68,11 @@ export async function recoverStalePwaShell(reason = 'stale-pwa-shell') {
 
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.allSettled(registrations.map((registration) => registration.unregister()));
+      await Promise.allSettled(
+        registrations
+          .filter((registration) => !isPushOnlyRegistration(registration))
+          .map((registration) => registration.unregister()),
+      );
     }
   } finally {
     const url = new URL(window.location.href);

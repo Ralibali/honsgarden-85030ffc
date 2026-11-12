@@ -1,3 +1,5 @@
+import QueryNotice from '@/components/QueryNotice';
+import { withRequestTimeout } from '@/lib/requestTimeout';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,11 +27,12 @@ function PctIcon({ p }: { p: number }) {
 export default function BreedingAnalysisCard() {
   const [showAllParents, setShowAllParents] = useState(false);
   const [showAllInbreed, setShowAllInbreed] = useState(false);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['breeding-values'],
-    queryFn: () => api.getBreedingValues(),
+    queryFn: () => withRequestTimeout(() => api.getBreedingValues()),
   });
 
+  if (isError) return <QueryNotice title="Kunde inte läsa avelsanalysen" onRetry={() => void refetch()} />;
   if (isLoading) {
     return (
       <Card className="bg-card border-border shadow-sm">

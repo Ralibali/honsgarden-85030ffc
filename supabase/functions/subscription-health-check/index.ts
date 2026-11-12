@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { cronRequestAllowed } from "../_shared/cronAuth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,29 +15,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Auth: accept CRON_SECRET header, service-role bearer, or any project-scoped
-  // Supabase JWT (anon/service_role) — matches how pg_cron invokes us.
-  const auth = req.headers.get("Authorization") ?? "";
-  const provided = auth.replace("Bearer ", "").trim();
-  const cronSecret = Deno.env.get("CRON_SECRET") ?? "";
-  const serviceKeyAuth = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const okSecret = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-  const okServiceKey = !!serviceKeyAuth && provided === serviceKeyAuth;
-  let okProjectJwt = false;
-  if (!okSecret && !okServiceKey && provided.split(".").length === 3) {
-    try {
-      const payload = JSON.parse(atob(provided.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-      const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\./)?.[1];
-      okProjectJwt = payload?.ref === projectRef && (payload?.role === "anon" || payload?.role === "service_role");
-    } catch (_) {
-      okProjectJwt = false;
-    }
-  }
-  if (!okServiceKey && !okSecret && !okProjectJwt) {
+  // Bara pg_cron (x-cron-secret) eller service role-nyckeln släpps in.
+  // verify_jwt är avstängt, så en JWT:s innehåll bevisar ingenting här.
+  const allowed = cronRequestAllowed(req.headers, {
+    cronSecret: Deno.env.get("CRON_SECRET"),
+    serviceRoleKey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
+  });
+  if (!allowed) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
-
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",

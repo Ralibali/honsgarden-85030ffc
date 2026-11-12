@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,9 +86,9 @@ function lastNMonths(n: number) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const start = new Date(d.getFullYear(), d.getMonth(), 1);
     const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-    const value = `${start.toISOString().slice(0, 10)}|${end.toISOString().slice(0, 10)}`;
+    const value = `${format(start, 'yyyy-MM-dd')}|${format(end, 'yyyy-MM-dd')}`;
     const label = start.toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' });
-    list.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1), start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) });
+    list.push({ value, label: label.charAt(0).toUpperCase() + label.slice(1), start: format(start, 'yyyy-MM-dd'), end: format(end, 'yyyy-MM-dd') });
   }
   return list;
 }
@@ -101,10 +102,10 @@ function lastNQuarters(n: number) {
     const q = ((totalQ % 4) + 4) % 4;
     const start = new Date(year, q * 3, 1);
     const end = new Date(year, q * 3 + 3, 0);
-    const value = `${start.toISOString().slice(0, 10)}|${end.toISOString().slice(0, 10)}`;
+    const value = `${format(start, 'yyyy-MM-dd')}|${format(end, 'yyyy-MM-dd')}`;
     list.push({
       value, label: `Q${q + 1} ${year}`,
-      start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10),
+      start: format(start, 'yyyy-MM-dd'), end: format(end, 'yyyy-MM-dd'),
     });
   }
   return list;
@@ -121,7 +122,7 @@ function lastNYears(n: number) {
   }
   // Also include current year-to-date
   const ytdStart = `${now.getFullYear()}-01-01`;
-  const ytdEnd = now.toISOString().slice(0, 10);
+  const ytdEnd = format(now, 'yyyy-MM-dd');
   list.unshift({
     value: `${ytdStart}|${ytdEnd}`,
     label: `${now.getFullYear()} (hittills)`,
@@ -165,11 +166,14 @@ function ReportsInner() {
 
   // Reports list (RLS filters to farms the user is a member of)
   const { data: reports = [], isLoading } = useQuery<ReportRow[]>({
-    queryKey: ['generated-reports'],
+    queryKey: ['generated-reports', user?.id],
+    enabled: !!user,
     queryFn: async () => {
+      const { data: memberships, error: memberError } = await supabase.from('farm_members').select('farm_id').eq('user_id', user!.id);
+      if (memberError) throw memberError;
       const { data, error } = await supabase
         .from('generated_reports')
-        .select('*')
+        .select('*').in('farm_id', (memberships ?? []).map(m => m.farm_id))
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as ReportRow[];
@@ -204,29 +208,33 @@ function ReportsInner() {
 
   // Live preview counts
   const periodResolved = resolvePeriod();
-  const { data: preview } = useQuery({
+  const { data: preview, isError: previewError } = useQuery({
     queryKey: ['report-preview', farmId, periodResolved?.start, periodResolved?.end],
     enabled: open && !!periodResolved && !!farmId,
     queryFn: async () => {
       if (!periodResolved) return null;
-      const [{ count: eggs }, { count: health }, { count: hatch }] = await Promise.all([
+      const { data: members, error } = await supabase.from('farm_members').select('user_id').eq('farm_id', farmId);
+      if (error) throw error;
+      const owners = (members ?? []).map(member => member.user_id);
+      const counts = await Promise.all([
         supabase
           .from('egg_logs')
-          .select('id', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true }).in('user_id', owners)
           .gte('date', periodResolved.start)
           .lte('date', periodResolved.end),
         supabase
           .from('health_events')
-          .select('id', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true }).in('user_id', owners)
           .gte('event_date', periodResolved.start)
           .lte('event_date', periodResolved.end),
         supabase
           .from('hatch_sessions')
-          .select('id', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true }).in('user_id', owners)
           .gte('set_date', periodResolved.start)
           .lte('set_date', periodResolved.end),
       ]);
-      return { eggs: eggs ?? 0, health: health ?? 0, hatch: hatch ?? 0 };
+      for (const count of counts) if (count.error) throw count.error;
+      return { eggs: counts[0].count ?? 0, health: counts[1].count ?? 0, hatch: counts[2].count ?? 0 };
     },
   });
 
@@ -425,7 +433,8 @@ function ReportsInner() {
                       {SV_DATE(periodResolved.start)} – {SV_DATE(periodResolved.end)}
                     </span>
                   </p>
-                  {preview && (
+                  {previewError && <p role="alert" className="text-sm">Förhandsvisningen kunde inte hämtas.</p>}
+              {preview && (
                     <p className="text-muted-foreground">
                       Innehåll: {preview.eggs} ägglogg-rader · {preview.health} hälsohändelser · {preview.hatch} kläckomgångar
                     </p>

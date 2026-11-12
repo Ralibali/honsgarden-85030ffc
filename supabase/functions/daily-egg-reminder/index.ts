@@ -5,8 +5,9 @@
 //   - have not opted out (reminder_settings.evening_reminder !== false)
 // Email is enqueued via the standard pgmq queue, same pattern as weekly-report.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
+import { pushDelivered } from "../_shared/pushResult.ts";
 
-const APP_URL = "https://honsgarden.lovable.app/app";
+const APP_URL = "https://honsgarden.se/app";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 Deno.serve(async (req) => {
@@ -102,15 +103,16 @@ Deno.serve(async (req) => {
 
       const name = (p.display_name || "").split(" ")[0] || "kompis";
 
-      // Push first for everyone with a subscription – email only as fallback.
+      // Push först för alla som har en prenumeration, i webbläsaren eller i
+      // appen. Mejl skickas som reserv när ingen notis faktiskt gick fram.
       // Push syns direkt på hemskärmen och når fler än mejl; copy anpassas efter streak.
+      let pushed = false;
       try {
-        const { data: pushSubs } = await supabase
-          .from("push_subscriptions")
-          .select("id")
-          .eq("user_id", p.user_id)
-          .limit(1);
-        if (pushSubs && pushSubs.length > 0) {
+        const [{ data: webSubs }, { data: appTokens }] = await Promise.all([
+          supabase.from("push_subscriptions").select("id").eq("user_id", p.user_id).limit(1),
+          supabase.from("device_tokens").select("id").eq("user_id", p.user_id).limit(1),
+        ]);
+        if ((webSubs?.length ?? 0) > 0 || (appTokens?.length ?? 0) > 0) {
           const title = streak >= 3
             ? `🔥 Din streak på ${streak} dagar är i fara`
             : streak >= 1
@@ -119,7 +121,7 @@ Deno.serve(async (req) => {
           const body = streak >= 3
             ? "Logga dagens ägg innan midnatt så lever den vidare – inga ägg idag räknas också."
             : "Det tar 10 sekunder – logga dagens ägg innan kvällen är slut.";
-          await supabase.functions.invoke("send-push", {
+          const pushResponse = await supabase.functions.invoke("send-push", {
             body: {
               user_ids: [p.user_id],
               title,
@@ -128,11 +130,15 @@ Deno.serve(async (req) => {
               tag: `egg-reminder-${todayStr}`,
             },
           });
-          sent++;
-          continue;
+          pushed = pushDelivered(pushResponse);
+          if (!pushed) console.warn("egg reminder push not delivered, falling back to email", p.user_id);
         }
       } catch (err) {
         console.error("egg reminder push failed, falling back to email", p.user_id, err);
+      }
+      if (pushed) {
+        sent++;
+        continue;
       }
 
       const subject = "Glöm inte att räkna dagens ägg 🥚";

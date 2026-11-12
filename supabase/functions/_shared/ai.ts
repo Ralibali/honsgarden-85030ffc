@@ -183,11 +183,12 @@ export async function callAi(opts: AiCallOptions): Promise<AiSuccess | AiFailure
 }
 
 /** Strömmande AI-anrop (SSE) med samma fallback-kedja. */
-export async function callAiStream(opts: AiCallOptions): Promise<AiStreamSuccess | AiFailure> {
+export async function callAiStream(opts: AiCallOptions, signal?: AbortSignal): Promise<AiStreamSuccess | AiFailure> {
   const attempts: string[] = [];
   let anyKey = false;
 
   for (const provider of PROVIDERS) {
+    if (signal?.aborted) return { ok: false, status: 499, error: "Anropet avbröts", attempts };
     const apiKey = Deno.env.get(provider.keyEnv);
     if (!apiKey) continue;
     anyKey = true;
@@ -202,7 +203,7 @@ export async function callAiStream(opts: AiCallOptions): Promise<AiStreamSuccess
           Authorization: `Bearer ${apiKey}`,
         },
         body: buildBody(provider, opts.model, opts, true),
-        signal: AbortSignal.timeout(60_000),
+        signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(60_000)]) : AbortSignal.timeout(60_000),
       });
     } catch (err) {
       attempts.push(`${provider.id}: nätverksfel (${err instanceof Error ? err.message : String(err)})`);

@@ -4,20 +4,22 @@ import { withRequestTimeout } from '@/lib/requestTimeout';
 import { QueryClient } from '@tanstack/react-query';
 import { invalidateEggQueries } from '@/lib/eggQueryCache';
 
-const db = vi.hoisted(() => ({ from: vi.fn(), getSession: vi.fn(), getQueue: vi.fn(), loadQueue: vi.fn() }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: db.from, auth: { getSession: db.getSession } } }));
+const db = vi.hoisted(() => ({ rpc: vi.fn(), from: vi.fn(), getSession: vi.fn(), getQueue: vi.fn(), loadQueue: vi.fn() }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: db.rpc, from: db.from, auth: { getSession: db.getSession } } }));
 vi.mock('@/lib/offlineQueue', () => ({ getQueue: db.getQueue, loadQueue: db.loadQueue }));
 
 beforeEach(() => {
   vi.clearAllMocks();
   db.getSession.mockResolvedValue({ data: { session: { user: { id: 'farm-owner' } } } });
+  db.rpc.mockReturnValue({ abortSignal: () => Promise.resolve({ data: ['farm-owner', 'family'], error: null }) });
   db.getQueue.mockReturnValue([]);
   db.loadQueue.mockResolvedValue(undefined);
 });
 afterEach(() => vi.useRealTimers());
 
 function table(range: ReturnType<typeof vi.fn>) {
-  const query = { select: vi.fn(), order: vi.fn(), abortSignal: vi.fn(), range };
+  const query = { in: vi.fn(), select: vi.fn(), order: vi.fn(), abortSignal: vi.fn(), range };
+  query.in.mockReturnValue(query);
   query.select.mockReturnValue(query);
   query.order.mockReturnValue(query);
   query.abortSignal.mockReturnValue(query);
@@ -28,9 +30,12 @@ describe('reliable shared farm reads', () => {
   it('shares concurrent pagination without dropping rows beyond 1000', async () => {
     const range = vi.fn().mockResolvedValueOnce({ data: Array.from({ length: 1000 }, (_, id) => ({ id })), error: null })
       .mockResolvedValueOnce({ data: [{ id: 1000 }], error: null });
-    db.from.mockReturnValue(table(range));
+    const query = table(range);
+    db.from.mockReturnValue(query);
     const [first, second] = await Promise.all([getHens(), getHens()]);
     expect(first).toEqual(second);
+    expect(query.in.mock.calls).toEqual([['user_id', ['farm-owner', 'family']], ['user_id', ['farm-owner', 'family']]]);
+    expect(db.rpc).toHaveBeenCalledTimes(1);
     expect(first).toHaveLength(1001);
     expect(range.mock.calls).toEqual([[0, 999], [1000, 1999]]);
   });

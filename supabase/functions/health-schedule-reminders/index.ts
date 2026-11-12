@@ -3,7 +3,7 @@
 // Schemaläggs via pg_cron.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
-const APP_URL = "https://honsgarden.lovable.app/app/health";
+const APP_URL = "https://honsgarden.se/app/health";
 const LOGO_URL = "https://sikbymtrbhrofysgkqsj.supabase.co/storage/v1/object/public/email-assets/logo-honsgarden.png";
 
 const corsHeaders = {

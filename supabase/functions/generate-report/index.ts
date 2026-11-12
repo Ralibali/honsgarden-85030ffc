@@ -31,13 +31,13 @@ function reportTitle(
   const s = new Date(start);
   switch (type) {
     case "manad":
-      return `Månadsrapport – ${s.toLocaleDateString("sv-SE", { month: "long", year: "numeric" })}`;
+      return `Månadsrapport – ${s.toLocaleDateString("sv-SE", { month: "long", year: "numeric", timeZone: "UTC" })}`;
     case "kvartal": {
-      const q = Math.floor(s.getMonth() / 3) + 1;
-      return `Kvartalsrapport – Q${q} ${s.getFullYear()}`;
+      const q = Math.floor(s.getUTCMonth() / 3) + 1;
+      return `Kvartalsrapport – Q${q} ${s.getUTCFullYear()}`;
     }
     case "ar":
-      return `Årsrapport – ${s.getFullYear()}`;
+      return `Årsrapport – ${s.getUTCFullYear()}`;
     case "avel":
       return `Avelsrapport – ${SV_DATE(start)} – ${SV_DATE(end)}`;
   }
@@ -140,10 +140,10 @@ Deno.serve(async (req) => {
   // Generate PDF in background (await for now to keep it simple)
   try {
     // Get farm-shared user_ids
-    const { data: farmUserIds } = await admin.rpc("get_farm_user_ids", {
-      _uid: user.id,
-    });
-    const userIds: string[] = (farmUserIds ?? [user.id]) as string[];
+    const { data: members, error: membersError } = await admin.from("farm_members")
+      .select("user_id").eq("farm_id", input.farm_id);
+    if (membersError || !members?.length) throw new Error("Kunde inte läsa gårdens medlemmar.");
+    const userIds = members.map(member => member.user_id);
 
     // Coop info
     const { data: coop } = await admin
@@ -156,16 +156,7 @@ Deno.serve(async (req) => {
     const periodStart = input.period_start;
     const periodEnd = input.period_end;
 
-    const [
-      { data: eggs },
-      { data: feed },
-      { data: txns },
-      { data: health },
-      { data: hens },
-      { data: hatchSessions },
-      { data: pairs },
-      { data: deaths },
-    ] = await Promise.all([
+    const results = await Promise.all([
       selectAll(() =>
         admin
           .from("egg_logs")
@@ -231,6 +222,17 @@ Deno.serve(async (req) => {
           .order("id"),
       ),
     ]);
+    for (const result of results) if (result.error) throw new Error(result.error.message);
+    const [
+      { data: eggs },
+      { data: feed },
+      { data: txns },
+      { data: health },
+      { data: hens },
+      { data: hatchSessions },
+      { data: pairs },
+      { data: deaths },
+    ] = results;
 
     const pdfBytes = await buildPdf({
       title,

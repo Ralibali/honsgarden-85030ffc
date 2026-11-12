@@ -29,7 +29,7 @@
     "yearly": {
       "name": "Plus årsvis",
       "price": "299 kr",
-      "period": "/ år",
+      "period": "/år",
       "description": "För dig som vill låta Hönsgården följa flocken genom hela året.",
       "badge": "Mest för pengarna",
       "cta": "Välj ett år med Plus",
@@ -39,7 +39,7 @@
     "monthly": {
       "name": "Plus månadsvis",
       "price": "39 kr",
-      "period": "/ månad",
+      "period": "/månad",
       "description": "Prova i din egen takt och avsluta när du vill.",
       "sub_price": "Betala en månad i taget",
       "cta": "Välj Plus månadsvis",

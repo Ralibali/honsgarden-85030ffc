@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { functionErrorMessage } from "@/lib/functionError";
 import { toast } from "sonner";
 import { Loader2, MapPin, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 
@@ -64,7 +65,7 @@ export default function AddMapListingDialog({ trigger }: { trigger: React.ReactN
         image_b64,
       };
       const { data, error } = await supabase.functions.invoke("map-listing-submit", { body: payload });
-      if (error) throw error;
+      if (error) throw new Error(await functionErrorMessage(error, "Något gick fel — försök igen"));
       if ((data as any)?.error) throw new Error((data as any).error);
       setDone({ email: form.owner_email });
     } catch (err: any) {

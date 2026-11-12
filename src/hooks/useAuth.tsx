@@ -56,9 +56,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-async function clearPrivateClientCaches(): Promise<void> {
+async function clearPrivateClientCaches(accountId?: string): Promise<void> {
   try {
     localStorage.removeItem(GLOBAL_QUERY_CACHE_KEY);
+    if (accountId) localStorage.removeItem(`honsgarden_rq_cache_v2:${accountId}`);
     sessionStorage.removeItem('_track_sid');
   } catch {
     // Private browsing or blocked storage.
@@ -129,8 +130,11 @@ async function buildProfile(
   if (doSync) {
     const res = await syncSubscriptionStatus();
     if (res.userMissing) {
-      try { await supabase.auth.signOut(); } catch { /* ignore */ }
-      await clearPrivateClientCaches();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user.id === supaUser.id) {
+        try { await supabase.auth.signOut(); } catch { /* ignore */ }
+        await clearPrivateClientCaches(supaUser.id);
+      }
       return null;
     }
     subscribed = res.subscribed;
@@ -201,9 +205,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     syncIntervalRef.current = setInterval(async () => {
       if (!currentUserRef.current || !profileReadyRef.current) return;
+      const id = currentUserRef.current.id;
       try {
         const profile = await buildProfile(currentUserRef.current);
-        setUser(profile);
+        if (currentUserRef.current?.id === id) setUser(profile);
       } catch {
         // Non-blocking periodic sync.
       }
@@ -222,7 +227,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshSubscription = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
-      await hydratePremiumProfile(session.user, setUser);
+      await hydratePremiumProfile(session.user, profile => {
+        if (currentUserRef.current?.id === session.user.id) setUser(profile);
+      });
     }
   }, []);
 
@@ -230,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
       const profile = await buildProfile(session.user, { sync: false });
-      if (profile) setUser(profile);
+      if (profile && currentUserRef.current?.id === session.user.id) setUser(profile);
     }
   }, []);
 
@@ -252,6 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Keep the hydrated profile on token refreshes for the same user;
       // resetting to the basic profile would drop Plus status until the next sync.
       if (isMounted) setUser((prev) => (prev?.id === supaUser.id ? prev : toBasicProfile(supaUser)));
+      currentUserRef.current = supaUser;
       if (!hydrateProfile) return;
 
       // Sync profile from auth metadata (fills Google name/avatar on every login, never overwrites edits)
@@ -261,31 +269,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       profileReadyRef.current = false;
       void hydratePremiumProfile(supaUser, (profile) => {
-        if (!isMounted) return;
+        if (!isMounted || currentUserRef.current?.id !== supaUser.id) return;
         setUser(profile);
         if (!profileReadyRef.current) {
           profileReadyRef.current = true;
           startPeriodicSync(supaUser);
         }
       }).catch(() => {
-        if (isMounted) {
+        if (isMounted && currentUserRef.current?.id === supaUser.id) {
           profileReadyRef.current = true;
           startPeriodicSync(supaUser);
         }
       }).finally(() => {
-        if (isMounted) setPremiumResolvedFor(supaUser.id);
+        if (isMounted && currentUserRef.current?.id === supaUser.id) setPremiumResolvedFor(supaUser.id);
       });
     };
 
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
-        if (!isMounted) return;
+        if (!isMounted || authEventVersion !== 0) return;
         applySession(session, true);
         setLoading(false);
       })
       .catch(() => {
-        if (!isMounted) return;
+        if (!isMounted || authEventVersion !== 0) return;
         setUser(null);
         setLoading(false);
       });
@@ -294,13 +302,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isMounted) return;
       const eventVersion = ++authEventVersion;
       if (event === 'SIGNED_OUT') {
+        const previousId = currentUserRef.current?.id;
+        setPremiumResolvedFor(null);
         setUser(null);
         stopPeriodicSync();
-        void clearPrivateClientCaches();
+        void clearPrivateClientCaches(previousId);
         setLoading(false);
         return;
       }
 
+      currentUserRef.current = session?.user ?? null;
       if (event === 'SIGNED_IN') {
         void import('@/lib/analytics').then(({ maybeTrackAuthSignup }) => {
           maybeTrackAuthSignup(event, session?.user);
@@ -348,16 +359,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (data.user) {
       setUser(toBasicProfile(data.user));
-      profileReadyRef.current = false;
-      void hydratePremiumProfile(data.user, (profile) => {
-        setUser(profile);
-        if (!profileReadyRef.current) {
-          profileReadyRef.current = true;
-          startPeriodicSync(data.user);
-        }
-      }).catch(() => {
-        profileReadyRef.current = true;
-      });
+      // The SIGNED_IN listener owns profile hydration.
+      currentUserRef.current = data.user;
     }
   };
 
@@ -390,7 +393,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
     } finally {
       setUser(null);
-      await clearPrivateClientCaches();
+      await clearPrivateClientCaches(user?.id);
     }
 
     try {

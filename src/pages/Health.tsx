@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import React, { useState, useMemo } from 'react';
 import { todayLocal, localCalendarDate } from '@/lib/datetime';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -117,7 +118,7 @@ export default function Health() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('hens')
-        .select('id, name, hen_type, is_active, flock_id')
+        .select('id, name, hen_type, is_active, flock_id').in('user_id', await getFarmUserIds())
         .eq('is_active', true)
         .order('name');
       if (error) throw error;
@@ -128,7 +129,7 @@ export default function Health() {
   const { data: flocks = [] } = useQuery({
     queryKey: ['flocks', 'minimal'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('flocks').select('id, name').order('name');
+      const { data, error } = await supabase.from('flocks').select('id, name').in('user_id', await getFarmUserIds()).order('name');
       if (error) throw error;
       return data ?? [];
     },
@@ -139,7 +140,7 @@ export default function Health() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('health_events')
-        .select('*, hens:hen_id(name, hen_type)')
+        .select('*, hens:hen_id(name, hen_type)').in('user_id', await getFarmUserIds())
         .order('event_date', { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -150,7 +151,7 @@ export default function Health() {
     queryKey: ['health_schedules'],
     queryFn: async () => {
       const { data, error } = await supabase.from('health_schedules')
-        .select('*')
+        .select('*').in('user_id', await getFarmUserIds())
         .eq('is_active', true)
         .order('next_due_date', { ascending: true });
       if (error) throw error;
@@ -483,14 +484,9 @@ export default function Health() {
               {filtered.map((e) => (
                 <Card key={e.id} className="border-border/50 hover:border-border hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200">
                   <CardContent className="p-4 flex items-start gap-3">
-                    <div className="flex flex-col items-center min-w-[3rem]">
-                      <span className="text-[10px] text-muted-foreground uppercase">
-                        {new Date(e.event_date).toLocaleDateString('sv-SE', { month: 'short' })}
-                      </span>
-                      <span className="text-lg font-serif text-foreground">
-                        {new Date(e.event_date).getDate()}
-                      </span>
-                    </div>
+                    <time dateTime={e.event_date} className="min-w-[3rem] text-sm font-medium text-foreground">
+                      {new Date(e.event_date + 'T12:00:00').toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                    </time>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className={`text-[10px] ${typeColor(e.event_type)}`}>

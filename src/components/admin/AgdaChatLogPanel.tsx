@@ -1,3 +1,4 @@
+import ReactMarkdown from 'react-markdown';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -256,7 +257,7 @@ export default function AgdaChatLogPanel() {
                     <p className="text-sm font-medium leading-snug line-clamp-2">{l.question}</p>
                     {l.answer && (
                       <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
-                        {l.answer.slice(0, 200)}
+                        {l.answer.slice(0, 200).replace(/[*_#`]/g, '')}
                       </p>
                     )}
                   </div>
@@ -328,7 +329,7 @@ export default function AgdaChatLogPanel() {
                     )}
                   </div>
                   <div className="rounded-lg border p-3 text-sm whitespace-pre-wrap">
-                    {selected.answer || <span className="text-muted-foreground italic">Inget svar sparades{selected.error ? ` – ${selected.error}` : ''}</span>}
+                    {selected.answer ? <ReactMarkdown>{selected.answer}</ReactMarkdown> : <span className="text-muted-foreground italic">Inget svar sparades{selected.error ? ` – ${selected.error}` : ''}</span>}
                   </div>
                 </div>
 

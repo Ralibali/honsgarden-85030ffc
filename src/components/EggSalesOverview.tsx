@@ -1,3 +1,5 @@
+import { format } from 'date-fns';
+import { getSyncedEggSales } from '@/lib/syncedProductState';
 import { bookingTotal } from '@/lib/eggSalePricing';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -88,6 +90,8 @@ export default function EggSalesOverview() {
     refetchInterval: 30_000,
   });
 
+  const { data: manualSales = [] } = useQuery({ queryKey: ['egg-sales-journal'], queryFn: getSyncedEggSales });
+
   const priceFor = useMemo(() => {
     const map = new Map<string, number>();
     listings.forEach((listing) => map.set(listing.id, Number(listing.price_per_pack || 0)));
@@ -101,7 +105,7 @@ export default function EggSalesOverview() {
     for (let i = RANGE_DAYS - 1; i >= 0; i -= 1) {
       const date = new Date(today);
       date.setDate(today.getDate() - i);
-      days.push({ date, key: date.toISOString().slice(0, 10), label: formatShortDate(date) });
+      days.push({ date, key: format(date, 'yyyy-MM-dd'), label: formatShortDate(date) });
     }
 
     const buckets = new Map<string, { bookings: number; packs: number; value: number }>();
@@ -111,18 +115,19 @@ export default function EggSalesOverview() {
     const previousStart = new Date(periodStart);
     previousStart.setDate(previousStart.getDate() - RANGE_DAYS);
 
-    const currentPeriod = { bookings: 0, packs: 0, value: 0 };
-    const previousPeriod = { bookings: 0, packs: 0, value: 0 };
+    const currentPeriod = { bookings: 0, packs: 0, value: 0, manual: 0, eggs: 0 };
+    const previousPeriod = { bookings: 0, packs: 0, value: 0, manual: 0, eggs: 0 };
 
     bookings.forEach((booking) => {
-      if (!booking.created_at || booking.status === 'cancelled') return;
+      if (!booking.created_at || booking.status === 'cancelled' || booking.payment_status === 'refunded') return;
 
       const created = startOfDay(new Date(booking.created_at));
       const packs = Number(booking.packs || 0);
       const value = bookingTotal(booking,{price_per_pack:priceFor(booking.listing_id)});
 
+      if (created > today) return;
       if (created >= periodStart) {
-        const key = created.toISOString().slice(0, 10);
+        const key = format(created, 'yyyy-MM-dd');
         const bucket = buckets.get(key);
         if (bucket) {
           bucket.bookings += 1;
@@ -139,6 +144,17 @@ export default function EggSalesOverview() {
       }
     });
 
+    const previousKey = format(previousStart, 'yyyy-MM-dd');
+    for (const sale of manualSales) {
+      if (sale.date < previousKey || sale.date > days[days.length - 1].key) continue;
+      const bucket = buckets.get(sale.date);
+      const period = bucket ? currentPeriod : previousPeriod;
+      period.manual++;
+      period.value += sale.amount;
+      period.eggs += sale.eggs;
+      if (bucket) bucket.value += sale.amount;
+    }
+
     return {
       series: days.map((day) => ({
         label: day.label,
@@ -149,10 +165,10 @@ export default function EggSalesOverview() {
       current: currentPeriod,
       previous: previousPeriod,
     };
-  }, [bookings, priceFor]);
+  }, [bookings, priceFor, manualSales]);
 
-  const averageOrder = current.bookings > 0 ? current.value / current.bookings : 0;
-  const previousAverage = previous.bookings > 0 ? previous.value / previous.bookings : 0;
+  const averageOrder = (current.bookings + current.manual) > 0 ? current.value / (current.bookings + current.manual) : 0;
+  const previousAverage = (previous.bookings + previous.manual) > 0 ? previous.value / (previous.bookings + previous.manual) : 0;
   const valueChange = current.value - previous.value;
 
   return (
@@ -163,13 +179,13 @@ export default function EggSalesOverview() {
             <p className="data-label">Så går det i Äggboden</p>
             <h1 className="font-serif text-2xl sm:text-3xl text-foreground mt-1">Din lilla äggförsäljning, på ett ställe</h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2">
-              De senaste 30 dagarna har du haft <strong className="text-foreground">{current.bookings} bokningar</strong> och sålt <strong className="text-foreground">{current.packs} kartor</strong> till ett värde av <strong className="text-foreground">{formatKr(current.value)}</strong>.
+              De senaste 30 dagarna har du haft <strong className="text-foreground">{current.bookings} {current.bookings === 1 ? 'bokning' : 'bokningar'}</strong> och registrerat <strong>{current.manual} {current.manual === 1 ? 'manuell försäljning' : 'manuella försäljningar'} ({current.eggs} ägg)</strong>. Bokningarna omfattar <strong className="text-foreground">{current.packs} {current.packs === 1 ? 'karta' : 'kartor'}</strong>. Sammanlagt värde är <strong className="text-foreground">{formatKr(current.value)}</strong>.
             </p>
           </div>
           <div className={`egg-shop-change ${valueChange > 0 ? 'is-up' : valueChange < 0 ? 'is-down' : ''}`}>
             {valueChange > 0 ? <ArrowUpRight className="h-4 w-4" /> : valueChange < 0 ? <ArrowDownRight className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
             <span>{valueChange === 0 ? 'Stabilt' : `${valueChange > 0 ? '+' : ''}${formatKr(valueChange)}`}</span>
-            <small>mot perioden innan</small>
+            <small> mot perioden innan</small>
           </div>
         </div>
 
@@ -189,7 +205,7 @@ export default function EggSalesOverview() {
           <ReadableStat
             icon={Wallet}
             value={formatKr(averageOrder)}
-            label="per bokning i snitt"
+            label="per försäljning i snitt"
             sentence={previousAverage > 0 ? `Tidigare låg snittet på ${formatKr(previousAverage)}.` : 'Snittordern växer fram när fler bokningar kommer in.'}
           />
         </div>

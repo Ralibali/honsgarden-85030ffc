@@ -1,195 +1,83 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Bird, Egg, Wallet, Search } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { CommandDialog, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { supabase } from '@/integrations/supabase/client';
+import { getFarmUserIds } from '@/lib/farmScope';
+import { withRequestTimeout } from '@/lib/requestTimeout';
+import { appPages } from '@/lib/appPages';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
 
-interface SearchResult {
-  id: string;
-  type: 'hen' | 'egg' | 'transaction';
-  title: string;
-  subtitle: string;
+async function findRecords(term: string, userId: string, signal: AbortSignal) {
+  const owners = await getFarmUserIds(userId);
+  // Quote the complete PostgREST operand, including commas in names.
+  const pattern = '%' + term.replace(/[\\%_]/g, '\\$&') + '%';
+  const operand = '"' + pattern.replace(/["\\]/g, '\\$&') + '"';
+  const [hens, flocks, eggs, tx] = await Promise.all([
+    supabase.from('hens').select('id,name,breed').in('user_id', owners)
+      .or(`name.ilike.${operand},breed.ilike.${operand}`).limit(5).abortSignal(signal),
+    supabase.from('flocks').select('id,name').in('user_id', owners).ilike('name', pattern).limit(5).abortSignal(signal),
+    supabase.from('egg_logs').select('id,date,count,notes').in('user_id', owners).ilike('notes', pattern).limit(5).abortSignal(signal),
+    supabase.from('transactions').select('id,amount,description,category').in('user_id', owners)
+      .or(`description.ilike.${operand},category.ilike.${operand}`).limit(5).abortSignal(signal),
+  ]);
+  for (const response of [hens, flocks, eggs, tx]) if (response.error) throw response.error;
+  return [
+    ...(hens.data ?? []).map(h => ({ id: h.id, label: h.name, detail: h.breed || 'Höna', path: '/app/hens/' + h.id })),
+    ...(flocks.data ?? []).map(f => ({ id: f.id, label: f.name, detail: 'Flock', path: '/app/hens?flock=' + f.id })),
+    ...(eggs.data ?? []).map(e => ({ id: e.id, label: e.count + ' ägg · ' + e.date, detail: e.notes, path: '/app/eggs' })),
+    ...(tx.data ?? []).map(t => ({ id: t.id, label: t.amount + ' kr · ' + (t.description || t.category || 'Transaktion'), detail: 'Ekonomi', path: '/app/finance' })),
+  ];
 }
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [input, setInput] = useState('');
+  const [term, setTerm] = useState('');
   const { user } = useAuth();
-
-  // Cmd+K / Ctrl+K shortcut
+  const navigate = useNavigate();
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+    const shortcut = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((o) => !o);
+        setOpen(v => !v);
       }
     };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
+    document.addEventListener('keydown', shortcut);
+    return () => document.removeEventListener('keydown', shortcut);
   }, []);
-
-  const search = useCallback(async (q: string) => {
-    if (!q.trim() || !user) {
-      setResults([]);
-      return;
-    }
-
-    setLoading(true);
-    const searchTerm = `%${q.trim()}%`;
-
-    const [hensRes, eggsRes, txRes] = await Promise.all([
-      supabase
-        .from('hens')
-        .select('id, name, breed')
-        .or(`name.ilike.${searchTerm},breed.ilike.${searchTerm}`)
-        .limit(5),
-      supabase
-        .from('egg_logs')
-        .select('id, date, count, notes')
-        .ilike('notes', searchTerm)
-        .limit(5),
-      supabase
-        .from('transactions')
-        .select('id, date, amount, description, type, category')
-        .or(`description.ilike.${searchTerm},category.ilike.${searchTerm}`)
-        .limit(5),
-    ]);
-
-    const items: SearchResult[] = [];
-
-    hensRes.data?.forEach((h) =>
-      items.push({
-        id: h.id,
-        type: 'hen',
-        title: h.name,
-        subtitle: h.breed || 'Höna',
-      })
-    );
-
-    eggsRes.data?.forEach((e) =>
-      items.push({
-        id: e.id,
-        type: 'egg',
-        title: `${e.count} ägg – ${format(new Date(e.date), 'yyyy-MM-dd')}`,
-        subtitle: e.notes || 'Äggloggning',
-      })
-    );
-
-    txRes.data?.forEach((t) =>
-      items.push({
-        id: t.id,
-        type: 'transaction',
-        title: `${t.amount} kr – ${t.description || t.category || t.type}`,
-        subtitle: format(new Date(t.date), 'yyyy-MM-dd'),
-      })
-    );
-
-    setResults(items);
-    setLoading(false);
-  }, [user]);
-
-  // Debounced search
   useEffect(() => {
-    if (!open) return;
-    const t = setTimeout(() => search(query), 250);
-    return () => clearTimeout(t);
-  }, [query, open, search]);
-
-  const handleSelect = (item: SearchResult) => {
-    setOpen(false);
-    setQuery('');
-    switch (item.type) {
-      case 'hen':
-        navigate(`/app/hens/${item.id}`);
-        break;
-      case 'egg':
-        navigate('/app/eggs');
-        break;
-      case 'transaction':
-        navigate('/app/finance');
-        break;
-    }
-  };
-
-  const iconMap = {
-    hen: Bird,
-    egg: Egg,
-    transaction: Wallet,
-  };
-
+    if (!open) { setInput(''); setTerm(''); return; }
+    const timer = setTimeout(() => setTerm(input.trim()), 220);
+    return () => clearTimeout(timer);
+  }, [input, open]);
+  const { data: admin } = useQuery({ queryKey: ['admin-check'], queryFn: api.adminCheck, enabled: open && !!user });
+  const result = useQuery({
+    queryKey: ['command-search', user?.id, term],
+    enabled: open && !!user && !!term,
+    queryFn: () => withRequestTimeout(signal => findRecords(term, user!.id, signal), 8000),
+    retry: false, networkMode: 'always',
+  });
+  const query = input.trim().toLocaleLowerCase('sv');
+  const pages = query ? appPages.filter(p => (admin?.is_admin || !['/app/admin', '/app/growth-intelligence', '/app/butik'].includes(p.path)) &&
+    (p.label + ' ' + (p.terms ?? '')).toLocaleLowerCase('sv').includes(query)) : [];
+  const records = input.trim() === term && query ? result.data ?? [] : [];
+  const go = (path: string) => { setOpen(false); navigate(path); };
+  const waiting = input.trim() !== term || result.isFetching;
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput
-        placeholder="Sök höna, ägg, transaktion..."
-        value={query}
-        onValueChange={setQuery}
-      />
+    <CommandDialog open={open} onOpenChange={setOpen} shouldFilter={false}>
+      <CommandInput placeholder="Sök sida, flock, höna, ägg eller transaktion…" value={input} onValueChange={setInput} />
       <CommandList>
-        <CommandEmpty>
-          {loading ? 'Söker...' : query ? 'Inga resultat hittades.' : 'Börja skriva för att söka...'}
-        </CommandEmpty>
-
-        {results.filter((r) => r.type === 'hen').length > 0 && (
-          <CommandGroup heading="Hönor">
-            {results
-              .filter((r) => r.type === 'hen')
-              .map((item) => {
-                const Icon = iconMap[item.type];
-                return (
-                  <CommandItem key={item.id} onSelect={() => handleSelect(item)} className="gap-3">
-                    <Icon className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-sm">{item.title}</span>
-                      <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-                    </div>
-                  </CommandItem>
-                );
-              })}
-          </CommandGroup>
-        )}
-
-        {results.filter((r) => r.type === 'egg').length > 0 && (
-          <CommandGroup heading="Äggloggningar">
-            {results
-              .filter((r) => r.type === 'egg')
-              .map((item) => {
-                const Icon = iconMap[item.type];
-                return (
-                  <CommandItem key={item.id} onSelect={() => handleSelect(item)} className="gap-3">
-                    <Icon className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-sm">{item.title}</span>
-                      <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-                    </div>
-                  </CommandItem>
-                );
-              })}
-          </CommandGroup>
-        )}
-
-        {results.filter((r) => r.type === 'transaction').length > 0 && (
-          <CommandGroup heading="Transaktioner">
-            {results
-              .filter((r) => r.type === 'transaction')
-              .map((item) => {
-                const Icon = iconMap[item.type];
-                return (
-                  <CommandItem key={item.id} onSelect={() => handleSelect(item)} className="gap-3">
-                    <Icon className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-sm">{item.title}</span>
-                      <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-                    </div>
-                  </CommandItem>
-                );
-              })}
-          </CommandGroup>
-        )}
+        {pages.length > 0 && <CommandGroup heading="Sidor">{pages.map(p =>
+          <CommandItem key={p.path} value={p.path} onSelect={() => go(p.path)}>{p.label}</CommandItem>)}</CommandGroup>}
+        {records.length > 0 && <CommandGroup heading="På din gård">{records.map(r =>
+          <CommandItem key={r.id} value={r.id} onSelect={() => go(r.path)}>
+            {r.label} <span className="ml-2 text-xs text-muted-foreground">{r.detail}</span>
+          </CommandItem>)}</CommandGroup>}
+        {(!query || waiting || result.isError || (!pages.length && !records.length)) &&
+          <p role="status" className="p-4 text-sm text-muted-foreground">{!query ? 'Börja skriva för att söka.' :
+            waiting ? 'Söker…' : result.isError ? 'Gårdens uppgifter kunde inte hämtas.' : 'Inga resultat hittades.'}</p>}
       </CommandList>
     </CommandDialog>
   );

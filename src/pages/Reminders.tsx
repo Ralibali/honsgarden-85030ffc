@@ -1,3 +1,7 @@
+import { format, parseISO } from 'date-fns';
+import { sv } from 'date-fns/locale';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,6 +75,7 @@ export default function Reminders() {
   const [open, setOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState<ReminderType>('vaccination');
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [newDate, setNewDate] = useState('');
   const [newRecurrence, setNewRecurrence] = useState<Recurrence>('none');
   const [newHenId, setNewHenId] = useState<string>('none');
@@ -191,7 +196,7 @@ export default function Reminders() {
         <div className="flex-1 min-w-0">
           <p className={`text-xs sm:text-sm font-medium text-foreground truncate ${completed ? 'line-through' : ''}`}>{r.title}</p>
           <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-            {r.due_date} · {config.label}{r.recurrence !== 'none' ? ` · ${recurrenceLabels[r.recurrence]}` : ''} {contextLabel}
+            {format(parseISO(r.due_date), 'd MMM yyyy', { locale: sv })} · {config.label}{r.recurrence !== 'none' ? ` · ${recurrenceLabels[r.recurrence]}` : ''} {contextLabel}
           </p>
         </div>
         {!completed && (
@@ -259,8 +264,18 @@ export default function Reminders() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label>Datum</Label>
-                  <Input className="mt-1.5" type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                  <Label htmlFor="reminder-date">Datum</Label>
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild><Button id="reminder-date" type="button" variant="outline" className="mt-1.5 w-full justify-start">
+                      {newDate ? format(parseISO(newDate), 'd MMMM yyyy', { locale: sv }) : 'Välj datum'}
+                    </Button></PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar mode="single" locale={sv} weekStartsOn={1} initialFocus
+                        selected={newDate ? parseISO(newDate) : undefined} onSelect={date => {
+                          if (date) { setNewDate(format(date, 'yyyy-MM-dd')); setDatePickerOpen(false); }
+                        }} />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div>
                   <Label>Upprepning</Label>

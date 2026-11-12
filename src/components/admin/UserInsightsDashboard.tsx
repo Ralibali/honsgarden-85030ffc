@@ -523,7 +523,7 @@ export default function UserInsightsDashboard() {
                   <span className="flex-1 text-foreground truncate">{user.display_name || user.email}</span>
                   <span className="text-muted-foreground">{user.daysSinceLastActivity}d sedan</span>
                   <span className="text-muted-foreground">{user.totalEggs} ägg</span>
-                  <Badge variant="outline" className="text-[8px]">{user.featureCount} funktioner</Badge>
+                  <Badge variant="outline" className="text-[8px]">{user.featureCount} {user.featureCount === 1 ? 'funktion' : 'funktioner'}</Badge>
                 </div>
               ))}
             </div>

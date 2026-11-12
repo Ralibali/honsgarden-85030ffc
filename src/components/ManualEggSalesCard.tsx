@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { todayLocal } from '@/lib/datetime';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,8 +27,8 @@ function todayISO() {
 }
 
 export default function ManualEggSalesCard() {
-  const [sales, setSales] = useState<EggSale[]>([]);
-  const [loading, setLoading] = useState(true);
+  const qc = useQueryClient();
+  const { data: sales = [], isLoading: loading } = useQuery({ queryKey: ['egg-sales-journal'], queryFn: getSyncedEggSales });
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -37,19 +38,6 @@ export default function ManualEggSalesCard() {
   const [date, setDate] = useState(todayISO());
   const [paid, setPaid] = useState(true);
   const [note, setNote] = useState('');
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const data = await getSyncedEggSales();
-        setSales(data);
-      } catch (err: any) {
-        console.warn('[manual-sales] load failed', err?.message || err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
 
   const totals = useMemo(() => {
     const total = sales.reduce((s, sale) => s + Number(sale.amount || 0), 0);
@@ -94,7 +82,7 @@ export default function ManualEggSalesCard() {
         date,
         note: note.trim().slice(0, 500) || undefined,
       });
-      setSales((prev) => [newSale, ...prev]);
+      qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => [newSale, ...prev]);
       toast({ title: 'Försäljning sparad' });
       resetForm();
       setOpen(false);
@@ -108,7 +96,7 @@ export default function ManualEggSalesCard() {
   async function togglePaid(sale: EggSale) {
     try {
       const updated = await updateSyncedEggSale(sale.id, { paid: !sale.paid });
-      setSales((prev) => prev.map((s) => (s.id === sale.id ? updated : s)));
+      qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => prev.map((s) => (s.id === sale.id ? updated : s)));
     } catch (err: any) {
       toast({ title: 'Kunde inte uppdatera', description: err?.message, variant: 'destructive' });
     }
@@ -118,7 +106,7 @@ export default function ManualEggSalesCard() {
     if (!confirm(`Ta bort försäljningen till ${sale.customer}?`)) return;
     try {
       await deleteSyncedEggSale(sale.id);
-      setSales((prev) => prev.filter((s) => s.id !== sale.id));
+      qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => prev.filter((s) => s.id !== sale.id));
       toast({ title: 'Försäljning borttagen' });
     } catch (err: any) {
       toast({ title: 'Kunde inte ta bort', description: err?.message, variant: 'destructive' });

@@ -1,3 +1,4 @@
+import { getUserId } from '@/lib/farmScope';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -13,7 +14,7 @@ export interface FarmWeather {
 async function getCoords(): Promise<{ lat: number; lon: number } | null> {
   const { data } = await supabase
     .from('coop_settings')
-    .select('latitude, longitude')
+    .select('latitude, longitude').eq('user_id', await getUserId())
     .limit(1)
     .maybeSingle();
   if (data?.latitude != null && data?.longitude != null) {

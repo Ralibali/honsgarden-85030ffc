@@ -1,3 +1,4 @@
+import { getFarmUserIds } from '@/lib/farmScope';
 import { OnboardingFrame } from '../../packages/app-foundation/src/OnboardingFrame';
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -91,7 +92,7 @@ export default function OnboardingGuide() {
 
       const { count } = await supabase
         .from('hens')
-        .select('id', { count: 'exact', head: true });
+        .select('id', { count: 'exact', head: true }).in('user_id', await getFarmUserIds(user.id));
 
       if (isCancelled) return;
       if (count && count > 0) {
@@ -110,7 +111,7 @@ export default function OnboardingGuide() {
           trackOnboardingStep('welcome');
         }
       }, 800);
-    })();
+    })().catch(() => { /* Keep onboarding closed while farm ownership is unavailable. */ });
 
     return () => {
       isCancelled = true;

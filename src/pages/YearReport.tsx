@@ -1,3 +1,5 @@
+import QueryNotice from '@/components/QueryNotice';
+import { isActiveHen } from '@/lib/farmMetrics';
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,15 +16,15 @@ const MONTHS_SV = [
   'juli', 'augusti', 'september', 'oktober', 'november', 'december',
 ];
 
-/** Längsta streak i kalenderåret (sammanhängande dagar med minst ett ägg). */
+/** Längsta streak i kalenderåret (sammanhängande dagar med en registrering). */
 function longestStreakInYear(eggsByDate: Record<string, number>, year: number): number {
   const start = new Date(year, 0, 1);
   const end = new Date(year, 11, 31);
   let best = 0;
   let cur = 0;
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const key = d.toISOString().split('T')[0];
-    if ((eggsByDate[key] || 0) > 0) {
+    const key = format(d, 'yyyy-MM-dd');
+    if (eggsByDate[key] !== undefined) {
       cur++;
       if (cur > best) best = cur;
     } else {
@@ -144,8 +146,8 @@ export default function YearReport() {
   const yearStart = `${year}-01-01`;
   const yearEnd = `${year}-12-31`;
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
+  const { data: eggs = [], isPending: loadingEggs, isError: eggError, refetch: reloadEggs } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
+  const { data: hens = [], isPending: loadingHens, isError: henError, refetch: reloadHens } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
   const { data: feedStats } = useQuery({
     queryKey: ['feed-stats'],
     queryFn: () => api.getFeedStatistics().catch(() => null),
@@ -171,7 +173,7 @@ export default function YearReport() {
       ? `${format(new Date(bestDayEntry[0]), 'd MMM', { locale: sv })} (${bestDayEntry[1]} st)`
       : '—';
 
-    const activeHens = hens.filter((h) => h.is_active).length || hens.length;
+    const activeHens = hens.filter(isActiveHen).length;
     const avgPerHen = activeHens > 0 ? totalEggs / activeHens : 0;
     const longestStreak = longestStreakInYear(byDate, year);
 
@@ -209,7 +211,7 @@ export default function YearReport() {
     });
   }, [stats, year, user]);
 
-  useEffect(() => { render(); }, [render]);
+  useEffect(() => { render(); }, [render, loadingEggs, loadingHens]);
 
   const handleDownload = () => {
     if (!canvasRef.current) return;
@@ -243,7 +245,9 @@ export default function YearReport() {
     }
   };
 
-  const hasData = stats.totalEggs > 0;
+  if (eggError || henError) return <QueryNotice title="Kunde inte läsa hönsåret" onRetry={() => { void reloadEggs(); void reloadHens(); }} />;
+  if (loadingEggs || loadingHens) return <QueryNotice loading title="Hämtar hönsåret…" />;
+  const hasData = stats.longestStreak > 0;
 
   return (
     <div className="max-w-2xl mx-auto space-y-5 animate-fade-in pb-8">
@@ -260,7 +264,7 @@ export default function YearReport() {
           <CardContent className="p-3 flex flex-col items-center gap-1">
             <Egg className="h-5 w-5 text-primary" />
             <span className="text-xl font-bold">{stats.totalEggs}</span>
-            <span className="text-[11px] text-muted-foreground">Ägg i år</span>
+            <span className="text-[11px] text-muted-foreground"> Ägg i år</span>
           </CardContent>
         </Card>
         <Card className="border-border/50 shadow-sm">

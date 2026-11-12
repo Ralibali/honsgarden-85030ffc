@@ -35,7 +35,7 @@
   --border: 145 12% 25%;
   --input: 145 12% 25%;
   --ring: 93 30% 60%;
-  --muted-foreground: 43 12% 70%;
+  --muted-foreground: 43 12% 78%;
   background: #111c16;
 }
 .honsgarden-app-shell.noise-bg::before { display: none; }
@@ -189,4 +189,9 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .honsgarden-app-shell *, .hg-mobile-menu { animation: none !important; transition: none !important; }
+}
+
+/* Preserve secondary text contrast on the dark app surfaces. */
+.dark .honsgarden-app-shell :is(.text-muted-foreground\/40, .text-muted-foreground\/50, .text-muted-foreground\/60, .text-muted-foreground\/70) {
+  color: hsl(var(--muted-foreground));
 }

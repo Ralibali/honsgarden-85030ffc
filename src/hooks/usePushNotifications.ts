@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { pushNotificationPath } from '@/lib/pushNotificationPath';
 import { NATIVE_PUSH_SUSPEND, trackNativePushSave } from '@/lib/nativePushCleanup';
 import { trackEvent } from '@/lib/analytics';
+import { currentPushSubscription, ensurePushRegistration } from '@/lib/pushServiceWorker';
 
 /**
  * SW -> klient: push-sw.js postar detta meddelande vid notificationclick så
@@ -149,8 +150,7 @@ function usePushNotificationsController() {
   // --- Web (befintlig serviceworker-flöde) ---
   useEffect(() => {
     if (isNative || !webSupported) return;
-    navigator.serviceWorker.ready
-      .then((reg) => reg.pushManager.getSubscription())
+    currentPushSubscription()
       .then((sub) => setEnabled(!!sub))
       .catch(() => {});
 
@@ -204,7 +204,13 @@ function usePushNotificationsController() {
         result: perm === 'granted' ? 'accepted' : perm === 'denied' ? 'denied' : 'dismissed',
       });
       if (perm !== 'granted') return false;
-      const reg = await navigator.serviceWorker.ready;
+      let reg: ServiceWorkerRegistration;
+      try {
+        reg = await ensurePushRegistration();
+      } catch (error) {
+        console.warn('[push] Service worker registration failed', error);
+        return false;
+      }
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         const vapidKey = await fetchVapidPublicKey();
@@ -248,8 +254,7 @@ function usePushNotificationsController() {
     if (!webSupported) return;
     setBusy(true);
     try {
-      const reg = await navigator.serviceWorker.ready;
-      const sub = await reg.pushManager.getSubscription();
+      const sub = await currentPushSubscription();
       if (sub) {
         const ep = sub.endpoint;
         await sub.unsubscribe();

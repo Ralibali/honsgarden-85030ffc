@@ -207,6 +207,14 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const weekDelta = weekEggs - previousWeekEggs;
 
   const activeHens = hens.filter(isActiveHen).length;
+  const flockHens = useMemo(() => hens.filter(isActiveHen), [hens]);
+  const todayByHen = useMemo(() => {
+    const byHen: Record<string, number> = {};
+    for (const egg of eggs) {
+      if (egg.date === todayKey && egg.hen_id) byHen[egg.hen_id] = (byHen[egg.hen_id] ?? 0) + (egg.count || 0);
+    }
+    return byHen;
+  }, [eggs, todayKey]);
   const pendingChores = chores.filter((chore: any) => !chore.completed).length;
   const streakInfo = useMemo(() => computeLogStreak(eggs, todayKey), [eggs, todayKey]);
   const streak = streakInfo.current;
@@ -283,7 +291,16 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
       </section>
 
       <section className="today-v3__egg" aria-label="Logga dagens ägg">
-        <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={todayRows} loggedToday={loggedToday} allowZeroDay={activeHens > 0} />
+        <QuickEggLogCard
+          todayEggs={todayEggs}
+          todayEggRowIds={todayRows}
+          loggedToday={loggedToday}
+          allowZeroDay={activeHens > 0}
+          hens={flockHens}
+          todayByHen={todayByHen}
+          yesterdayEggs={yesterdayEggs}
+          streak={streak}
+        />
       </section>
 
       <FarmPulseCard items={pulseItems} reminders={openReminders} seasonKey={seasonKey} />
@@ -291,6 +308,8 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
       {weekProgress && activeHens > 0 && eggs.length > 0 && (
         <WeekRingCard week={weekProgress} streak={streak} winter={season === 'winter'} demo={demo} />
       )}
+
+      <section className="today-v3__race" aria-label="Veckans värptävling"><HenRaceCard eggs={eggs} hens={hens} /></section>
 
       {monthRecap && (
         <MonthRecapCard recap={monthRecap} eggs={eggs} hens={hens} isPlus={canDownloadReports} demo={demo} />
@@ -369,8 +388,6 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
           <WeekInsightLine insights={weekInsights} isPlus={canSeeInsights} demo={demo} />
         </section>
       )}
-
-      <section className="today-v3__race" aria-label="Veckans värptävling"><HenRaceCard eggs={eggs} hens={hens} /></section>
 
       <footer className="today-v3__footer-note"><span aria-hidden="true">🌿</span><p>Du behöver inte hålla koll på allt. Logga det som hjälper dig – Hönsgården tar hand om resten.</p></footer>
     </div>

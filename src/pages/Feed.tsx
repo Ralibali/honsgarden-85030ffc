@@ -35,6 +35,7 @@ function formatKr(value: number) {
 
 export default function Feed() {
   const queryClient = useQueryClient();
+  const [visible, setVisible] = useState(25);
   const [open, setOpen] = useState(false);
   const [newType, setNewType] = useState('');
   const [newCost, setNewCost] = useState('');
@@ -250,7 +251,7 @@ export default function Feed() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border/60">
-                  {feedRecords.map((record: any) => {
+                  {feedRecords.slice(0, visible).map((record: any) => {
                     const id = record._id || record.id;
                     const kg = Number(record.amount_kg || record.kg || 0);
                     return (
@@ -276,6 +277,7 @@ export default function Feed() {
                     );
                   })}
                 </div>
+              {feedRecords.length > visible && <Button variant="outline" className="m-4" onClick={() => setVisible(n => n + 25)}>Visa fler inköp ({feedRecords.length - visible} kvar)</Button>}
               </CardContent>
             </Card>
           </>
