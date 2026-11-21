@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "content_id": "editorial-20261121-kontrollera-leverans-honsutrustning",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-11-21T13:52:08.517352+00:00",
+  "sources_checked_at": null,
+  "site": "honsgarden",
+  "slug": "kontrollera-leverans-honsutrustning",
+  "title": "Ny hönsutrustning: kontrollera leveransen innan den tas i bruk",
+  "description": "En praktisk mottagningskontroll för hönsutrustning: jämför beställning, modell och delar, dokumentera avvikelser och samla frågor till säljaren.",
+  "category": "utrustning",
+  "tags": [
+    "hönsutrustning",
+    "leveranskontroll",
+    "köpguide"
+  ],
+  "cover_image": "/blog-images/hens-feeding.jpg",
+  "cta_path": "/foderkostnad-hons",
+  "search_intent": "Kontrollera det som faktiskt levererats efter köp av hönsutrustning; skilt från att välja modell eller jämföra reservdelstillgång.",
+  "source_urls": [
+    "https://honsgarden.se/foderkostnad-hons",
+    "https://honsgarden.se/blogg/reservdelar-honsutrustning-fore-kop"
+  ],
+  "content_html": "<p>När ny utrustning till hönsgården kommer är nästa steg att kontrollera vad som faktiskt levererats. Den här mallen hjälper dig upptäcka oklarheter innan delarna monteras eller tas i bruk. Texten är skriven med AI-stöd av ChatGPT.</p>\n<h2>Lägg beställningen bredvid leveransen</h2>\n<p>Ta fram orderbekräftelsen, produktbeskrivningen som gällde vid köpet och eventuell separat lista över tillbehör. Börja med modellnamn, variant och antal. En liknande produktbild är inte tillräcklig för att avgöra om rätt version har kommit. Skriv upp det som skiljer sig och kontrollera om skillnaden kan förklaras av märkningen.</p>\n<p>Gör jämförelsen innan delar sprids mellan förråd och hönshus. Om beställningen kommer i flera kollin, markera vilka som har kommit och vilka som fortfarande saknas. Ett tomt fack i kartongen behöver inte betyda att en del fattas; utgå från innehållslistan för just modellen. Fråga säljaren när listan är oklar.</p>\n<h2>Räkna delarna utan att gissa hur de ska användas</h2>\n<p>Läs den medföljande instruktionen och jämför delnamnen med det som ligger i kartongen. Lägg smådelar samlat och fotografera uppställningen om du behöver ställa en fråga. Kontrollera också att instruktionen gäller samma modellbeteckning som produkten. En manual för en snarlik variant kan ge fel underlag.</p>\n<p>Skilj på något som ingår, ett valbart tillbehör och något du redan behöver ha hemma. Köpte du exempelvis ett paket med flera produkter, gör en rad per produkt. Anteckna vad som är kontrollerat i stället för att bara skriva att hela paketet verkar komplett.</p>\n<h2>Dokumentera en avvikelse så att den går att förstå</h2>\n<p>Beskriv vad du ser, var det finns och vilken del det gäller. En översiktsbild tillsammans med en närbild kan göra frågan tydligare än en ensam detaljbild. Spara även modellbeteckning och orderreferens. Undvik att få med adressetiketter eller andra personuppgifter om bilden ska delas utanför kontakten med säljaren.</p>\n<p>En tydlig anteckning kan vara: lockets kant är sprucken vid det vänstra fästet, upptäckt vid uppackning. Håll observationen åtskild från antaganden om orsaken. Försök inte reparera eller modifiera en skadad del för att kunna prova den. Be säljaren eller tillverkaren klargöra hur den ska hanteras.</p>\n<h2>Bestäm vad som kan gå vidare</h2>\n<p>Sortera din lista i komplett och begripligt, behöver förklaring samt avvikelse som behöver lösas. Följ tillverkarens anvisningar för montering och användning. Den här kontrollen ersätter inte produktens säkerhetsinstruktioner. Ta inte oklar eller skadad utrustning i bruk hos djuren medan du väntar på svar.</p>\n<p>Spara emballage och handlingar tills du har fått besked om hur ett eventuellt ärende ska hanteras. Fråga uttryckligen vilka delar och bilder mottagaren behöver. Artikeln anger inga generella garanti- eller returtider; de aktuella villkoren och omständigheterna behöver kontrolleras för ditt köp.</p>\n<h2>Avsluta med en liten mottagningslista</h2>\n<p>Samla fem uppgifter: produkt och variant, vad som beställdes, vad som kom, vilka frågor som återstår och vem du har kontaktat. Lägg datum för kontrollen och spara svaret tillsammans med instruktionen. När frågan är löst ska det framgå vilket besked du fick, så att nästa person inte behöver börja om.</p>\n<p>En leveranskontroll är också ett bra tillfälle att skilja engångsinköpet från den löpande driften. Anteckna kostnaden som den faktiskt står på underlaget. Dra inga slutsatser om besparing eller livslängd innan du har eget underlag för det. Då går inköpet att följa upp utan att antaganden blir till fakta.</p>\n<p>Fortsätt med <a href=\"/blogg/reservdelar-honsutrustning-fore-kop\">frågorna om reservdelar före köp</a>. Spara inköp och löpande kostnader separat när du använder <a href=\"/foderkostnad-hons\">Hönsgårdens underlag om foderkostnad</a>.</p>",
+  "publication_gate": {
+    "earliest_date": "2026-11-23",
+    "timezone": "Europe/Stockholm",
+    "requires_fresh_inventory_source_product_and_live_checks": true,
+    "note": "Utkast utan publiceringsdatum. Kontrollera verklig senaste publicering före användning."
+  },
+  "review_notes": "Originalutkast av ChatGPT. Källor och produktväg måste läsas på nytt före publicering; inga externa sakpåståenden eller produktfunktioner ska anses godkända genom detta köutkast."
+}
