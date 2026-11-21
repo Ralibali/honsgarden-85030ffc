@@ -58,9 +58,9 @@ export default function StartCostCalculator() {
   const annualOperating = (monthlyFeed + monthlyBedding + monthlyOther) * 12;
 
   useSeo({
-    title: 'Vad kostar det att skaffa höns? Startkostnadskalkylator | Hönsgården',
+    title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården',
     description:
-      'Räkna på hönshus, höns, stängsel, foder och utrustning. Gratis startkostnadskalkylator för dig som funderar på att skaffa höns.',
+      'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.',
     path: '/verktyg/vad-kostar-hons',
     jsonLd: [
       {
