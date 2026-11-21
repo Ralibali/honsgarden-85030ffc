@@ -9,7 +9,7 @@ export const BREED_PRERENDER_PROFILES = [
     ['Är silkeshöns bra för barn?', 'Bland de bästa. De är lugna, tåliga och låter sig lyftas utan att bli stressade. Många använder dem för att lära barn hönsskötsel.'],
     ['Varför ruvar silkeshöns så ofta?', 'De har starka moderinstinkter som avlats fram i århundraden. Många hobbyhönsägare skaffar en silkeshöna enbart för att ruva andra rasers ägg.'],
   ]},
-  { slug: 'brahma', namn: 'Brahma', description: 'Brahma är den mjuka jätten bland höns: 4–5 kg, ~150 ägg per år och ett temperament så lugnt att man knappt tror det. Klarar vintern utmärkt.', faq: [
+  { slug: 'brahma', namn: 'Brahma', description: 'Brahma höns väger 4–5,5 kg men hör till de lugnaste raserna. Ljust beige ägg (~150/år), fjäderben och god vinterhärdighet. Så sköter du rasen.', faq: [
     ['Hur många ägg lägger en brahma per år?', 'Cirka 130–160 stora, ljust beige ägg per år. Räkna med lägre värpning under vintermörkret.'],
     ['Är brahma bra för nybörjare?', 'Ja, trots storleken. De är lugna, långsamma och lätta att hantera. Se bara till att sittpinnen inte är för hög – en brahma landar tungt.'],
     ['Klarar brahma svensk vinter?', 'Utmärkt. De är fjäderrika ända ner på tårna. Håll bara rastgården torr så fjäderbenen inte fryser fast i lera eller blöt snö.'],
@@ -39,7 +39,7 @@ export const BREED_PRERENDER_PROFILES = [
     ['Klarar marans svensk vinter?', 'Ja, bra. De har en solid fjäderdräkt och en måttlig kam som sällan drabbas av frostbett.'],
     ['Kan marans-ägg vara stora?', 'Ja, en mogen marans-höna lägger ofta 65–75 grams ägg. Det är en tydlig plus jämfört med hybridvärpare i samma storleksklass.'],
   ]},
-  { slug: 'araucana', namn: 'Araucana', description: 'Araucana är den chilenska rasen som lägger blå till turkosa ägg. Värper ~180 om året och är en pigg, alert flockhöna.', faq: [
+  { slug: 'araucana', namn: 'Araucana', description: 'Araucana värper blå till turkosa ägg där färgen går genom hela skalet. ~180 ägg/år, pigg och flygvillig. Så fungerar rasen i en svensk hobbyflock.', faq: [
     ['Varför är araucana-ägg blå?', 'Blåfärgen sitter i själva skalpigmentet. Öppna ett ägg och du ser att insidan också är blå – till skillnad från marans som bara har färg på ytan.'],
     ['Hur många ägg lägger en araucana per år?', 'Cirka 150–200 ägg per år. Volymen varierar med linje – utställningslinjer värper ofta färre än bruksavlade.'],
     ['Klarar araucana svensk vinter?', 'Ja. Rasen är van vid kalla nätter i Anderna och klarar frost bra om hönshuset är dragfritt.'],
@@ -51,7 +51,7 @@ export const BREED_PRERENDER_PROFILES = [
     ['Klarar australorp svensk vinter?', 'Ja, mycket bra. Den täta svarta fjäderdräkten isolerar utmärkt.'],
     ['Ruvar australorp ofta?', 'Nej, mindre än den engelska orpingtonen. Vill du ha kycklingar behöver du oftast en ruvande ras vid sidan om.'],
   ]},
-  { slug: 'sussex', namn: 'Sussex', description: 'Sussex är engelsk klassiker: pratsam, nyfiken, hänger efter dig i trädgården och lägger ~240 beige ägg per år.', faq: [
+  { slug: 'sussex', namn: 'Sussex', description: 'Sussex höns värper ~240 beige ägg per år. Ljus sussex är vanligast, följt av speckled och röd. Nyfiken, social och nybörjarvänlig – fakta och skötsel.', faq: [
     ['Hur många ägg lägger en sussex per år?', 'Cirka 220–260 beige ägg per år. Produktionen håller sig jämn de första 2–3 åren.'],
     ['Vilken sussex-färg är vanligast?', 'Ljus sussex (columbia) är klart vanligast i Sverige, följt av speckled och röd.'],
     ['Är sussex bra i frigång?', 'Ja, de är duktiga födosökare och vaksamma. Håll dig i närheten första veckan så de lär sig var hönshuset är.'],
@@ -117,7 +117,7 @@ export const BREED_PRERENDER_PROFILES = [
     ['Kan sebright flyga?', 'Ja, mycket bra. Överbyggd rastgård är i princip ett måste.'],
     ['Klarar sebright svensk vinter?', 'Med torrt, dragfritt hönshus ja, men de är mer känsliga än större raser. Håll ströet extra torrt.'],
   ]},
-  { slug: 'hedemorahona', namn: 'Hedemorahöna', description: 'Hedemorahöna är den svenska lantrasen från Dalarna. Extremt vinterhärdig, lägger ~150 krämvita ägg/år och bevaras via genbank.', faq: [
+  { slug: 'hedemorahona', namn: 'Hedemorahöna', description: 'Hedemorahöna är en svensk lantras från Dalarna med tät, dunrik fjäderdräkt. ~150 krämvita ägg/år och mycket vintertålig. Fakta, skötsel och köp.', faq: [
     ['Hur många ägg lägger en hedemorahöna per år?', 'Cirka 130–170 krämvita ägg per år, med typisk paus under mörka vintermånaderna.'],
     ['Är hedemorahönan bra för norra Sverige?', 'Ja, den är förmodligen den mest vinterhärdiga svenska rasen. Fjäderdräkten är tät och kammen liten.'],
     ['Var köper man hedemorahöna?', 'Via Svenska Lanthönsklubbens uppfödarregister eller genom lokala lantras-nätverk.'],

@@ -67,7 +67,7 @@ const topicPages = [
     file: "dist/honsraser/sussex/index.html",
     path: "/honsraser/sussex",
     topicH1: "Sussex",
-    titleIncludes: ["Sussex-höna", "~240"],
+    titleIncludes: ["Sussex höns", "~240"],
   },
   {
     file: "dist/blogg/berakna-foderkostnad-for-hons/index.html",

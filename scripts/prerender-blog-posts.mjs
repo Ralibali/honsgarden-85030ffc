@@ -355,7 +355,7 @@ const STATIC_PAGES = [
   // /dvarghons och /skansk-blommehona är sammanslagna till canonical-URL:erna
   // under /honsraser/ (gamla sökvägar 308:as på edge-nivå via routeInventory).
   { path: '/honsraser/dvarghons', route: 'honsraser/dvarghons', title: 'Dvärghöns – raser, skötsel och tips för nybörjare | Hönsgården', description: 'Allt om dvärghöns: populära raser, plats- och foderkrav, temperament och vad du bör tänka på innan du skaffar dvärghöns.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
-  { path: '/honsraser/skansk-blommehona', route: 'honsraser/skansk-blommehona', title: 'Skånsk blommehöna – lantras med värpning, temperament och skötsel | Hönsgården', description: 'Skånsk blommehöna är en gammal svensk lantras. Läs om värpning, temperament, färgvariation och skötsel av blommehönor.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/honsraser/skansk-blommehona', route: 'honsraser/skansk-blommehona', title: 'Skånsk blommehöna – äggfärg, värpning och var du köper | Hönsgården', description: 'Skånsk blommehöna lägger ljust krämbeige ägg på 50–60 g, cirka 150–200 per år. Lugn svensk lantras för barnfamiljer – så köper och sköter du den.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/app', route: 'app', title: 'Öppna Hönsgården-appen – logga ägg och sköt flocken | Hönsgården', description: 'Logga in i Hönsgården-appen. Registrera ägg, hönor, foder och påminnelser. Fungerar direkt i webbläsaren och som PWA i mobilen.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
 ];
 

@@ -4,7 +4,7 @@
 // inga uppfunna siffror. Riktvärden på värpning och vikt är vedertagna.
 
 import type { LongformPage, ContentSection } from './honsraserContent';
-import { breedTopicH1, documentTitleForPath } from '../lib/prerenderTopicPages';
+import { BREED_NEXT_STEP_LINKS, breedTopicH1, documentTitleForPath } from '../lib/prerenderTopicPages';
 
 export interface BreedProfile {
   slug: string;                 // /honsraser/<slug>
@@ -76,6 +76,7 @@ export function buildBreedPage(b: BreedProfile): LongformPage {
     ...b.related.map((s) => ({ href: `/honsraser/${s}`, label: breedLabel(s) })),
     { href: '/borja-med-hons', label: 'Börja med höns – nybörjarguide' },
     { href: '/honskalender', label: 'Hönskalender och rutiner året runt' },
+    ...BREED_NEXT_STEP_LINKS,
   ];
 
   return {
@@ -139,7 +140,7 @@ export const BREED_PROFILES: BreedProfile[] = [
     ljudniva: 'Låg – brahma pratar inte mycket',
     nyborjarvanlig: 'Hög – lätt att hantera trots storleken',
     passar: 'de som vill ha en imponerande, lugn ras och inte kräver toppvärpning',
-    description: 'Brahma är den mjuka jätten bland höns: 4–5 kg, ~150 ägg per år och ett temperament så lugnt att man knappt tror det. Klarar vintern utmärkt.',
+    description: 'Brahma höns väger 4–5,5 kg men hör till de lugnaste raserna. Ljust beige ägg (~150/år), fjäderben och god vinterhärdighet. Så sköter du rasen.',
     intro: [
       'Första gången jag såg en brahmatupp trodde jag det var en liten kalkon. De är enorma – en fullvuxen tupp kan väga runt sex kilo och en höna 4–5. Trots storleken är brahman en av de lugnaste raserna som finns. Jag känner familjer som skaffat brahma just för att de vill ha en “tittarhöna” – ett mjukt, imponerande djur som står stilla i rastgården och tuggar gräs medan barnen springer omkring.',
       'Värpningen är blygsam till måttlig, cirka 130–160 ljust beige ägg per år, men äggen blir stora när de väl kommer. Brahma är fjäderrik ända ner på tårna, vilket gör dem otroligt vinterhärdiga men också sårbara för blöta, leriga rastgårdar där fjäderbenen kläggs ihop. Klarar du att strö rejält runt hönshuset och ge dem torrt underlag är brahma en av de mest tacksamma raserna för svenskt klimat.',
@@ -264,7 +265,7 @@ export const BREED_PROFILES: BreedProfile[] = [
     ljudniva: 'Måttlig',
     nyborjarvanlig: 'Medel',
     passar: 'de som vill ha blå ägg och en aktiv, självständig ras',
-    description: 'Araucana är den chilenska rasen som lägger blå till turkosa ägg. Värper ~180 om året och är en pigg, alert flockhöna.',
+    description: 'Araucana värper blå till turkosa ägg där färgen går genom hela skalet. ~180 ägg/år, pigg och flygvillig. Så fungerar rasen i en svensk hobbyflock.',
     intro: [
       'Araucana är rasen jag rekommenderar till alla som säljer ägg vid grinden eller på REKO-ring och vill sticka ut. De lägger äkta blå till turkosa ägg – färgen sitter genom hela skalet, inte bara på ytan som hos marans. Rasen kommer från Chile och har traditionellt saknat stjärt och haft öron-tofsar, men den europeiska varianten (som är vanligast i Sverige) har ofta både stjärt och en mer normal profil.',
       'Räkna med cirka 150–200 blå till gröna ägg per år. Färgen varierar mellan individer och kan gå från klarblå till dammig turkos. Araucana är pigga och alerta höns, ofta duktiga på att flyga och älskar att gå ute. De kräver högre eller överbyggd rastgård om du inte vill hitta dem hos grannen. Blandas gärna med lugnare raser som orpington – deras jagande temperament håller flocken vaken utan att skapa gräl.',
@@ -314,7 +315,7 @@ export const BREED_PROFILES: BreedProfile[] = [
     ljudniva: 'Måttlig',
     nyborjarvanlig: 'Hög',
     passar: 'frigående flockar, familjer och de som vill ha en pratsam höna som följer efter en',
-    description: 'Sussex är engelsk klassiker: pratsam, nyfiken, hänger efter dig i trädgården och lägger ~240 beige ägg per år.',
+    description: 'Sussex höns värper ~240 beige ägg per år. Ljus sussex är vanligast, följt av speckled och röd. Nyfiken, social och nybörjarvänlig – fakta och skötsel.',
     intro: [
       'Sussex är förmodligen den mest kompletta hobbyrasen jag haft. De är sociala nästan till oförskämdhet – står du still i rastgården kliver de upp på fötterna och petar på skorna. Rasen är gammal engelsk, med en produktiv gren som togs fram främst för hobbyodlare kring 1900-talets början. Den vanligaste färgvarianten i Sverige är “ljus sussex” (vit med svart hals och stjärt).',
       'Värpmässigt är sussex bland de mest produktiva icke-hybriderna, med 220–260 beige ägg per år. De är också bra på att gå ute – duktiga födosökare, hyfsat vaksamma mot rovdjur, och tacksamma i blandflock. En sussex bryr sig sällan om vem som är chef, tar plats i hierarkin utan drama och vinner ofta popularitetsomröstningen bland barnen. Baksidan är att de är pratsamma, så bor du tätt med grannar kan sussex vara mer hörd än en tystlåten wyandotte.',
@@ -589,7 +590,7 @@ export const BREED_PROFILES: BreedProfile[] = [
     ljudniva: 'Låg till måttlig',
     nyborjarvanlig: 'Hög – förlåtande och tålig',
     passar: 'norra Sverige, kalla klimat och de som vill bevara en svensk lantras',
-    description: 'Hedemorahöna är den svenska lantrasen från Dalarna. Extremt vinterhärdig, lägger ~150 krämvita ägg/år och bevaras via genbank.',
+    description: 'Hedemorahöna är en svensk lantras från Dalarna med tät, dunrik fjäderdräkt. ~150 krämvita ägg/år och mycket vintertålig. Fakta, skötsel och köp.',
     intro: [
       'Hedemorahönan är förmodligen den mest vinterhärdiga höna vi har i Sverige. Rasen är en svensk lantras från trakten kring Hedemora i Dalarna, där den överlevt genom generationer i ett klimat som annars är rejält utmanande för fjäderfä. Fjäderdräkten är tät med mycket dun, och rasen finns i flera färgvarianter – från svart och vit till brokiga individer.',
       'Räkna med 130–170 krämvita ägg per år från en frisk hedemorahöna, med en typisk paus under de mörkaste vintermånaderna. De är pigga, självständiga och duktiga födosökare, vilket gör dem utmärkta i frigång. Jag har aldrig sett en hedemora med frostbitna kammar, till skillnad från leghorn där jag sett det flera gånger. Rasen har en stark bevarandevärde för svensk hönsuppfödning och passar särskilt bra för dig som bor norr om Mälaren eller vill bidra till bevarandet av svenska lantraser genom stambokförd uppfödning.',

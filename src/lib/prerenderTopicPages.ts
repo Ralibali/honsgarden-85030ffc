@@ -18,7 +18,10 @@ import {
 
 export const CTR_DOCUMENT_TITLES: Record<string, string> = {
   '/honsraser/orpington': 'Orpington-höna – nybörjarvänlig ras, ~180 ägg/år | Hönsgården',
-  '/honsraser/sussex': 'Sussex-höna – nyfiken ras som värper ~240 ägg | Hönsgården',
+  '/honsraser/sussex': 'Sussex höns – äggfärg, vanliga färger och ~240 ägg/år | Hönsgården',
+  '/honsraser/brahma': 'Brahma höns – lugn jätte på 4–5 kg, ~150 ägg/år | Hönsgården',
+  '/honsraser/araucana': 'Araucana – hönan som värper blå ägg, ~180 per år | Hönsgården',
+  '/honsraser/hedemorahona': 'Hedemorahöna – vintertålig svensk lantras från Dalarna | Hönsgården',
   '/blogg/berakna-foderkostnad-for-hons': 'Beräkna foderkostnad för höns – kalkyl för din flock | Hönsgården',
 };
 
@@ -52,6 +55,14 @@ export function injectTopicBody(html: string, bodyHtml: string): string {
   );
 }
 
+/** Vårens köp- och startsidor som rassidorna länkar vidare till (crawlbara i prerender). */
+export const BREED_NEXT_STEP_LINKS: { href: string; label: string }[] = [
+  { href: '/blogg/kopa-hons', label: 'Köpa höns – så hittar du en bra säljare' },
+  { href: '/verktyg/vad-kostar-hons', label: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden' },
+  { href: '/blogg/klacka-agg', label: 'Kläcka ägg hemma – dag för dag' },
+  { href: '/klackningskalender', label: 'Kläckningskalender' },
+];
+
 export function renderBreedTopicBody(
   breed: { slug?: string; namn: string; description?: string; faq?: [string, string][]; h1Suffix?: string },
   h1 = breedTopicH1(breed),
@@ -77,6 +88,7 @@ export function renderBreedTopicBody(
   <section class="max-w-3xl border-t border-border/40 pt-8">
     <h2 class="font-serif text-2xl text-foreground mb-4">Vanliga frågor</h2>
     <div class="space-y-5">${faqHtml}</div>
+    <nav aria-label="Nästa steg" class="mt-8"><h2 class="font-serif text-xl text-foreground mb-3">Nästa steg</h2><ul class="space-y-1 text-sm">${BREED_NEXT_STEP_LINKS.map((l) => `<li><a href="${escapeHtml(l.href)}" class="text-primary underline">${escapeHtml(l.label)}</a></li>`).join('')}</ul></nav>
     <p class="mt-8 text-xs text-muted-foreground"><a href="/honsraser" class="underline">← Alla hönsraser</a></p>
     ${shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''}
   </section>

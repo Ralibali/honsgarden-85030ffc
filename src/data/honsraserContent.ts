@@ -43,6 +43,9 @@ const standardRelated = [
   { href: '/blogg/foder-till-hons-guide', label: 'Foder till höns – komplett guide' },
   { href: '/borja-med-hons', label: 'Börja med höns' },
   { href: '/honskalender', label: 'Hönskalender och rutiner' },
+  { href: '/blogg/kopa-hons', label: 'Köpa höns – så hittar du en bra säljare' },
+  { href: '/verktyg/vad-kostar-hons', label: 'Vad kostar det att skaffa höns?' },
+  { href: '/blogg/klacka-agg', label: 'Kläcka ägg hemma – dag för dag' },
 ];
 
 // ---------- Hönsraser (1 600/mån, position 12) ----------
@@ -393,9 +396,9 @@ const dvarghons: LongformPage = {
 const skanskBlommehona: LongformPage = {
   slug: 'skansk-blommehona',
   path: '/honsraser/skansk-blommehona',
-  title: 'Skånsk blommehöna – äggfärg, värpning & skötsel',
+  title: 'Skånsk blommehöna – äggfärg, värpning & köp',
   description:
-    'Allt om skånsk blommehöna: äggfärg, värpning per år, temperament, vinterhärdighet och varför den är en av Sveriges bästa lantraser.',
+    'Skånsk blommehöna lägger ljust krämbeige ägg på 50–60 g, cirka 150–200 per år. Lugn svensk lantras för barnfamiljer – så köper och sköter du den.',
   h1: 'Skånsk blommehöna – en av Sveriges vackraste lantraser',
   eyebrow: 'Svensk lantras',
   intro: [

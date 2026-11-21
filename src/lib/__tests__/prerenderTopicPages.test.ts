@@ -88,7 +88,10 @@ describe('prerender topic H1 + CTR titles', () => {
 
   it.each([
     ['orpington', 'Orpington', ['Orpington-höna', '~180']],
-    ['sussex', 'Sussex', ['Sussex-höna', '~240']],
+    ['sussex', 'Sussex', ['Sussex höns', '~240']],
+    ['brahma', 'Brahma', ['Brahma höns', '4–5 kg']],
+    ['araucana', 'Araucana', ['blå ägg', '~180']],
+    ['hedemorahona', 'Hedemorahöna', ['Hedemorahöna', 'Dalarna']],
   ] as const)('%s får topic-H1 och CTR-title, inte generic Hönsgården', (slug, topic, titleIncludes) => {
     const page = prerenderBreed(slug);
     expect(page.html).not.toContain('<h1>Hönsgården</h1>');
@@ -100,6 +103,13 @@ describe('prerender topic H1 + CTR titles', () => {
     expect(result.title).toBe(CTR_DOCUMENT_TITLES[page.path]);
     expect(result.title).not.toMatch(/^Hönsgården/);
     expect(page.html).toContain(`<h1 class="font-serif`);
+  });
+
+  it('rassidornas prerender länkar crawlbart till vårens köp- och kläckningssidor', () => {
+    const page = prerenderBreed('brahma');
+    for (const href of ['/blogg/kopa-hons', '/verktyg/vad-kostar-hons', '/blogg/klacka-agg', '/klackningskalender']) {
+      expect(page.html).toContain(`href="${href}"`);
+    }
   });
 
   it('foderkostnad-artikeln behåller artikelns H1 och får CTR-title', () => {
@@ -142,10 +152,13 @@ describe('prerender topic H1 + CTR titles', () => {
     expect(DEMO_PATH).toBe('/demo');
   });
 
-  it('title-overrides gäller bara de tre URL:erna', () => {
+  it('title-overrides gäller bara de listade URL:erna', () => {
     expect(TOPIC_PAGE_PATHS).toEqual([
       '/honsraser/orpington',
       '/honsraser/sussex',
+      '/honsraser/brahma',
+      '/honsraser/araucana',
+      '/honsraser/hedemorahona',
       '/blogg/berakna-foderkostnad-for-hons',
     ]);
     expect(documentTitleForPath('/honsraser/wyandotte', 'Wyandotte – fallback | Hönsgården'))
