@@ -2,6 +2,17 @@
 
 Sammanställt 2026-11-21 från Search Console (export 20 aug–19 nov 2026) och ChatSEO-analyser av honsgarden.se. Siffror från ChatSEO är tredjepartsdata; Search Console-siffrorna är de som går att lita på.
 
+## Genomfört 25 november 2026
+
+- De fem väntande uppdateringarna (`klacka-agg`, `sittpinnar-hons`, `varprede-hons`, `varmelampa-hons`, `vattenautomat-hons`) är körda i produktionsdatabasen och innehållshasharna separat verifierade.
+- Fågelinfluensaartikeln är källgranskad direkt mot myndighetsbesluten och publicerad i databasen.
+- Hönsgårdsguiden är källgranskad och kvar i kön till tidigast 27 november; aktuellt smittläge ska kontrolleras igen vid publiceringen.
+- Claude-ändringarna med de fyra 308-omdirigeringarna finns på main i `e85ee618`.
+- Se [publiceringsloggen](../content/editorial/publication-log-2026-11-25.md) och arbetsflödet **Editorial live verification** för databas- respektive driftkontroller.
+- Search Console har inte varit anslutet i denna session. Ingen indexeringsbegäran är skickad och ingen ny trafik-/rankingeffekt är verifierad.
+
+Historiken och förslagen nedan bevaras. Punkterna 1–2 under ”Kvar att göra” är utförda enligt statusen ovan. Länkprofilens tidigare påståenden om hur Google behandlar specifika länkar är inte verifierade i denna genomgång.
+
 ## Läget
 
 - 3 månader: 1 436 klick, 60 194 visningar, snittposition 6,9. Visningarna ökade cirka 60 % från augusti till november.
