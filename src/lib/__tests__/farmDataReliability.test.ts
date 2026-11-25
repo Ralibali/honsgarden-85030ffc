@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getEggs, getHens, getSummaryStats } from '@/lib/api';
+import { getEggs, getFlockStatistics, getHens, getSummaryStats } from '@/lib/api';
+import { summarizeEggPeriod } from '@/lib/farmMetrics';
 import { withRequestTimeout } from '@/lib/requestTimeout';
 import { QueryClient } from '@tanstack/react-query';
 import { invalidateEggQueries } from '@/lib/eggQueryCache';
@@ -80,6 +81,32 @@ describe('reliable shared farm reads', () => {
     expect(db.getQueue).toHaveBeenCalledWith('farm-owner');
   });
 
+  it('reconciles flock totals with the shared egg book and active hen count', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 10, 25, 0, 10));
+    const data: Record<string, unknown[]> = {
+      flocks: [{ id: 'a', name: 'Min flock' }, { id: 'b', name: 'Ny flock' }],
+      hens: [
+        { id: 'hen', flock_id: 'b', is_active: true, hen_type: 'hen' },
+        { id: 'pullet', flock_id: 'b', is_active: true, hen_type: 'pullet' },
+        { id: 'rooster', flock_id: 'b', is_active: true, hen_type: 'rooster' },
+      ],
+      egg_logs: [
+        { date: '2026-11-25', count: 2, hen_id: 'hen', flock_id: 'a' },
+        { date: '2026-11-19', count: 3, hen_id: 'hen' },
+        { date: '2026-11-18', count: 6, flock_id: 'b' },
+        { date: '2026-11-25', count: 4 },
+      ],
+      transactions: [],
+    };
+    db.from.mockImplementation((name: string) => table(vi.fn().mockResolvedValue({ data: data[name], error: null })));
+    const [summary, stats] = await Promise.all([getSummaryStats(), getFlockStatistics()]);
+    expect(stats.flocks[0]).toMatchObject({ id: 'b', active_hens: 2, total_eggs: 9, week_eggs: 3, week_change: -50 });
+    expect(stats.flocks[1]).toMatchObject({ id: 'a', active_hens: 0, total_eggs: 2 });
+    expect(stats.unassigned_eggs).toBe(4);
+    expect(summary).toMatchObject({ active_hens: 2, total_eggs: 15, recorded_days: 3 });
+  });
+
   it('marks egg history and derived statistics stale after quick logging or offline sync', async () => {
     const client = new QueryClient();
     for (const key of ['eggs', 'stats-summary', 'stats-insights', 'hens-with-eggs', 'flock-statistics']) {
@@ -111,5 +138,27 @@ describe('bounded requests', () => {
     vi.useFakeTimers();
     await expect(withRequestTimeout(async () => 6)).resolves.toBe(6);
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('egg statistics periods', () => {
+  const rows = [
+    { date: '2026-03-23', count: 5 },
+    { date: '2026-03-24', count: 1 },
+    { date: '2026-03-30', count: 2 },
+    { date: '2026-03-30', count: 3 },
+    { date: '2026-03-31', count: 100 },
+  ];
+
+  it('uses inclusive local dates through a daylight saving change and ignores future entries', () => {
+    expect(summarizeEggPeriod(rows, '2026-03-30', 7)).toMatchObject({
+      currentTotal: 6, previousTotal: 5, bestDay: ['2026-03-30', 5], avgPerDay: 6 / 7,
+    });
+  });
+
+  it('averages all time from the first registration, including zero-egg days', () => {
+    expect(summarizeEggPeriod([{ date: '2026-03-21', count: 0 }, ...rows], '2026-03-30', null))
+      .toMatchObject({ currentTotal: 11, avgPerDay: 1.1 });
+    expect(summarizeEggPeriod([], '2026-03-30', null).avgPerDay).toBe(0);
   });
 });

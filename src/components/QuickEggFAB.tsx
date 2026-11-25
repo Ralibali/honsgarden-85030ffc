@@ -1,10 +1,11 @@
 import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import React, { useState, useCallback } from 'react';
-import { todayLocal, localCalendarDate } from '@/lib/datetime';
+import { todayLocal } from '@/lib/datetime';
+import { addDaysIso } from '@/lib/isoDay';
 import { Egg, Plus, Minus, Check, X, CalendarMinus, Bird } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { api, type EggLog } from '@/lib/api';
 import { saveEggLog } from '@/lib/saveEggLog';
 import { toast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,6 +18,8 @@ import { readScoped, writeScoped } from '@/lib/userScopedStorage';
 import { checkPersonalRecords, recordLabel } from '@/lib/personalRecords';
 import { feedbackCelebrate, hapticTap } from '@/lib/feedback';
 
+type EggEntry = { date: string; count: number; hen_id?: string; flock_id?: string };
+
 const LAST_HEN_KEY = 'honsgarden-last-hen';
 
 export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) {
@@ -26,6 +29,7 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
   const [selectedHenId, setSelectedHenId] = useState<string>(() => readScoped(user?.id, LAST_HEN_KEY) || 'all');
   const [showAnimation, setShowAnimation] = useState(false);
   const [animCount, setAnimCount] = useState(0);
+  const [savedDate, setSavedDate] = useState('');
   const [recordToast, setRecordToast] = useState<PersonalRecordToastData | null>(null);
   const [useYesterday, setUseYesterday] = useState(false);
   const queryClient = useQueryClient();
@@ -45,69 +49,47 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
 
   const handleAnimationDone = useCallback(() => {
     setShowAnimation(false);
-    toast({ title: `🥚 ${animCount} ägg registrerade!${useYesterday ? ' (igår)' : ''}` });
-  }, [animCount, useYesterday]);
+    toast({ title: `🥚 ${animCount} ägg registrerade!${savedDate === addDaysIso(todayLocal(), -1) ? ' (igår)' : ''}` });
+  }, [animCount, savedDate]);
 
   const activeHens = (hens as any[]).filter((h: any) => h.is_active && h.hen_type !== 'rooster');
   const hasHens = activeHens.length > 0;
 
   const mutation = useMutation({
-    mutationFn: async ({ count, hen_id, flock_id }: { count: number; hen_id?: string; flock_id?: string }) => {
-      const date = useYesterday
-        ? localCalendarDate(new Date(Date.now() - 86400000))
-        : todayLocal();
-      const payload = { date, count, hen_id: hen_id || undefined, flock_id: flock_id || undefined };
-      return saveEggLog(user?.id, { ...payload, analytics_source: 'quick_fab' }, api.createEggRecord);
-    },
-    onMutate: async ({ count }) => {
-      await queryClient.cancelQueries({ queryKey: ['eggs'] });
-      const prev = queryClient.getQueryData(['eggs']);
-      queryClient.setQueryData(['eggs'], (old: any[]) => {
-        if (!old) return old;
-        const date = useYesterday
-          ? localCalendarDate(new Date(Date.now() - 86400000))
-          : todayLocal();
-        return [...old, { date, count, id: `temp-${Date.now()}`, hen_id: null, flock_id: null }];
+    networkMode: 'always',
+    mutationFn: (entry: EggEntry) => saveEggLog(user?.id, { ...entry, analytics_source: 'quick_fab' }, api.createEggRecord),
+    onSuccess: (result, entry) => {
+      const offline = '__offline' in result;
+      const row: EggLog = offline ? {
+        ...entry,
+        id: `pending-${result.client_id}`,
+        client_id: result.client_id,
+        user_id: user!.id,
+        created_at: new Date().toISOString(),
+        hen_id: entry.hen_id ?? null,
+        flock_id: entry.flock_id ?? null,
+        notes: null,
+        weather: null,
+      } : result;
+      const updated = queryClient.setQueryData<EggLog[]>(['eggs'], (old) => {
+        if (!old && !offline) return old;
+        if (old?.some(egg => egg.id === row.id || (row.client_id && row.client_id === egg.client_id))) return old;
+        return [row, ...(old ?? [])];
       });
-      return { prev };
-    },
-    onSuccess: (result: any) => {
-      const isOffline = result?.__offline === true;
-      if (isOffline) {
-        const date = useYesterday
-          ? localCalendarDate(new Date(Date.now() - 86400000))
-          : todayLocal();
-        queryClient.setQueryData(['eggs'], (old: any[] | undefined) => {
-          const next = (old ?? []).filter((e: any) => !String(e.id).startsWith('temp-'));
-          next.unshift({
-            id: `pending-${result.client_id}`,
-            client_id: result.client_id,
-            date,
-            count,
-            hen_id: result.hen_id ?? null,
-            flock_id: result.flock_id ?? null,
-            pending: true,
-          });
-          return next;
-        });
+      if (offline) {
         toast({ title: 'Sparat offline 📡', description: 'Synkas automatiskt när du får täckning.' });
       } else {
         void invalidateEggQueries(queryClient);
       }
-      setAnimCount(count);
+      setAnimCount(entry.count);
+      setSavedDate(entry.date);
       setShowAnimation(true);
       setOpen(false);
-      const savedCount = count;
       setCount(1);
       setUseYesterday(false);
-      writeScoped(user?.id, LAST_HEN_KEY, selectedHenId);
+      writeScoped(user?.id, LAST_HEN_KEY, entry.hen_id ?? (entry.flock_id ? `flock:${entry.flock_id}` : 'all'));
 
-      // Personal record check
-      const date = useYesterday
-        ? localCalendarDate(new Date(Date.now() - 86400000))
-        : todayLocal();
-      const existing = (queryClient.getQueryData(['eggs']) as any[]) || [];
-      const records = checkPersonalRecords(user?.id, [...existing, { date, count: savedCount }], date);
+      const records = checkPersonalRecords(user?.id, updated ?? [], entry.date);
       if (records.length > 0) {
         const r = records[0];
         setTimeout(() => {
@@ -122,8 +104,7 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
         }, 600);
       }
     },
-    onError: (err: any, _, ctx) => {
-      if (ctx?.prev) queryClient.setQueryData(['eggs'], ctx.prev);
+    onError: (err: Error) => {
       toast({ title: 'Fel', description: err.message, variant: 'destructive' });
     },
   });
@@ -133,7 +114,9 @@ export function QuickEggFAB({ desktopOnly = false }: { desktopOnly?: boolean }) 
     const isFlockSelection = selectedHenId.startsWith('flock:');
     const hen_id = !isFlockSelection && selectedHenId !== 'all' ? selectedHenId : undefined;
     const flock_id = isFlockSelection ? selectedHenId.replace('flock:', '') : undefined;
-    mutation.mutate({ count, hen_id, flock_id });
+    const today = todayLocal();
+    const date = useYesterday ? addDaysIso(today, -1)! : today;
+    mutation.mutate({ date, count, hen_id, flock_id });
   };
 
   React.useEffect(() => {

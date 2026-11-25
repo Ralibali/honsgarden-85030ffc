@@ -1,3 +1,5 @@
+import { breedGuides } from '../src/data/breedGuides.mjs';
+import { renderBreedGuide } from '../src/lib/prerenderBreedGuide.mjs';
 import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { renderSeoLandingBody } from '../src/lib/prerenderSeoLanding.mjs';
 import { DIGITAL_GUIDE_COVER_PATH, DIGITAL_GUIDE_SAMPLE_PATH, digitalGuideAudienceForArticle, renderDigitalGuidePlacement } from '../src/lib/digitalGuidePlacements.mjs';
@@ -113,7 +115,7 @@ function buildHeadGeneric({ title, description, path, ogImage, ogImageAlt, noind
 <meta name="twitter:description" content="${escapeHtml(description)}">
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}">
 <meta name="twitter:image:alt" content="${escapeHtml(ogImageAlt || title)}">${extraHead}
-<link rel="alternate" type="application/rss+xml" title="Hönsgården – blogg om höns" href="https://sikbymtrbhrofysgkqsj.supabase.co/functions/v1/rss">${jsonLdTag}`;
+${jsonLdTag}`;
 }
 
 function injectHead(template, headHtml) {
@@ -332,6 +334,10 @@ const PRODUCT_PAGES = [
 
 const STATIC_PAGES = [
   ...PRODUCT_PAGES,
+  { path: '/priser', route: 'priser', h1: 'Välj det som passar din hönsgård', title: 'Priser – Gratis och Plus | Hönsgården',
+    description: 'Börja gratis. Plus kostar 39 kr/mån eller 299 kr/år. Nya konton får prova Plus i 7 dagar utan kortuppgifter.',
+    instructions: 'Alla priser är inklusive moms. Efter provperioden kan du fortsätta med Gratis.',
+    related: ['/login?mode=register', 'Skapa konto gratis'], priority: '0.8', changefreq: 'monthly' },
   { path: '/', route: '', title: 'Hönsgården – svensk app för hönsägare, ägglogg och hönskalender', description: 'Hönsgården är en svensk app för hobbyhönsägare. Logga ägg, följ flocken, räkna foderkostnad, skapa påminnelser och få koll på hönsgården i mobilen.', ogImage: '/og-image.jpg', priority: '1.0', changefreq: 'weekly' },
   { path: '/app-for-honsagare', route: 'app-for-honsagare', title: 'App för hönsägare – håll koll på ägg, flock, foder och rutiner | Hönsgården', description: 'Hönsgården är en svensk app för hobbyhönsägare. Logga ägg, följ flocken, räkna foderkostnad och skapa vardagsrutiner direkt i mobilen.', ogImage: '/blog-images/hens-garden.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/agglogg', route: 'agglogg', title: 'Ägglogg – logga ägg och följ värpningen över tid | Hönsgården', description: 'Digital ägglogg för hönsägare. Logga dagens ägg snabbt, se veckotrender, jämför perioder och förstå hur flocken värper.', ogImage: '/blog-images/hens-garden.jpg', priority: '0.9', changefreq: 'monthly' },
@@ -342,20 +348,28 @@ const STATIC_PAGES = [
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
   // Same title/description as the runtime page (src/pages/Guides.tsx useSeo).
   { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, köpguider & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
-  { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
-  { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? | Hönsgården', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
+  { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', h1: 'Äggkalkylator',
+    instructions: 'Dela månadens kostnader för foder, strö och övriga inköp med antalet insamlade ägg. Med 400 kr i kostnader och 100 ägg blir kostnaden 4 kr per ägg.',
+    related: ['/foderkostnad-hons', 'Så följer du foderkostnaden'], title: 'Äggkalkylator – Beräkna kostnad per ägg | Hönsgården', description: 'Räkna ut vad dina ägg kostar, hur mycket du producerar och om din hönsgård går plus. Gratis kalkylator för hönsägare.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', h1: 'Äggregler-vägvisaren',
+    instructions: 'Utgå från hur många värphöns du har och hur äggen säljs. I guiden kan du läsa om de olika försäljningssätten och hitta myndigheternas källor.',
+    related: ['/guider/salja-agg-regler', 'Läs guiden om regler för äggförsäljning'], title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? (2026)', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
   // Same title/description as src/pages/StartCostCalculator.tsx useSeo.
-  { path: '/verktyg/vad-kostar-hons', route: 'verktyg/vad-kostar-hons', title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården', description: 'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
-  { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
+  { path: '/verktyg/vad-kostar-hons', route: 'verktyg/vad-kostar-hons', h1: 'Vad kostar det att skaffa höns?',
+    instructions: 'Lägg ihop engångsköpen för hus, stängsel, utrustning och höns. Räkna sedan foder och strö för ett år separat så att du ser både startbudgeten och den löpande driften.',
+    related: ['/borja-med-hons', 'Planera din första flock'], title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården', description: 'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
+  { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', h1: 'Kläckningskalkylator',
+    instructions: 'Starten räknas som dag 0. Om ruvningen av hönsägg börjar den 1 april är den beräknade kläckdagen den 22 april. Tiden kan variera.',
+    related: ['/klackningskalender', 'Följ kläckningen dag för dag'], title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/karta', route: 'karta', title: 'Hönskarta – hitta säljare av färska ägg nära dig | Hönsgården', description: 'Interaktiv karta över svenska hönsägare som säljer färska ägg. Hitta säljare i din närhet, se öppettider och boka direkt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'weekly' },
   { path: '/marknad', route: 'marknad', title: 'Marknad för höns, ägg och tillbehör | Hönsgården', description: 'Köp och sälj höns, tuppar, kläckägg och tillbehör mellan svenska hönsägare. Enkla annonser, direkt kontakt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'daily' },
   { path: '/salja-agg', route: 'salja-agg', title: 'Sälja ägg lokalt med Swish – gratis säljsida | Hönsgården', description: 'Sälja ägg från egna höns? Skapa en gratis säljsida med bokning och Swish-betalning på 2 minuter. Få stamkunder, hantera lager och äggförsäljning enkelt med Hönsgården.', ogImage: '/og-image.jpg', priority: '0.9', changefreq: 'weekly' },
-  { path: '/honsraser', route: 'honsraser', title: 'Hönsraser i Sverige – jämför lämpliga raser för hobbyn | Hönsgården', description: 'Guide till svenska och internationella hönsraser för hobbyn: värpning, temperament, storlek och vinterhärdighet.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'monthly' },
-  { path: '/honsraser-lista', route: 'honsraser-lista', title: 'Lista över hönsraser – A till Ö | Hönsgården', description: 'Komplett lista över hönsraser med egenskaper, ursprung och tips. Hitta rätt ras för din flock.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/honsraser', route: 'honsraser', priority: '0.85', changefreq: 'monthly' },
+  { path: '/honsraser-lista', route: 'honsraser-lista', priority: '0.8', changefreq: 'monthly' },
   // /dvarghons och /skansk-blommehona är sammanslagna till canonical-URL:erna
   // under /honsraser/ (gamla sökvägar 308:as på edge-nivå via routeInventory).
-  { path: '/honsraser/dvarghons', route: 'honsraser/dvarghons', title: 'Dvärghöns – raser, skötsel och tips för nybörjare | Hönsgården', description: 'Allt om dvärghöns: populära raser, plats- och foderkrav, temperament och vad du bör tänka på innan du skaffar dvärghöns.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
-  { path: '/honsraser/skansk-blommehona', route: 'honsraser/skansk-blommehona', title: 'Skånsk blommehöna – äggfärg, värpning och var du köper | Hönsgården', description: 'Skånsk blommehöna lägger ljust krämbeige ägg på 50–60 g, cirka 150–200 per år. Lugn svensk lantras för barnfamiljer – så köper och sköter du den.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/honsraser/dvarghons', route: 'honsraser/dvarghons', priority: '0.8', changefreq: 'monthly' },
+  { path: '/honsraser/skansk-blommehona', route: 'honsraser/skansk-blommehona', priority: '0.8', changefreq: 'monthly' },
   { path: '/app', route: 'app', title: 'Öppna Hönsgården-appen – logga ägg och sköt flocken | Hönsgården', description: 'Logga in i Hönsgården-appen. Registrera ägg, hönor, foder och påminnelser. Fungerar direkt i webbläsaren och som PWA i mobilen.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
 ];
 
@@ -443,6 +457,21 @@ function buildOrtPage(template, ort, ogImagePath, { noindex = false } = {}) {
 const CATEGORY_META = BLOG_CATEGORY_META;
 
 function buildStaticPage(template, page, { posts = [] } = {}) {
+  const breed = Object.values(breedGuides).find(guide => guide.path === page.path);
+  if (breed) {
+    const url = BASE_URL + breed.path;
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'Article', headline: breed.h1, description: breed.description, url, inLanguage: 'sv-SE', author: { '@id': BASE_URL + '/#organization' } },
+        { '@type': 'FAQPage', mainEntity: breed.faq.map(({ q, a }) => ({
+          '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a },
+        })) },
+      ],
+    };
+    const head = buildHeadGeneric({ ...breed, jsonLd, ogType: 'article', ogImage: '/blog-images/hens-garden.jpg' });
+    return injectTopicBody(injectHead(template, head), renderBreedGuide(breed));
+  }
   const landing = SEO_LANDING_PAGES[page.route];
   if (landing) page = { ...page, title: landing.title, description: landing.description };
   if (page.path === '/blogg') return buildBlogIndexPage(template, page, posts);
@@ -470,10 +499,14 @@ function buildStaticPage(template, page, { posts = [] } = {}) {
     }
     return injectTopicBody(withHead, body);
   }
-  const shopPlacement = shopPlacementForPath(page.path);
-  if (['/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {
-    const audience = page.path.startsWith('/honsraser') ? 'breed' : 'beginner';
-    return injectTopicBody(withHead, renderDigitalGuidePlacement(audience) + (shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''));
+  if (page.h1) {
+    const [href, label] = page.related;
+    return injectTopicBody(withHead, `<main id="main-content" tabindex="-1" class="container mx-auto max-w-3xl px-5 pt-24 pb-16 space-y-6">
+      <nav aria-label="Brödsmulor"><a class="underline" href="/">Hönsgården</a></nav>
+      <h1 class="font-serif text-4xl">${escapeHtml(page.h1)}</h1>
+      <p class="text-lg">${escapeHtml(page.description)}</p><p>${escapeHtml(page.instructions)}</p>
+      <p><a class="text-primary underline" href="${escapeHtml(href)}">${escapeHtml(label)}</a></p>
+    </main>`);
   }
   return withHead;
 }

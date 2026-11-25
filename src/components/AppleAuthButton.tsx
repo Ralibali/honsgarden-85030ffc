@@ -16,6 +16,7 @@ function AppleLogo() {
 
 interface AppleAuthButtonProps {
   mode?: 'login' | 'register';
+  onStart?: () => void;
 }
 
 async function signInWithNativeApple() {
@@ -34,7 +35,7 @@ async function signInWithNativeApple() {
 }
 
 /** Native Apple sign-in. Web OAuth is not configured on honsgarden.se. */
-export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps) {
+export default function AppleAuthButton({ mode = 'login', onStart }: AppleAuthButtonProps) {
   const [loading, setLoading] = useState(false);
 
   // The Lovable /~oauth route is unavailable on our production web host, and
@@ -44,6 +45,7 @@ export default function AppleAuthButton({ mode = 'login' }: AppleAuthButtonProps
 
   const handleClick = async () => {
     setLoading(true);
+    onStart?.();
     try {
       const { trackEvent } = await import('@/lib/analytics');
       trackEvent('OAuth Started', { provider: 'apple', mode });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle, Feather, LogIn, Pencil, Eye } from 'lucide-react';
@@ -16,13 +16,11 @@ const ROLE_LABEL: Record<InviteRole, string> = {
 
 export default function AcceptInvite() {
   const { token } = useParams<{ token: string }>();
-  const [searchParams] = useSearchParams();
-  const roleParam = (searchParams.get('role') || 'editor').toLowerCase();
-  const role: InviteRole = roleParam === 'viewer' ? 'viewer' : 'editor';
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string; inviter_name?: string } | null>(null);
+  const [inviteInfo, setInviteInfo] = useState<{ farm_name: string; email: string; role: InviteRole; inviter_name?: string } | null>(null);
+  const role: InviteRole = inviteInfo?.role === 'editor' ? 'editor' : 'viewer';
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
@@ -156,12 +154,12 @@ export default function AcceptInvite() {
                   <p className="text-xs text-muted-foreground">
                     Du behöver logga in eller skapa ett konto för att acceptera inbjudan.
                   </p>
-                  <Link to={`/login?redirect=/inbjudan/${token}`}>
-                    <Button className="w-full rounded-xl h-12 text-base gap-2">
+                  <Button asChild className="w-full rounded-xl h-12 text-base gap-2">
+                    <Link to={`/login?redirect=/inbjudan/${token}`}>
                       <LogIn className="h-5 w-5" />
                       Logga in / Skapa konto
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               )}
             </>

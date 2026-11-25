@@ -1,5 +1,6 @@
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
+import { loginDestination, rememberLoginDestination } from '@/lib/loginDestination';
 import { pendingAccountLink } from '@/lib/linkedApps';
 import { loginErrorMessage } from '@/lib/loginError';
 import { isNativePlatform } from '@/lib/nativePlatform';
@@ -42,12 +43,12 @@ export default function Login() {
   });
 
   const selectedPlan = ['free', 'plus_monthly', 'plus_annual'].includes(searchParams.get('plan') || '') ? searchParams.get('plan') : null;
-  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : '/app';
+  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : loginDestination(searchParams.get('redirect')) ?? '/app';
   const initialMode = searchParams.get('mode');
   // Valideras mot tillåtna AnalyticsSource-värden – aldrig fritext till analytics.
   const signupSource = parseAnalyticsSource(searchParams.get('source'));
   const [authMode, setAuthMode] = useState<AuthMode>(
-    initialMode === 'register' ? 'register' : initialMode === 'login' ? 'login' : 'welcome'
+    initialMode === 'register' || initialMode === 'login' || initialMode === 'forgot' ? initialMode : 'welcome'
   );
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +60,7 @@ export default function Login() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetFeedback, setResetFeedback] = useState<'sent' | 'error' | null>(null);
   const [registrationNotice, setRegistrationNotice] = useState('');
 
   const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
@@ -89,6 +91,7 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     try {
+      rememberLoginDestination(null);
       await login(email.trim().toLowerCase(), password);
       try {
         const pending = localStorage.getItem('pending_postal_code');
@@ -120,6 +123,7 @@ export default function Login() {
 
     setLoading(true);
     try {
+      rememberLoginDestination(null);
       const acceptedAt = new Date().toISOString();
       const meta = {
         country_code: countryDefaults.code,
@@ -149,6 +153,7 @@ export default function Login() {
       // A successful request is not necessarily a signed-in new account:
       // confirmation-required and anti-enumeration responses have no session.
       if (!data?.session) {
+        if (data?.user?.identities?.length) rememberLoginDestination(nextPath);
         setPassword('');
         setRegistrationNotice('Kontrollera din inkorg. Om en bekräftelse behövs får du ett mejl med nästa steg. Har du redan ett konto kan du logga in eller välja ”Glömt lösenord?”.');
         setAuthMode('login');
@@ -186,19 +191,22 @@ export default function Login() {
     }
   };
 
-  const handleForgotPassword = async () => {
+  const handleForgotPassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setResetFeedback(null);
     if (!email.trim()) {
       toast({ title: 'Ange e-post', description: 'Fyll i din e-postadress.', variant: 'destructive' });
       return;
     }
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
         redirectTo: isNativePlatform() ? getNativeAuthRedirect(true) : `${window.location.origin}/reset-password`,
       });
-      toast({ title: 'E-post skickad!', description: 'Kolla din inkorg för att återställa lösenordet.' });
-    } catch (err) {
-      toast({ title: 'Fel', description: err instanceof Error ? err.message : 'Försök igen.', variant: 'destructive' });
+      if (error) throw error;
+      setResetFeedback('sent');
+    } catch {
+      setResetFeedback('error');
     } finally {
       setLoading(false);
     }
@@ -325,8 +333,8 @@ export default function Login() {
                 <h3 className="font-serif text-3xl text-foreground mb-2">Logga in</h3>
                 <p className="text-muted-foreground">Välkommen tillbaka till Hönsgården.</p>
               </div>
-              <GoogleAuthButton mode="login" />
-              <AppleAuthButton mode="login" />
+              <GoogleAuthButton mode="login" onStart={() => rememberLoginDestination(nextPath)} />
+              <AppleAuthButton mode="login" onStart={() => rememberLoginDestination(nextPath)} />
               <AuthDivider />
               <p className="text-sm text-muted-foreground">Inga kortuppgifter krävs.</p>
               {selectedPlan && <p className="text-sm">Vald plan: {selectedPlan === 'plus_annual' ? 'Plus – År' : selectedPlan === 'plus_monthly' ? 'Plus – Månad' : 'Gratis'}. {selectedPlan !== 'free' && 'Nya konton får prova Plus i 7 dagar.'}</p>}
@@ -353,7 +361,7 @@ export default function Login() {
                 <span className="relative flex items-center">Logga in <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
               </Button>
               <div className="flex items-center justify-between text-sm">
-                <button type="button" className="text-primary hover:underline" onClick={() => setAuthMode('forgot')}>Glömt lösenord?</button>
+                <button type="button" className="text-primary hover:underline" onClick={() => { setResetFeedback(null); setAuthMode('forgot'); }}>Glömt lösenord?</button>
                 <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('register')}>Skapa konto</button>
               </div>
               <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('welcome')}>← Tillbaka</button>
@@ -370,8 +378,8 @@ export default function Login() {
                   <p className="text-sm text-primary font-medium">Sju dagars Premium ingår gratis!</p>
                 </div>
               </div>
-              <GoogleAuthButton mode="register" />
-              <AppleAuthButton mode="register" />
+              <GoogleAuthButton mode="register" onStart={() => rememberLoginDestination(nextPath)} />
+              <AppleAuthButton mode="register" onStart={() => rememberLoginDestination(nextPath)} />
               <AuthDivider />
               <div className="space-y-4">
                 <div>
@@ -471,7 +479,7 @@ export default function Login() {
           )}
 
           {authMode === 'forgot' && (
-            <div className="animate-fade-in space-y-5">
+            <form onSubmit={handleForgotPassword} className="animate-fade-in space-y-5">
               <div>
                 <h3 className="font-serif text-3xl text-foreground mb-2">Återställ lösenord</h3>
                 <p className="text-muted-foreground">Ange din e-post så skickar vi en länk.</p>
@@ -480,15 +488,17 @@ export default function Login() {
                 <Label htmlFor="forgot-email" className="text-muted-foreground">E-post</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" />
+                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => { setEmail(e.target.value); setResetFeedback(null); }} className="pl-10 h-12 rounded-xl" required />
                 </div>
               </div>
-              <Button className="w-full h-12 text-base font-medium" onClick={handleForgotPassword} disabled={loading}>
+              {resetFeedback === 'error' && <p role="alert" className="text-sm text-destructive">Begäran kunde inte skickas. Kontrollera din anslutning och försök igen om en stund.</p>}
+              {resetFeedback === 'sent' && <p role="status" className="text-sm text-foreground">Om adressen hör till ett konto får du ett mejl med en återställningslänk. Kolla även skräpposten.</p>}
+              <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Skicka återställningslänk
               </Button>
-              <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('login')}>← Tillbaka till login</button>
-            </div>
+              <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('login')}>← Tillbaka till inloggningen</button>
+            </form>
           )}
         </div>
       </div>

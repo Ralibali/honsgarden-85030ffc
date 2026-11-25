@@ -1,7 +1,3 @@
-let swRegistration: ServiceWorkerRegistration | null = null;
-let onUpdateFoundCb: (() => void) | null = null;
-const updateFoundListenersAttached = new WeakSet<ServiceWorkerRegistration>();
-
 export function isStandalonePwa(): boolean {
   if (typeof window === 'undefined') return false;
 
@@ -82,55 +78,21 @@ export async function recoverStalePwaShell(reason = 'stale-pwa-shell') {
   }
 }
 
-export function setSwRegistration(reg: ServiceWorkerRegistration | null) {
-  swRegistration = reg;
-  if (reg && !updateFoundListenersAttached.has(reg)) {
-    updateFoundListenersAttached.add(reg);
-    reg.addEventListener('updatefound', () => {
-      onUpdateFoundCb?.();
-    });
-  }
-}
-
+/** The deployed web bundle is independent of the optional push worker. */
 export async function checkForPwaUpdate(): Promise<{ hasUpdate: boolean; error?: string }> {
-  if (isPwaRegistrationDisabled()) {
-    return { hasUpdate: false, error: 'Uppdateringskontroll är bara aktiv i den publicerade appen' };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
+  try {
+    const response = await fetch('/app-version.json', { cache: 'no-store', signal: controller.signal });
+    if (!response.ok) throw new Error();
+    const version = await response.json();
+    if (typeof version?.buildTime !== 'string' || !Number.isFinite(Date.parse(version.buildTime))) {
+      throw new Error();
+    }
+    return { hasUpdate: version.buildTime !== __BUILD_TIME__ };
+  } catch {
+    return { hasUpdate: false, error: 'Kunde inte hämta den senaste versionen. Kontrollera anslutningen och försök igen.' };
+  } finally {
+    clearTimeout(timeout);
   }
-
-  if (!('serviceWorker' in navigator)) {
-    return { hasUpdate: false, error: 'Service Worker stöds inte i den här webbläsaren' };
-  }
-  if (!swRegistration) {
-    return { hasUpdate: false, error: 'Ingen Service Worker registrerad ännu' };
-  }
-
-  return new Promise((resolve) => {
-    let resolved = false;
-
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        onUpdateFoundCb = null;
-        resolve({ hasUpdate: false });
-      }
-    }, 5000);
-
-    onUpdateFoundCb = () => {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        onUpdateFoundCb = null;
-        resolve({ hasUpdate: true });
-      }
-    };
-
-    swRegistration!.update().catch((err) => {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        onUpdateFoundCb = null;
-        resolve({ hasUpdate: false, error: String(err) });
-      }
-    });
-  });
 }

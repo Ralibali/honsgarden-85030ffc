@@ -19,6 +19,7 @@ const DEFAULT_SUPABASE_PUBLISHABLE_KEY =
 const DEFAULT_SUPABASE_PROJECT_ID = "sikbymtrbhrofysgkqsj";
 
 export default defineConfig(({ mode }) => {
+  const buildTime = new Date().toISOString();
   const fileEnv = loadEnv(mode, process.cwd(), "");
   const env: Record<string, string> = {
     ...fileEnv,
@@ -51,6 +52,13 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      {
+        name: "app-version",
+        apply: "build" as const,
+        generateBundle() {
+          this.emitFile({ type: "asset", fileName: "app-version.json", source: JSON.stringify({ buildTime }) });
+        },
+      },
       { name: "owned-editorial-prerender", apply: "build" as const, enforce: "post" as const, closeBundle() {
         execFileSync(process.execPath, ["scripts/prerender-blog-posts.mjs"], { cwd: process.cwd(), stdio: "inherit" });
       } },
@@ -60,7 +68,7 @@ export default defineConfig(({ mode }) => {
       "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
       "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabasePublishableKey),
       "import.meta.env.VITE_SUPABASE_PROJECT_ID": JSON.stringify(supabaseProjectId),
-      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      __BUILD_TIME__: JSON.stringify(buildTime),
     },
     build: {
       cssCodeSplit: true,

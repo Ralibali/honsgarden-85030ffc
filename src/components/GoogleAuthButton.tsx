@@ -18,15 +18,17 @@ function GoogleLogo() {
 
 interface GoogleAuthButtonProps {
   mode?: 'login' | 'register';
+  onStart?: () => void;
 }
 
 /** "Fortsätt med Google" – Supabase OAuth med spårning och felhantering. */
-export default function GoogleAuthButton({ mode = 'login' }: GoogleAuthButtonProps) {
+export default function GoogleAuthButton({ mode = 'login', onStart }: GoogleAuthButtonProps) {
   const { loginWithGoogle } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
     setLoading(true);
+    onStart?.();
     try {
       await loginWithGoogle(mode);
     } catch (err) {

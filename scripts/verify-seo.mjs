@@ -1,3 +1,5 @@
+import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
+import { breedGuides } from '../src/data/breedGuides.mjs';
 import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
@@ -187,4 +189,39 @@ for (const page of Object.values(SEO_LANDING_PAGES)) {
   if ((html.match(/<main\b/gi) || []).length !== 1) throw new Error(`Fel antal main för ${page.path}`);
   if (!html.includes(`rel="canonical" href="https://honsgarden.se${page.path}"`)) throw new Error(`Fel canonical för ${page.path}`);
   if (!html.includes(escapeHtml(page.sections[0].body))) throw new Error(`Sakinnehåll saknas för ${page.path}`);
+}
+
+
+for (const guide of Object.values(breedGuides)) {
+  const html = readFileSync(`dist${guide.path}/index.html`, 'utf8');
+  assertTopicPageHtml(html, { path: guide.path, topicH1: guide.h1 });
+  if (extractTitle(html) !== guide.title || !html.includes(escapeHtml(guide.sections[0].paragraphs[0]))) {
+    throw new Error(`${guide.path} saknar guidens titel eller text`);
+  }
+  for (const section of guide.sections) {
+    for (const bullet of section.bullets ?? []) {
+      const href = bullet.match(/ Läs mer: (\/honsraser\/[a-z0-9-]+)$/)?.[1];
+      if (href && (!html.includes(`href="${href}"`) || !existsSync(`dist${href}/index.html`))) {
+        throw new Error(`${guide.path} saknar fungerande raslänk till ${href}`);
+      }
+    }
+  }
+  if (guide.breedTable && !html.includes('<table')) throw new Error(`${guide.path} saknar jämförelsetabell`);
+}
+for (const [path, h1, link] of [
+  ['/priser', 'Välj det som passar din hönsgård', '/login?mode=register'],
+  ['/verktyg/aggkalkylator', 'Äggkalkylator', '/foderkostnad-hons'],
+  ['/verktyg/vad-kostar-hons', 'Vad kostar det att skaffa höns?', '/borja-med-hons'],
+  ['/verktyg/klackningskalkylator', 'Kläckningskalkylator', '/klackningskalender'],
+  ['/verktyg/aggregler-vagvisare', 'Äggregler-vägvisaren', '/guider/salja-agg-regler'],
+]) {
+  const html = readFileSync(`dist${path}/index.html`, 'utf8');
+  assertTopicPageHtml(html, { path, topicH1: h1 });
+  if (!html.includes(`href="${link}"`) || !sitemap.includes(`<loc>https://honsgarden.se${path}</loc>`)) {
+    throw new Error(`${path} saknar länk eller finns inte i sitemap`);
+  }
+}
+
+for (const breed of BREED_PRERENDER_PROFILES) {
+  if (!existsSync(`dist/honsraser/${breed.slug}/index.html`)) throw new Error(`Saknad rasguide: ${breed.slug}`);
 }

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { toast } from 'sonner';
-import { cleanupPreviewServiceWorkers, isPwaRegistrationDisabled, setSwRegistration } from '@/lib/pwaUpdate';
+import { cleanupPreviewServiceWorkers, isPwaRegistrationDisabled } from '@/lib/pwaUpdate';
 
 /**
  * Visar en liten toast längst ner när en ny service worker väntar
@@ -17,12 +17,10 @@ export default function PwaUpdatePrompt() {
     immediate: !disabled,
     onRegistered(registration) {
       if (disabled) {
-        setSwRegistration(null);
         void cleanupPreviewServiceWorkers();
         return;
       }
 
-      setSwRegistration(registration ?? null);
       if (!registration) return;
 
       const check = () => {

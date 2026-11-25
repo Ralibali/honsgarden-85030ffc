@@ -35,3 +35,22 @@ export function getRecoveryLinkStatus(
   }
   return 'missing';
 }
+
+// Supabase consumes an implicit recovery callback before the lazy reset page can mount.
+// Retain only the verified account ID for this page load.
+export const initialRecoveryLinkStatus = typeof window !== 'undefined' && window.location.pathname === '/reset-password'
+  ? getRecoveryLinkStatus() : 'missing';
+
+let recoveryUserId: string | null = null;
+
+export function recordRecoveryUser(event: string, userId?: string): void {
+  if (event === 'PASSWORD_RECOVERY' && window.location.pathname === '/reset-password') {
+    recoveryUserId = userId ?? null;
+  } else if (event === 'SIGNED_OUT' || (userId && userId !== recoveryUserId)) {
+    recoveryUserId = null;
+  }
+}
+
+export function getRecoveryUser(): string | null {
+  return recoveryUserId;
+}

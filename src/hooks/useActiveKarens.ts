@@ -12,9 +12,10 @@ export interface ActiveKarens {
   days_left: number;
 }
 
-export function useActiveKarens() {
+export function useActiveKarens(enabled = true) {
   return useQuery<ActiveKarens[]>({
     queryKey: ['active-karens'],
+    enabled,
     queryFn: async () => {
       const today = todayLocal();
       const { data, error } = await (supabase

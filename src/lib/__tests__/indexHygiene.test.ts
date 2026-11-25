@@ -40,9 +40,9 @@ describe('canonical-konsolidering av äldre rassidor', () => {
   it('har canonical-sidorna sitt egen path (ingen canonical-loop)', () => {
     expect(longformPages['dvarghons'].path).toBe('/honsraser/dvarghons');
     expect(longformPages['skansk-blommehona'].path).toBe('/honsraser/skansk-blommehona');
-    // Canonical-målen måste fortsatt träffa den dynamiska ras-routen.
-    expect(matchRoute('/honsraser/dvarghons').kind).toBe('dynamic');
-    expect(matchRoute('/honsraser/skansk-blommehona').kind).toBe('dynamic');
+    // Canonical-målen genereras som egna HTML-sidor och ska inte omdirigeras.
+    expect(matchRoute('/honsraser/dvarghons').kind).toBe('static');
+    expect(matchRoute('/honsraser/skansk-blommehona').kind).toBe('static');
   });
 
   it('har inga dubbletter bland longform-sidornas canonical paths', () => {

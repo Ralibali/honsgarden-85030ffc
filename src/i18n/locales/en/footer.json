@@ -8,6 +8,8 @@
     "support": "Support"
   },
   "links": {
+    "demo": "Try without an account",
+    "breeds": "Chicken breeds",
     "all_features": "Everything Honsgarden offers",
     "pricing": "Pricing",
     "app_for_owners": "App for chicken keepers",
@@ -26,7 +28,7 @@
     "community": "Community",
     "weather": "Weather",
     "feedback": "Feedback",
-    "premium": "Premium",
+    "premium": "Plus",
     "help": "Help",
     "contact": "Contact",
     "about": "About Honsgarden",

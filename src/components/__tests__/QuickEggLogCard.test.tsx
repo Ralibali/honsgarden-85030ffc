@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import QuickEggLogCard from '../dashboard/QuickEggLogCard';
 import { todayLocal } from '@/lib/datetime';
 
@@ -22,7 +23,7 @@ function renderCard(todayEggs: number, ids: string[] = [], extra: Partial<React.
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={ids} {...extra} />
+      <MemoryRouter><QuickEggLogCard todayEggs={todayEggs} todayEggRowIds={ids} {...extra} /></MemoryRouter>
     </QueryClientProvider>,
   );
 }
@@ -40,6 +41,15 @@ describe('QuickEggLogCard – äggloggning', () => {
     vi.clearAllMocks();
     mockCreate.mockResolvedValue({});
     mockDelete.mockResolvedValue({});
+  });
+
+  it.each([
+    [true, '/demo?view=eggs', '/demo?view=eggs&log=1'],
+    [false, '/app/eggs', '/app/eggs?log=1'],
+  ] as const)('länkar till rätt historik och formulär för demo=%s', (demo, history, composer) => {
+    renderCard(2, ['row'], { demo });
+    expect(screen.getByRole('link', { name: 'Historik' })).toHaveAttribute('href', history);
+    expect(screen.getByRole('link', { name: 'Logga en annan dag' })).toHaveAttribute('href', composer);
   });
 
   it('loggar ett ägg med dagens datum när man trycker på plus', async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 // Appens stilar laddas med appen – publika sidor slipper dem (se styles/app-shell.css).
 import '@/styles/app-shell.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -15,8 +15,16 @@ import {
   DEMO_DOCUMENT_TITLE,
   DEMO_PATH,
 } from '@/lib/prerenderTopicPages';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import DashboardV3 from '@/pages/DashboardV3';
 import Diary from '@/pages/Diary';
+
+const Eggs = lazyWithRetry(() => import('@/pages/Eggs'));
+const demoViews = [
+  { id: 'today', label: 'Idag', href: '/demo' },
+  { id: 'eggs', label: 'Äggbok', href: '/demo?view=eggs' },
+  { id: 'diary', label: 'Dagbok', href: '/demo?view=diary' },
+] as const;
 
 const DEMO_USER_ID = 'demo-user';
 
@@ -46,7 +54,7 @@ function suppressOneTimeOverlays() {
  */
 export default function DemoApp() {
   const [params] = useSearchParams();
-  const diary = params.get('view') === 'diary';
+  const view = demoViews.find((item) => item.id === params.get('view'))?.id ?? 'today';
   useSeo({
     title: DEMO_DOCUMENT_TITLE,
     description: DEMO_DESCRIPTION,
@@ -99,6 +107,7 @@ export default function DemoApp() {
             <div className="px-4 md:px-6 lg:px-8 py-2.5 flex items-center gap-3">
               <a
                 href="/"
+                aria-label="Till startsidan"
                 className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground shrink-0"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -121,10 +130,19 @@ export default function DemoApp() {
           {/* Den riktiga dashboarden, precis som inloggade ser den */}
           <main id="main-content" tabIndex={-1} className="px-4 md:px-6 lg:px-8 pt-4 md:pt-6 pb-24">
             <nav aria-label="Prova appen" className="max-w-2xl mx-auto flex gap-2 mb-5">
-              <Button asChild variant={diary ? 'outline' : 'default'}><Link to="/demo" aria-current={!diary ? 'page' : undefined}>Idag</Link></Button>
-              <Button asChild variant={diary ? 'default' : 'outline'}><Link to="/demo?view=diary" aria-current={diary ? 'page' : undefined}>Dagbok</Link></Button>
+              {demoViews.map((item) => (
+                <Button key={item.id} asChild variant={view === item.id ? 'default' : 'outline'}>
+                  <Link to={item.href} aria-current={view === item.id ? 'page' : undefined}>{item.label}</Link>
+                </Button>
+              ))}
             </nav>
-            {diary ? <Diary demo /> : <DashboardV3 demo />}
+            {view === 'today' && <DashboardV3 demo />}
+            {view === 'diary' && <Diary demo />}
+            {view === 'eggs' && (
+              <Suspense fallback={<p role="status" className="text-center">Hämtar äggboken…</p>}>
+                <Eggs demo />
+              </Suspense>
+            )}
           </main>
 
           {/* Fast CTA längst ner */}

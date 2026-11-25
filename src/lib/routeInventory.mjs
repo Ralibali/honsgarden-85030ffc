@@ -11,6 +11,8 @@
  * Pure ESM data + string matching only — safe to import from Node scripts.
  */
 
+import { BREED_PRERENDER_PROFILES } from '../data/honsraserBreedProfiles.mjs';
+import { breedGuides } from '../data/breedGuides.mjs';
 import { CONSOLIDATED_BLOG_REDIRECTS } from '../data/blogConsolidation.mjs';
 
 /** Infra-level permanent redirects (308), evaluated before the filesystem. */
@@ -51,6 +53,8 @@ export const STATIC_PUBLIC_ROUTES = [
   '/borja-med-hons',
   '/honsraser',
   '/honsraser-lista',
+  ...Object.values(breedGuides).map(guide => guide.path).filter(path => path.startsWith('/honsraser/')),
+  ...BREED_PRERENDER_PROFILES.map(breed => `/honsraser/${breed.slug}`),
   '/salja-agg',
   '/karta',
   '/karta/bekrafta',
@@ -105,7 +109,6 @@ export const STATIC_PUBLIC_ROUTES = [
  * exists — tracked as GATED in the V2 plan.
  */
 export const DYNAMIC_PUBLIC_ROUTES = [
-  { pattern: '/honsraser/:slug', example: '/honsraser/orpington', note: 'bogus slug → client 404 + noindex' },
   { pattern: '/salja-agg/:ort', example: '/salja-agg/stockholm', note: 'bogus ort → client 404 + noindex' },
   { pattern: '/karta/hantera/:token', example: '/karta/hantera/abc123', note: 'token page' },
   { pattern: '/s/:slug', example: '/s/anna-lena', note: 'public egg-sale page' },
@@ -184,6 +187,7 @@ export function buildVercelRewrites() {
   const rewrites = [];
   for (const route of STATIC_PUBLIC_ROUTES) {
     if (route === '/') continue; // served from dist/index.html by the filesystem
+    if (route.startsWith('/honsraser/')) continue; // Each published breed has its own static HTML.
     rewrites.push({ source: route, destination: '/index.html' });
   }
   for (const route of DYNAMIC_PUBLIC_ROUTES) {

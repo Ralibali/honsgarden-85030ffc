@@ -5,6 +5,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api';
+import QueryNotice from '@/components/QueryNotice';
+import { Skeleton } from '@/components/ui/skeleton';
+import { todayLocal } from '@/lib/datetime';
+import { summarizeEggPeriod } from '@/lib/farmMetrics';
 import {
   ArrowRight,
   Bird,
@@ -31,12 +35,6 @@ type InsightItem = {
   tone?: 'good' | 'warn' | 'info';
 };
 
-function daysAgo(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  return date;
-}
-
 function formatDecimal(value: number, digits = 1) {
   return value.toFixed(digits).replace('.', ',');
 }
@@ -51,77 +49,37 @@ function trendMeta(diff: number) {
   return { label: '±0', text: 'stabilt', sentence: 'ungefär samma nivå som perioden innan', icon: Minus, className: 'text-muted-foreground', tone: 'info' as const };
 }
 
-export default function SmartStatisticsOverview() {
+interface Props {
+  activeHenCount: number;
+  costPerEgg: number;
+  topHen?: { id: string; name?: string | null; total_eggs?: number | null };
+}
+
+export default function SmartStatisticsOverview({ activeHenCount, costPerEgg, topHen }: Props) {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>('7d');
   const [showAllInsights, setShowAllInsights] = useState(false);
 
-  const { data: eggs = [] } = useQuery({ queryKey: ['eggs'], queryFn: () => api.getEggs() });
-  const { data: hens = [] } = useQuery({ queryKey: ['hens'], queryFn: () => api.getHens() });
-  const { data: feedStats } = useQuery({ queryKey: ['smart-feed-stats'], queryFn: () => api.getFeedStatistics().catch(() => null) });
-  const { data: hensWithEggs = [] } = useQuery({ queryKey: ['smart-hens-with-eggs'], queryFn: () => api.getHensWithEggTotals().catch(() => []) });
-
-  const activeHens = useMemo(
-    () => hens.filter((hen) => hen.is_active && hen.hen_type !== 'rooster'),
-    [hens],
-  );
-
+  const { data: eggs = [], isPending, isError, refetch } = useQuery({
+    queryKey: ['eggs'], queryFn: () => api.getEggs(),
+  });
+  const today = todayLocal();
   const stats = useMemo(() => {
-    const now = new Date();
-    const currentStart = period === '7d' ? daysAgo(7) : period === '30d' ? daysAgo(30) : new Date('1970-01-01');
-    const previousStart = period === '7d' ? daysAgo(14) : period === '30d' ? daysAgo(60) : null;
-    const previousEnd = period === '7d' ? daysAgo(7) : period === '30d' ? daysAgo(30) : null;
-
-    const currentEggs = eggs.filter((egg) => new Date(egg.date) >= currentStart);
-    const previousEggs = previousStart && previousEnd
-      ? eggs.filter((egg) => {
-          const date = new Date(egg.date);
-          return date >= previousStart && date < previousEnd;
-        })
-      : [];
-
-    const currentTotal = currentEggs.reduce((sum, egg) => sum + (egg.count || 0), 0);
-    const previousTotal = previousEggs.reduce((sum, egg) => sum + (egg.count || 0), 0);
-    const diff = period === 'all' ? 0 : currentTotal - previousTotal;
-    const daysInPeriod = period === '7d'
-      ? 7
-      : period === '30d'
-        ? 30
-        : Math.max(1, Math.ceil((now.getTime() - currentStart.getTime()) / 86400000));
-    const avgPerDay = currentTotal / Math.max(1, daysInPeriod);
-    const avgPerHen = activeHens.length > 0 ? avgPerDay / activeHens.length : 0;
-
-    const dayTotals: Record<string, number> = {};
-    currentEggs.forEach((egg) => {
-      dayTotals[egg.date] = (dayTotals[egg.date] || 0) + (egg.count || 0);
-    });
-    const bestDay = Object.entries(dayTotals).sort((a, b) => b[1] - a[1])[0] || null;
-
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : null;
+    const result = summarizeEggPeriod(eggs, today, days);
     return {
-      currentTotal,
-      previousTotal,
-      diff,
-      avgPerDay,
-      avgPerHen,
-      daysWithLogs: Object.keys(dayTotals).length,
-      bestDay,
+      ...result,
+      diff: days ? result.currentTotal - result.previousTotal : 0,
+      avgPerHen: activeHenCount ? result.avgPerDay / activeHenCount : 0,
     };
-  }, [eggs, period, activeHens.length]);
+  }, [eggs, today, period, activeHenCount]);
 
   const trend = trendMeta(stats.diff);
   const TrendIcon = trend.icon;
-  const costPerEgg = feedStats?.cost_per_egg || 0;
-
-  const topHen = useMemo(() => {
-    return [...hensWithEggs]
-      .filter((hen) => hen.hen_type !== 'rooster' && Number(hen.total_eggs || 0) > 0)
-      .sort((a, b) => Number(b.total_eggs || 0) - Number(a.total_eggs || 0))[0] || null;
-  }, [hensWithEggs]);
-
   const insights = useMemo<InsightItem[]>(() => {
     const items: InsightItem[] = [];
 
-    if (stats.currentTotal === 0) {
+    if (!stats.bestDay) {
       items.push({
         title: 'Vi behöver några fler dagar',
         text: 'Logga äggen ett par dagar till. Sedan kan Hönsgården börja se mönster som faktiskt är värda att reagera på.',
@@ -157,7 +115,7 @@ export default function SmartStatisticsOverview() {
       });
     }
 
-    if (activeHens.length > 0 && stats.avgPerHen > 0) {
+    if (activeHenCount > 0 && stats.avgPerHen > 0) {
       items.push({
         title: 'Så ser det ut per höna',
         text: `Flocken ligger på ungefär ${formatDecimal(stats.avgPerHen, 2)} ägg per höna och dag. Det gör jämförelsen rättvisare när flocken förändras.`,
@@ -186,7 +144,7 @@ export default function SmartStatisticsOverview() {
       });
     }
 
-    if (!topHen && activeHens.length > 0) {
+    if (!topHen && activeHenCount > 0) {
       items.push({
         title: 'Gör hönsprofilerna ännu mer levande',
         text: 'Koppla ägg till enskilda hönor ibland. Då kan du se vem som värper mest och följa förändringar över tid.',
@@ -207,10 +165,13 @@ export default function SmartStatisticsOverview() {
     }
 
     return items;
-  }, [stats, period, activeHens.length, costPerEgg, topHen]);
+  }, [stats, period, activeHenCount, costPerEgg, topHen]);
 
   const visibleInsights = showAllInsights ? insights : insights.slice(0, 2);
   const periodLabel = period === '7d' ? 'senaste sju dagarna' : period === '30d' ? 'senaste trettio dagarna' : 'sedan du började logga';
+
+  if (isError) return <QueryNotice title="Kunde inte läsa äggregistreringarna" onRetry={() => { void refetch(); }} />;
+  if (isPending) return <Skeleton className="h-40 rounded-2xl" />;
 
   return (
     <section className="farm-insights-overview space-y-4" aria-label="Din hönsgård i siffror">
@@ -223,6 +184,7 @@ export default function SmartStatisticsOverview() {
           <button
             key={item.key}
             onClick={() => setPeriod(item.key as Period)}
+            aria-pressed={period === item.key}
             className={`min-h-11 rounded-xl px-3 text-xs font-medium transition-all ${
               period === item.key
                 ? 'bg-background text-foreground shadow-sm'
@@ -247,7 +209,7 @@ export default function SmartStatisticsOverview() {
               </h2>
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mt-2 max-w-2xl">
                 Det blir ungefär {formatDecimal(stats.avgPerDay)} ägg om dagen
-                {activeHens.length > 0 ? ` från ${activeHens.length} aktiva hönor` : ''}.
+                {activeHenCount > 0 ? ` från ${activeHenCount} aktiva hönor` : ''}.
                 {period !== 'all' ? ` Jämfört med perioden innan är det ${trend.sentence}.` : ' Ju längre du loggar, desto tydligare blir din egen gårds historia.'}
               </p>
 
@@ -280,7 +242,7 @@ export default function SmartStatisticsOverview() {
         <div className="farm-readable-metric">
           <Bird className="h-4 w-4" />
           <div>
-            <span>{activeHens.length ? formatDecimal(stats.avgPerHen, 2) : '–'}</span>
+            <span>{activeHenCount ? formatDecimal(stats.avgPerHen, 2) : '–'}</span>
             <p>ägg per höna och dag</p>
           </div>
         </div>

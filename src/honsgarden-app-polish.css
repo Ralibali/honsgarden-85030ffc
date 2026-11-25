@@ -39,9 +39,9 @@
   background: #111c16;
 }
 .honsgarden-app-shell.noise-bg::before { display: none; }
-.honsgarden-view body, .honsgarden-app-shell { font-family: 'HG Inter', Inter, system-ui, sans-serif; }
+.honsgarden-view body, .honsgarden-app-shell { font-family: 'Inter', system-ui, sans-serif; }
 .honsgarden-app-shell :is(h1, h2, h3, .font-serif),
-.honsgarden-view [role='dialog'] :is(h1, h2, h3, .font-serif) { font-family: 'HG Young Serif', 'Young Serif', Georgia, serif !important; }
+.honsgarden-view [role='dialog'] :is(h1, h2, h3, .font-serif) { font-family: 'Young Serif', Georgia, serif !important; }
 .honsgarden-app-shell > div.flex-1 > .app-mobile-header {
   min-height: calc(60px + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) 16px 0;
@@ -99,7 +99,7 @@
 .hg-mobile-menu .hg-more-group__heading p { display: none; }
 .hg-mobile-menu .hg-more-quick__item { position: relative; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; }
 .hg-mobile-menu .hg-more-quick__item > span:nth-child(2) { width: 100%; }
-.hg-mobile-menu .hg-more-quick__item strong { font-family: 'HG Inter', Inter, system-ui, sans-serif; font-size: 14px; line-height: 1.4; }
+.hg-mobile-menu .hg-more-quick__item strong { font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.4; }
 .hg-mobile-menu .hg-more-quick__item small { font-size: 12px; line-height: 1.5; }
 .hg-mobile-menu .hg-more-quick__item .hg-more-plus { position: absolute; top: 14px; right: 12px; }
 .honsgarden-view [role='dialog'] { color: hsl(var(--foreground)); }
@@ -124,7 +124,7 @@
 }
 .honsgarden-app-shell .today-v3__hero-copy { width: 100%; max-width: none; }
 .honsgarden-app-shell .today-v3 .today-v3__hero h1 {
-  font-family: 'HG Young Serif', 'Young Serif', Georgia, serif !important;
+  font-family: 'Young Serif', Georgia, serif !important;
   font-size: clamp(1.9rem, 7.5vw, 2.65rem) !important;
   line-height: 1.08 !important;
   text-wrap: pretty !important;
@@ -164,7 +164,7 @@
 .premium-plan__content h2 { font-size: 1.4rem; }
 .premium-plan__content > button { min-height: 48px; }
 .premium-plan__content > p { line-height: 1.65; }
-.premium-plan .text-4xl { font-family: 'HG Inter', Inter, system-ui, sans-serif; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.premium-plan .text-4xl { font-family: 'Inter', system-ui, sans-serif; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .premium-account-actions { padding-top: 0; }
 .premium-account-actions button { font-size: 12px; min-height: 44px; }
 .premium-benefits { border-radius: 20px; box-shadow: none; }

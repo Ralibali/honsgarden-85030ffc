@@ -1,10 +1,11 @@
+import { loginDestination, pendingLoginDestination, rememberLoginDestination } from '@/lib/loginDestination';
 import ConnectAccount from '@/pages/ConnectAccount';
 import { NEW_DIGITAL_PRODUCTS } from './lib/digitalProducts';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import FarmQueryProvider from '@/components/FarmQueryProvider';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { isNativePlatform } from '@/lib/nativePlatform';
 import SeoCanonical from "./components/SeoCanonical";
@@ -129,8 +130,19 @@ const LoadingFallback = () => <SuspenseFallback fullScreen />;
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+  const path = location.pathname + location.search + location.hash;
+  const destination = isAuthenticated && location.pathname === '/app' ? pendingLoginDestination() : null;
+  React.useEffect(() => {
+    if (destination) rememberLoginDestination(null);
+  }, [destination]);
   if (loading) return <LoadingFallback />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    const redirect = loginDestination(path);
+    const query = redirect && redirect !== '/app' ? '?' + new URLSearchParams({ redirect }) : '';
+    return <Navigate to={'/login' + query} replace />;
+  }
+  if (destination && destination !== path) return <Navigate to={destination} replace />;
   return <>{children}</>;
 }
 

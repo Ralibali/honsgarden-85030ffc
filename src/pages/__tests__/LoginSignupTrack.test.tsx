@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { AuthError } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { resetSignupTrackingForTests } from '@/lib/analytics';
 
@@ -54,6 +56,7 @@ function renderLogin(path: string) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/marknad/ny" element={<p>Ny annons</p>} />
         <Route path="/app" element={<p>Din hönsgård</p>} />
       </Routes>
     </MemoryRouter>,
@@ -83,6 +86,30 @@ describe('Login – Signup fires only when an account is created', () => {
     resetSignupTrackingForTests();
     localStorage.clear();
     delete window.analyticsEvent;
+  });
+
+  it('återgår till annonsen efter inloggning', async () => {
+    renderLogin('/login?mode=login&redirect=/marknad/ny');
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Logga in' }));
+    expect(await screen.findByText('Ny annons')).toBeInTheDocument();
+  });
+
+  it('låter användaren försöka igen efter en misslyckad begäran om nytt lösenord', async () => {
+    const reset = vi.mocked(supabase.auth.resetPasswordForEmail);
+    reset.mockResolvedValueOnce({ data: null, error: new AuthError('unavailable', 503) })
+      .mockResolvedValueOnce({ data: {}, error: null });
+    renderLogin('/login?mode=forgot');
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'Ada@example.se' } });
+    const send = screen.getByRole('button', { name: 'Skicka återställningslänk' });
+    fireEvent.click(send);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Begäran kunde inte skickas');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    fireEvent.click(send);
+    expect(await screen.findByRole('status')).toHaveTextContent('återställningslänk');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(reset).toHaveBeenCalledWith('ada@example.se', { redirectTo: window.location.origin + '/reset-password' });
   });
 
   it('fires Signup Completed once after a successful email register', async () => {

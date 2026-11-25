@@ -41,6 +41,7 @@ describe('routeInventory matcher', () => {
   it('returns notfound for bogus, dotless and unknown top-level paths', () => {
     for (const bogus of [
       '/qwerty-uiop',
+      '/honsraser/okand-ras',
       '/honsraser2', // dotless prefix collision must NOT match /honsraser/:slug
       '/blogg2',
       '/apple-touch-icon-precomposed.pngx',

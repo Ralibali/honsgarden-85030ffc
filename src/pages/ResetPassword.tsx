@@ -1,5 +1,5 @@
 import { hasNativeRecoverySession, clearNativeRecoverySession } from '@/lib/nativeAuth';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Lock, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useSeo } from '@/hooks/useSeo';
-import { getRecoveryLinkStatus } from '@/lib/resetPasswordLink';
+import { getRecoveryLinkStatus, getRecoveryUser, initialRecoveryLinkStatus, recordRecoveryUser } from '@/lib/resetPasswordLink';
 import logoHonsgarden from '@/assets/logo-honsgarden.png';
 
 const VERIFY_TIMEOUT_MS = 10_000;
@@ -19,6 +19,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const otpVerification = useRef<Promise<boolean> | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [error, setError] = useState('');
   const [linkIssue, setLinkIssue] = useState<'missing' | 'invalid' | null>(null);
@@ -31,37 +32,55 @@ export default function ResetPassword() {
   });
 
   useEffect(() => {
-    const status = hasNativeRecoverySession() ? 'present' : getRecoveryLinkStatus();
-    if (status === 'missing') {
-      setLinkIssue('missing');
-      return;
-    }
-    if (status === 'error') {
-      setLinkIssue('invalid');
+    let active = true;
+    const nativeRecovery = hasNativeRecoverySession();
+    const currentStatus = getRecoveryLinkStatus();
+    const status = currentStatus === 'missing' ? initialRecoveryLinkStatus : currentStatus;
+    if (status === 'error' || (status === 'missing' && !nativeRecovery && !getRecoveryUser() && !otpVerification.current)) {
+      setLinkIssue(status === 'error' ? 'invalid' : 'missing');
       return;
     }
 
+    const verified = () => {
+      if (active) setSessionReady(true);
+    };
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setSessionReady(true);
-      }
+      if (event === 'PASSWORD_RECOVERY') verified();
     });
+    const query = new URLSearchParams(window.location.search);
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const tokenHash = fragment.get('token_hash') || query.get('token_hash') || query.get('token');
+    const type = fragment.get('type') || query.get('type');
+    if (type === 'recovery' && tokenHash && !otpVerification.current) {
+      window.history.replaceState(window.history.state, '', '/reset-password');
+      otpVerification.current = supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+        .then(({ data, error }) => !error && !!data.session).catch(() => false);
+    }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSessionReady(true);
-      }
-    });
+    if (otpVerification.current) {
+      void otpVerification.current.then(ok => {
+        if (ok) verified();
+        else if (active) setLinkIssue('invalid');
+      });
+    } else {
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && (nativeRecovery || session.user.id === getRecoveryUser())) verified();
+      }).catch(() => { if (active) setLinkIssue('invalid'); });
+    }
 
-    const timeoutId = window.setTimeout(() => {
-      setLinkIssue('invalid');
-    }, VERIFY_TIMEOUT_MS);
-
+    const timeoutId = window.setTimeout(() => setLinkIssue('invalid'), VERIFY_TIMEOUT_MS);
     return () => {
+      active = false;
       subscription.unsubscribe();
       window.clearTimeout(timeoutId);
     };
   }, []);
+
+  useEffect(() => {
+    if (!success) return;
+    const timer = window.setTimeout(() => navigate('/app', { replace: true }), 2500);
+    return () => window.clearTimeout(timer);
+  }, [success, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +99,10 @@ export default function ResetPassword() {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
-      clearNativeRecoverySession();
+      if (hasNativeRecoverySession()) clearNativeRecoverySession();
+      recordRecoveryUser('SIGNED_OUT');
       setSuccess(true);
-      toast({ title: 'Lösenord uppdaterat!', description: 'Du kan nu logga in med ditt nya lösenord.' });
-      setTimeout(() => navigate('/login?mode=login', { replace: true }), 2500);
+      toast({ title: 'Lösenord uppdaterat!' });
     } catch (err: any) {
       setError(err.message || 'Något gick fel.');
     } finally {
@@ -106,21 +125,18 @@ export default function ResetPassword() {
           <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-4">
             <CheckCircle className="h-12 w-12 text-primary mx-auto" />
             <p className="text-foreground font-medium">Lösenordet har uppdaterats!</p>
-            <p className="text-muted-foreground text-sm">Du skickas vidare till inloggningen…</p>
+            <p className="text-muted-foreground text-sm">Din hönsgård öppnas om ett ögonblick.</p>
           </div>
         ) : showLinkError ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-4">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <p className="text-foreground font-medium">Länken saknas eller är ogiltig</p>
             <p className="text-muted-foreground text-sm">
-              Öppna länken från e-postmeddelandet, eller begär en ny återställning via inloggningssidan.
+              Öppna den senaste länken från ditt mejl eller begär en ny.
             </p>
             <Button asChild className="w-full">
-              <Link to="/login?mode=login">Tillbaka till inloggning</Link>
+              <Link to="/login?mode=forgot">Begär en ny återställningslänk</Link>
             </Button>
-            <p className="text-muted-foreground text-xs">
-              Behöver du en ny länk? Välj «Glömt lösenord?» på inloggningssidan.
-            </p>
           </div>
         ) : !sessionReady ? (
           <div className="bg-card border border-border rounded-2xl p-8 text-center space-y-4">
@@ -137,6 +153,8 @@ export default function ResetPassword() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
@@ -153,6 +171,8 @@ export default function ResetPassword() {
                 <Input
                   id="confirm"
                   type="password"
+                  autoComplete="new-password"
+                  minLength={8}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10"
@@ -161,7 +181,7 @@ export default function ResetPassword() {
                 />
               </div>
             </div>
-            {error && <p className="text-destructive text-sm">{error}</p>}
+            {error && <p role="alert" className="text-destructive text-sm">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Uppdatera lösenord

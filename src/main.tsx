@@ -5,12 +5,18 @@ import "./index.css";
 import "./mobile.css";
 import "./honsgarden-atmosphere-v6.css";
 import "./honsgarden-home-v3.css";
-import "./app-fonts.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
 import { isNativePlatform } from "@/lib/nativePlatform";
+
+import { supabase } from '@/integrations/supabase/client';
+import { recordRecoveryUser } from '@/lib/resetPasswordLink';
+
+if (window.location.pathname === '/reset-password') {
+  supabase.auth.onAuthStateChange((event, session) => recordRecoveryUser(event, session?.user.id));
+}
 
 document.documentElement.classList.toggle('native-app', isNativePlatform());
 if (isNativePlatform()) {

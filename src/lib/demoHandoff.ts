@@ -75,7 +75,8 @@ export function trackDemoNavigation(
   ) {
     try {
       const path = url == null ? '' : String(url);
-      const feature = mapAppPathToDemoFeature(path);
+      const view = path.startsWith('/demo?') ? new URLSearchParams(path.slice('/demo?'.length)).get('view') : null;
+      const feature = view === 'eggs' ? 'egg_log' : view === 'diary' ? 'diary' : mapAppPathToDemoFeature(path);
       if (feature && !seenFeatures.has(feature)) {
         seenFeatures.add(feature);
         events.onFeatureUsed(feature);

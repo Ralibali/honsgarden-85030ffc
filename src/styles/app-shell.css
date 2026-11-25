@@ -8,7 +8,7 @@
  * desktopbredd: ingen regel i de här filerna användes där.
  *
  * Ordningen är exakt densamma som tidigare i main.tsx. De globala filerna
- * (index, mobile, atmosphere-v6, home-v3, app-fonts) laddas fortfarande
+ * (index, mobile, atmosphere-v6, home-v3) laddas fortfarande
  * först; atmosphere-v6 riktar sig mot landningssidans hero, cookiearket och
  * :root-variabler som de här filerna inte rör, och home-v3 är begränsad till
  * .hg-home-v3 – därför påverkas inte kaskaden av att de här laddas efteråt.

@@ -151,6 +151,7 @@ Deno.serve(async (req) => {
   const staticPages = [
     { loc: "/", priority: "1.0", changefreq: "weekly" },
     { loc: "/blogg", priority: "0.9", changefreq: "daily" },
+    { loc: "/priser", priority: "0.8", changefreq: "monthly" },
     { loc: "/om-oss", priority: "0.7", changefreq: "monthly" },
     { loc: "/verktyg/aggkalkylator", priority: "0.8", changefreq: "monthly" },
     { loc: "/verktyg/klackningskalkylator", priority: "0.8", changefreq: "monthly" },
