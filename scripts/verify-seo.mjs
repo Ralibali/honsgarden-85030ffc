@@ -15,7 +15,6 @@ const required = [
   "dist/404.html",
   "dist/sitemap.xml",
   "dist/blogg/index.html",
-  "dist/borja-med-hons/index.html",
   "dist/honsraser-lista/index.html",
   "dist/salja-agg/index.html",
   "dist/demo/index.html",

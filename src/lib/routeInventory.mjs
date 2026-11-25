@@ -25,6 +25,10 @@ export const ROUTE_REDIRECTS = [
   // exakt en indexerbar URL per sida.
   { source: '/dvarghons', destination: '/honsraser/dvarghons', statusCode: 308 },
   { source: '/skansk-blommehona', destination: '/honsraser/skansk-blommehona', statusCode: 308 },
+  // Brahma rankar på blogginlägget; rassidan var okänd för Google (2026-11-25).
+  { source: '/honsraser/brahma', destination: '/blogg/brahma-hons', statusCode: 308 },
+  // Nybörjarlandningen sammanslagen med den nybörjarguide som syns i Google.
+  { source: '/borja-med-hons', destination: '/blogg/skaffa-hons-nyborjare', statusCode: 308 },
   // Sammanslagna bloggartiklar med samma sökavsikt (src/data/blogConsolidation.mjs).
   ...CONSOLIDATED_BLOG_REDIRECTS,
 ];
@@ -48,7 +52,6 @@ export const STATIC_PUBLIC_ROUTES = [
   '/honskalender',
   '/foderkostnad-hons',
   '/klackningskalender',
-  '/borja-med-hons',
   '/honsraser',
   '/honsraser-lista',
   '/salja-agg',

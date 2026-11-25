@@ -12,7 +12,7 @@ interface Props {
   ortName?: string | null;
   /** Var kortet visas: 'egg-sale' | 'map' | 'order-portal' | annat. Sparas för analys. */
   source: string;
-  /** UTM-kampanj som skickas med länken till /borja-med-hons. */
+  /** UTM-kampanj som skickas med länken till nybörjarguiden. */
   utmCampaign?: string;
   /** Rubrikvariant efter genomförd bokning. */
   variant?: 'default' | 'post-order';
@@ -45,7 +45,7 @@ export default function EggAlertSignup({
     source,
     campaign_context: utmCampaign,
   }).toString();
-  const guideHref = `/borja-med-hons?${context}`;
+  const guideHref = `/blogg/skaffa-hons-nyborjare?${context}`;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

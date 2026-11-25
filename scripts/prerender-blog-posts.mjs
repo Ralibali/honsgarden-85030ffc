@@ -5,7 +5,8 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
-import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
+import { BREED_PRERENDER_PROFILES as ALL_BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
+import { ROUTE_REDIRECTS } from '../src/lib/routeInventory.mjs';
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
@@ -338,7 +339,6 @@ const STATIC_PAGES = [
   { path: '/honskalender', route: 'honskalender', title: 'Hönskalender – planera skötsel, rutiner och hönsåret | Hönsgården', description: 'Hönskalender för svenska hönsägare. Håll koll på rengöring, foder, vatten, kvalster, ruggning, kläckning och säsongsrutiner.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/foderkostnad-hons', route: 'foderkostnad-hons', title: 'Foderkostnad för höns – räkna kostnad per ägg | Hönsgården', description: 'Räkna ut foderkostnad för höns och kostnad per ägg. Hönsgården hjälper dig följa inköp, förbrukning och lönsamhet.', ogImage: '/blog-images/feed-varieties.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/klackningskalender', route: 'klackningskalender', title: 'Kläckningskalender för hönsägg – följ dag 1 till 21 | Hönsgården', description: 'Digital kläckningskalender för hönsägg. Håll koll på startdatum, lysning, vändning, luftfuktighet och beräknad kläckdag.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
-  { path: '/borja-med-hons', route: 'borja-med-hons', title: 'Börja med höns – praktisk guide för nya hönsägare | Hönsgården', description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
   // Same title/description as the runtime page (src/pages/Guides.tsx useSeo).
   { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, köpguider & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
@@ -424,7 +424,7 @@ function renderOrtCta(ort) {
   <h2 style="font-family:'Young Serif',Georgia,serif;font-size:1.5rem;line-height:1.3;color:#3A6B35;margin:0 0 0.5rem;">Drömmer du om egna höns i ${ortName}? 🐔</h2>
   <p style="margin:0 0 1.25rem;color:#3f3f3f;font-size:1rem;line-height:1.5;">Kom igång med din egen hönsflock – gratis guide för nybörjare, eller hitta färska ägg från lokala säljare på kartan.</p>
   <div style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;">
-    <a href="/borja-med-hons?utm_source=ort-sida&amp;utm_content=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#3A6B35;color:#FFF9EC;font-weight:600;text-decoration:none;">Börja med höns</a>
+    <a href="/blogg/skaffa-hons-nyborjare?utm_source=ort-sida&amp;utm_content=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#3A6B35;color:#FFF9EC;font-weight:600;text-decoration:none;">Börja med höns</a>
     <a href="/karta?ort=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#FFF9EC;color:#3A6B35;border:1px solid #3A6B35;font-weight:600;text-decoration:none;">Se äggsäljare i ${ortName} på kartan</a>
   </div>
 </aside>`;
@@ -464,14 +464,10 @@ function buildStaticPage(template, page, { posts = [] } = {}) {
   }
   if (landing) {
     let body = renderSeoLandingBody(landing);
-    if (page.path === '/borja-med-hons') {
-      const placement = shopPlacementForPath(page.path);
-      body += renderDigitalGuidePlacement('beginner') + (placement ? renderContextualShopPlacementHtml(placement) : '');
-    }
     return injectTopicBody(withHead, body);
   }
   const shopPlacement = shopPlacementForPath(page.path);
-  if (['/borja-med-hons', '/honsraser', '/honsraser-lista'].includes(page.path)) {
+  if (['/honsraser', '/honsraser-lista'].includes(page.path)) {
     const audience = page.path.startsWith('/honsraser') ? 'breed' : 'beginner';
     return injectTopicBody(withHead, renderDigitalGuidePlacement(audience) + (shopPlacement ? renderContextualShopPlacementHtml(shopPlacement) : ''));
   }
@@ -660,6 +656,10 @@ function ownPostImageUrl(post) {
 // suppliedOrtSlugs: null = okänd likviditet (inkludera alla), Set = bara orter med aktivt utbud.
 // lastmod skrivs bara när ett verkligt ändringsdatum finns (artiklar, hubbar,
 // regelguider). Ett bygg-datum på varje URL lär Google att ignorera lastmod.
+// Rassidor som 308:as (t.ex. brahma → bloggen) ska varken prerenderas eller ligga i sitemapen.
+const REDIRECTED_SOURCES = new Set(ROUTE_REDIRECTS.map((r) => r.source));
+const BREED_PRERENDER_PROFILES = ALL_BREED_PRERENDER_PROFILES.filter((b) => !REDIRECTED_SOURCES.has(`/honsraser/${b.slug}`));
+
 function buildSitemap(posts, tags, orter = [], regulationGuides = [], breeds = [], marketplaceCategories = [], disallows = [], suppliedOrtSlugs = null) {
   const urls = [];
   const push = (loc, opts = {}) => {

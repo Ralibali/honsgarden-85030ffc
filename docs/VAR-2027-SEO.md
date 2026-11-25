@@ -32,8 +32,8 @@ Båda utkasten klarar `validateArticle` men har status `draft`. Källorna läste
    - `brahma-hons`: det är den sidan som rankar för "brahma" (inte `/honsraser/brahma`). Byt hype-titeln mot storlek, ägg och temperament.
    - `kopa-hons`: lägg till pris, var man köper och en checklista.
    - `honshus-guide` och `honshus-2026-kompletta-kopguiden` konkurrerar om "hönshus" (3 600/mån). Låt köpguiden äga "hönshus" och byggguiden "bygga hönshus".
-6. **Beslut:** ska `/honsraser/brahma` omdirigeras till `/blogg/brahma-hons`? ChatSEO föreslår 301. Det påverkar rashubben och sitemapen och är därför inte gjort.
-7. **Beslut:** slå ihop de fyra nybörjarsidorna (`borja-med-hons`, `hobbyhons-nyborjarguide`, `skaffa-hons-nyborjarguide`, `skaffa-hons-nyborjare`).
+6. **Klart 2026-11-25:** `/honsraser/brahma` 308:as till `/blogg/brahma-hons`. Rassidan prerenderas inte och ligger inte i sitemapen, och raslänkar pekar direkt på blogginlägget.
+7. **Klart 2026-11-25:** nybörjarsidorna är sammanslagna. `/borja-med-hons`, `/blogg/hobbyhons-nyborjarguide` och `/blogg/skaffa-hons-nyborjarguide` 308:as till `/blogg/skaffa-hons-nyborjare`, och alla interna länkar och kampanjlänkar pekar direkt dit. Butiksplaceringarna på de borttagna sidorna är borttagna; målsidan har redan egna Adtraction-placeringar.
 8. **Statistiksidan** "Antal höns i Sverige" finns som utkast i ChatSEO. Varje siffra måste kontrolleras mot Jordbruksverket och SCB före publicering. Sidan är för lång för redaktionens ordgräns och är därför inte inlagd i kön.
 
 ## Länkprofil

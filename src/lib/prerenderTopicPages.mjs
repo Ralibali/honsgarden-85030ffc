@@ -22,7 +22,6 @@ import {
 export const CTR_DOCUMENT_TITLES = {
   '/honsraser/orpington': 'Orpington-höna – nybörjarvänlig ras, ~180 ägg/år | Hönsgården',
   '/honsraser/sussex': 'Sussex höns – äggfärg, vanliga färger och ~240 ägg/år | Hönsgården',
-  '/honsraser/brahma': 'Brahma höns – lugn jätte på 4–5 kg, ~150 ägg/år | Hönsgården',
   '/honsraser/araucana': 'Araucana – hönan som värper blå ägg, ~180 per år | Hönsgården',
   '/honsraser/hedemorahona': 'Hedemorahöna – vintertålig svensk lantras från Dalarna | Hönsgården',
   '/blogg/berakna-foderkostnad-for-hons': 'Beräkna foderkostnad för höns – kalkyl för din flock | Hönsgården',

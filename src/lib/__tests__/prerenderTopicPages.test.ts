@@ -89,7 +89,6 @@ describe('prerender topic H1 + CTR titles', () => {
   it.each([
     ['orpington', 'Orpington', ['Orpington-höna', '~180']],
     ['sussex', 'Sussex', ['Sussex höns', '~240']],
-    ['brahma', 'Brahma', ['Brahma höns', '4–5 kg']],
     ['araucana', 'Araucana', ['blå ägg', '~180']],
     ['hedemorahona', 'Hedemorahöna', ['Hedemorahöna', 'Dalarna']],
   ] as const)('%s får topic-H1 och CTR-title, inte generic Hönsgården', (slug, topic, titleIncludes) => {
@@ -106,7 +105,7 @@ describe('prerender topic H1 + CTR titles', () => {
   });
 
   it('rassidornas prerender länkar crawlbart till vårens köp- och kläckningssidor', () => {
-    const page = prerenderBreed('brahma');
+    const page = prerenderBreed('orpington');
     for (const href of ['/blogg/kopa-hons', '/verktyg/vad-kostar-hons', '/blogg/klacka-agg', '/klackningskalender']) {
       expect(page.html).toContain(`href="${href}"`);
     }
@@ -156,7 +155,6 @@ describe('prerender topic H1 + CTR titles', () => {
     expect(TOPIC_PAGE_PATHS).toEqual([
       '/honsraser/orpington',
       '/honsraser/sussex',
-      '/honsraser/brahma',
       '/honsraser/araucana',
       '/honsraser/hedemorahona',
       '/blogg/berakna-foderkostnad-for-hons',
