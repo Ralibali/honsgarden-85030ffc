@@ -43,7 +43,7 @@ def smoke(base):
 
     def element(strategy, selector):
         found = webdriver("POST", path + "/element", {"using": strategy, "value": selector})
-        return found["element-6066-11e4-a52e-4f73-9f4d-51b9a3dcf116"]
+        return found["element-6066-11e4-a52e-4f735466cecf"]
 
     def click(strategy, selector):
         webdriver("POST", path + "/element/" + element(strategy, selector) + "/click", {})

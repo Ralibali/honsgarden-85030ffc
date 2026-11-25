@@ -90,6 +90,7 @@ export function FamilyMembers() {
         .from('farm_invitations')
         .select('id, email, status, created_at, expires_at')
         .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as any[];
@@ -117,10 +118,10 @@ export function FamilyMembers() {
         }
         throw new Error(msg);
       }
-      if (data?.error) throw new Error(data.error);
+      if (!data?.success) throw new Error(data?.error || 'Utskicket kunde inte bekräftas.');
     },
-    onSuccess: () => {
-      toast({ title: 'Inbjudan skickad! 📬', description: `En inbjudan har skickats till ${inviteEmail}` });
+    onSuccess: (_, { email }) => {
+      toast({ title: 'Inbjudan är på väg', description: `Mejlet till ${email} har lagts i kön för utskick.` });
       setInviteEmail('');
       setInviteRole('editor');
       setInviteOpen(false);
@@ -285,7 +286,7 @@ export function FamilyMembers() {
                 <div>
                   <p className="text-xs text-foreground">{inv.email}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    Skickad {new Date(inv.created_at).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                    Skapad {new Date(inv.created_at).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
                   </p>
                 </div>
               </div>

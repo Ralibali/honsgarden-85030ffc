@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (action === "invite") {
       if (!user) throw new Error("Ej inloggad");
-      const { email } = body;
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
       if (!email) throw new Error("E-postadress saknas");
 
       // Validera roll (default editor)
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
         .select("user_id")
-        .eq("email", email.toLowerCase())
+        .eq("email", email)
         .maybeSingle();
 
       if (existingProfile) {
@@ -76,28 +76,6 @@ Deno.serve(async (req) => {
         if (existingMember)
           throw new Error("Denna person är redan medlem i din gård");
       }
-
-      const { data: existingInvite } = await supabaseAdmin
-        .from("farm_invitations")
-        .select("id")
-        .eq("farm_id", membership.farm_id)
-        .eq("email", email.toLowerCase())
-        .eq("status", "pending")
-        .maybeSingle();
-      if (existingInvite)
-        throw new Error("En inbjudan har redan skickats till denna e-post");
-
-      const { data: invitation, error: invErr } = await supabaseAdmin
-        .from("farm_invitations")
-        .insert({
-          farm_id: membership.farm_id,
-          email: email.toLowerCase(),
-          invited_by: user.id,
-          role: requestedRole,
-        })
-        .select("token")
-        .single();
-      if (invErr) throw new Error(invErr.message);
 
       const { data: coop } = await supabaseAdmin
         .from("coop_settings")
@@ -115,14 +93,19 @@ Deno.serve(async (req) => {
       const farmName = escapeHtml(coop?.coop_name || "Hönsgården");
       const inviterName = escapeHtml(inviterProfile?.display_name || user.email || "Någon");
       const roleNameSv = roleLabel(requestedRole);
+      const inviteToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
       // Äldre appversioner använder rollen i länken som visningstext.
-      const inviteUrl = `https://honsgarden.se/inbjudan/${encodeURIComponent(invitation.token)}?role=${requestedRole}`;
+      const inviteUrl = `https://honsgarden.se/inbjudan/${inviteToken}?role=${requestedRole}`;
 
-      await supabaseAdmin.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
+      const { data: queueId, error: queueError } = await supabaseAdmin.rpc("queue_farm_invitation", {
+        p_farm_id: membership.farm_id,
+        p_invited_by: user.id,
+        p_email: email,
+        p_role: requestedRole,
+        p_token: inviteToken,
+        p_message: {
           run_id: crypto.randomUUID(),
-          to: email.toLowerCase(),
+          to: email,
           from: "Hönsgården <noreply@notify.honsgarden.se>",
           sender_domain: "notify.honsgarden.se",
           subject: `${inviterName} bjuder in dig till ${farmName} 🐔`,
@@ -137,10 +120,15 @@ Deno.serve(async (req) => {
           text: `${inviterName} bjuder in dig till ${farmName} på Hönsgården som ${roleNameSv}. Acceptera här: ${inviteUrl}`,
           purpose: "transactional",
           label: "farm-invitation",
-          message_id: `farm-invite-${invitation.token}-${requestedRole}`,
+          message_id: `farm-invite-${inviteToken}-${requestedRole}`,
           queued_at: new Date().toISOString(),
         },
       });
+
+      if (queueError?.code === "PT409") throw new Error("Det finns redan en giltig inbjudan till den här e-postadressen.");
+      if (queueError || queueId == null) {
+        throw new Error("Inbjudan kunde inte köas för utskick. Försök igen om en stund.");
+      }
 
       return new Response(JSON.stringify({ success: true, role: requestedRole }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
