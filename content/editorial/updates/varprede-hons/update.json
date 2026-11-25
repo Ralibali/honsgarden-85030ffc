@@ -7,7 +7,7 @@
   "export_run": "https://github.com/Ralibali/honsgarden-85030ffc/actions/runs/38572099733",
   "reason": "Artikeln var tunn (437 ord), hade \"bäst i test\" i metatiteln utan något test och påhittade erfarenheter (\"Jag har byggt många reden\"). Utökad med mått per storlek på höns, antal reden per flock, placering, typer av reden, strö, kvalster och golvägg.",
   "author": "Claude",
-  "quality_checked_at": "2026-10-14T13:48:00.000Z",
+  "quality_checked_at": "2026-11-25T16:41:53.298Z",
   "source_urls": [
     "https://www.lansstyrelsen.se/vastmanland/djur/skota-visa-behandla-eller-transportera-djur/hons-i-hobbybesattning.html"
   ],
@@ -36,5 +36,6 @@
       "rena ägg",
       "reden hönshus"
     ]
-  }
+  },
+  "reviewed_by": "ChatGPT"
 }

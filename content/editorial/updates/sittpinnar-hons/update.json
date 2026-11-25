@@ -7,7 +7,7 @@
   "export_run": "https://github.com/Ralibali/honsgarden-85030ffc/actions/runs/38572099733",
   "reason": "Artikeln var tunn (472 ord) och innehöll felaktig text (\"förebygger bomull, havsörn\") och påhittade erfarenheter. Utökad med mått per storlek på höns, materialval, placering, gödselbräda, kvalster och källa från Länsstyrelsen.",
   "author": "Claude",
-  "quality_checked_at": "2026-10-14T13:48:00.000Z",
+  "quality_checked_at": "2026-11-25T16:41:53.298Z",
   "source_urls": [
     "https://www.lansstyrelsen.se/vastmanland/djur/skota-visa-behandla-eller-transportera-djur/hons-i-hobbybesattning.html"
   ],
@@ -29,7 +29,7 @@
     "title": "Sittpinnar till höns – rätt mått, placering och material för friska fötter",
     "meta_title": "Sittpinnar till höns – rätt mått, placering och material för friska fötter",
     "meta_description": "Hur ska sittpinnar till höns vara utformade? Lär dig rätt mått, höjd, material och placering för att undvika fotproblem och ge dina höns god vila.",
-    "excerpt": "En höna tillbringar ungefär en tredjedel av sitt liv på sittpinnen. Rätt utformade sittpinnar förebygger trycksår och kroniska fotskador.",
+    "excerpt": "Rätt mått, höjd och material ger hönsen en bra viloplats. Anpassa sittpinnarna efter flockens storlek och gör dem enkla att ta loss och rengöra.",
     "tags": [
       "sittpinnar höns",
       "hönshus inredning",
@@ -38,5 +38,6 @@
       "hönshus bygga",
       "höns sovplats"
     ]
-  }
+  },
+  "reviewed_by": "ChatGPT"
 }
