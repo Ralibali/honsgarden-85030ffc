@@ -116,7 +116,7 @@ export const REGULATION_GUIDES = [
     ],
     relatedLinks: [
       { href: '/verktyg/aggregler-vagvisare', label: 'Äggregler-vägvisaren – vilka regler gäller just dig?' },
-      { href: '/borja-med-hons', label: 'Börja med höns – nybörjarguide' },
+      { href: '/blogg/skaffa-hons-nyborjare', label: 'Skaffa höns – nybörjarguide' },
       { href: '/guider/salja-agg-regler', label: 'Sälja ägg från egna höns – reglerna i klartext' },
       { href: '/salja-agg', label: 'Sälja ägg privat – översikt' },
     ],

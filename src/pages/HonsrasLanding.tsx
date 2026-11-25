@@ -1,3 +1,4 @@
+import { breedGuideBullet } from '@/data/breedGuides.mjs';
 import ContentToc from '@/components/ContentToc';
 import { subjectImage } from '@/lib/breedImage';
 import SubjectImage from '@/components/SubjectImage';
@@ -158,12 +159,17 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
                 ))}
                 {section.bullets && (
                   <ul className="space-y-2 pt-1">
-                    {section.bullets.map((b) => (
-                      <li key={b} className="flex gap-2 text-foreground/85 text-base">
-                        <span className="text-primary mt-1">•</span>
-                        <span>{b.includes('Läs mer: /honsraser/') ? <>{b.split('Läs mer:')[0]}<a className="text-primary underline" href={b.split('Läs mer: ')[1]}>Läs mer om {b.split(' – ')[0]}</a></> : b}</span>
-                      </li>
-                    ))}
+                    {section.bullets.map((line) => {
+                      const bullet = breedGuideBullet(line);
+                      return (
+                        <li key={line} className="flex gap-2 text-foreground/85 text-base">
+                          <span className="text-primary mt-1">•</span>
+                          {bullet.href
+                            ? <a className="text-primary underline" href={bullet.href}>{bullet.text}</a>
+                            : <span>{bullet.text}</span>}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

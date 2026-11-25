@@ -7,14 +7,13 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 import { REGULATION_GUIDES } from '../src/data/regulationGuides.mjs';
-import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
+import { PUBLISHED_BREED_PROFILES } from '../src/lib/routeInventory.mjs';
 import { MARKETPLACE_CATEGORY_PAGES } from '../src/data/marketplaceCategories.mjs';
 import { renderBlogMarkdown, stripDuplicateTitleHeading, injectBreedFigures, heroForPost, isHtmlContent } from '../src/lib/blogMarkdown.mjs';
 import { rewriteNakedShopAffiliateHrefs } from '../src/lib/adtractionShopLinks.mjs';
 import { consolidatedBlogTarget, rewriteConsolidatedBlogLinks, withoutConsolidatedPosts } from '../src/data/blogConsolidation.mjs';
 import { BLOG_CATEGORY_META, withBlogCategory } from '../src/data/blogCategories.mjs';
 import { injectContextualRegisterCta } from '../src/lib/contextualRegisterCtas.mjs';
-import { renderContextualShopPlacementHtml, shopPlacementForPath } from '../src/lib/contextualShopPlacements.mjs';
 import { extractBlogArticlePosts, indexableTags, isRobotsDisallowed, mergeBlogPosts, ortHasSupply, parseStarDisallows } from '../src/lib/sitemapPolicy.mjs';
 import {
   BLOG_INDEX_H1,
@@ -344,7 +343,6 @@ const STATIC_PAGES = [
   { path: '/honskalender', route: 'honskalender', title: 'Hönskalender – planera skötsel, rutiner och hönsåret | Hönsgården', description: 'Hönskalender för svenska hönsägare. Håll koll på rengöring, foder, vatten, kvalster, ruggning, kläckning och säsongsrutiner.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/foderkostnad-hons', route: 'foderkostnad-hons', title: 'Foderkostnad för höns – räkna kostnad per ägg | Hönsgården', description: 'Räkna ut foderkostnad för höns och kostnad per ägg. Hönsgården hjälper dig följa inköp, förbrukning och lönsamhet.', ogImage: '/blog-images/feed-varieties.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/klackningskalender', route: 'klackningskalender', title: 'Kläckningskalender för hönsägg – följ dag 1 till 21 | Hönsgården', description: 'Digital kläckningskalender för hönsägg. Håll koll på startdatum, lysning, vändning, luftfuktighet och beräknad kläckdag.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
-  { path: '/borja-med-hons', route: 'borja-med-hons', title: 'Börja med höns – praktisk guide för nya hönsägare | Hönsgården', description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.9', changefreq: 'monthly' },
   { path: '/om-oss', route: 'om-oss', title: 'Om Hönsgården – Vår vision för svenska hönsägare', description: 'Lär känna Hönsgården – byggt av och för svenska hobbyhönsägare. Vår vision, historia och varför vi finns.', ogImage: '/og-image.jpg', priority: '0.7', changefreq: 'monthly' },
   // Same title/description as the runtime page (src/pages/Guides.tsx useSeo).
   { path: '/blogg', route: 'blogg', title: 'Blogg om höns – Guider, köpguider & tips | Hönsgården', description: 'Guider och praktiska tips om höns, hönshus, foder och vardagen med en hobbyflock. Läs, planera och samla din egen erfarenhet i Hönsgården.', ogImage: '/blog-images/hens-garden.jpg', ogImageAlt: 'Höns i en vacker trädgård – Hönsgårdens blogg', priority: '0.9', changefreq: 'daily' },
@@ -357,7 +355,7 @@ const STATIC_PAGES = [
   // Same title/description as src/pages/StartCostCalculator.tsx useSeo.
   { path: '/verktyg/vad-kostar-hons', route: 'verktyg/vad-kostar-hons', h1: 'Vad kostar det att skaffa höns?',
     instructions: 'Lägg ihop engångsköpen för hus, stängsel, utrustning och höns. Räkna sedan foder och strö för ett år separat så att du ser både startbudgeten och den löpande driften.',
-    related: ['/borja-med-hons', 'Planera din första flock'], title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården', description: 'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
+    related: ['/blogg/skaffa-hons-nyborjare', 'Planera din första flock'], title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården', description: 'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', h1: 'Kläckningskalkylator',
     instructions: 'Starten räknas som dag 0. Om ruvningen av hönsägg börjar den 1 april är den beräknade kläckdagen den 22 april. Tiden kan variera.',
     related: ['/klackningskalender', 'Följ kläckningen dag för dag'], title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
@@ -438,7 +436,7 @@ function renderOrtCta(ort) {
   <h2 style="font-family:'Young Serif',Georgia,serif;font-size:1.5rem;line-height:1.3;color:#3A6B35;margin:0 0 0.5rem;">Drömmer du om egna höns i ${ortName}? 🐔</h2>
   <p style="margin:0 0 1.25rem;color:#3f3f3f;font-size:1rem;line-height:1.5;">Kom igång med din egen hönsflock – gratis guide för nybörjare, eller hitta färska ägg från lokala säljare på kartan.</p>
   <div style="display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;">
-    <a href="/borja-med-hons?utm_source=ort-sida&amp;utm_content=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#3A6B35;color:#FFF9EC;font-weight:600;text-decoration:none;">Börja med höns</a>
+    <a href="/blogg/skaffa-hons-nyborjare?utm_source=ort-sida&amp;utm_content=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#3A6B35;color:#FFF9EC;font-weight:600;text-decoration:none;">Börja med höns</a>
     <a href="/karta?ort=${slug}" style="display:inline-block;padding:0.75rem 1.25rem;border-radius:0.75rem;background:#FFF9EC;color:#3A6B35;border:1px solid #3A6B35;font-weight:600;text-decoration:none;">Se äggsäljare i ${ortName} på kartan</a>
   </div>
 </aside>`;
@@ -492,12 +490,7 @@ function buildStaticPage(template, page, { posts = [] } = {}) {
     return injectTopicBody(withHead, renderHomeTopicBody());
   }
   if (landing) {
-    let body = renderSeoLandingBody(landing);
-    if (page.path === '/borja-med-hons') {
-      const placement = shopPlacementForPath(page.path);
-      body += renderDigitalGuidePlacement('beginner') + (placement ? renderContextualShopPlacementHtml(placement) : '');
-    }
-    return injectTopicBody(withHead, body);
+    return injectTopicBody(withHead, renderSeoLandingBody(landing));
   }
   if (page.h1) {
     const [href, label] = page.related;
@@ -839,7 +832,7 @@ async function main() {
   });
 
   await runStep('breed-pages', async () => {
-    for (const breed of BREED_PRERENDER_PROFILES) {
+    for (const breed of PUBLISHED_BREED_PROFILES) {
       await writeRoute(`honsraser/${breed.slug}`, buildBreedPage(pageTemplate, breed));
     }
   });
@@ -875,13 +868,13 @@ async function main() {
     }
     await writeFile(
       join('dist', 'sitemap.xml'),
-      buildSitemap(sitemapPosts, tags, orter, REGULATION_GUIDES, BREED_PRERENDER_PROFILES, MARKETPLACE_CATEGORY_PAGES, disallows, suppliedOrtSlugs),
+      buildSitemap(sitemapPosts, tags, orter, REGULATION_GUIDES, PUBLISHED_BREED_PROFILES, MARKETPLACE_CATEGORY_PAGES, disallows, suppliedOrtSlugs),
       'utf8',
     );
   });
 
   const ortSummary = suppliedOrtSlugs ? `${suppliedOrtSlugs.size}/${orter.length} med utbud` : `${orter.length} (likviditet okänd)`;
-  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- (+ ${consolidatedPosts.length} sammanslagna → redirect) + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${BREED_PRERENDER_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
+  console.log(`✅ Prerender klar: ${STATIC_PAGES.length} statiska + ${Object.keys(CATEGORY_META).length} kategori- + ${tags.length} tagg- (≥2 artiklar) + ${posts.length} artikel- (+ ${consolidatedPosts.length} sammanslagna → redirect) + ${ortSummary} ort- + ${REGULATION_GUIDES.length} regelguide- + ${PUBLISHED_BREED_PROFILES.length} rassidor + ${MARKETPLACE_CATEGORY_PAGES.length} marknadskategorier.`);
 
 
 

@@ -53,10 +53,6 @@
       "destination": "/index.html"
     },
     {
-      "source": "/borja-med-hons",
-      "destination": "/index.html"
-    },
-    {
       "source": "/honsraser",
       "destination": "/index.html"
     },
@@ -334,6 +330,16 @@
       "statusCode": 308
     },
     {
+      "source": "/honsraser/brahma",
+      "destination": "/blogg/brahma-hons",
+      "statusCode": 308
+    },
+    {
+      "source": "/borja-med-hons",
+      "destination": "/blogg/skaffa-hons-nyborjare",
+      "statusCode": 308
+    },
+    {
       "source": "/blogg/mobilapp-jamfort-med-kalkylblad-for-hons",
       "destination": "/blogg/mobilapp-vs-excel-for-hons",
       "statusCode": 308
@@ -406,6 +412,16 @@
     {
       "source": "/blogg/kom-igang-med-honsapp",
       "destination": "/blogg/honsapp-for-nyborjare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/hobbyhons-nyborjarguide",
+      "destination": "/blogg/skaffa-hons-nyborjare",
+      "statusCode": 308
+    },
+    {
+      "source": "/blogg/skaffa-hons-nyborjarguide",
+      "destination": "/blogg/skaffa-hons-nyborjare",
       "statusCode": 308
     },
     {

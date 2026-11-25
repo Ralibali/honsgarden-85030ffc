@@ -110,26 +110,4 @@ export const SEO_LANDING_PAGES = {
       { q: 'Kan jag följa flera kläckningar samtidigt?', a: 'Ja, Hönsgården är byggd för att kunna hantera flera händelser och kullar.' },
     ],
   },
-  'borja-med-hons': {
-    path: '/borja-med-hons',
-    title: 'Börja med höns – guide för nybörjare | Hönsgården',
-    description: 'Börja med höns hemma? Här får du praktiska råd om hönshus, foder, ägg, rutiner och hur du får koll från första veckan.',
-    eyebrow: 'För nya hönsägare',
-    h1: 'Börja med höns utan att tappa kontrollen första veckan',
-    intro: 'Att skaffa höns är fantastiskt – men det är också mer vardag än många tror. Vatten, foder, rovdjurssäkerhet, reden, strö, ägg, ruggning och små hälsotecken blir snabbt en del av rutinen. Hönsgården hjälper dig få ordning redan från start.',
-    primaryCta: 'Kom igång gratis',
-    secondaryCta: 'Se appen för hönsägare',
-    heroBullets: ['Första hönorna och första äggen', 'Rutiner för vatten, foder och rengöring', 'Koll på hälsa, kostnad och säsong'],
-    sections: [
-      { title: 'Börja enkelt – men börja strukturerat', body: 'Du behöver inte dokumentera allt från dag ett. Men om du lägger in hönornas namn, börjar logga ägg och skapar några enkla rutiner får du snabbt bättre koll.' },
-      { title: 'Det du lär dig första månaderna är guld värt', body: 'Du kommer märka vilka hönor som är framåt, vilka som värper mest, när flocken blir stressad och hur foder påverkar vardagen. Skriv ner det – annars glöms det lätt.' },
-      { title: 'Tryggare hönsägande med historik', body: 'När något känns fel är historiken ofta avgörande. Har äggproduktionen minskat? Har en höna varit hängig tidigare? När rengjorde du senast? Appen hjälper dig svara.' },
-    ],
-    practicalTips: ['Börja med en hanterbar flockstorlek.', 'Säkra hönshus och rastgård mot rovdjur.', 'Skapa dagliga rutiner för vatten, foder och ägg.', 'Logga enkla observationer om hälsa och beteende.'],
-    faq: [
-      { q: 'Hur många hönor ska man börja med?', a: 'Många börjar med 3–5 hönor. Det ger en liten men social flock och är lättare att lära känna.' },
-      { q: 'Behöver jag en app direkt?', a: 'Du måste inte, men det hjälper dig få struktur från början och slippa minnas allt själv.' },
-      { q: 'Vad är viktigast första veckan?', a: 'Vatten, foder, tryggt hönshus, lugn introduktion och att observera flockens beteende.' },
-    ],
-  },
 };

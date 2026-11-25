@@ -13,7 +13,7 @@ import { SEO_LANDING_PAGES } from '@/data/seoLandingPages.mjs';
 const LandingFooter = lazy(() => import('@/components/LandingFooter'));
 const StickyMobileCTA = lazy(() => import('@/components/StickyMobileCTA'));
 
-type PageKey = 'app-for-honsagare' | 'agglogg' | 'honskalender' | 'foderkostnad-hons' | 'klackningskalender' | 'borja-med-hons';
+type PageKey = 'app-for-honsagare' | 'agglogg' | 'honskalender' | 'foderkostnad-hons' | 'klackningskalender';
 
 interface LandingPageData {
   path: string;
@@ -33,7 +33,7 @@ interface LandingPageData {
 const pages = SEO_LANDING_PAGES as Record<PageKey, LandingPageData>;
 const pageIcons: Record<PageKey, React.ElementType> = {
   'app-for-honsagare': Bird, agglogg: Egg, honskalender: CalendarDays,
-  'foderkostnad-hons': Wheat, klackningskalender: Egg, 'borja-med-hons': Bird,
+  'foderkostnad-hons': Wheat, klackningskalender: Egg,
 };
 
 function fadeUp(delay = 0) {
@@ -163,15 +163,6 @@ export function SeoLandingPage({ pageKey }: { pageKey: PageKey }) {
           </div>
         </div>
       </section>
-
-      {pageKey === 'borja-med-hons' && (
-        <section className="pb-4 bg-background">
-          <div className="container max-w-3xl mx-auto px-5 sm:px-6">
-            <DigitalGuideCard placement="beginner_guide" />
-            <ContextualShopCta path="/borja-med-hons" />
-          </div>
-        </section>
-      )}
 
       <section className="py-14 sm:py-20 bg-background">
         <div className="container max-w-3xl mx-auto px-5 sm:px-6">

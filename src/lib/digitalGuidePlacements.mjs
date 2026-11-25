@@ -1,8 +1,8 @@
 // Explicitly reviewed article matches: do not promote a chicken guide on
 // unrelated gardening articles merely because their title says beginner.
 const BEGINNER_ARTICLES = new Set([
-  'hobbyhons-nyborjarguide', 'skaffa-hons-nyborjare',
-  'skaffa-hons-nyborjarguide', 'kopa-hons', 'honsapp-for-nyborjare',
+  'skaffa-hons-nyborjare',
+  'kopa-hons', 'honsapp-for-nyborjare',
 ]);
 const BREED_ARTICLES = new Set([
   'bast-honsras-sverige', 'honsraser-for-agglaggeri-sverige', 'brahma-hons',

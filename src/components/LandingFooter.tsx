@@ -30,10 +30,9 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
     links: [
       { labelKey: 'links.breeds', href: '/honsraser' },
       { labelKey: 'links.egg_calculator', href: '/verktyg/aggkalkylator' },
-      { labelKey: 'links.starting_chickens', href: '/borja-med-hons' },
       { labelKey: 'links.chicken_egg_guides', href: '/blogg' },
       { labelKey: 'links.how_many_eggs', href: '/blogg/hur-manga-agg-lagger-en-hona' },
-      { labelKey: 'links.beginner_guide', href: '/blogg/hobbyhons-nyborjarguide' },
+      { labelKey: 'links.beginner_guide', href: '/blogg/skaffa-hons-nyborjare' },
     ],
   },
   {

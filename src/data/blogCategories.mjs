@@ -115,7 +115,6 @@ export const BLOG_POST_CATEGORY = {
   'daglig-kontroll-av-hons': 'halsa',
   'guide-till-halsokontroll-i-flock': 'halsa',
   // Nybörjare och regler.
-  'skaffa-hons-nyborjarguide': 'nyborjare',
   'registrera-hons-jordbruksverket': 'nyborjare',
   'regler-hons-sverige': 'nyborjare',
   // Foder och ekonomi.

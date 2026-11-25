@@ -32,28 +32,11 @@ export const CONTEXTUAL_SHOP_PLACEMENTS = [
     ],
   },
   {
-    path: '/honsraser/brahma',
-    slug: 'brahma',
-    body: 'Brahma är stora höns — reden och inredning behöver extra utrymme.',
-    links: [
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergRede, label: 'Se värpreden hos P-Lindberg' },
-    ],
-  },
-  {
     path: '/honsraser/orpington',
     slug: 'orpington',
     body: 'Foder och gårdsutrustning till en lugn hobbyflock.',
     links: [
       { merchant: 'bonden', destination: SHOP_DESTINATIONS.bondenHome, label: 'Se foderutrustning hos Bonden' },
-    ],
-  },
-  {
-    path: '/borja-med-hons',
-    slug: 'borja-med-hons',
-    body: 'Hus och startutrustning innan första hönorna flyttar in.',
-    links: [
-      { merchant: 'outl1', destination: SHOP_DESTINATIONS.outl1Honshus, label: 'Se hönshus hos Outl1' },
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergStartset, label: 'Se startset hos P-Lindberg' },
     ],
   },
   {
@@ -71,24 +54,6 @@ export const CONTEXTUAL_SHOP_PLACEMENTS = [
     links: [
       { merchant: 'bonden', destination: SHOP_DESTINATIONS.bondenHome, label: 'Se foderutrustning hos Bonden' },
       { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergFodertraag, label: 'Se fodertråg hos P-Lindberg' },
-    ],
-  },
-  {
-    path: '/blogg/skaffa-hons-nyborjarguide',
-    slug: 'skaffa-hons-nyborjarguide',
-    body: 'Hus och startutrustning innan första hönorna flyttar in.',
-    links: [
-      { merchant: 'outl1', destination: SHOP_DESTINATIONS.outl1Honshus, label: 'Se hönshus hos Outl1' },
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergStartset, label: 'Se startset hos P-Lindberg' },
-    ],
-  },
-  {
-    path: '/blogg/hobbyhons-nyborjarguide',
-    slug: 'hobbyhons-nyborjarguide',
-    body: 'Hus och startutrustning till en liten hobbyflock.',
-    links: [
-      { merchant: 'outl1', destination: SHOP_DESTINATIONS.outl1Honshus, label: 'Se hönshus hos Outl1' },
-      { merchant: 'p-lindberg', destination: SHOP_DESTINATIONS.plindbergStartset, label: 'Se startset hos P-Lindberg' },
     ],
   },
 ];

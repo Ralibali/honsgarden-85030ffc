@@ -176,7 +176,6 @@ const AppRoutes = () => (
         <Route path="/honskalender" element={<SeoLandingPage pageKey="honskalender" />} />
         <Route path="/foderkostnad-hons" element={<SeoLandingPage pageKey="foderkostnad-hons" />} />
         <Route path="/klackningskalender" element={<SeoLandingPage pageKey="klackningskalender" />} />
-        <Route path="/borja-med-hons" element={<SeoLandingPage pageKey="borja-med-hons" />} />
         <Route path="/honsraser" element={<HonsrasLanding slug="honsraser" />} />
         <Route path="/honsraser-lista" element={<HonsrasLanding slug="honsraser-lista" />} />
         <Route path="/honsraser/:slug" element={<HonsrasLanding />} />

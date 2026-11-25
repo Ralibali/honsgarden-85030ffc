@@ -3,7 +3,6 @@ const standardRelated = [
   { href: '/blogg/bast-honsras-sverige', label: 'Bästa hönsrasen i Sverige – stor guide' },
   { href: '/blogg/skaffa-hons-nyborjare', label: 'Skaffa höns – nybörjarguide' },
   { href: '/blogg/foder-till-hons-guide', label: 'Foder till höns – komplett guide' },
-  { href: '/borja-med-hons', label: 'Börja med höns' },
   { href: '/honskalender', label: 'Hönskalender och rutiner' },
   { href: '/blogg/kopa-hons', label: 'Köpa höns – så hittar du en bra säljare' },
   { href: '/verktyg/vad-kostar-hons', label: 'Vad kostar det att skaffa höns?' },
@@ -206,7 +205,7 @@ const honsraserLista = {
         'Barnevelder – mörkbruna ägg, snäll. Läs mer: /honsraser/barnevelder',
         'Bielefelder – modern autosexande allroundras. Läs mer: /honsraser/bielefelder',
         'Bohuslän-Dals svarthöna – svensk lantras, svart. Läs mer: /honsraser/bohuslan-dals-svarthona',
-        'Brahma – lugn jätte. Läs mer: /honsraser/brahma',
+        'Brahma – lugn jätte. Läs mer: /blogg/brahma-hons',
         'Cochin – fluffig ruvare. Läs mer: /honsraser/cochin',
         'Dvärghöns – översikt av dvärgraser. Läs mer: /honsraser/dvarghons',
         'Faverolle – lugn skäggig fransk ras. Läs mer: /honsraser/faverolle',
@@ -437,3 +436,8 @@ export const breedGuides = {
   dvarghons,
   'skansk-blommehona': skanskBlommehona,
 };
+
+export function breedGuideBullet(text) {
+  const match = text.match(/^(.*?) Läs mer: (\/(?:honsraser|blogg)\/[a-z0-9-]+)$/);
+  return match ? { text: match[1], href: match[2] } : { text, href: null };
+}

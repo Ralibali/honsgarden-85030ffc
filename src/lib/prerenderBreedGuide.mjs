@@ -1,11 +1,12 @@
+import { breedGuideBullet } from '../data/breedGuides.mjs';
 import { escapeHtml } from './prerenderTopicPages.mjs';
 import { renderDigitalGuidePlacement } from './digitalGuidePlacements.mjs';
 import { renderContextualShopPlacementHtml, shopPlacementForPath } from './contextualShopPlacements.mjs';
 
 function renderBullet(text) {
-  const link = text.match(/^(.*?) Läs mer: (\/honsraser\/[a-z0-9-]+)$/);
-  if (!link) return escapeHtml(text);
-  return `<a class="underline" href="${link[2]}">${escapeHtml(link[1])}</a>`;
+  const bullet = breedGuideBullet(text);
+  if (!bullet.href) return escapeHtml(bullet.text);
+  return `<a class="underline" href="${escapeHtml(bullet.href)}">${escapeHtml(bullet.text)}</a>`;
 }
 
 function renderTable(rows) {

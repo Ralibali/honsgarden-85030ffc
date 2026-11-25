@@ -1,5 +1,5 @@
-import { BREED_PRERENDER_PROFILES } from '../src/data/honsraserBreedProfiles.mjs';
-import { breedGuides } from '../src/data/breedGuides.mjs';
+import { PUBLISHED_BREED_PROFILES } from '../src/lib/routeInventory.mjs';
+import { breedGuides, breedGuideBullet } from '../src/data/breedGuides.mjs';
 import { SEO_LANDING_PAGES } from '../src/data/seoLandingPages.mjs';
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import {
@@ -17,7 +17,6 @@ const required = [
   "dist/404.html",
   "dist/sitemap.xml",
   "dist/blogg/index.html",
-  "dist/borja-med-hons/index.html",
   "dist/honsraser-lista/index.html",
   "dist/salja-agg/index.html",
   "dist/demo/index.html",
@@ -200,7 +199,7 @@ for (const guide of Object.values(breedGuides)) {
   }
   for (const section of guide.sections) {
     for (const bullet of section.bullets ?? []) {
-      const href = bullet.match(/ Läs mer: (\/honsraser\/[a-z0-9-]+)$/)?.[1];
+      const { href } = breedGuideBullet(bullet);
       if (href && (!html.includes(`href="${href}"`) || !existsSync(`dist${href}/index.html`))) {
         throw new Error(`${guide.path} saknar fungerande raslänk till ${href}`);
       }
@@ -211,7 +210,7 @@ for (const guide of Object.values(breedGuides)) {
 for (const [path, h1, link] of [
   ['/priser', 'Välj det som passar din hönsgård', '/login?mode=register'],
   ['/verktyg/aggkalkylator', 'Äggkalkylator', '/foderkostnad-hons'],
-  ['/verktyg/vad-kostar-hons', 'Vad kostar det att skaffa höns?', '/borja-med-hons'],
+  ['/verktyg/vad-kostar-hons', 'Vad kostar det att skaffa höns?', '/blogg/skaffa-hons-nyborjare'],
   ['/verktyg/klackningskalkylator', 'Kläckningskalkylator', '/klackningskalender'],
   ['/verktyg/aggregler-vagvisare', 'Äggregler-vägvisaren', '/guider/salja-agg-regler'],
 ]) {
@@ -222,6 +221,6 @@ for (const [path, h1, link] of [
   }
 }
 
-for (const breed of BREED_PRERENDER_PROFILES) {
+for (const breed of PUBLISHED_BREED_PROFILES) {
   if (!existsSync(`dist/honsraser/${breed.slug}/index.html`)) throw new Error(`Saknad rasguide: ${breed.slug}`);
 }

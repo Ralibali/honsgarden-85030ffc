@@ -26,6 +26,15 @@ export interface BreedProfile {
   h1Suffix?: string;            // valfri egen h1-svans
 }
 
+/** Rassidor som 308:as till en annan URL; länka direkt dit (routeInventory.mjs). */
+export const REDIRECTED_BREED_PATHS: Record<string, string> = {
+  brahma: '/blogg/brahma-hons',
+};
+
+export function breedHref(slug: string): string {
+  return REDIRECTED_BREED_PATHS[slug] ?? `/honsraser/${slug}`;
+}
+
 // Etikett för länkar mellan raser (används i relatedLinks)
 export function breedLabel(slug: string): string {
   const p = BREED_PROFILES.find((b) => b.slug === slug);
@@ -73,8 +82,8 @@ export function buildBreedPage(b: BreedProfile): LongformPage {
   ];
 
   const relatedLinks = [
-    ...b.related.map((s) => ({ href: `/honsraser/${s}`, label: breedLabel(s) })),
-    { href: '/borja-med-hons', label: 'Börja med höns – nybörjarguide' },
+    ...b.related.map((s) => ({ href: breedHref(s), label: breedLabel(s) })),
+    { href: '/blogg/skaffa-hons-nyborjare', label: 'Skaffa höns – nybörjarguide' },
     { href: '/honskalender', label: 'Hönskalender och rutiner året runt' },
     ...BREED_NEXT_STEP_LINKS,
   ];

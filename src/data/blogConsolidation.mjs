@@ -38,6 +38,10 @@ export const CONSOLIDATED_BLOG_POSTS = {
   // Komma igång med appen som nybörjare.
   'kom-igang-med-honsapp': '/blogg/honsapp-for-nyborjare',
 
+  // Nybörjarguider med samma avsikt → den som syns i Google (2026-11-25).
+  'hobbyhons-nyborjarguide': '/blogg/skaffa-hons-nyborjare',
+  'skaffa-hons-nyborjarguide': '/blogg/skaffa-hons-nyborjare',
+
   // Ägglogg i appen → produktsidan för äggloggen.
   'agglogg-app-battre-koll-honsgarden': '/agglogg',
   'basta-appen-for-aggloggning': '/agglogg',
