@@ -1,0 +1,102 @@
+{
+  "verified_database_at": "2026-11-25T16:46:25Z",
+  "origin": "https://honsgarden.se",
+  "articles": [
+    {
+      "slug": "fagelinfluensa-sverige-2026",
+      "title": "Fågelinfluensa i Sverige 2026 – vad som gäller för dina höns just nu",
+      "sha256": "c7a87b8f1fcbd7de30c5130e2fb6562a2b91c2da0acb011f8da182ccdee983b3",
+      "markers_html": [
+        "Från och med den 17 november 2026 gäller ett högriskområde för fågelinfluensa i stora delar av södra Sverige. Har du hobbyhöns där får fåglarna inte längre gå fritt ute. Samtidigt finns det enligt Jordbruksverket just nu inga konstaterade utbrott av fågelinfluensa i Sverige och inga restriktionszoner för sjukdomen. Restriktionszonen i Halland gäller newcastlesjuka, en annan sjukdom.",
+        "Newcastlesjuka är en annan sjukdom än fågelinfluensa, med egna regler. Har du höns nära Eldsberga ska du utgå från beslutet om newcastlesjuka, inte från fågelinfluensans regler.",
+        "Källorna kontrollerades direkt den 25 november 2026. Läs alltid Jordbruksverkets aktuella beslut innan du flyttar fåglar eller säljer ägg."
+      ],
+      "cta_paths": [
+        "/blogg/regler-hons-sverige",
+        "/guider/salja-agg-regler",
+        "/salja-agg",
+        "/app-for-honsagare"
+      ]
+    },
+    {
+      "slug": "klacka-agg",
+      "title": "Kläcka ägg – guide till att kläcka kycklingägg hemma med eller utan ruvig höna",
+      "sha256": "b78d172ebf4a73359d0fc23589f8e17ab9d5ea13a68aa45c1d218483e73c7101",
+      "markers_html": [
+        "Det är få saker i hönshållningen som slår det första pipet inifrån ett ägg. Kläckning är inte svårt, men det kräver friska ägg, stabil temperatur och luftfuktighet, och tålamod de sista dagarna. Den här guiden går igenom båda vägarna, med kläckmaskin och med ruvande höna, dag för dag, och vad du behöver ha klart när kycklingarna kommer.",
+        "Följ alltid kläckmaskinens bruksanvisning om den anger andra värden. Vänd äggen ett udda antal gånger per dygn om du gör det för hand, så att de inte ligger på samma sida två nätter i rad. En pennmarkering på äggets ena sida gör det lätt att se att alla vänts.",
+        "Skriv ner temperatur, luftfuktighet och vad du såg vid genomlysningen. Nästa gång kan du då jämföra och justera en sak i taget. Kontrollera också maskinens termometer mot en separat termometer innan nästa omgång."
+      ],
+      "cta_paths": [
+        "/verktyg/klackningskalkylator",
+        "/guider/registrera-hons-jordbruksverket",
+        "/klackningskalender",
+        "/blogg/varmelampa-hons"
+      ]
+    },
+    {
+      "slug": "sittpinnar-hons",
+      "title": "Sittpinnar till höns – rätt mått, placering och material för friska fötter",
+      "sha256": "d284d0630d5e8818fd26d78355c2641774db1ef89ffae38681448a91e5591176",
+      "markers_html": [
+        "Hönsen tillbringar varje natt på sittpinnen, under vinterhalvåret ofta mer än halva dygnet. Det är där de sover, håller värmen och känner sig trygga. Ändå är sittpinnarna en av de delar av hönshuset som oftast blir fel: för tunna, för höga, för få eller av fel material. Rätt utformade sittpinnar ger friskare fötter, lugnare nätter och mindre bråk i flocken.",
+        "Rör av plast och metall är hala, och metall blir iskall på vintern. Det ger sämre grepp och kalla fötter. Använd dem inte som sittpinnar i hönshuset.",
+        "Sittpinnar låter enkelt, men rätt utförda gör de stor skillnad för hönsens fötter och sömn."
+      ],
+      "cta_paths": [
+        "/blogg/varprede-hons",
+        "/blogg/bygga-honshus",
+        "/blogg/kvalster-hons"
+      ]
+    },
+    {
+      "slug": "varmelampa-hons",
+      "title": "Värmelampa till höns – vad du behöver veta om värme i hönshuset",
+      "sha256": "ad428c1955b76975ac09b154e57d43044ffc02e884711bab3c831e42f17bf12c",
+      "markers_html": [
+        "Varje höst kommer samma fråga från nya hönsägare: behöver hönsen en värmelampa nu? Behovet beror på ras, ålder, hälsa, befjädring och temperaturen i hönshuset. Ett torrt och dragfritt hus är viktigt, men det garanterar inte att alla höns klarar sträng kyla utan extra värme. Men kycklingar behöver värme, och ibland finns det skäl att värma även för vuxna höns. Då gäller det att välja en värmekälla som inte sätter hönshuset i brand.",
+        "När orsaken till en brand i ett djurstall är känd har den enligt <a href=\"https://www.brandskyddsforeningen.se/globalassets/lbk/brandskydd---ditt-ansvar-2016-okt-a4.pdf\">Lantbrukets brandskyddskommitté</a> ofta börjat i uppvärmningsanordningar eller i elinstallationen. På landsbygden kan det dessutom dröja över en halvtimme innan räddningstjänsten är på plats. Strö, damm och spindelväv nära en het lampa är en farlig kombination.",
+        "Värmebehovet varierar mellan flockar och årstider. När värme behövs ska den ordnas säkert."
+      ],
+      "cta_paths": [
+        "/blogg/hons-pa-vintern",
+        "/blogg/klacka-agg"
+      ]
+    },
+    {
+      "slug": "varprede-hons",
+      "title": "Värprede till höns – mått, placering och tips för att hönsen faktiskt ska använda dem",
+      "sha256": "d12406aa857ae594a8ab974e99f9f91695ce228d68bcdd9749da588d7f5068df",
+      "markers_html": [
+        "Ett värprede som ser snyggt ut för oss är inte alltid det hönorna väljer. Hönor vill värpa där det är lugnt, lite mörkt och tryggt. När redena har rätt storlek, sitter på rätt ställe och räcker till hela flocken får du renare ägg, färre ägg på golvet och mindre stress i hönshuset.",
+        "Lägg ett attrappägg av porslin, trä eller plast, eller en golfboll, i det rede du vill att hönorna ska använda. Unghöns som börjar värpa lär sig snabbare var äggen ska läggas.",
+        "Ägg på golvet beror nästan alltid på redena: de är för få, för ljusa, för smutsiga, placerade fel eller nya för hönorna. Plocka upp golväggen direkt, så att vanan inte sätter sig, och lägg ett attrappägg i redet. Unghöns som just börjat värpa behöver ofta en vecka eller två innan alla hittat rätt. Fortsätter problemet kan det också bero på kvalster i redena eller en dominant höna som håller de andra borta."
+      ],
+      "cta_paths": [
+        "/blogg/klacka-agg",
+        "/blogg/bygga-honshus",
+        "/blogg/kvalster-hons"
+      ]
+    },
+    {
+      "slug": "vattenautomat-hons",
+      "title": "Vattenautomat till höns – välj rätt och håll vattnet rent",
+      "sha256": "fda43062bfaba2422acc372f9ea8453014da5b04fe66d20f4627f6610c78340c",
+      "markers_html": [
+        "Vatten är det viktigaste du ger dina höns. En vuxen höna dricker ungefär en halv liter om dagen, och upp till dubbelt så mycket en varm sommardag när hon värper. Får hon för lite vatten slutar hon snabbt att värpa. En bra vattenautomat ger flocken rent vatten hela dagen och sparar dig arbete, men bara om du väljer rätt typ och storlek och håller den ren.",
+        "Elutrustningen ska vara avsedd för den aktuella djurmiljön; anlita ett registrerat elinstallationsföretag för fasta elinstallationer, och sladdar ska sitta där hönsen inte kan picka på dem. <a href=\"https://www.brandskyddsforeningen.se/globalassets/lbk/brandskydd---ditt-ansvar-2016-okt-a4.pdf\">Lantbrukets brandskyddskommitté</a> pekar på värmeanordningar och elfel som vanliga orsaker till bränder i djurstallar, så välj hellre en värmeplatta med termostat än en provisorisk lösning. Mer om vintern finns i guiden om <a href=\"/blogg/hons-pa-vintern\">höns på vintern</a>.",
+        "En bra vattenautomat sparar tid och håller flocken frisk, så länge den är rätt dimensionerad och hålls ren."
+      ],
+      "cta_paths": [
+        "/blogg/hons-pa-vintern",
+        "/blogg/honsvakt-checklista-overlamning"
+      ]
+    }
+  ],
+  "redirects": {
+    "/honsraser/brahma": "/blogg/brahma-hons",
+    "/borja-med-hons": "/blogg/skaffa-hons-nyborjare",
+    "/blogg/hobbyhons-nyborjarguide": "/blogg/skaffa-hons-nyborjare",
+    "/blogg/skaffa-hons-nyborjarguide": "/blogg/skaffa-hons-nyborjare"
+  }
+}

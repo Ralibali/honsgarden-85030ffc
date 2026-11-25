@@ -53,7 +53,7 @@ En publicerad artikel uppdateras i `content/editorial/updates/<slug>/`:
 4. `node scripts/editorial-update.mjs sql <slug>` ger SQL som körs via den autentiserade Lovable-databasanslutningen. Den ändrar raden bara om texten fortfarande är `previous.html`; har artikeln ändrats sedan exporten avbryts den med ett konfliktfel, och en andra körning gör ingenting. Kontrollera att sista raden visar `applied = t`.
 5. Kontrollera den riktiga domänen som vid publicering. Mappen ligger kvar som historik.
 
-Följande uppdateringar väntar på att SQL:en körs (2026-10-14): `vattenautomat-hons`, `varmelampa-hons`, `varprede-hons`, `sittpinnar-hons`, `klacka-agg`.
+Uppdateringarna för `vattenautomat-hons`, `varmelampa-hons`, `varprede-hons`, `sittpinnar-hons` och `klacka-agg` kördes 2026-11-25 med den ordinarie hashskyddade SQL-vägen. Separata SELECT-frågor bekräftade samtliga innehållshashar. Se `publication-log-2026-11-25.md` för detaljer.
 
 ## Soro-flytt
 

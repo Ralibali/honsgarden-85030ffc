@@ -1,0 +1,41 @@
+name: Editorial live verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'content/editorial/live-release.json'
+      - 'scripts/verify-editorial-live.mjs'
+      - '.github/workflows/editorial-live.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: editorial-live
+  cancel-in-progress: false
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install isolated browser tooling
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Wait for deployment and verify the real domain
+        run: node scripts/verify-editorial-live.mjs --wait=600 --browser
+      - name: Preserve live report and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editorial-live-verification
+          path: artifacts/editorial-live/
+          if-no-files-found: warn
