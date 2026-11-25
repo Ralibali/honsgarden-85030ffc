@@ -98,7 +98,7 @@ for (;;) {
 }
 
 if (!errors.length && process.argv.includes('--browser')) {
-  const { chromium } = await import('playwright');
+  const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
   const browser = await chromium.launch();
   try {
     for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
