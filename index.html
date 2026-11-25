@@ -3,6 +3,24 @@
 <html lang="sv">
   <head>
     <meta charset="UTF-8" />
+    <script id="storage-fallback">
+      // SDKs read Web Storage during import. Keep data in this document only if the browser blocks reads.
+      for (const name of ['localStorage', 'sessionStorage']) {
+        try {
+          window[name].getItem('honsgarden.storage.check');
+        } catch {
+          const entries = new Map();
+          Object.defineProperty(window, name, { configurable: true, value: {
+            get length() { return entries.size; },
+            key(index) { return Array.from(entries.keys())[index] ?? null; },
+            getItem(key) { return entries.get(String(key)) ?? null; },
+            setItem(key, value) { entries.set(String(key), String(value)); },
+            removeItem(key) { entries.delete(String(key)); },
+            clear() { entries.clear(); }
+          }});
+        }
+      }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#3a6b35" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

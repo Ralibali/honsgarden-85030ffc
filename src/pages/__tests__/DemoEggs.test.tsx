@@ -21,7 +21,7 @@ it('keeps the dashboard, backfill form and updated egg history in one demo sessi
   fireEvent.click(screen.getByRole('button', { name: 'Spara 3 ägg' }));
   await screen.findByText('Visa alla dagar');
 
-  fireEvent.click(screen.getByRole('link', { name: 'Idag', exact: true }));
+  fireEvent.click(screen.getByRole('link', { name: 'Idag' }));
   expect(await screen.findByRole('button', { name: new RegExp(`^${total + 3} ägg idag`) })).toBeVisible();
   fireEvent.click(screen.getByRole('link', { name: 'Historik' }));
   expect(await screen.findByRole('heading', { name: 'Historik' })).toBeVisible();

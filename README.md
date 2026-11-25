@@ -21,7 +21,7 @@ Projektet är byggt med Vite, React, TypeScript, Tailwind CSS, shadcn/ui, Capaci
 
 Krav:
 
-- Node.js 20 eller senare
+- Node.js 22 eller senare
 - npm
 - Ett Supabase-projekt för full funktionalitet
 
@@ -73,7 +73,7 @@ npm run build        # Bygger appen och prerenderar blogg/SEO-sidor
 npm run build:dev    # Bygger i development mode
 npm run lint         # Kör ESLint
 npm test             # Kör tester med Vitest
-npx tsc -b           # TypeScript-kontroll
+npm run typecheck    # Kontrollerar både appen och byggkonfigurationen
 npm run preview      # Förhandsgranskar produktionsbuilden
 ```
 

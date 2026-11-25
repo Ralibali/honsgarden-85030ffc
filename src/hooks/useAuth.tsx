@@ -5,6 +5,13 @@ import { resolvePremiumType, type PremiumType } from '@/lib/premiumStatus';
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { isNativePlatform } from '@/lib/nativePlatform';
 
+import { recordRecoveryUser } from '@/lib/resetPasswordLink';
+
+// Register before the SDK finishes consuming the URL, including when the reset page loads lazily.
+if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
+  supabase.auth.onAuthStateChange((event, session) => recordRecoveryUser(event, session?.user.id));
+}
+
 interface UserProfile {
   id: string;
   email: string;

@@ -25,7 +25,7 @@ it('counts a saved quick entry once in the book and the personal record', async 
 
   render(<MemoryRouter><QueryClientProvider client={client}><QuickEggFAB /></QueryClientProvider></MemoryRouter>);
   fireEvent.click(screen.getByRole('button', { name: 'Registrera ägg (E)' }));
-  fireEvent.click(screen.getByRole('button', { name: '3', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: '3' }));
   fireEvent.click(screen.getByRole('button', { name: 'Logga 3 ägg idag' }));
 
   await waitFor(() => expect(checkRecords).toHaveBeenCalledWith('member', [saved, original], day));

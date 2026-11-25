@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import { execFileSync } from "node:child_process";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -58,7 +58,7 @@ export default defineConfig(({ mode }) => {
         generateBundle() {
           this.emitFile({ type: "asset", fileName: "app-version.json", source: JSON.stringify({ buildTime }) });
         },
-      },
+      } satisfies Plugin,
       { name: "owned-editorial-prerender", apply: "build" as const, enforce: "post" as const, closeBundle() {
         execFileSync(process.execPath, ["scripts/prerender-blog-posts.mjs"], { cwd: process.cwd(), stdio: "inherit" });
       } },
