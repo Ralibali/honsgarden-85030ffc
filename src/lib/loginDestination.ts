@@ -3,6 +3,10 @@
 const STORAGE_KEY = 'honsgarden.loginDestination';
 const MAX_AGE_MS = 60 * 60 * 1000;
 
+export function signupPlanDestination(plan: unknown): string {
+  return plan === 'plus_monthly' || plan === 'plus_annual' ? `/app/premium?plan=${plan}&trial=7d` : '/app';
+}
+
 export function loginDestination(raw: string | null): string | null {
   if (!raw?.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return null;
   try {

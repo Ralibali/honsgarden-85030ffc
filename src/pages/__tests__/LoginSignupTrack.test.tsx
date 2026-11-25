@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -24,7 +24,7 @@ vi.mock('@/lib/api', () => ({ api: { updateCoopSettings: vi.fn() } }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     rpc: vi.fn(),
-    auth: { resetPasswordForEmail: vi.fn() },
+    auth: { resetPasswordForEmail: vi.fn(), resend: vi.fn() },
   },
 }));
 vi.mock('@/components/GoogleAuthButton', () => ({
@@ -51,11 +51,16 @@ function newEmailUser() {
   };
 }
 
+function PlanDestination() {
+  return <p>{useLocation().search}</p>;
+}
+
 function renderLogin(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/app/premium" element={<PlanDestination />} />
         <Route path="/marknad/ny" element={<p>Ny annons</p>} />
         <Route path="/app" element={<p>Din hönsgård</p>} />
       </Routes>
@@ -88,6 +93,18 @@ describe('Login – Signup fires only when an account is created', () => {
     delete window.analyticsEvent;
   });
 
+  it('behåller årsplanen från registrering via inloggning till Plus-sidan', async () => {
+    renderLogin('/login?mode=register&plan=plus_annual');
+    expect(screen.getByText(/Du har valt Plus – År/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '← Tillbaka' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Logga in med e-post' }));
+    expect(screen.getByText(/Du har valt Plus – År/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Logga in' }));
+    expect(await screen.findByText('?plan=plus_annual&trial=7d')).toBeInTheDocument();
+  });
+
   it('återgår till annonsen efter inloggning', async () => {
     renderLogin('/login?mode=login&redirect=/marknad/ny');
     fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
@@ -112,6 +129,18 @@ describe('Login – Signup fires only when an account is created', () => {
     expect(reset).toHaveBeenCalledWith('ada@example.se', { redirectTo: window.location.origin + '/reset-password' });
   });
 
+  it('kan skicka ett nytt bekräftelsemejl från den utgångna länkens väg', async () => {
+    const resend = vi.mocked(supabase.auth.resend);
+    resend.mockResolvedValue({ data: { user: null, session: null }, error: null });
+    renderLogin('/login?mode=confirm');
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'Ada@example.se' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Skicka bekräftelsemejl' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Om kontot väntar');
+    expect(resend).toHaveBeenCalledWith({
+      type: 'signup', email: 'ada@example.se', options: { emailRedirectTo: 'https://honsgarden.se/auth/confirm' },
+    });
+  });
+
   it('fires Signup Completed once after a successful email register', async () => {
     renderLogin('/login?mode=register');
 
@@ -132,6 +161,18 @@ describe('Login – Signup fires only when an account is created', () => {
       props: { source: 'signup_form' },
     });
     expect(plausible.mock.calls.filter(call => call[0] === 'Signup Started')).toHaveLength(1);
+  });
+
+  it('sparar det valda abonnemanget som navigationsval vid mejlregistrering', async () => {
+    renderLogin('/login?mode=register&plan=plus_annual');
+    fireEvent.change(screen.getByLabelText('Namn'), { target: { value: 'Ada' } });
+    fireEvent.change(screen.getByLabelText('E-post'), { target: { value: 'ada@example.se' } });
+    fireEvent.change(screen.getByLabelText('Lösenord'), { target: { value: 'hemligt12' } });
+    fireEvent.click(screen.getByLabelText(/Jag godkänner/));
+    fireEvent.click(screen.getByRole('button', { name: /Skapa konto/i }));
+    await waitFor(() => expect(register).toHaveBeenCalledWith(
+      'ada@example.se', 'hemligt12', 'Ada', expect.objectContaining({ signup_plan: 'plus_annual' }),
+    ));
   });
 
   it('distinguishes opening the form from a validated signup submission', async () => {

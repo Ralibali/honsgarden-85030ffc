@@ -132,7 +132,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
   const path = location.pathname + location.search + location.hash;
-  const destination = isAuthenticated && location.pathname === '/app' ? pendingLoginDestination() : null;
+  const destination = !loading && isAuthenticated && location.pathname === '/app' ? pendingLoginDestination() : null;
   React.useEffect(() => {
     if (destination) rememberLoginDestination(null);
   }, [destination]);

@@ -10,7 +10,6 @@ import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";
 import { isStandalonePwa, recoverStalePwaShell } from "@/lib/pwaUpdate";
 import { isNativePlatform } from "@/lib/nativePlatform";
-
 import { supabase } from '@/integrations/supabase/client';
 import { recordRecoveryUser } from '@/lib/resetPasswordLink';
 

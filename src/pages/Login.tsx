@@ -1,6 +1,6 @@
 import LandingNavbar from '@/components/LandingNavbar';
 import LandingFooter from '@/components/LandingFooter';
-import { loginDestination, rememberLoginDestination } from '@/lib/loginDestination';
+import { loginDestination, rememberLoginDestination, signupPlanDestination } from '@/lib/loginDestination';
 import { pendingAccountLink } from '@/lib/linkedApps';
 import { loginErrorMessage } from '@/lib/loginError';
 import { isNativePlatform } from '@/lib/nativePlatform';
@@ -27,12 +27,12 @@ import { isInternationalDomain, defaultCountryForRegion } from '@/lib/brand';
 import GoogleAuthButton, { AuthDivider } from '@/components/GoogleAuthButton';
 import AppleAuthButton from '@/components/AppleAuthButton';
 
-type AuthMode = 'welcome' | 'login' | 'register' | 'forgot';
+type AuthMode = 'welcome' | 'login' | 'register' | 'forgot' | 'confirm';
 const TERMS_VERSION = '2026-07-12';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login, register, isAuthenticated, loading: authLoading } = useAuth();
 
   useSeo({
@@ -43,13 +43,19 @@ export default function Login() {
   });
 
   const selectedPlan = ['free', 'plus_monthly', 'plus_annual'].includes(searchParams.get('plan') || '') ? searchParams.get('plan') : null;
-  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : loginDestination(searchParams.get('redirect')) ?? '/app';
+  const planName = selectedPlan === 'plus_annual' ? 'Plus – År' : selectedPlan === 'plus_monthly' ? 'Plus – Månad' : 'Gratis';
+  const nextPath = selectedPlan && selectedPlan !== 'free' ? signupPlanDestination(selectedPlan) : loginDestination(searchParams.get('redirect')) ?? '/app';
   const initialMode = searchParams.get('mode');
   // Valideras mot tillåtna AnalyticsSource-värden – aldrig fritext till analytics.
   const signupSource = parseAnalyticsSource(searchParams.get('source'));
-  const [authMode, setAuthMode] = useState<AuthMode>(
-    initialMode === 'register' || initialMode === 'login' || initialMode === 'forgot' ? initialMode : 'welcome'
-  );
+  const authMode: AuthMode = initialMode === 'register' || initialMode === 'login' || initialMode === 'forgot' || initialMode === 'confirm' ? initialMode : 'welcome';
+  const setAuthMode = (mode: AuthMode) => {
+    const params = new URLSearchParams(searchParams);
+    if (mode === 'welcome') params.delete('mode');
+    else params.set('mode', mode);
+    setEmailFeedback(null);
+    setSearchParams(params);
+  };
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -60,7 +66,7 @@ export default function Login() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [resetFeedback, setResetFeedback] = useState<'sent' | 'error' | null>(null);
+  const [emailFeedback, setEmailFeedback] = useState<'sent' | 'error' | null>(null);
   const [registrationNotice, setRegistrationNotice] = useState('');
 
   const countryDefaults = useMemo(() => COUNTRIES[country], [country]);
@@ -77,8 +83,10 @@ export default function Login() {
   }, [postalCode, country, intl, normalizedPostalCode]);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
-  }, [authLoading, isAuthenticated, navigate, nextPath]);
+    if (!authLoading && isAuthenticated && authMode !== 'forgot') {
+      navigate(pendingAccountLink() ? '/auth/connect' : nextPath, { replace: true });
+    }
+  }, [authLoading, authMode, isAuthenticated, navigate, nextPath]);
 
   // Trattmätning: besökaren har nått registreringsformuläret
   useEffect(() => {
@@ -104,6 +112,9 @@ export default function Login() {
       }
       navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
     } catch (err) {
+      if (err && typeof err === 'object' && 'code' in err && err.code === 'email_not_confirmed') {
+        setRegistrationNotice('Din e-postadress behöver bekräftas. Öppna länken från mejlet eller begär ett nytt.');
+      }
       toast({ title: 'Inloggning misslyckades', description: loginErrorMessage(err), variant: 'destructive' });
     } finally {
       setLoading(false);
@@ -126,6 +137,7 @@ export default function Login() {
       rememberLoginDestination(null);
       const acceptedAt = new Date().toISOString();
       const meta = {
+        ...(selectedPlan ? { signup_plan: selectedPlan } : {}),
         country_code: countryDefaults.code,
         language_code: countryDefaults.language,
         locale: countryDefaults.locale,
@@ -153,7 +165,7 @@ export default function Login() {
       // A successful request is not necessarily a signed-in new account:
       // confirmation-required and anti-enumeration responses have no session.
       if (!data?.session) {
-        if (data?.user?.identities?.length) rememberLoginDestination(nextPath);
+        if (data?.user?.identities?.length && (!selectedPlan || selectedPlan === 'free')) rememberLoginDestination(nextPath);
         setPassword('');
         setRegistrationNotice('Kontrollera din inkorg. Om en bekräftelse behövs får du ett mejl med nästa steg. Har du redan ett konto kan du logga in eller välja ”Glömt lösenord?”.');
         setAuthMode('login');
@@ -180,8 +192,8 @@ export default function Login() {
       toast({
         title: 'Konto skapat!',
         description: referralCode.trim()
-          ? 'Du har sju dagars gratis Premium. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
-          : 'Du har fått sju dagars gratis Premium! 🎉',
+          ? 'Du har sju dagars gratis Plus. Värvningsbonusen aktiveras när du börjar använda appen. 🥚'
+          : 'Du har fått sju dagars gratis Plus! 🎉',
       });
       navigate(pendingAccountLink()?'/auth/connect':nextPath, { replace: true });
     } catch (err) {
@@ -191,22 +203,25 @@ export default function Login() {
     }
   };
 
-  const handleForgotPassword = async (event: React.FormEvent) => {
+  const handleEmailLink = async (event: React.FormEvent) => {
     event.preventDefault();
-    setResetFeedback(null);
+    setEmailFeedback(null);
     if (!email.trim()) {
       toast({ title: 'Ange e-post', description: 'Fyll i din e-postadress.', variant: 'destructive' });
       return;
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: isNativePlatform() ? getNativeAuthRedirect(true) : `${window.location.origin}/reset-password`,
-      });
+      const address = email.trim().toLowerCase();
+      const { error } = authMode === 'confirm'
+        ? await supabase.auth.resend({ type: 'signup', email: address, options: { emailRedirectTo: 'https://honsgarden.se/auth/confirm' } })
+        : await supabase.auth.resetPasswordForEmail(address, {
+            redirectTo: isNativePlatform() ? getNativeAuthRedirect(true) : `${window.location.origin}/reset-password`,
+          });
       if (error) throw error;
-      setResetFeedback('sent');
+      setEmailFeedback('sent');
     } catch {
-      setResetFeedback('error');
+      setEmailFeedback('error');
     } finally {
       setLoading(false);
     }
@@ -337,8 +352,10 @@ export default function Login() {
               <AppleAuthButton mode="login" onStart={() => rememberLoginDestination(nextPath)} />
               <AuthDivider />
               <p className="text-sm text-muted-foreground">Inga kortuppgifter krävs.</p>
-              {selectedPlan && <p className="text-sm">Vald plan: {selectedPlan === 'plus_annual' ? 'Plus – År' : selectedPlan === 'plus_monthly' ? 'Plus – Månad' : 'Gratis'}. {selectedPlan !== 'free' && 'Nya konton får prova Plus i 7 dagar.'}</p>}
-              {registrationNotice && <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">{registrationNotice}</p>}
+              {selectedPlan && <p className="text-sm">Du har valt {planName}. {selectedPlan !== 'free' && 'Nya konton får prova Plus i 7 dagar.'}</p>}
+              {registrationNotice && <p role="status" className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-foreground">{registrationNotice}{' '}
+                <button type="button" className="text-primary underline" onClick={() => setAuthMode('confirm')}>Begär nytt bekräftelsemejl</button>
+              </p>}
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="email" className="text-muted-foreground">E-post</Label>
@@ -361,7 +378,7 @@ export default function Login() {
                 <span className="relative flex items-center">Logga in <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
               </Button>
               <div className="flex items-center justify-between text-sm">
-                <button type="button" className="text-primary hover:underline" onClick={() => { setResetFeedback(null); setAuthMode('forgot'); }}>Glömt lösenord?</button>
+                <button type="button" className="text-primary hover:underline" onClick={() => setAuthMode('forgot')}>Glömt lösenord?</button>
                 <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('register')}>Skapa konto</button>
               </div>
               <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('welcome')}>← Tillbaka</button>
@@ -375,7 +392,7 @@ export default function Login() {
                 <p className="text-muted-foreground">Kom igång med din hönsgård på några sekunder.</p>
                 <div className="mt-3 flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 px-3 py-2">
                   <Gift className="h-4 w-4 text-primary shrink-0" />
-                  <p className="text-sm text-primary font-medium">Sju dagars Premium ingår gratis!</p>
+                  <p className="text-sm text-primary font-medium">{selectedPlan ? `Du har valt ${planName}. ` : ''}Prova Plus gratis i sju dagar utan kortuppgifter.</p>
                 </div>
               </div>
               <GoogleAuthButton mode="register" onStart={() => rememberLoginDestination(nextPath)} />
@@ -478,24 +495,24 @@ export default function Login() {
             </form>
           )}
 
-          {authMode === 'forgot' && (
-            <form onSubmit={handleForgotPassword} className="animate-fade-in space-y-5">
+          {(authMode === 'forgot' || authMode === 'confirm') && (
+            <form onSubmit={handleEmailLink} className="animate-fade-in space-y-5">
               <div>
-                <h3 className="font-serif text-3xl text-foreground mb-2">Återställ lösenord</h3>
+                <h3 className="font-serif text-3xl text-foreground mb-2">{authMode === 'confirm' ? 'Bekräfta din e-post' : 'Återställ lösenord'}</h3>
                 <p className="text-muted-foreground">Ange din e-post så skickar vi en länk.</p>
               </div>
               <div>
                 <Label htmlFor="forgot-email" className="text-muted-foreground">E-post</Label>
                 <div className="relative mt-1.5">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => { setEmail(e.target.value); setResetFeedback(null); }} className="pl-10 h-12 rounded-xl" required />
+                  <Input id="forgot-email" type="email" autoComplete="email" placeholder="din@email.se" value={email} onChange={(e) => { setEmail(e.target.value); setEmailFeedback(null); }} className="pl-10 h-12 rounded-xl" required />
                 </div>
               </div>
-              {resetFeedback === 'error' && <p role="alert" className="text-sm text-destructive">Begäran kunde inte skickas. Kontrollera din anslutning och försök igen om en stund.</p>}
-              {resetFeedback === 'sent' && <p role="status" className="text-sm text-foreground">Om adressen hör till ett konto får du ett mejl med en återställningslänk. Kolla även skräpposten.</p>}
+              {emailFeedback === 'error' && <p role="alert" className="text-sm text-destructive">Begäran kunde inte skickas. Kontrollera din anslutning och försök igen om en stund.</p>}
+              {emailFeedback === 'sent' && <p role="status" className="text-sm text-foreground">{authMode === 'confirm' ? 'Om kontot väntar på bekräftelse får du ett nytt mejl.' : 'Om adressen hör till ett konto får du ett mejl med en återställningslänk.'} Kolla även skräpposten.</p>}
               <Button type="submit" className="w-full h-12 text-base font-medium" disabled={loading}>
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Skicka återställningslänk
+                {authMode === 'confirm' ? 'Skicka bekräftelsemejl' : 'Skicka återställningslänk'}
               </Button>
               <button type="button" className="text-sm text-muted-foreground hover:text-foreground" onClick={() => setAuthMode('login')}>← Tillbaka till inloggningen</button>
             </form>

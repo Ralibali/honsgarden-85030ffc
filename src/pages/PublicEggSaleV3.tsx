@@ -19,9 +19,16 @@ import { atomicEggOrdersEnabled, formatTierRange, getOrderTotal, getPricePerPack
 import EggAlertSignup from '@/components/marketing/EggAlertSignup';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
-function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast({ title: 'Kopierat' });
+  } catch {
+    toast({ title: 'Kunde inte kopiera', description: 'Markera uppgifterna på sidan och kopiera dem manuellt.' });
+  }
+}
 function parsePrice(value: unknown) {
-  const amount = Number(String(value ?? '').replace(/\s*kr\s*$/i, '').trim().replace(',', '.'));
+  const amount = Number(String(value ?? '').replace(/\s*kr\s*$/i, '').replace(/\s/g, '').replace(',', '.'));
   return Number.isFinite(amount) && amount >= 0 ? amount : 0;
 }
 
@@ -218,10 +225,9 @@ export default function PublicEggSaleV3() {
     setSwishConfirm(true);
     window.location.href = swishDeepLink;
     setTimeout(() => {
-      // Fallback if Swish app isn't installed: copy details
+      // Keep payment details available when the app does not open.
       if (document.hasFocus()) {
-        copy(`${swishText}\nBelopp: ${swishAmount} kr`);
-        toast({ title: 'Öppna Swish manuellt', description: `Beloppet ${swishAmount} kr och uppgifterna är kopierade.` });
+        toast({ title: 'Öppna Swish manuellt', description: 'Du kan kopiera betalningsuppgifterna på sidan.' });
       }
     }, 1200);
   };
