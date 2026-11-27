@@ -1,7 +1,23 @@
 {
-  "verified_database_at": "2026-11-25T16:46:25Z",
+  "verified_database_at": "2026-11-27T07:27:33Z",
   "origin": "https://honsgarden.se",
   "articles": [
+    {
+      "slug": "honsgard-guide",
+      "title": "Hönsgård – så planerar du en säker utegård för dina höns",
+      "sha256": "df959921ec7b542db1c0666f17f0de074e13af370607bc81d65318db76079598",
+      "markers_html": [
+        "En hönsgård är den inhägnade yta där hönorna vistas ute, och den del av anläggningen som avgör om flocken är skyddad eller inte. Rovdjur kan komma både underifrån och ovanifrån, och sedan den 17 november 2026 gäller särskilda regler i stora delar av södra Sverige på grund av fågelinfluensa. Den här guiden går igenom storlek, placering, tak, nät och markrotation med Jordbruksverkets regler som grund, så att du kan planera och bygga innan våren är här.",
+        "Något generellt djup att gräva ner till finns inte. Granngården skriver uttryckligen att några centimeters nedgrävning inte är ett generellt skydd mot grävande djur, och att djup, bredd och förankring väljs efter marken, nätet och vilka djur som ska hållas ute. En lös nederkant eller en glipa vid dörren blir en svag punkt även om resten av nätet sitter bra.",
+        "Källorna kontrollerades direkt den 27 november 2026. Regler för fågelinfluensa ändras när smittläget förändras – kontrollera alltid Jordbruksverkets aktuella sida innan du bygger eller flyttar din hönsgård."
+      ],
+      "cta_paths": [
+        "/blogg/kopa-hons",
+        "/blogg/honshus-guide",
+        "/app-for-honsagare",
+        "/verktyg/vad-kostar-hons"
+      ]
+    },
     {
       "slug": "fagelinfluensa-sverige-2026",
       "title": "Fågelinfluensa i Sverige 2026 – vad som gäller för dina höns just nu",

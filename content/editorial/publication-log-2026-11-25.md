@@ -21,6 +21,6 @@ Kontrollen av den riktiga domänen görs separat efter merge och driftsättning 
 
 ## Återstående
 
-- `honsgard-guide` ligger källgranskad i kön för nästa tillåtna publiceringsdag. Smittläget ska kontrolleras på nytt då.
+- `honsgard-guide` publicerades på nästa tillåtna publiceringsdag efter en ny kontroll av smittläget; se `publication-log-2026-11-27.md`.
 - Search Console-anslutning saknas i denna session: ingen indexeringsbegäran skickades och organisk effekt har inte mätts.
 - Ingen outreach skickades.
