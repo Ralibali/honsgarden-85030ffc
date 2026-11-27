@@ -8,7 +8,7 @@ Spara genomförda publiceringar med URL och content-hash i en separat publicerin
 
 ## Nästa i kön
 
-Nästa utkast är `honsgard-guide`. Källorna granskades direkt 2026-11-25. `fagelinfluensa-sverige-2026` publicerades samma dag, så tidigaste nästa datum är 2026-11-27. Kontrollera den verkliga senaste publiceringen och det aktuella smittläget före publicering. `foderautomat-hons-valj-ratt` är redan publicerad (2026-10-24).
+Det finns inget färdiggranskat utkast kvar i kön efter att `honsgard-guide` förbereddes för publicering 2026-11-27. Välj nästa ämne först efter en ny kontroll av artikelinventeringen, Search Console om anslutning finns och listorna nedan. `foderautomat-hons-valj-ratt` är redan publicerad (2026-10-24).
 
 ## Idéer med köpavsikt (inte skrivna)
 
