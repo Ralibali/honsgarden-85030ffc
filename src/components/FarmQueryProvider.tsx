@@ -1,5 +1,5 @@
 import React from 'react';
-import { QueryCache, QueryClient, QueryClientProvider, defaultShouldDehydrateQuery } from '@tanstack/react-query';
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 
@@ -43,8 +43,10 @@ function AccountCache({ accountId, children }: Props) {
   return (
     <PersistQueryClientProvider client={client} persistOptions={{
       persister, maxAge: 86_400_000,
+      // Inlined instead of calling defaultShouldDehydrateQuery so the check does not
+      // depend on which copy of the query core gets resolved at build time.
       dehydrateOptions: { shouldDehydrateQuery: q =>
-        defaultShouldDehydrateQuery(q) && PERSISTED_KEYS.has(String(q.queryKey[0])) },
+        q.state.status === 'success' && PERSISTED_KEYS.has(String(q.queryKey[0])) },
     }}>
       {children}
     </PersistQueryClientProvider>
