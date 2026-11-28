@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "content_id": "editorial-20261014-namnnyckel-forkortningar-flockjournal",
+  "author": "ChatGPT",
+  "status": "draft",
+  "written_at": "2026-10-14T14:11:00.287414+00:00",
+  "sources_checked_at": "2026-10-14T14:11:00.287414+00:00",
+  "slug": "namnnyckel-forkortningar-flockjournal",
+  "title": "Gör en namnnyckel för förkortningar i flockjournalen",
+  "description": "Skriv ut vad namn och förkortningar betyder i flockjournalen. En liten namnnyckel gör äldre anteckningar lättare att förstå och lämna över.",
+  "category": "guide",
+  "tags": [
+    "dokumentation",
+    "arbetsmall"
+  ],
+  "cover_image": "/blog-images/hens-garden.jpg",
+  "cta_path": "/demo",
+  "search_intent": "Tolka egna förkortningar och namn i en flockjournal med en daterad namnnyckel, utan att ändra äldre observationer eller ge djurmedicinska råd.",
+  "source_urls": [
+    "https://honsgarden.se/demo"
+  ],
+  "content_html": "<p>En anteckning som är självklar i dag kan vara svår att förstå nästa säsong. Betyder L en viss höna, en grupp eller platsen där något observerades? När samma kortnamn används på flera sätt blir det svårt att läsa journalen utan att fråga den som skrev den.</p><p>En namnnyckel är en liten lista över de beteckningar som faktiskt används. Den behöver inte göra journalen mer omfattande. Syftet är att nästa läsare ska kunna förstå vem eller vad en anteckning gäller. Arbetssättet kan användas i en anteckningsbok, i ett separat dokument eller tillsammans med en digital journal.</p><h2>Samla beteckningar från riktiga anteckningar</h2><p>Läs ett avgränsat urval, till exempel den senaste månaden, och skriv upp återkommande kortnamn. Ta med beteckningar för individer, grupper, platser och egna arbetsmoment. Utgå från det som står i materialet i stället för att skapa en lång lista över ord som kanske kommer att behövas senare.</p><p>Markera varje ord som någon annan skulle kunna tolka på två sätt. Fråga personen som gjorde anteckningen om betydelsen fortfarande går att fastställa. Om ni inte vet, skriv oklar betydelse. En gissning blir inte mer tillförlitlig för att den skrivs in i en prydlig förteckning.</p><h2>Skriv betydelse och giltig period på samma rad</h2><p>En enkel rad kan innehålla beteckning, vad den avser, fullständigt namn och från vilket datum den används. Lägg till vem som kan förklara termen när det behövs. Skilj särskilt på en individs namn och namnet på gruppen där individen går; de svarar på olika frågor.</p><p>Ett påhittat exempel är att B1 tidigare betydde en mindre grupp men senare används som namn på en byggnad. Skriv då två tydliga rader med respektive period. Ändra inte betydelsen i gamla anteckningar bara för att den nya användningen känns vanligare. Namnnyckeln ska förklara historiken, inte skriva om den.</p><h2>Bestäm hur nya namn ska införas</h2><p>Välj en enkel regel för framtida anteckningar: första gången ett nytt kortnamn används skrivs även det fullständiga namnet ut. För sedan in beteckningen i namnnyckeln. Om flera personer hjälper till behöver de veta var listan finns och vem som uppdaterar den när ett namn ändras.</p><p>Undvik att återanvända samma beteckning för något annat under samma period. Om ett missförstånd ändå upptäcks kan en daterad förklaring läggas till. Guiden om att <a href=\"/blogg/ratta-flockanteckning-behall-sammanhang\">rätta en flockanteckning och behålla sammanhanget</a> beskriver en närliggande fråga: hur rättelsen hålls skild från den ursprungliga uppgiften.</p><h2>Låt en annan person provläsa</h2><p>Välj tre anteckningar med olika beteckningar och låt någon läsa dem med enbart namnnyckeln som stöd. Be personen säga vilken individ, grupp eller plats varje rad avser. Frågan är om texten går att tolka, inte om läsaren redan känner till hur du brukar uttrycka dig.</p><p>Komplettera det som saknas och skriv när listan senast kontrollerades. Förvara namnnyckeln tillsammans med den journal eller arkivkopia den hör till. Du kan <a href=\"/demo\">prova Hönsgårdens demo</a> när du ser över hur dina flockuppgifter ska organiseras. Namnnyckeln i denna guide är en manuell arbetsmall; den innebär inget löfte om en automatisk ordlista i appen.</p>",
+  "not_before": "2026-10-16"
+}
