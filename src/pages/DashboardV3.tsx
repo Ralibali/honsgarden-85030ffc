@@ -179,7 +179,10 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayKey = localCalendarDate(yesterday, Intl.DateTimeFormat().resolvedOptions().timeZone);
 
-  const todayRows = eggs.filter((egg) => egg.date === todayKey).map((egg) => egg.id);
+  const todayRows = eggs
+    .filter((egg) => egg.date === todayKey && egg.count > 0 && egg.user_id === user?.id)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .map((egg) => egg.id);
   const todayEggs = eggs
     .filter((egg) => egg.date === todayKey)
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
@@ -292,6 +295,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
 
       <section className="today-v3__egg" aria-label="Logga dagens ägg">
         <QuickEggLogCard
+          demo={demo}
           todayEggs={todayEggs}
           todayEggRowIds={todayRows}
           loggedToday={loggedToday}
@@ -331,7 +335,7 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
           <button type="button" onClick={() => navigate('/app/tasks')}>Gården <ChevronRight className="h-4 w-4" /></button>
         </div>
         <div className="today-v3__journal-lines">
-          <button type="button" className="today-v3__journal-line" onClick={() => navigate('/app/eggs')}>
+          <button type="button" className="today-v3__journal-line" onClick={() => navigate(demo ? '/demo?view=eggs' : '/app/eggs')}>
             <span className="today-v3__line-icon"><Egg className="h-5 w-5" /></span>
             <span className="today-v3__line-copy"><strong>{todayEggs} ägg idag</strong><small>{yesterdayEggs === todayEggs ? 'Samma som igår hittills' : `${yesterdayEggs} loggades igår`}</small></span>
             <ChevronRight className="h-4 w-4" />

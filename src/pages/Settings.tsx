@@ -124,6 +124,7 @@ export default function SettingsPage() {
   const [supportMsg, setSupportMsg] = useState('');
   const [darkMode, setDarkMode] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     if (coopSettings) {
@@ -326,11 +327,12 @@ export default function SettingsPage() {
       const result = await checkForPwaUpdate();
       if (result.error) {
         toast({ title: 'Kunde inte söka', description: result.error, variant: 'destructive' });
-      } else if (!result.hasUpdate) {
+      } else if (result.hasUpdate) {
+        setUpdateAvailable(true);
+        toast({ title: 'En ny version finns', description: 'Ladda om när du är redo att uppdatera.' });
+      } else {
         toast({ title: 'Ingen ny version', description: 'Du har redan den senaste versionen installerad.' });
       }
-      // Om hasUpdate === true triggar onNeedRefresh i PwaUpdatePrompt automatiskt
-      // och sidan laddas om inom kort — ingen toast behövs.
     } finally {
       setCheckingUpdate(false);
     }
@@ -695,16 +697,16 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground">
-            Hönsgården uppdateras automatiskt i bakgrunden. Om något verkar konstigt kan du tvinga fram en kontroll manuellt.
+            Här kan du se om det finns en ny version av webbappen.
           </p>
           <Button
             variant="outline"
             className="gap-2 rounded-xl"
-            onClick={handleCheckUpdate}
+            onClick={updateAvailable ? () => window.location.reload() : handleCheckUpdate}
             disabled={checkingUpdate}
           >
             {checkingUpdate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-            {checkingUpdate ? 'Söker…' : 'Kontrollera efter uppdatering'}
+            {checkingUpdate ? 'Söker…' : updateAvailable ? 'Ladda om och uppdatera' : 'Sök efter uppdatering'}
           </Button>
         </CardContent>
       </Card>}

@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     if (action === "invite") {
       if (!user) throw new Error("Ej inloggad");
-      const { email } = body;
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
       if (!email) throw new Error("E-postadress saknas");
 
       // Validera roll (default editor)
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
       const { data: existingProfile } = await supabaseAdmin
         .from("profiles")
         .select("user_id")
-        .eq("email", email.toLowerCase())
+        .eq("email", email)
         .maybeSingle();
 
       if (existingProfile) {
@@ -76,38 +76,6 @@ Deno.serve(async (req) => {
         if (existingMember)
           throw new Error("Denna person är redan medlem i din gård");
       }
-
-      const { data: existingInvite } = await supabaseAdmin
-        .from("farm_invitations")
-        .select("id")
-        .eq("farm_id", membership.farm_id)
-        .eq("email", email.toLowerCase())
-        .eq("status", "pending")
-        .maybeSingle();
-      if (existingInvite)
-        throw new Error("En inbjudan har redan skickats till denna e-post");
-
-      // Lagra rollen i invitation (vi har ingen role-kolumn på farm_invitations,
-      // så vi kodar den i token-prefix? Nej — enklare: vi sparar inte role och
-      // använder default 'editor' vid accept. Eftersom vi vill behålla schema
-      // intakt (ingen ny kolumn), skickar vi role i mailämne+e-postmetadata
-      // och låter accept-invite läsa den från en lookup-tabell? Vi tar enklaste:
-      // skapa raden och spara önskad roll i message_id-suffix för spårbarhet.
-      // För faktisk roll-tilldelning vid accept lagrar vi den i en separat
-      // map via metadata på invitation. Det fungerar inte — tabellen saknar
-      // metadata-kolumn. Lösning: vi kodar rollen i mailen/UI och har den
-      // som default 'editor'. Om kunden behöver 'viewer' explicit kan de byta
-      // efteråt via update-member-role. Detta håller schemat orört.)
-      const { data: invitation, error: invErr } = await supabaseAdmin
-        .from("farm_invitations")
-        .insert({
-          farm_id: membership.farm_id,
-          email: email.toLowerCase(),
-          invited_by: user.id,
-        })
-        .select("token")
-        .single();
-      if (invErr) throw new Error(invErr.message);
 
       const { data: coop } = await supabaseAdmin
         .from("coop_settings")
@@ -125,14 +93,19 @@ Deno.serve(async (req) => {
       const farmName = escapeHtml(coop?.coop_name || "Hönsgården");
       const inviterName = escapeHtml(inviterProfile?.display_name || user.email || "Någon");
       const roleNameSv = roleLabel(requestedRole);
-      // Lägg rollen i URL:en som query-param så accept-invite kan läsa den
-      const inviteUrl = `https://honsgarden.se/inbjudan/${encodeURIComponent(invitation.token)}?role=${requestedRole}`;
+      const inviteToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, "0")).join("");
+      // Äldre appversioner använder rollen i länken som visningstext.
+      const inviteUrl = `https://honsgarden.se/inbjudan/${inviteToken}?role=${requestedRole}`;
 
-      await supabaseAdmin.rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
+      const { data: queueId, error: queueError } = await supabaseAdmin.rpc("queue_farm_invitation", {
+        p_farm_id: membership.farm_id,
+        p_invited_by: user.id,
+        p_email: email,
+        p_role: requestedRole,
+        p_token: inviteToken,
+        p_message: {
           run_id: crypto.randomUUID(),
-          to: email.toLowerCase(),
+          to: email,
           from: "Hönsgården <noreply@notify.honsgarden.se>",
           sender_domain: "notify.honsgarden.se",
           subject: `${inviterName} bjuder in dig till ${farmName} 🐔`,
@@ -147,10 +120,15 @@ Deno.serve(async (req) => {
           text: `${inviterName} bjuder in dig till ${farmName} på Hönsgården som ${roleNameSv}. Acceptera här: ${inviteUrl}`,
           purpose: "transactional",
           label: "farm-invitation",
-          message_id: `farm-invite-${invitation.token}-${requestedRole}`,
+          message_id: `farm-invite-${inviteToken}-${requestedRole}`,
           queued_at: new Date().toISOString(),
         },
       });
+
+      if (queueError?.code === "PT409") throw new Error("Det finns redan en giltig inbjudan till den här e-postadressen.");
+      if (queueError || queueId == null) {
+        throw new Error("Inbjudan kunde inte köas för utskick. Försök igen om en stund.");
+      }
 
       return new Response(JSON.stringify({ success: true, role: requestedRole }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -163,7 +141,7 @@ Deno.serve(async (req) => {
 
       const { data: invite, error } = await supabaseAdmin
         .from("farm_invitations")
-        .select("id, email, status, expires_at, farm_id, invited_by")
+        .select("id, email, status, expires_at, farm_id, invited_by, role")
         .eq("token", token)
         .single();
       if (error || !invite) throw new Error("Inbjudan hittades inte");
@@ -194,6 +172,7 @@ Deno.serve(async (req) => {
           email: invite.email,
           farm_name: coop?.coop_name || "Hönsgården",
           status: invite.status,
+          role: invite.role,
           inviter_name: inviter?.display_name || inviter?.email || "Ägaren",
         }),
         {
@@ -206,11 +185,6 @@ Deno.serve(async (req) => {
       if (!user) throw new Error("Du måste vara inloggad för att acceptera");
       const { token } = body;
       if (!token) throw new Error("Token saknas");
-
-      // Roll från klienten (läses från ?role=-query-paramen i URL:en).
-      // Default 'editor'. Owner-roll får aldrig sättas via accept.
-      const requestedRole = (body.role ?? "editor").toString().toLowerCase();
-      const acceptedRole = ALLOWED_INVITE_ROLES.has(requestedRole) ? requestedRole : "editor";
 
       const { data: invite } = await supabaseAdmin
         .from("farm_invitations")
@@ -229,6 +203,9 @@ Deno.serve(async (req) => {
           `Inbjudan skickades till ${invite.email}. Du är inloggad som ${user.email}. Logga in med rätt konto.`
         );
       }
+
+      // Behörigheten bestäms när ägaren skapar inbjudan.
+      const acceptedRole = invite.role === "editor" ? "editor" : "viewer";
 
       // Verifiera att gården fortfarande finns
       const { data: coop } = await supabaseAdmin

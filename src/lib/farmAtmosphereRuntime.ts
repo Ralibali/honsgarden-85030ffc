@@ -41,35 +41,13 @@ function markDashboardAndCorrectGreeting(daypart: FarmDaypart) {
   }
 }
 
-function markCookieSheet() {
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>('div')).filter((element) => {
-    const text = element.textContent ?? '';
-    return text.includes('Cookies och statistik') && text.includes('Acceptera statistik') && text.includes('Endast nödvändiga');
-  });
-
-  if (!candidates.length) return;
-
-  // Pick the innermost matching container so we style the actual consent card,
-  // not a full-screen portal/root wrapper.
-  const card = candidates.find((candidate) =>
-    !candidates.some((other) => other !== candidate && candidate.contains(other)),
-  ) ?? candidates[candidates.length - 1];
-
-  card.classList.add('hg-cookie-sheet');
-}
-
 function syncFarmAtmosphere() {
   const daypart = getDaypart();
   document.documentElement.dataset.localDaypart = daypart;
 
-  // Give the public hero a correct local fallback immediately. The weather hook
-  // may later refine dusk/day using sunrise and sunset for the visitor location.
-  if (!document.documentElement.dataset.heroTime) {
-    document.documentElement.dataset.heroTime = daypart === 'night' ? 'night' : daypart === 'evening' ? 'dusk' : 'day';
-  }
+  document.documentElement.dataset.heroTime = daypart === 'night' ? 'night' : daypart === 'evening' ? 'dusk' : 'day';
 
   markDashboardAndCorrectGreeting(daypart);
-  markCookieSheet();
 }
 
 export function installFarmAtmosphereRuntime() {

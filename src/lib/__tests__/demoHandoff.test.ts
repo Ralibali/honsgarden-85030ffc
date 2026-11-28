@@ -60,6 +60,19 @@ describe('trackDemoNavigation', () => {
     uninstall();
   });
 
+  it('räknar demots äggbok och dagbok utan att signalera registrering', () => {
+    const history = fakeHistory();
+    const onFeatureUsed = vi.fn();
+    const onHandoff = vi.fn();
+    const uninstall = trackDemoNavigation({ onFeatureUsed, onHandoff }, history);
+    history.pushState(null, '', '/demo?view=eggs&log=1');
+    history.pushState(null, '', '/demo?view=eggs');
+    history.pushState(null, '', '/demo?view=diary');
+    expect(onFeatureUsed.mock.calls).toEqual([['egg_log'], ['diary']]);
+    expect(onHandoff).not.toHaveBeenCalled();
+    uninstall();
+  });
+
   it('återställer original-pushState vid uninstall', () => {
     const history = fakeHistory();
     const original = history.pushState;

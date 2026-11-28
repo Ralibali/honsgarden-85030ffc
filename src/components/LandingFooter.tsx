@@ -14,6 +14,7 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
   {
     titleKey: 'columns.product',
     links: [
+      { labelKey: 'links.demo', href: '/demo' },
       { labelKey: 'links.all_features', href: '/#funktioner' },
       { labelKey: 'links.pricing', href: '/priser' },
       { labelKey: 'links.app_for_owners', href: '/app-for-honsagare' },
@@ -27,6 +28,7 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
   {
     titleKey: 'columns.guides',
     links: [
+      { labelKey: 'links.breeds', href: '/honsraser' },
       { labelKey: 'links.egg_calculator', href: '/verktyg/aggkalkylator' },
       { labelKey: 'links.chicken_egg_guides', href: '/blogg' },
       { labelKey: 'links.how_many_eggs', href: '/blogg/hur-manga-agg-lagger-en-hona' },
@@ -47,7 +49,6 @@ const columns: { titleKey: string; links: FooterLink[] }[] = [
   {
     titleKey: 'columns.support',
     links: [
-      { labelKey: 'links.help', href: 'mailto:info@auroramedia.se' },
       { labelKey: 'links.contact', href: 'mailto:info@auroramedia.se' },
       { labelKey: 'links.about', href: '/om-oss' },
       { labelKey: 'links.privacy', href: '/integritet' },
@@ -62,7 +63,7 @@ export default function LandingFooter() {
   return (
     <footer data-landing-footer className="relative z-10 bg-[#1c2e1a] text-[#d4e8ce]">
       <div className="container max-w-6xl mx-auto px-5 sm:px-6 py-12 sm:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.25fr_repeat(4,minmax(0,1fr))] gap-8 sm:gap-10">
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Bird className="h-5 w-5 text-[#7cb36b]" aria-hidden="true" />
@@ -84,7 +85,7 @@ export default function LandingFooter() {
                     <a
                       key={link.labelKey}
                       href={link.href}
-                      className="block text-sm text-[#a8c9a0] hover:text-white transition-colors"
+                      className="flex min-h-8 items-center text-sm text-[#a8c9a0] hover:text-white transition-colors"
                       {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                     >
                       {t(link.labelKey)}

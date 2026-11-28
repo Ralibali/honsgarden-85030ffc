@@ -1999,6 +1999,7 @@ export type Database = {
           farm_id: string
           id: string
           invited_by: string
+          role: string
           status: string
           token: string
         }
@@ -2009,6 +2010,7 @@ export type Database = {
           farm_id: string
           id?: string
           invited_by: string
+          role?: string
           status?: string
           token?: string
         }
@@ -2019,6 +2021,7 @@ export type Database = {
           farm_id?: string
           id?: string
           invited_by?: string
+          role?: string
           status?: string
           token?: string
         }

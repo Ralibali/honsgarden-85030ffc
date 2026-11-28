@@ -1,3 +1,4 @@
+import { breedGuideBullet } from '@/data/breedGuides.mjs';
 import ContentToc from '@/components/ContentToc';
 import { subjectImage } from '@/lib/breedImage';
 import SubjectImage from '@/components/SubjectImage';
@@ -38,7 +39,7 @@ interface HonsrasLandingProps {
 export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingProps) {
   const params = useParams<{ slug?: string }>();
   const activeSlug = (slug ?? params.slug ?? '') as string;
-  const page = longformPages[activeSlug] as LongformPage | undefined;
+  const page: LongformPage | undefined = Object.prototype.hasOwnProperty.call(longformPages, activeSlug) ? longformPages[activeSlug] : undefined;
 
   const articleJsonLd = page
     ? {
@@ -64,12 +65,13 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
     : null;
 
   useSeo({
-    title: page?.title ?? 'Hönsraser',
+    title: page?.title ?? 'Rasguiden hittades inte | Hönsgården',
     description: page?.description ?? '',
-    path: canonicalPath ?? page?.path ?? '/honsraser',
+    path: canonicalPath ?? page?.path ?? `/honsraser/${encodeURIComponent(activeSlug)}`,
+    noindex: !page,
     ogType: 'article',
     ogImage: 'https://honsgarden.se/blog-images/hens-garden.jpg',
-    jsonLd: page ? [articleJsonLd, faqJsonLd] : [],
+    jsonLd: page ? [articleJsonLd, faqJsonLd] : undefined,
   });
 
   const breedImage = subjectImage(activeSlug);
@@ -80,8 +82,9 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
 
   if (!page) {
     return (
-      <main className="min-h-dvh flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Sidan finns inte.</p>
+      <main id="main-content" tabIndex={-1} className="min-h-dvh flex flex-col items-center justify-center gap-4 bg-background">
+        <h1 className="font-serif text-3xl">Rasguiden hittades inte</h1>
+        <a className="text-primary underline" href="/honsraser-lista">Till listan över hönsraser</a>
       </main>
     );
   }
@@ -156,12 +159,17 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
                 ))}
                 {section.bullets && (
                   <ul className="space-y-2 pt-1">
-                    {section.bullets.map((b) => (
-                      <li key={b} className="flex gap-2 text-foreground/85 text-base">
-                        <span className="text-primary mt-1">•</span>
-                        <span>{b.includes('Läs mer: /honsraser/') ? <>{b.split('Läs mer:')[0]}<a className="text-primary underline" href={b.split('Läs mer: ')[1]}>Läs mer om {b.split(' – ')[0]}</a></> : b}</span>
-                      </li>
-                    ))}
+                    {section.bullets.map((line) => {
+                      const bullet = breedGuideBullet(line);
+                      return (
+                        <li key={line} className="flex gap-2 text-foreground/85 text-base">
+                          <span className="text-primary mt-1">•</span>
+                          {bullet.href
+                            ? <a className="text-primary underline" href={bullet.href}>{bullet.text}</a>
+                            : <span>{bullet.text}</span>}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>

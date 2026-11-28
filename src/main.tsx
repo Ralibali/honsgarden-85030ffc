@@ -5,7 +5,6 @@ import "./index.css";
 import "./mobile.css";
 import "./honsgarden-atmosphere-v6.css";
 import "./honsgarden-home-v3.css";
-import "./app-fonts.css";
 import "./i18n"; // initierar i18next (sv + en) före render
 import { installGlobalErrorHandlers } from "@/lib/errorLogger";
 import { installFarmAtmosphereRuntime } from "@/lib/farmAtmosphereRuntime";

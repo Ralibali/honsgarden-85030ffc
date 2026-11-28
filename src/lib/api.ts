@@ -1,6 +1,6 @@
 import { getFarmUserIds, getUserId } from '@/lib/farmScope';
 import { withRequestTimeout } from '@/lib/requestTimeout';
-import { isActiveHen, isLayingHen } from '@/lib/farmMetrics';
+import { isActiveHen, isLayingHen, summarizeEggPeriod } from '@/lib/farmMetrics';
 import { supabase } from '@/integrations/supabase/client';
 import { todayLocal } from '@/lib/datetime';
 import { computeLogStreak } from '@/lib/logStreak';
@@ -204,7 +204,7 @@ export async function createEggRecord(record: { date: string; count: number; not
         .maybeSingle();
       if (existing) return existing as EggLog;
     }
-    throw new Error(error.message);
+    throw Object.assign(new Error(error.message), { code: error.code });
   }
   // Only a confirmed new insert counts. The idempotent retry branch above
   // returns the existing row without sending another save event.
@@ -250,8 +250,9 @@ export async function fetchEggLogWeatherSnapshot(date: string): Promise<Record<s
 }
 
 export async function deleteEggRecord(id: string): Promise<void> {
-  const { error } = await supabase.from('egg_logs').delete().eq('id', id);
+  const { data, error } = await supabase.from('egg_logs').delete().eq('id', id).select('id').maybeSingle();
   if (error) throw new Error(error.message);
+  if (!data) throw new Error('Registreringen kunde inte tas bort. Ladda om äggboken och kontrollera din behörighet.');
 }
 
 export async function updateEggRecord(
@@ -705,6 +706,7 @@ export async function getSummaryStats() {
 
   return {
     total_eggs: totalEggs,
+    recorded_days: days.length,
     active_hens: activeHens,
     total_income: income,
     total_expense: expense,
@@ -914,15 +916,7 @@ export async function getStatisticsInsights() {
   const totalIncome = txns.filter(t => t.type === 'income').reduce((s, r) => s + r.amount, 0);
   const revenuePerEgg = totalEggs > 0 ? totalIncome / totalEggs : 0;
 
-  const now = new Date();
-  const thisWeekEggs = eggs.filter(e => {
-    const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24);
-    return diff <= 7;
-  }).reduce((s, r) => s + r.count, 0);
-  const lastWeekEggs = eggs.filter(e => {
-    const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24);
-    return diff > 7 && diff <= 14;
-  }).reduce((s, r) => s + r.count, 0);
+  const { currentTotal: thisWeekEggs, previousTotal: lastWeekEggs } = summarizeEggPeriod(eggs, todayLocal(), 7);
 
   if (lastWeekEggs > 0) {
     const change = Math.round(((thisWeekEggs - lastWeekEggs) / lastWeekEggs) * 100);
@@ -985,34 +979,24 @@ export async function getHensWithEggTotals(): Promise<HenWithEggTotal[]> {
 /** Flock statistics – egg totals, weekly/monthly breakdown per flock */
 export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unassigned_eggs: number }> {
   const [flocks, eggs, hens] = await Promise.all([getFlocks(), getEggs(), getHens()]);
-  const now = new Date();
+  const today = todayLocal();
+  const eggsByFlock = new Map(flocks.map(flock => [flock.id, [] as EggLog[]]));
+  const henFlocks = new Map(hens.map(hen => [hen.id, hen.flock_id]));
+  let unassignedTotal = 0;
+  for (const egg of eggs) {
+    const flockId = egg.flock_id ?? (egg.hen_id && henFlocks.get(egg.hen_id));
+    const rows = flockId ? eggsByFlock.get(flockId) : undefined;
+    if (rows) rows.push(egg);
+    else unassignedTotal += egg.count;
+  }
 
   const flockStats: FlockStat[] = flocks.map(flock => {
-    const directEggs = eggs.filter(e => e.flock_id === flock.id);
-    const flockHenIds = new Set(hens.filter(h => h.flock_id === flock.id).map(h => h.id));
-    const henEggs = eggs.filter(e => !e.flock_id && e.hen_id && flockHenIds.has(e.hen_id));
-    const allFlockEggs = [...directEggs, ...henEggs];
-
-    const totalEggs = allFlockEggs.reduce((s, e) => s + e.count, 0);
-
-    const weekEggs = allFlockEggs.filter(e => {
-      const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24);
-      return diff <= 7;
-    }).reduce((s, e) => s + e.count, 0);
-
-    const monthEggs = allFlockEggs.filter(e => {
-      const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24);
-      return diff <= 30;
-    }).reduce((s, e) => s + e.count, 0);
-
-    const prevWeekEggs = allFlockEggs.filter(e => {
-      const diff = (now.getTime() - new Date(e.date).getTime()) / (1000 * 60 * 60 * 24);
-      return diff > 7 && diff <= 14;
-    }).reduce((s, e) => s + e.count, 0);
-
+    const allFlockEggs = eggsByFlock.get(flock.id)!;
+    const totalEggs = allFlockEggs.reduce((sum, egg) => sum + egg.count, 0);
+    const { currentTotal: weekEggs, previousTotal: prevWeekEggs } = summarizeEggPeriod(allFlockEggs, today, 7);
+    const { currentTotal: monthEggs } = summarizeEggPeriod(allFlockEggs, today, 30);
     const weekChange = prevWeekEggs > 0 ? Math.round(((weekEggs - prevWeekEggs) / prevWeekEggs) * 100) : null;
-
-    const activeHensCount = hens.filter(h => h.flock_id === flock.id && h.is_active && (h.hen_type ?? 'hen') === 'hen').length;
+    const activeHensCount = hens.filter(hen => hen.flock_id === flock.id && isActiveHen(hen)).length;
     const dailyCounts: Record<string, number> = {};
     allFlockEggs.forEach(e => { dailyCounts[e.date] = (dailyCounts[e.date] || 0) + e.count; });
     const daysCount = Object.keys(dailyCounts).length;
@@ -1029,10 +1013,6 @@ export async function getFlockStatistics(): Promise<{ flocks: FlockStat[]; unass
       avg_per_day: Math.round(avgPerDay * 10) / 10,
     };
   });
-
-  const allFlockHenIds = new Set(hens.filter(h => h.flock_id).map(h => h.id));
-  const unassigned = eggs.filter(e => !e.flock_id && (!e.hen_id || !allFlockHenIds.has(e.hen_id)));
-  const unassignedTotal = unassigned.reduce((s, e) => s + e.count, 0);
 
   return { flocks: flockStats.sort((a, b) => b.total_eggs - a.total_eggs), unassigned_eggs: unassignedTotal };
 }

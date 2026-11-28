@@ -42,7 +42,7 @@ function formatMonthLabel(date = new Date()) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-export default function Eggs() {
+export default function Eggs({ demo = false }: { demo?: boolean }) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
@@ -94,16 +94,17 @@ export default function Eggs() {
   const handleAnimationDone = useCallback(() => {
     setShowAnimation(false);
     toast({ title: `Snyggt, ${animCount} ägg är loggade! 🥚` });
-    if (unusedFeatures.length > 0) setShowSuggestion(true);
-  }, [animCount, unusedFeatures.length]);
+    if (!demo && unusedFeatures.length > 0) setShowSuggestion(true);
+  }, [animCount, demo, unusedFeatures.length]);
 
   const refreshEggData = () => {
     void invalidateEggQueries(queryClient);
   };
 
   const createMutation = useMutation({
+    networkMode: 'always',
     mutationFn: async (data: EggFormInput): Promise<CreateEggResult> => {
-      const weather = navigator.onLine ? await api.fetchEggLogWeatherSnapshot(data.date).catch(() => null) : null;
+      const weather = !demo && navigator.onLine ? await api.fetchEggLogWeatherSnapshot(data.date).catch(() => null) : null;
       return saveEggLog(user?.id, { ...data, weather, analytics_source: 'eggs_page' }, api.createEggRecord);
     },
     onSuccess: (result, variables) => {
@@ -133,6 +134,7 @@ export default function Eggs() {
       setShowAnimation(true);
       setShowForm(false);
 
+      if (demo) return;
       const updatedEggs = [...eggs, { date: variables.date, count: variables.count }];
       const records = checkPersonalRecords(user?.id, updatedEggs, variables.date);
       if (records.length > 0) {
@@ -229,7 +231,7 @@ export default function Eggs() {
     .reduce((sum, egg) => sum + (egg.count || 0), 0);
 
   const weekDelta = weekEggs - previousWeekEggs;
-  const dailyAverage = activeHens.length > 0 ? weekEggs / 7 : 0;
+  const dailyAverage = weekEggs / 7;
   const todayComparison = todayEggs === yesterdayEggs
     ? 'Samma antal som igår hittills.'
     : todayEggs > yesterdayEggs
@@ -284,6 +286,7 @@ export default function Eggs() {
       {showForm && (
         <div className="eggbook-v10__composer">
           <EggForm
+            demo={demo}
             activeHens={activeHens}
             flocks={flocks}
             key={formVersion}
@@ -303,7 +306,7 @@ export default function Eggs() {
             description="Logga dagens skörd så börjar äggboken fyllas. Efter några dagar kan Hönsgården hjälpa dig se flockens egen rytm."
             actionLabel="Logga dagens ägg"
             onAction={() => openComposer()}
-            secondaryLabel="Lägg till höna först"
+            secondaryLabel={demo ? undefined : 'Lägg till höna först'}
             onSecondaryAction={() => window.location.assign('/app/hens')}
           />
         </div>
@@ -331,7 +334,7 @@ export default function Eggs() {
                 <p className="eggbook-v10__eyebrow">Veckans rytm</p>
                 <h2 id="eggbook-rhythm-heading">{weekStory}</h2>
                 {activeHens.length > 0 && (
-                  <p>Det motsvarar ungefär {dailyAverage.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} ägg per dag från {activeHens.length} aktiva hönor.</p>
+                  <p>Det motsvarar ungefär {dailyAverage.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} ägg per dag under de senaste sju dagarna.</p>
                 )}
               </div>
             </div>

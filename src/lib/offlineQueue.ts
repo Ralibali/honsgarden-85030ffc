@@ -178,12 +178,10 @@ export async function claimLegacyEntries(userId: string): Promise<number> {
  */
 function isPermanentRejection(error: unknown): boolean {
   if (typeof navigator !== "undefined" && !navigator.onLine) return false;
-  const message = (
-    error instanceof Error ? error.message : String(error ?? "")
-  ).toLowerCase();
-  return /foreign key|violates|not present in table|does not exist|invalid input|invalid uuid|malformed|ogiltig|\b(400|404|422)\b/.test(
-    message
-  );
+  if (!error || typeof error !== "object" || !("code" in error)) return false;
+  // SQLSTATE for a missing related row, a failed check or an invalid input.
+  // Permission and deployment errors can also say "violates" or "does not exist".
+  return ["23503", "23514", "22P02", "22007", "22008"].includes(String(error.code));
 }
 
 const syncInFlight = new Map<

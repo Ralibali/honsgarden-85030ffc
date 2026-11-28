@@ -12,7 +12,7 @@
     "build": "vite build && npm run verify:seo && npm run verify:routes",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --pretty false",
     "preview": "vite preview",
     "test": "vitest run",
     "test:native-push-db": "node scripts/test-native-push-db.mjs",

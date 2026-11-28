@@ -10,6 +10,7 @@ import { useActiveKarens } from '@/hooks/useActiveKarens';
 import type { Flock, Hen } from '@/lib/api';
 
 interface EggFormProps {
+  demo?: boolean;
   activeHens: Hen[];
   flocks: Flock[];
   isPending: boolean;
@@ -20,12 +21,12 @@ interface EggFormProps {
 
 const QUICK_COUNTS = [1, 2, 3, 4, 5, 6, 8, 10] as const;
 
-export function EggForm({ activeHens, flocks, isPending, onSubmit, onCancel, initialDate }: EggFormProps) {
+export function EggForm({ demo = false, activeHens, flocks, isPending, onSubmit, onCancel, initialDate }: EggFormProps) {
   const [date, setDate] = useState(initialDate ?? todayLocal());
   const dateRef = useRef<HTMLInputElement>(null);
   const [count, setCount] = useState(0);
   const [selectedHenId, setSelectedHenId] = useState<string>('all');
-  const { data: karens = [] } = useActiveKarens();
+  const { data: karens = [] } = useActiveKarens(!demo);
 
   const activeKarensForSelection = useMemo(() => {
     if (!karens.length) return [];

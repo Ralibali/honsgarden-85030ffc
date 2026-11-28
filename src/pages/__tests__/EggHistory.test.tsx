@@ -1,18 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react-query';
 import Eggs from '@/pages/Eggs';
 import type { EggLog } from '@/lib/api';
 
-const mocks = vi.hoisted(() => ({ getEggs: vi.fn(), update: vi.fn(), create: vi.fn() }));
+const mocks = vi.hoisted(() => ({ enqueue: vi.fn(), getEggs: vi.fn(), update: vi.fn(), create: vi.fn(), weather: vi.fn(async () => null), karens: vi.fn(() => ({ data: [] })) }));
 vi.mock('@/lib/api', () => ({ api: {
   getEggs: mocks.getEggs, updateEggRecord: mocks.update, createEggRecord: mocks.create,
-  fetchEggLogWeatherSnapshot: async () => null,
+  fetchEggLogWeatherSnapshot: mocks.weather,
   getHens: async () => [], getFlocks: async () => [], getFeedRecords: async () => [], getTransactions: async () => [], getDailyChores: async () => [],
 } }));
+vi.mock('@/lib/offlineQueue', () => ({ enqueueEggLog: mocks.enqueue }));
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
-vi.mock('@/hooks/useActiveKarens', () => ({ useActiveKarens: () => ({ data: [] }) }));
+vi.mock('@/hooks/useActiveKarens', () => ({ useActiveKarens: mocks.karens }));
 vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
 vi.mock('@/lib/personalRecords', () => ({ checkPersonalRecords: () => [], recordLabel: vi.fn() }));
 vi.mock('@/components/EggSuccessAnimation', () => ({ EggSuccessAnimation: () => null }));
@@ -37,13 +38,38 @@ beforeEach(() => {
   });
 });
 
-function mount(path = '/app/eggs') {
+function mount(path = '/app/eggs', demo = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  render(<MemoryRouter initialEntries={[path]}><QueryClientProvider client={client}><Eggs /></QueryClientProvider></MemoryRouter>);
+  render(<MemoryRouter initialEntries={[path]}><QueryClientProvider client={client}><Eggs demo={demo} /></QueryClientProvider></MemoryRouter>);
   return client;
 }
 
 describe('egg book history flow', () => {
+  it('opens the demo composer and saves without looking up farm health or weather', async () => {
+    mount('/demo?view=eggs&log=1', true);
+    fireEvent.change(await screen.findByLabelText('Antal ägg', { exact: true }), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Spara 2 ägg' }));
+    await waitFor(() => expect(mocks.create).toHaveBeenCalled());
+    expect(mocks.karens).toHaveBeenCalledWith(false);
+    expect(mocks.weather).not.toHaveBeenCalled();
+  });
+
+  it('persists the signed-in member’s entry immediately after losing connectivity', async () => {
+    mount('/app/eggs?log=1');
+    const input = await screen.findByLabelText('Antal ägg', { exact: true });
+    const status = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    onlineManager.setOnline(false);
+    try {
+      fireEvent.change(input, { target: { value: '3' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Spara 3 ägg' }));
+      await waitFor(() => expect(mocks.enqueue).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'owner', count: 3 })));
+      expect(mocks.create).not.toHaveBeenCalled();
+    } finally {
+      status.mockRestore();
+      onlineManager.setOnline(true);
+    }
+  });
+
   it('adds eggs to any previous date through the direct backfill entry point', async () => {
     mount('/app/eggs?log=1');
     fireEvent.change(await screen.findByLabelText('Datum', { exact: true }), { target: { value: '2025-04-03' } });

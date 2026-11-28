@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
+import { signupPlanDestination } from '@/lib/loginDestination';
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function ConfirmEmail() {
   const navigate = useNavigate();
-  const verification = useRef<Promise<boolean> | null>(null);
+  const verification = useRef<Promise<string | null> | null>(null);
+  const [destination, setDestination] = useState('/app');
   const [status, setStatus] = useState<"loading" | "confirmed" | "error">(
     "loading",
   );
@@ -25,26 +27,28 @@ export default function ConfirmEmail() {
       // Keep one-time credentials out of history, referrers and analytics.
       window.history.replaceState({}, "", "/auth/confirm");
       verification.current = (async () => {
-        if (failed) return false;
+        if (failed) return null;
         if (tokenHash && (type === "email" || type === "signup")) {
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: tokenHash,
             type: "email",
           });
-          return !error && !!data.session && !!data.user?.email_confirmed_at;
+          return !error && data.session && data.user?.email_confirmed_at ? signupPlanDestination(data.user.user_metadata?.signup_plan) : null;
         }
         if (legacyCallback) {
           // The Supabase client has already started parsing the legacy callback.
           const { data: { session }, error } = await supabase.auth.getSession();
-          if (error || !session) return false;
+          if (error || !session) return null;
           const { data, error: userError } = await supabase.auth.getUser();
-          return !userError && !!data.user?.email_confirmed_at;
+          return !userError && data.user?.email_confirmed_at ? signupPlanDestination(data.user.user_metadata?.signup_plan) : null;
         }
-        return false;
-      })().catch(() => false);
+        return null;
+      })().catch(() => null);
     }
     void verification.current.then((confirmed) => {
-      if (active) setStatus(confirmed ? "confirmed" : "error");
+      if (!active) return;
+      if (confirmed) setDestination(confirmed);
+      setStatus(confirmed ? "confirmed" : "error");
     });
     return () => {
       active = false;
@@ -54,11 +58,11 @@ export default function ConfirmEmail() {
   useEffect(() => {
     if (status !== "confirmed") return;
     const timer = window.setTimeout(
-      () => navigate("/app", { replace: true }),
+      () => navigate(destination, { replace: true }),
       5000,
     );
     return () => window.clearTimeout(timer);
-  }, [status, navigate]);
+  }, [status, navigate, destination]);
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-background p-5">
@@ -84,10 +88,10 @@ export default function ConfirmEmail() {
               <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
               <h1 className="font-serif text-3xl">Din e-post är bekräftad</h1>
               <p className="text-muted-foreground">
-                Välkommen! Din hönsgård öppnas om några sekunder.
+                {destination === '/app' ? 'Välkommen! Din hönsgård öppnas om några sekunder.' : 'Ditt val av Plus-plan visas om några sekunder.'}
               </p>
-              <Button onClick={() => navigate("/app", { replace: true })}>
-                Öppna min hönsgård
+              <Button onClick={() => navigate(destination, { replace: true })}>
+                {destination === '/app' ? 'Öppna min hönsgård' : 'Visa min valda plan'}
               </Button>
             </>
           )
@@ -103,8 +107,9 @@ export default function ConfirmEmail() {
                 inloggningssidan.
               </p>
               <Button asChild>
-                <Link to="/login?mode=login">Till inloggningen</Link>
+                <Link to="/login?mode=confirm">Begär nytt bekräftelsemejl</Link>
               </Button>
+              <p><Link className="text-primary underline" to="/login?mode=login">Till inloggningen</Link></p>
             </>
           )}
       </section>

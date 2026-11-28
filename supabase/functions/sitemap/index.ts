@@ -15,7 +15,7 @@ const CATEGORIES = [
 
 // Mirrors src/data/honsraserBreedProfiles.ts – drives /honsraser/:slug
 const HONSRASER_SLUGS = [
-  "silkeshons","brahma","cochin","orpington","wyandotte","maran","araucana",
+  "silkeshons","cochin","orpington","wyandotte","maran","araucana",
   "australorp","sussex","vit-leghorn","rhode-island-red","plymouth-rock",
   "bielefelder","vorwerk","welsumer","barnevelder","faverolle","new-hampshire",
   "sebright","hedemorahona","gotlandshona","olandsk-hona",
@@ -151,6 +151,7 @@ Deno.serve(async (req) => {
   const staticPages = [
     { loc: "/", priority: "1.0", changefreq: "weekly" },
     { loc: "/blogg", priority: "0.9", changefreq: "daily" },
+    { loc: "/priser", priority: "0.8", changefreq: "monthly" },
     { loc: "/om-oss", priority: "0.7", changefreq: "monthly" },
     { loc: "/verktyg/aggkalkylator", priority: "0.8", changefreq: "monthly" },
     { loc: "/verktyg/klackningskalkylator", priority: "0.8", changefreq: "monthly" },
@@ -159,7 +160,6 @@ Deno.serve(async (req) => {
     { loc: "/honskalender", priority: "0.7", changefreq: "monthly" },
     { loc: "/foderkostnad-hons", priority: "0.7", changefreq: "monthly" },
     { loc: "/klackningskalender", priority: "0.7", changefreq: "monthly" },
-    { loc: "/borja-med-hons", priority: "0.7", changefreq: "monthly" },
     { loc: "/honsraser", priority: "0.9", changefreq: "monthly" },
     { loc: "/honsraser-lista", priority: "0.8", changefreq: "monthly" },
     // /dvarghons och /skansk-blommehona är borttagna: de 308:as till

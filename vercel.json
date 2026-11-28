@@ -229,10 +229,6 @@
       "destination": "/index.html"
     },
     {
-      "source": "/honsraser/:slug",
-      "destination": "/index.html"
-    },
-    {
       "source": "/salja-agg/:ort",
       "destination": "/index.html"
     },

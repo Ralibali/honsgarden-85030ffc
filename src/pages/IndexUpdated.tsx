@@ -55,13 +55,13 @@ type Tile = {
 };
 
 const productModules: Tile[] = [
-  { icon: Egg, title: 'Ägglogg', desc: 'Logga dagens ägg på några sekunder, följ trender och se hur flocken värper över tid.', href: '/agglogg', span: 'col-span-2 lg:col-span-2 lg:row-span-2', tone: 'deep', chart: true },
+  { icon: Egg, title: 'Ägglogg', desc: 'Logga dagens ägg på några sekunder, följ trender och se hur flocken värper över tid.', href: '/agglogg', span: 'sm:col-span-2 lg:row-span-2', tone: 'deep', chart: true },
   { icon: Bird, title: 'Flock & hönsprofiler', desc: 'Hönor, ras, bilder, hälsa och historik på ett ställe.', href: '/app-for-honsagare' },
   { icon: BarChart3, title: 'Statistik & insikter', desc: 'Veckor, månader, snitt, avvikelser och topplistor.', href: '/funktioner/statistik' },
-  { icon: ReceiptText, title: 'Agdas äggbod', desc: 'Egen säljsida med bild, pris, Swish, bokningar, kundlista och export.', href: '/salja-agg', badge: 'Sälj ägg', span: 'col-span-2', tone: 'sage' },
+  { icon: ReceiptText, title: 'Agdas äggbod', desc: 'Egen säljsida med bild, pris, Swish, bokningar, kundlista och export.', href: '/salja-agg', badge: 'Sälj ägg', span: 'sm:col-span-2', tone: 'sage' },
   { icon: Wheat, title: 'Foder & ekonomi', desc: 'Foderinköp, kostnad per ägg, intäkter och utgifter.', href: '/foderkostnad-hons' },
   { icon: CalendarDays, title: 'Kalender & rutiner', desc: 'Rengöring, vatten, foder, kvalster, ruggning och säsong.', href: '/honskalender' },
-  { icon: Bot, title: 'Agda AI', desc: 'Råd, säljtexter, veckorapporter och nästa steg – utifrån din egen hönsgård.', href: '/funktioner/agda-ai', badge: 'Plus', span: 'col-span-2', tone: 'sage' },
+  { icon: Bot, title: 'Agda AI', desc: 'Råd, säljtexter, veckorapporter och nästa steg – utifrån din egen hönsgård.', href: '/funktioner/agda-ai', badge: 'Plus', span: 'sm:col-span-2', tone: 'sage' },
   { icon: Egg, title: 'Kläckningskalender', desc: 'Dag 1–21, lysning, lockdown och resultat.', href: '/klackningskalender' },
   { icon: CloudSun, title: 'Väder & påverkan', desc: 'Se hur värme, kyla och säsong påverkar äggen.', href: '/funktioner/vader' },
   { icon: MessageCircle, title: 'Community', desc: 'Inlägg, frågor och tips mellan hönsägare.', href: '/funktioner/community' },
@@ -90,7 +90,7 @@ const audience = [
   { icon: HeartPulse, title: 'Du som vill upptäcka mönster', desc: 'För dig som vill förstå ruggning, väder, foder, avvikelser och flockens rytm.' },
 ];
 
-const trustItems = ['Byggt för svenska hönsägare', 'Mobil, iPad och dator', 'Ingen appinstallation krävs', 'Gratis att börja', 'Export till CSV', 'Dina data i ditt konto', 'Community och feedback', 'Premium med AI och rapporter'];
+const trustItems = ['Byggt för svenska hönsägare', 'Mobil, iPad och dator', 'Ingen appinstallation krävs', 'Gratis att börja', 'Export till CSV', 'Dina data i ditt konto', 'Community och feedback', 'Plus med AI och rapporter'];
 
 const faqs = [
   { q: 'Vad erbjuder Hönsgården exakt?', a: 'Hönsgården samlar ägglogg, hönsprofiler, flockhälsa, statistik, foderkostnad, ekonomi, kalender, påminnelser, kläckningskalender, väderpåverkan, community, feedback, rapporter, export, Agda AI och Agdas äggbod för lokal äggförsäljning.' },
@@ -137,10 +137,9 @@ export default function IndexUpdated() {
   });
 
   return (
-    <main id="main-content" tabIndex={-1} className="min-h-dvh overflow-x-hidden">
-      <div className="hg-home-v3">
-        <Suspense fallback={null}><StickyMobileCTA /></Suspense>
-        <LandingNavbar />
+    <div className="hg-home-v3 min-h-dvh">
+      <LandingNavbar />
+      <main id="main-content" tabIndex={-1} className="overflow-x-clip">
 
         <LandingHeroV3 />
 
@@ -149,15 +148,15 @@ export default function IndexUpdated() {
           <div className="container max-w-6xl mx-auto px-5 sm:px-6">
             <SectionHeading
               eyebrow="Funktioner"
-              title="Allt hönsägaren behöver – i ett lugnt arbetsbord"
-              desc="Hönsgården är inte bara en ägglogg. Det är platsen där flocken, vardagen, ekonomin och försäljningen hänger ihop."
+              title="Vad vill du hålla koll på i hönsgården?"
+              desc="Välj en funktion för att se hur du kan använda den med din egen flock."
             />
             <motion.div
               variants={staggerContainer}
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: '-60px' }}
-              className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[minmax(150px,auto)]"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-[minmax(150px,auto)]"
             >
               {productModules.map((f) => (
                 <motion.a
@@ -280,9 +279,9 @@ export default function IndexUpdated() {
             <SectionHeading
               eyebrow="Priser"
               title="Börja gratis – uppgradera när du vill ha mer hjälp"
-              desc="Gratis ger dig grunden. Plus ger mer AI, insikter, rapporter och obegränsad användning."
+              desc="Med Gratis kan du logga ägg och följa upp till tio hönor. Plus ger dig bland annat fler hönsprofiler, Agda AI och avancerad statistik."
             />
-<PublicPricing />
+            <PublicPricing />
           </div>
         </section>
 
@@ -331,9 +330,10 @@ export default function IndexUpdated() {
           </div>
         </section>
 
-        <Suspense fallback={null}><LandingFooter /></Suspense>
-      </div>
-    </main>
+      </main>
+      <Suspense fallback={null}><LandingFooter /></Suspense>
+      <Suspense fallback={null}><StickyMobileCTA /></Suspense>
+    </div>
   );
 }
 

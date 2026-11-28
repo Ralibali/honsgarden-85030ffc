@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { getEggs, updateEggRecord } from '@/lib/api';
+import { deleteEggRecord, getEggs, updateEggRecord } from '@/lib/api';
 
 const db = vi.hoisted(() => ({ from: vi.fn(), getSession: vi.fn() }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: () => ({ abortSignal: () => Promise.resolve({data: ['editor'], error: null}) }), from: db.from, auth: { getSession: db.getSession } } }));
@@ -11,7 +11,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
   db.getSession.mockResolvedValue({ data: { session: { user: { id: 'editor' } } } });
-  query = Object.fromEntries(['update', 'eq', 'in', 'select', 'order', 'range', 'maybeSingle'].map((name) => [name, vi.fn()]));
+  query = Object.fromEntries(['update', 'delete', 'eq', 'in', 'select', 'order', 'range', 'maybeSingle'].map((name) => [name, vi.fn()]));
   Object.values(query).forEach((fn) => fn.mockReturnValue(query));
   db.from.mockReturnValue(query);
 });
@@ -24,6 +24,14 @@ describe('historical egg persistence', () => {
     expect(await updateEggRecord(original, { date: original.date, count: 4 })).toEqual(saved);
     expect(query.update).toHaveBeenCalledWith({ date: original.date, count: 4 });
     expect(query.eq.mock.calls).toEqual([['id', original.id], ['date', original.date], ['count', 8]]);
+  });
+
+  it('requires a confirmed deleted row before reporting success', async () => {
+    query.maybeSingle.mockResolvedValueOnce({ data: null, error: null })
+      .mockResolvedValueOnce({ data: { id: original.id }, error: null });
+    await expect(deleteEggRecord(original.id)).rejects.toThrow('kunde inte tas bort');
+    await expect(deleteEggRecord(original.id)).resolves.toBeUndefined();
+    expect(query.eq).toHaveBeenCalledWith('id', original.id);
   });
 
   it('clears stale weather when moving the registration to another date', async () => {

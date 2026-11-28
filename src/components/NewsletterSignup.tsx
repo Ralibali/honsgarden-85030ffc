@@ -25,29 +25,21 @@ export default function NewsletterSignup({ variant = 'card', title, description 
     }
 
     setLoading(true);
-    const { error } = await supabase
-      .from('newsletter_subscribers' as any)
-      .insert({ email: trimmed } as any);
-
-    setLoading(false);
-
-    if (error) {
-      if (error.code === '23505') {
-        toast.info('Du prenumererar redan!');
-        setSuccess(true);
-      } else {
-        toast.error('Något gick fel. Försök igen.');
-      }
-      return;
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email: trimmed });
+      if (error && error.code !== '23505') throw error;
+      setSuccess(true);
+      toast.success('Tack för din prenumeration!');
+    } catch {
+      toast.error('Det gick inte att registrera din e-postadress. Försök igen.');
+    } finally {
+      setLoading(false);
     }
-
-    setSuccess(true);
-    toast.success('Tack! Du är nu prenumerant 🎉');
   };
 
   if (success) {
     return (
-      <div className={variant === 'card' ? 'rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-6 sm:p-8 text-center' : 'text-center py-4'}>
+      <div role="status" className={variant === 'card' ? 'rounded-2xl border border-border/30 bg-gradient-to-br from-primary/5 via-card to-accent/5 p-6 sm:p-8 text-center' : 'text-center py-4'}>
         <CheckCircle2 className="h-8 w-8 text-primary mx-auto mb-2" />
         <p className="font-serif text-lg text-foreground">Tack för din prenumeration!</p>
         <p className="text-sm text-muted-foreground mt-1">Du får våra bästa tips direkt i inkorgen.</p>
@@ -60,14 +52,16 @@ export default function NewsletterSignup({ variant = 'card', title, description 
       <form onSubmit={handleSubmit} className="flex gap-2 max-w-md" aria-label="Prenumerera på nyhetsbrev">
         <Input
           type="email"
+          name="email"
+          autoComplete="email"
           placeholder="din@epost.se"
           aria-label="E-postadress"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
+          className="min-w-0 flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
           required
         />
-        <Button type="submit" disabled={loading} className="shrink-0">
+        <Button type="submit" disabled={loading} aria-label={loading ? 'Registrerar prenumeration' : undefined} className="shrink-0">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Prenumerera'}
         </Button>
       </form>
@@ -88,13 +82,16 @@ export default function NewsletterSignup({ variant = 'card', title, description 
       <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
         <Input
           type="email"
+          name="email"
+          autoComplete="email"
+          aria-label="E-postadress"
           placeholder="din@epost.se"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="flex-1 h-11"
           required
         />
-        <Button type="submit" disabled={loading} size="lg" className="h-11 px-6 gap-2">
+        <Button type="submit" disabled={loading} aria-label={loading ? 'Registrerar prenumeration' : undefined} size="lg" className="h-11 px-6 gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
             <>
               <Mail className="h-4 w-4" /> Prenumerera

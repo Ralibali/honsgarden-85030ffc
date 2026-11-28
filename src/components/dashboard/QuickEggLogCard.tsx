@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { invalidateEggQueries } from '@/lib/eggQueryCache';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,6 +21,7 @@ export interface FlockHen {
 }
 
 interface Props {
+  demo?: boolean;
   todayEggs: number;
   todayEggRowIds: string[];
   /** Sant när dagen har någon registrering – även en äggfri (0 ägg). */
@@ -53,6 +55,7 @@ function summaryLine(count: number, yesterdayEggs?: number, streak?: number): st
 }
 
 export default function QuickEggLogCard({
+  demo = false,
   todayEggs,
   todayEggRowIds,
   loggedToday = todayEggs > 0,
@@ -187,6 +190,7 @@ export default function QuickEggLogCard({
   // "Inga ägg idag": en registrering med 0 ägg. Håller streaken och veckoringen
   // vid liv när hönorna pausar, och gör att statistiken slipper gissa.
   const logZero = useMutation({
+    networkMode: 'always',
     mutationFn: async () => saveEggLog(user?.id, { date: todayLocal(), count: 0, analytics_source: 'quick_log_card' }, api.createEggRecord),
     onSuccess: (result) => {
       if ('__offline' in result) {
@@ -202,6 +206,7 @@ export default function QuickEggLogCard({
   });
 
   const removeOne = useMutation({
+    networkMode: 'always',
     mutationFn: async () => {
       if (todayEggRowIds.length === 0) throw new Error('Inga ägg att ta bort idag');
       const lastId = todayEggRowIds.find(id => !id.startsWith('pending-') && !id.startsWith('temp-'));
@@ -240,9 +245,9 @@ export default function QuickEggLogCard({
               {layingHens.length > 0 ? 'Tryck på hönan som värpt, eller på plus' : 'Tryck när du hämtar ett ägg'}
             </p>
           </div>
-          <a href="/app/eggs" className="egg-counter-v3__details">
+          <Link to={demo ? '/demo?view=eggs' : '/app/eggs'} className="egg-counter-v3__details">
             Historik <ChevronRight className="h-3.5 w-3.5" />
-          </a>
+          </Link>
         </div>
 
         <div className="egg-counter-v3__controls">
@@ -334,7 +339,7 @@ export default function QuickEggLogCard({
               Inga ägg idag
             </button>
           )}
-          <a href="/app/eggs?log=1" className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">Logga en annan dag</a>
+          <Link to={demo ? '/demo?view=eggs&log=1' : '/app/eggs?log=1'} className="inline-flex min-h-11 items-center text-primary underline underline-offset-4">Logga en annan dag</Link>
         </div>
       </CardContent>
     </Card>

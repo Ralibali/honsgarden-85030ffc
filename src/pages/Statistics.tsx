@@ -25,6 +25,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { todayLocal } from '@/lib/datetime';
+import { isActiveHen } from '@/lib/farmMetrics';
 import { downloadMultiSheetExcel } from '@/lib/exportUtils';
 import { generateMonthlyReportPdf } from '@/lib/monthlyReportPdf';
 import { toast } from '@/hooks/use-toast';
@@ -111,8 +112,10 @@ export default function Statistics() {
       .sort((a, b) => Number(b.total_eggs || 0) - Number(a.total_eggs || 0));
   }, [hensWithEggs]);
 
+  const leadingHen = rankedHens[0];
   const flocks = ((flockStats as FlockStatsResult | undefined)?.flocks || []);
-  const totalEggs = Number(summary?.total_eggs || 0);
+  const unassignedEggs = flockStats?.unassigned_eggs ?? 0;
+  const hasEggLogs = (summary?.recorded_days ?? summary?.total_eggs ?? 0) > 0;
   const costPerEgg = Number(feedStats?.cost_per_egg || 0);
   const revenuePerEgg = Number(statisticsInsights?.revenue_per_egg || 0);
   const profitPerEgg = revenuePerEgg - costPerEgg;
@@ -153,7 +156,7 @@ export default function Statistics() {
       Namn: flock.name,
       'Aktiva hönor': flock.active_hens,
       'Totalt ägg': flock.total_eggs,
-      Veckan: flock.week_eggs,
+      '7 dagar': flock.week_eggs,
       '30 dagar': flock.month_eggs,
       'Snitt per dag': flock.avg_per_day,
     }));
@@ -162,7 +165,9 @@ export default function Statistics() {
       [
         { name: 'Sammanfattning', rows: summaryRows },
         { name: 'Hönor', rows: henRows },
-        { name: 'Flockar', rows: flockRows },
+        { name: 'Flockar', rows: unassignedEggs > 0
+          ? [...flockRows, { Namn: 'Utan flock', 'Totalt ägg': unassignedEggs }]
+          : flockRows },
       ],
       `honsgarden-statistik-${today}`,
     );
@@ -185,7 +190,7 @@ export default function Statistics() {
           type: transaction.type,
           amount: transaction.amount,
         })),
-        henCount: hens.length,
+        henCount: hens.filter(isActiveHen).length,
         topHens: rankedHens.slice(0, 5).map((hen) => ({
           name: hen.name ?? 'Namnlös',
           breed: hen.breed ?? null,
@@ -236,7 +241,7 @@ export default function Statistics() {
 
         <AIDeviationAlerts variant="inline" />
 
-        {totalEggs <= 0 ? (
+        {!hasEggLogs ? (
           <EmptyState
             icon={Sparkles}
             title="Insikterna vaknar snart"
@@ -248,7 +253,11 @@ export default function Statistics() {
           />
         ) : (
           <>
-            <SmartStatisticsOverview />
+            <SmartStatisticsOverview
+              activeHenCount={summary?.active_hens ?? 0}
+              costPerEgg={costPerEgg}
+              topHen={leadingHen && Number(leadingHen.total_eggs) > 0 ? leadingHen : undefined}
+            />
 
             <section className="insights-main-chart space-y-3" aria-labelledby="production-heading">
               <div className="px-1">
@@ -351,7 +360,7 @@ export default function Statistics() {
                           <div key={flock.id} className="flock-plain-row">
                             <div className="min-w-0">
                               <strong className="block truncate">{flock.name}</strong>
-                              <small>{flock.active_hens} aktiva hönor · {flock.week_eggs} ägg denna vecka</small>
+                              <small>{flock.active_hens} aktiva hönor · {flock.week_eggs} ägg senaste sju dagarna</small>
                             </div>
                             <span>{flock.total_eggs} ägg</span>
                           </div>
@@ -363,6 +372,7 @@ export default function Statistics() {
                         <p className="text-xs text-muted-foreground mt-1">Det är helt okej – den här delen blir användbar först när du vill dela upp hönsen.</p>
                       </div>
                     )}
+                    {unassignedEggs > 0 && <p className="mt-3 text-sm text-muted-foreground">{unassignedEggs} ägg är registrerade utan flock.</p>}
                   </CardContent>
                 </Card>
               </div>

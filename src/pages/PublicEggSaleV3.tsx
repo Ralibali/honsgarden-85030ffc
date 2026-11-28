@@ -1,4 +1,3 @@
-import { atomicEggOrdersEnabled } from '@/lib/eggSalePricing';
 import ExternalEmbedGate from '@/components/ExternalEmbedGate';
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -16,12 +15,27 @@ import { BG_CLASS, normalizeSections, normalizeTheme } from '@/lib/eggSaleTheme'
 import { CustomSectionsRenderer } from '@/components/egg-sales/CustomSectionsRenderer';
 import SwishQR from '@/components/egg-sales/SwishQR';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { formatTierRange, getPricePerPack, normalizeTiers } from '@/lib/eggSalePricing';
+import { atomicEggOrdersEnabled, formatTierRange, getOrderTotal, getPricePerPack, normalizeTiers } from '@/lib/eggSalePricing';
 import EggAlertSignup from '@/components/marketing/EggAlertSignup';
 
 function getParam(params: URLSearchParams, key: string, fallback = '') { return params.get(key)?.trim() || fallback; }
-function copy(text: string) { navigator.clipboard?.writeText(text); toast({ title: 'Kopierat' }); }
-function asKr(v: unknown, fallback = '') { const n = Number(v); return Number.isFinite(n) && n > 0 ? `${Math.round(n)} kr` : fallback; }
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast({ title: 'Kopierat' });
+  } catch {
+    toast({ title: 'Kunde inte kopiera', description: 'Markera uppgifterna på sidan och kopiera dem manuellt.' });
+  }
+}
+function parsePrice(value: unknown) {
+  const amount = Number(String(value ?? '').replace(/\s*kr\s*$/i, '').replace(/\s/g, '').replace(',', '.'));
+  return Number.isFinite(amount) && amount >= 0 ? amount : 0;
+}
+
+function optionalPrice(value: unknown) {
+  const amount = parsePrice(value);
+  return amount > 0 ? `${amount.toLocaleString('sv-SE')} kr` : '';
+}
 function formatRelativeSv(iso: string): string {
   const then = new Date(iso).getTime();
   if (!Number.isFinite(then)) return '';
@@ -66,7 +80,7 @@ export default function PublicEggSaleV3() {
   const [subPhone, setSubPhone] = useState('');
   const [showSub, setShowSub] = useState(false);
 
-  const { data: listing, isLoading: queryLoading, isFetching } = useQuery({
+  const { data: listing, isLoading: listingLoading, isError: listingFailed, refetch: retryListing } = useQuery({
     queryKey: ['public-egg-sale-listing-v3', slug],
     enabled: shouldLoadSlug,
     queryFn: async () => {
@@ -76,14 +90,13 @@ export default function PublicEggSaleV3() {
     },
     staleTime: 30_000,
   });
-  const isLoading = shouldLoadSlug && (queryLoading || isFetching);
 
-  const { data: bookedPacks = 0 } = useQuery({
+  const { data: bookedPacks, isLoading: stockLoading, isError: stockFailed, refetch: retryStock } = useQuery({
     queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id],
     enabled: Boolean(listing?.id),
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc('get_public_egg_sale_reserved_packs', { p_listing_id: listing.id });
-      if (error) return 0;
+      if (error) throw error;
       return Number(data) || 0;
     },
     staleTime: 15_000,
@@ -156,13 +169,16 @@ export default function PublicEggSaleV3() {
       title: theme.headline || listing.title || 'Färska ägg till salu',
       description: theme.tagline || listing.description || 'Färska ägg från lokal hönsgård.',
       imageUrl: theme.coverUrl || listing.image_url || '',
-      packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
+      packs: Number(listing.packs_available ?? 0),
+      size: String(listing.eggs_per_pack || 12),
+      price: parsePrice(listing.price_per_pack),
+      location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: optionalPrice(listing.p6_price), p12: optionalPrice(listing.p12_price), p30: optionalPrice(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
     };
-    const price = getParam(params, 'price', '60');
-    return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')) || 6, size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12', price), p30: getParam(params, 'p30', ''), soldOut: false };
+    const price = parsePrice(getParam(params, 'price', '60'));
+    return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')), size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12'), p30: getParam(params, 'p30', ''), soldOut: false };
   }, [listing, params, theme]);
 
-  const remaining = Math.max(0, sale.packs - bookedPacks);
+  const remaining = Math.max(0, sale.packs - (bookedPacks ?? 0));
   const isSoldOut = sale.soldOut || remaining <= 0;
   const swishText = sale.swish ? `Swish: ${sale.swish}${sale.swishName ? ` (${sale.swishName})` : ''}\nMeddelande: ${sale.swishMsg}` : 'Kontakta säljaren för betalningsinformation.';
   const reko = listing?.reko_enabled ? {
@@ -172,29 +188,26 @@ export default function PublicEggSaleV3() {
   } : null;
   const rekoDateLabel = reko?.nextAt ? reko.nextAt.toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', weekday: 'short', day: 'numeric', month: 'short' }) : '';
   const rekoTimeLabel = reko?.nextAt ? reko.nextAt.toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : '';
-  const shareText = reko
-    ? `🥚 Färska ägg – utlämning via ${reko.group}${reko.nextAt ? ` ${rekoDateLabel} kl ${rekoTimeLabel}` : ''}${reko.location ? ` (${reko.location})` : ''}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr · ${remaining} kartor kvar\n\nBoka och läs mer: ${typeof window !== 'undefined' ? window.location.href : ''}`
-    : `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${sale.price} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
   const tiers = useMemo(() => normalizeTiers(listing?.price_tiers), [listing?.price_tiers]);
+  const singlePackPrice = getPricePerPack(1, tiers, sale.price);
+  const singlePackDisplay = singlePackPrice.toLocaleString('sv-SE');
+  const shareText = reko
+    ? `🥚 Färska ägg – utlämning via ${reko.group}${reko.nextAt ? ` ${rekoDateLabel} kl ${rekoTimeLabel}` : ''}${reko.location ? ` (${reko.location})` : ''}\n\n${sale.description}\n\n${sale.size}-pack: ${singlePackDisplay} kr · ${remaining} kartor kvar\n\nBoka och läs mer: ${typeof window !== 'undefined' ? window.location.href : ''}`
+    : `${sale.title}\n\n${sale.description}\n\n${sale.size}-pack: ${singlePackDisplay} kr\n${remaining} kartor kvar\nHämtas: ${sale.location}\n${sale.pickup}`;
   const tierRows = useMemo(
     () => tiers.map((t) => ({ label: formatTierRange(t), price: `${t.price_per_pack} kr / karta` })),
     [tiers],
   );
   const sizeRows = [
-    sale.p6 ? { label: '6-pack', price: sale.p6 } : null,
-    { label: `${sale.size}-pack`, price: sale.p12 || `${sale.price} kr` },
-    sale.p30 ? { label: '30-pack', price: sale.p30 } : null,
-  ].filter(Boolean) as { label: string; price: string }[];
+    { label: `${sale.size}-pack`, price: `${singlePackDisplay} kr` },
+    ...[['6', sale.p6], ['12', sale.p12], ['30', sale.p30]]
+      .filter(([size, price]) => size !== sale.size && price)
+      .map(([size, price]) => ({ label: `${size}-pack`, price: optionalPrice(price) })),
+  ];
   const priceRows = tierRows.length ? tierRows : sizeRows;
-
-  const parseKr = (v: unknown) => {
-    const n = Number(String(v ?? '').replace(/[^\d.,-]/g, '').replace(',', '.'));
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  };
-  const basePricePerPack = parseKr(sale.p12) || parseKr(sale.price);
-  const packCount = Math.max(1, Number(packs) || 1);
-  const pricePerPack = tiers.length ? getPricePerPack(packCount, tiers, basePricePerPack) : basePricePerPack;
-  const swishAmount = Math.round(packCount * pricePerPack * 100)/100;
+  const packCount = Math.max(1, Math.floor(Number(packs) || 1));
+  const pricePerPack = getPricePerPack(packCount, tiers, sale.price);
+  const swishAmount = getOrderTotal(packCount, tiers, sale.price);
   const swishMsgFull = `${sale.swishMsg || 'Ägg'} ${packCount}x${sale.size}-pack`.slice(0, 50);
   const swishPayee = (sale.swish || '').replace(/\D/g, '');
   const swishDeepLink = sale.swish
@@ -212,10 +225,9 @@ export default function PublicEggSaleV3() {
     setSwishConfirm(true);
     window.location.href = swishDeepLink;
     setTimeout(() => {
-      // Fallback if Swish app isn't installed: copy details
+      // Keep payment details available when the app does not open.
       if (document.hasFocus()) {
-        copy(`${swishText}\nBelopp: ${swishAmount} kr`);
-        toast({ title: 'Öppna Swish manuellt', description: `Beloppet ${swishAmount} kr och uppgifterna är kopierade.` });
+        toast({ title: 'Öppna Swish manuellt', description: 'Du kan kopiera betalningsuppgifterna på sidan.' });
       }
     }, 1200);
   };
@@ -354,7 +366,7 @@ export default function PublicEggSaleV3() {
   const seoTitle = `${seoTitleBase.length > 50 ? seoTitleBase.slice(0, 50) : seoTitleBase} | Hönsgården`.slice(0, 70);
   const seoDescriptionRaw = sale.description?.replace(/\s+/g, ' ').trim() || 'Färska ägg från lokal hönsgård. Boka, hämta och betala enkelt via Hönsgården.';
   const seoDescription = (seoDescriptionRaw.length < 60
-    ? `${seoDescriptionRaw} Hämtas i ${sale.location}. ${sale.size} ägg per karta för ${sale.price} kr.`
+    ? `${seoDescriptionRaw} Hämtas i ${sale.location}. ${sale.size} ägg per karta för ${singlePackDisplay} kr.`
     : seoDescriptionRaw
   ).slice(0, 158);
 
@@ -378,8 +390,7 @@ export default function PublicEggSaleV3() {
     return d.toISOString().slice(0, 10);
   })();
 
-  const priceNumber = Math.max(0, Math.round(Number(sale.price) || 0));
-  const safePrice = String(priceNumber);
+  const safePrice = String(singlePackPrice);
 
   const seoJsonLd = listing
     ? [
@@ -445,7 +456,18 @@ export default function PublicEggSaleV3() {
     jsonLd: seoJsonLd,
   });
 
-  if (isLoading) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
+  if (shouldLoadSlug && ((!listing && listingFailed) || (listing && stockFailed && bookedPacks === undefined))) {
+    return (
+      <main className="min-h-dvh grid place-items-center p-4">
+        <Card className="max-w-md"><CardContent className="p-6 text-center space-y-3">
+          <h1 className="font-serif text-2xl">{listing ? 'Lagersaldot kunde inte hämtas' : 'Säljsidan kunde inte laddas'}</h1>
+          <p>Kontrollera din anslutning och försök igen.</p>
+          <Button onClick={() => void (listing ? retryStock() : retryListing())}>Försök igen</Button>
+        </CardContent></Card>
+      </main>
+    );
+  }
+  if (shouldLoadSlug && (listingLoading || (listing && stockLoading))) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center" role="status"><span className="sr-only">Laddar säljsidan</span><Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-muted-foreground" /></main>;
   if (shouldLoadSlug && !listing) return <main className="min-h-dvh noise-bg px-4 py-8 flex items-center justify-center"><Card className="max-w-md"><CardContent className="p-6 text-center space-y-3"><Egg className="h-10 w-10 mx-auto text-muted-foreground" /><h1 className="font-serif text-2xl">Säljlistan hittades inte</h1><p className="text-sm text-muted-foreground">Den kan vara pausad, borttagen eller felstavad.</p><Button variant="outline" onClick={() => window.open('https://honsgarden.se', '_blank')}>Till Hönsgården.se</Button></CardContent></Card></main>;
 
   const lowStock = !isSoldOut && remaining > 0 && remaining <= 3;
@@ -520,7 +542,7 @@ export default function PublicEggSaleV3() {
               <CheckCircle2 className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <h2 className="font-serif text-lg text-green-800">Betalningsförfrågan skickad</h2>
+              <h2 className="font-serif text-lg text-green-800">Betala med Swish</h2>
               <p className="text-sm text-green-700">Öppna Swish-appen och godkänn betalningen.</p>
             </div>
           </div>
@@ -538,7 +560,7 @@ export default function PublicEggSaleV3() {
           )}
           <div className="flex items-start gap-2 text-xs text-green-700">
             <Clock className="h-4 w-4 shrink-0 mt-0.5" />
-            <p>Efter att du betalat via Swish, be säljaren bekräfta mottagningen. Har du inte Swish installerat? Uppgifterna finns kopierade.</p>
+            <p>Efter att du betalat via Swish, be säljaren bekräfta mottagningen. Du kan också kopiera uppgifterna här.</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="rounded-lg" onClick={() => copy(`Swish: ${sale.swish}\nBelopp: ${swishAmount} kr\nMeddelande: ${swishMsgFull}`)}><Copy className="h-3.5 w-3.5 mr-1.5" /> Kopiera uppgifter</Button>
@@ -583,7 +605,7 @@ export default function PublicEggSaleV3() {
       <CardContent className="p-5 sm:p-6 space-y-5">
         <div className="grid grid-cols-3 gap-3 text-center">
           <InfoStat label="ägg/karta" value={sale.size} />
-          <InfoStat label="pris/karta" value={`${sale.price} kr`} accent />
+          <InfoStat label="pris/karta" value={`${singlePackDisplay} kr`} accent />
           <InfoStat label="kartor kvar" value={isSoldOut ? 0 : remaining} warn={isSoldOut} highlight={lowStock} />
         </div>
         {isSoldOut && <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center"><p className="font-serif text-lg">Slutsålt just nu</p><p className="text-sm text-muted-foreground">Anmäl dig till väntelistan nedan – du får mejl så fort nya ägg finns.</p></div>}
@@ -630,8 +652,8 @@ export default function PublicEggSaleV3() {
 
                 {slots.length > 0 && (
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Välj hämtningstid *</label>
-                    <select
+                    <label htmlFor="booking-pickup-slot" className="text-xs font-medium flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> Välj hämtningstid *</label>
+                    <select id="booking-pickup-slot"
                       className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
                       value={pickupSlotId}
                       onChange={(e) => setPickupSlotId(e.target.value)}

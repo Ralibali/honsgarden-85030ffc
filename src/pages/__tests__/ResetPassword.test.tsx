@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { recordRecoveryUser } from '@/lib/resetPasswordLink';
 import ResetPassword from '@/pages/ResetPassword';
 
 const getSession = vi.fn();
 const updateUser = vi.fn();
+const verifyOtp = vi.fn();
 const unsubscribe = vi.fn();
 let authCallback: ((event: string) => void) | null = null;
 
@@ -16,6 +18,7 @@ vi.mock('@/integrations/supabase/client', () => ({
         return { data: { subscription: { unsubscribe } } };
       },
       getSession: (...args: unknown[]) => getSession(...args),
+      verifyOtp: (...args: unknown[]) => verifyOtp(...args),
       updateUser: (...args: unknown[]) => updateUser(...args),
     },
   },
@@ -39,6 +42,7 @@ function setLocation(path: string) {
 describe('ResetPassword – tom och giltig länk', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    recordRecoveryUser('SIGNED_OUT');
     authCallback = null;
     getSession.mockResolvedValue({ data: { session: null } });
     setLocation('/reset-password');
@@ -53,11 +57,10 @@ describe('ResetPassword – tom och giltig länk', () => {
 
     expect(screen.getByText('Länken saknas eller är ogiltig')).toBeInTheDocument();
     expect(screen.queryByText('Verifierar länk…')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Tillbaka till inloggning' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Begär en ny återställningslänk' })).toHaveAttribute(
       'href',
-      '/login?mode=login',
+      '/login?mode=forgot',
     );
-    expect(screen.getByText(/Glömt lösenord/)).toBeInTheDocument();
     expect(getSession).not.toHaveBeenCalled();
   });
 
@@ -95,11 +98,27 @@ describe('ResetPassword – tom och giltig länk', () => {
     expect(screen.queryByText('Verifierar länk…')).not.toBeInTheDocument();
   });
 
-  it('visar formuläret om session redan finns tillsammans med token', async () => {
-    getSession.mockResolvedValue({ data: { session: { access_token: 'sess' } } });
+  it('verifierar token_hash innan formuläret visas', async () => {
+    verifyOtp.mockResolvedValue({ data: { session: { user: { id: 'member' } } }, error: null });
     setLocation('/reset-password?token_hash=th_1&type=recovery');
     renderPage();
+    expect(await screen.findByLabelText('Nytt lösenord')).toBeInTheDocument();
+    expect(verifyOtp).toHaveBeenCalledWith({ token_hash: 'th_1', type: 'recovery' });
+    expect(window.location.search).toBe('');
+  });
 
+  it('visar fel när tokenverifieringen misslyckas', async () => {
+    verifyOtp.mockResolvedValue({ data: { session: null }, error: { message: 'Expired' } });
+    setLocation('/reset-password?token_hash=th_1&type=recovery');
+    renderPage();
+    expect(await screen.findByText('Länken saknas eller är ogiltig')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Nytt lösenord')).not.toBeInTheDocument();
+  });
+
+  it('klarar att Supabase redan har verifierat och rensat webbadressen före renderingen', async () => {
+    recordRecoveryUser('PASSWORD_RECOVERY', 'member');
+    getSession.mockResolvedValue({ data: { session: { user: { id: 'member' } } } });
+    renderPage();
     expect(await screen.findByLabelText('Nytt lösenord')).toBeInTheDocument();
   });
 });

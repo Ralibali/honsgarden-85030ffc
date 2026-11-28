@@ -37,6 +37,28 @@ describe("durable, account-scoped egg queue", () => {
       expect(queue.getQueue("owner")[0].client_id).toBe("one");
     }
   );
+  it.each([
+    ["42501", "new row violates row-level security policy"],
+    ["42P01", 'relation "egg_logs" does not exist'],
+    ["23505", "duplicate key value violates unique constraint"],
+    ["PGRST204", "column does not exist in schema cache"],
+  ])("keeps queued eggs for a retry after %s", async (code, message) => {
+    await queue.enqueueEggLog(row);
+    const create = vi.fn()
+      .mockRejectedValueOnce(Object.assign(new Error(message), { code }))
+      .mockResolvedValueOnce({});
+    expect(await queue.syncQueue(create, "owner")).toEqual({ synced: 0, remaining: 1, dropped: 0 });
+    expect(await queue.syncQueue(create, "owner")).toEqual({ synced: 1, remaining: 0, dropped: 0 });
+    expect(create.mock.calls[1][0].client_id).toBe(row.client_id);
+  });
+  it("reports a deleted hen and continues syncing later valid records", async () => {
+    await queue.enqueueEggLog(row);
+    await queue.enqueueEggLog({ ...row, client_id: "two" });
+    const create = vi.fn()
+      .mockRejectedValueOnce(Object.assign(new Error("deleted hen"), { code: "23503" }))
+      .mockResolvedValueOnce({});
+    expect(await queue.syncQueue(create, "owner")).toEqual({ synced: 1, remaining: 0, dropped: 1 });
+  });
   it("syncs only the requested account with a stable id and expected owner", async () => {
     await queue.enqueueEggLog({ ...row, analytics_source: "quick_fab" });
     await queue.enqueueEggLog({ ...row, user_id: "another" });
