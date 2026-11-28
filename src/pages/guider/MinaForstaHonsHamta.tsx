@@ -109,6 +109,7 @@ export default function MinaForstaHonsHamta({ productSlug = 'mina-forsta-hons' }
                 <><Download className="mr-2 h-4 w-4" aria-hidden /> Ladda ner PDF:en</>
               )}
             </Button>
+            {['mina-forsta-hons','vinterklar-honsgard'].includes(product.slug) && <Link className="mt-4 block underline" to={'/app/calendar?program='+product.slug}>Starta guidens kalenderprogram</Link>}
           </>
         )}
 

@@ -238,6 +238,11 @@ export default function Agda() {
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput('');
+    const feedAnswer = findQuickAnswer(text);
+    if (feedAnswer?.id === 'kitchen_waste' && guard.urgency === 'none') {
+      setMessages([...nextMessages,{role:'assistant',content:feedAnswer.answer+'\n\n[Jordbruksverkets vägledning]('+feedAnswer.link!.href+')'}]);
+      return;
+    }
     setLoading(true);
     assistantContentRef.current = '';
 

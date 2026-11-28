@@ -102,6 +102,7 @@ export default function HonsrasLanding({ slug, canonicalPath }: HonsrasLandingPr
               {page.h1}
             </h1>
             {breedImage && <SubjectImage image={breedImage} alt={page.breedName || page.h1} />}
+            {['sussex','orpington'].includes(activeSlug) && <a className="mb-4 inline-flex rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground" href={'/verktyg/flockplanerare?ras='+activeSlug}>Planera min flock med {page.breedName}</a>}
             {page.intro.map((p, i) => (
               <p key={i} className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-4 max-w-3xl">
                 {p}

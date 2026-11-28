@@ -307,6 +307,8 @@ function GrowthDashboard({ intelligence }: { intelligence: GrowthIntelligenceRes
   );
 }
 
+import FarmGrowth from '@/components/farm/FarmGrowth';
+
 export default function GrowthIntelligence() {
   usePageTitle('Growth Intelligence');
   const queryClient = useQueryClient();
@@ -333,6 +335,7 @@ export default function GrowthIntelligence() {
         <Button variant="outline" size="sm" className="rounded-xl gap-1.5" onClick={() => { queryClient.invalidateQueries({ queryKey: ['growth-intelligence-data'] }); queryClient.invalidateQueries({ queryKey: ['growth-change-markers'] }); }}><RefreshCw className="h-3.5 w-3.5" /> Uppdatera</Button>
       </div>
 
+      <FarmGrowth />
       {growthData.isLoading ? <div className="flex items-center justify-center py-20 text-sm text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin mr-2" /> Bygger growth-modellen…</div> : growthData.isError ? <Card className="border-destructive/30"><CardContent className="p-4 text-sm text-destructive">Kunde inte läsa growth-data: {String(growthData.error)}</CardContent></Card> : intelligence ? <GrowthDashboard intelligence={intelligence} /> : null}
 
       <div className="grid sm:grid-cols-3 gap-3 text-[10px] text-muted-foreground">

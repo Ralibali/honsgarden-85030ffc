@@ -35,6 +35,7 @@ import { buildPremiumInsights } from '@/lib/premiumInsights';
 import { hasCapability } from '@/lib/entitlements';
 import { computeLogStreak, computeWeekProgress } from '@/lib/logStreak';
 import { buildFarmPulse, computeMonthPace } from '@/lib/farmPulse';
+import { useFeedWeighing } from '@/hooks/useFeedWeighing';
 import { computeFeedForecast } from '@/lib/feedForecast';
 import { getSeasonalMode, trackSeasonalModeIfChanged } from '@/lib/seasonalMode';
 import { fetchReminders, isOpenReminder, REMINDERS_QUERY_KEY, type ReminderLike } from '@/lib/reminderSchedule';
@@ -223,7 +224,8 @@ export default function DashboardV3({ demo = false }: { demo?: boolean }) {
   const showStreakRescue = hens.length > 0 && eggs.length > 0 && streak > 0 && !loggedToday;
   const weatherText = weatherSentence(weather);
   const season = getSeasonalMode(now);
-  const feedForecast = useMemo(() => computeFeedForecast(feedRecords, eggs, todayKey), [feedRecords, eggs, todayKey]);
+  const weighing = useFeedWeighing(user?.id, !demo);
+  const feedForecast = useMemo(() => computeFeedForecast(feedRecords, eggs, todayKey, demo ? null : weighing.data), [feedRecords, eggs, todayKey, weighing.data, demo]);
   const openReminders = useMemo(() => reminders.filter((r) => isOpenReminder(r.status)), [reminders]);
   const pulseItems = useMemo(() => buildFarmPulse({
     todayIso: todayKey,

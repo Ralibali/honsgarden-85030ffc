@@ -7,6 +7,7 @@ export interface EggGoal {
 
 export interface EggSale {
   id: string;
+  sourceBookingId?: string;
   customer: string;
   eggs: number;
   amount: number;

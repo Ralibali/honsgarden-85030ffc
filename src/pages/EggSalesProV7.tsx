@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import EggSalesOverview from '@/components/EggSalesOverview';
 import EggSalesListingsBrowser from '@/components/EggSalesListingsBrowser';
 import ShareListingCard from '@/components/egg-sales/ShareListingCard';
+import EggBasket from '@/components/egg-sales/EggBasket';
 import ManualEggSalesCard from '@/components/ManualEggSalesCard';
 
 type Booking = any;
@@ -285,6 +286,7 @@ export default function EggSalesProV7() {
   return (
     <div className="max-w-7xl mx-auto space-y-5 pb-8">
       <EggSalesOverview />
+      <EggBasket listings={listings} />
       <ManualEggSalesCard />
       <EggSalesListingsBrowser />
 

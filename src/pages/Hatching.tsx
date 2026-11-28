@@ -13,6 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PremiumGate } from '@/components/PremiumGate';
 import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
+import HatchOutcome from '@/components/hen/HatchOutcome';
+import { addDaysIso, daysBetweenIso } from '@/lib/isoDay';
+import { todayLocal } from '@/lib/datetime';
 import PageHeader from '@/components/PageHeader';
 
 const milestones = [
@@ -24,22 +27,12 @@ const milestones = [
   { day: 21, label: 'Kläckning!', emoji: '🐣' },
 ];
 
-function getDayInfo(startDate: string, duration: number = 21) {
-  const start = new Date(startDate);
-  const now = new Date();
-  const elapsed = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-  const remaining = Math.max(0, duration - elapsed);
-  const progress = Math.min(100, (elapsed / duration) * 100);
-  const done = elapsed >= duration;
-  return { elapsed, remaining, progress, done };
-}
-
 export default function Hatching() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [newNotes, setNewNotes] = useState('');
   const [newDate, setNewDate] = useState('');
-  const [newCount, setNewCount] = useState('');
+  const [newCount, setNewCount] = useState('1');
 
   const { data: batches = [], isLoading } = useQuery({
     queryKey: ['hatching'],
@@ -52,7 +45,7 @@ export default function Hatching() {
       queryClient.invalidateQueries({ queryKey: ['hatching'] });
       toast({ title: 'Kläckningen är startad! 🐣' });
       setOpen(false);
-      setNewNotes(''); setNewDate(''); setNewCount('');
+      setNewNotes(''); setNewDate(''); setNewCount('1');
     },
     onError: () => toast({ title: 'Något gick fel', description: 'Vi kunde inte starta kläckningen just nu. Kontrollera anslutningen och försök igen.', variant: 'destructive' }),
   });
@@ -67,14 +60,13 @@ export default function Hatching() {
 
   const handleAdd = () => {
     if (!newDate) return;
-    const startDate = new Date(newDate);
-    const expectedHatch = new Date(startDate);
-    expectedHatch.setDate(expectedHatch.getDate() + 21);
+    const expectedHatch = addDaysIso(newDate,21);
+    if (!expectedHatch || !Number.isInteger(Number(newCount)) || Number(newCount) < 1 || Number(newCount) > 1000) return;
     createMutation.mutate({
       start_date: newDate,
       egg_count: Number(newCount) || 1,
       notes: newNotes || null,
-      expected_hatch_date: expectedHatch.toISOString().split('T')[0],
+      expected_hatch_date: expectedHatch,
     });
   };
 
@@ -105,9 +97,9 @@ export default function Hatching() {
               </div>
               <div>
                 <Label>Antal ägg</Label>
-                <Input className="mt-1.5 rounded-xl" placeholder="T.ex. 12" type="number" value={newCount} onChange={(e) => setNewCount(e.target.value)} />
+                <Input className="mt-1.5 rounded-xl" placeholder="T.ex. 12" type="number" min={1} max={1000} value={newCount} onChange={(e) => setNewCount(e.target.value)} />
               </div>
-              <Button className="w-full rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newDate}>
+              <Button className="w-full rounded-xl" onClick={handleAdd} disabled={createMutation.isPending || !newDate || !Number.isInteger(Number(newCount)) || Number(newCount)<1 || Number(newCount)>1000}>
                 {createMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Starta kläckning
               </Button>
@@ -136,10 +128,15 @@ export default function Hatching() {
           onSecondaryAction={() => window.location.assign('/app/hens')}
         />
       ) : (
-        batches.map((batch: any) => {
+        batches.map((batch) => {
           const batchId = batch.id;
           const startDate = batch.start_date;
-          const { elapsed, remaining, progress, done } = getDayInfo(startDate);
+          const elapsed = Math.max(0, daysBetweenIso(startDate,todayLocal()) ?? 0);
+          const remaining = daysBetweenIso(todayLocal(),batch.expected_hatch_date || addDaysIso(startDate,21)!) ?? 0;
+          const progress = Math.min(100,elapsed / 21 * 100);
+          const done = ['hatched', 'completed'].includes(batch.status ?? '') || !!batch.outcome_date;
+          const resultLabel = done ? (batch.hatched_count == null ? 'Avslutad kläckning' : batch.hatched_count + ' kläckta kycklingar')
+            : remaining <= 0 ? 'Beräknad kläckdag nådd' : remaining + ' dagar kvar';
           return (
             <Card key={batchId} className={`bg-card border-border shadow-sm ${done ? 'border-success/50' : ''}`}>
               <CardContent className="p-4 sm:p-5">
@@ -158,14 +155,14 @@ export default function Hatching() {
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-muted-foreground">Dag {Math.min(elapsed, 21)} av 21</span>
                     <span className={`font-medium ${done ? 'text-success' : 'text-primary'}`}>
-                      {done ? 'Kläckt! 🎉' : `${remaining} dagar kvar`}
+                      {resultLabel}
                     </span>
                   </div>
                   <Progress value={progress} className="h-2.5" />
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                   {milestones.map((m) => {
-                    const reached = elapsed >= m.day;
+                    const reached = m.day === 21 ? done : elapsed >= m.day;
                     const isCurrent = elapsed >= m.day - 1 && elapsed < m.day;
                     return (
                       <div key={m.day} className={`text-center p-1.5 rounded-lg text-[10px] transition-colors ${reached ? 'bg-success/10 text-success' : isCurrent ? 'bg-primary/10 text-primary ring-1 ring-primary/30' : 'bg-muted/50 text-muted-foreground'}`}>
@@ -175,6 +172,7 @@ export default function Hatching() {
                     );
                   })}
                 </div>
+                {!done && batch.status === 'incubating' && <HatchOutcome batch={batch}/>}
               </CardContent>
             </Card>
           );

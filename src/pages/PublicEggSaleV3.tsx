@@ -156,13 +156,19 @@ export default function PublicEggSaleV3() {
       title: theme.headline || listing.title || 'Färska ägg till salu',
       description: theme.tagline || listing.description || 'Färska ägg från lokal hönsgård.',
       imageUrl: theme.coverUrl || listing.image_url || '',
-      packs: Number(listing.packs_available || 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
+      packs: Number(listing.packs_available ?? 1), size: String(listing.eggs_per_pack || 12), price: String(Math.round(Number(listing.price_per_pack || 60))), location: listing.location || 'Lokalt område', pickup: listing.pickup_info || 'Hämtning efter överenskommelse', contact: listing.contact_info || 'Kontakta säljaren', swish: listing.swish_number || '', swishName: listing.swish_name || '', swishMsg: listing.swish_message || 'Ägg', p6: asKr(listing.p6_price), p12: asKr(listing.p12_price, asKr(listing.price_per_pack)), p30: asKr(listing.p30_price), soldOut: Boolean(listing.sold_out_manually)
     };
     const price = getParam(params, 'price', '60');
     return { id: null, sellerUserId: null, title: getParam(params, 'title', 'Färska ägg till salu'), description: getParam(params, 'desc', 'Färska ägg från lokal hönsgård.'), imageUrl: getParam(params, 'image', ''), packs: Number(getParam(params, 'packs', '6')) || 6, size: getParam(params, 'size', '12'), price, location: getParam(params, 'location', 'Lokalt område'), pickup: getParam(params, 'pickup', 'Hämtning efter överenskommelse'), contact: getParam(params, 'contact', 'Kontakta säljaren'), swish: getParam(params, 'swish', ''), swishName: getParam(params, 'swishName', ''), swishMsg: getParam(params, 'swishMsg', 'Ägg'), p6: getParam(params, 'p6', ''), p12: getParam(params, 'p12', price), p30: getParam(params, 'p30', ''), soldOut: false };
   }, [listing, params, theme]);
 
-  const remaining = Math.max(0, sale.packs - bookedPacks);
+  const basketPacks = useQuery({queryKey:['public-basket-packs',listing?.id],enabled:!!listing?.id,refetchInterval:20000,queryFn:async()=>{
+    const {data,error}=await supabase.rpc('basket_listing_packs',{p_listing:listing!.id});
+    if(error) throw error;
+    return data;
+  }});
+  const listingRemaining = Math.max(0,sale.packs-bookedPacks);
+  const remaining = basketPacks.data == null ? listingRemaining : Math.min(listingRemaining,basketPacks.data);
   const isSoldOut = sale.soldOut || remaining <= 0;
   const swishText = sale.swish ? `Swish: ${sale.swish}${sale.swishName ? ` (${sale.swishName})` : ''}\nMeddelande: ${sale.swishMsg}` : 'Kontakta säljaren för betalningsinformation.';
   const reko = listing?.reko_enabled ? {
@@ -191,7 +197,7 @@ export default function PublicEggSaleV3() {
     const n = Number(String(v ?? '').replace(/[^\d.,-]/g, '').replace(',', '.'));
     return Number.isFinite(n) && n > 0 ? n : 0;
   };
-  const basePricePerPack = parseKr(sale.p12) || parseKr(sale.price);
+  const basePricePerPack = basketPacks.data != null && listing ? Number(listing.price_per_pack) : parseKr(sale.p12) || parseKr(sale.price);
   const packCount = Math.max(1, Number(packs) || 1);
   const pricePerPack = tiers.length ? getPricePerPack(packCount, tiers, basePricePerPack) : basePricePerPack;
   const swishAmount = Math.round(packCount * pricePerPack * 100)/100;
@@ -250,6 +256,10 @@ export default function PublicEggSaleV3() {
         if(error)throw error;inserted=data;
       }else{
         // Compatible with the existing anonymous INSERT policy: never request seller-only SELECT.
+        if (basketPacks.data != null) {
+          payload.basket_request_id = requestAttempt.current.id;
+          payload.basket_amount = swishAmount;
+        }
         const {error}=await (supabase as any).from('public_egg_sale_bookings').insert(payload);
         if(error)throw error;
         inserted={packs:packAmount,total_price_sek:swishAmount,eggs_per_pack:Number(sale.size)};
@@ -273,6 +283,7 @@ export default function PublicEggSaleV3() {
       setName(''); setPhone(''); setEmail(''); setMessage(''); setPacks('1');
       setPickupSlotId(''); setPickupPersonName(''); setPickupPersonPhone(''); setOtherPickup(false);
       setBookingConfirm(true);
+      await qc.invalidateQueries({queryKey:['public-basket-packs',listing?.id]});
       await qc.invalidateQueries({ queryKey: ['public-egg-sale-reserved-packs-v3', listing?.id] });
       await qc.invalidateQueries({ queryKey: ['public-egg-sale-slots-v3', listing?.id] });
       toast({ title: 'Bokningsförfrågan är skickad 🥚', description: 'Säljaren återkommer för att bekräfta tillgång och hämtning.' });

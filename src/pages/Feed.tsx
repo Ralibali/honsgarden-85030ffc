@@ -15,6 +15,9 @@ import EmptyState from '@/components/EmptyState';
 import AffiliateProductStrip from '@/components/affiliate/AffiliateProductStrip';
 import PageHeader from '@/components/PageHeader';
 import { computeFeedForecast } from '@/lib/feedForecast';
+import { useAuth } from '@/hooks/useAuth';
+import { useFeedWeighing } from '@/hooks/useFeedWeighing';
+import FeedTools from '@/components/farm/FeedTools';
 import { shortSvDate } from '@/lib/farmPulse';
 
 const FEED_CATEGORIES: { value: string; label: string }[] = [
@@ -55,8 +58,10 @@ export default function Feed() {
     staleTime: 60_000,
   });
 
+  const { user } = useAuth();
+  const weighing = useFeedWeighing(user?.id);
   const today = todayLocal();
-  const forecast = useMemo(() => computeFeedForecast(feedRecords, eggs, today), [feedRecords, eggs, today]);
+  const forecast = useMemo(() => computeFeedForecast(feedRecords, eggs, today, weighing.data), [feedRecords, eggs, today, weighing.data]);
 
   const invalidateFeed = () => {
     for (const key of ['feed', 'feed-records', 'feed-stats', 'feed-inventory']) {
@@ -134,6 +139,7 @@ export default function Feed() {
           )}
         />
 
+        {user && <FeedTools userId={user.id} last={weighing.data}/>}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="rounded-3xl sm:max-w-lg">
             <DialogHeader>

@@ -8,6 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Send, Share2, Users, Lightbulb, Loader2, Flag, Pin } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useSearchParams, Link } from 'react-router-dom';
+import { mondayOfWeekIso } from '@/lib/isoDay';
 import PageHeader from '@/components/PageHeader';
 
 type CommunityPost = {
@@ -45,6 +47,9 @@ function makeTitle(content: string) {
 export default function Community() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const week = params.get('klackvecka');
+  const group = week && mondayOfWeekIso(week) === week ? 'Kläckvecka '+week : null;
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
@@ -54,15 +59,16 @@ export default function Community() {
   }, []);
 
   const { data: posts = [], isLoading, isError, refetch } = useQuery({
-    queryKey: ['community-posts'],
+    queryKey: ['community-posts', group, user?.id],
     queryFn: async () => {
       const { data: userData } = await supabase.auth.getUser();
       const currentUserId = userData.user?.id ?? null;
 
-      const { data: rawPosts, error: postsError } = await (supabase as any)
+      let postsQuery = (supabase as any)
         .from('community_posts')
-        .select('id,user_id,title,content,category,created_at,is_pinned')
-        .order('is_pinned', { ascending: false })
+        .select('id,user_id,title,content,category,created_at,is_pinned');
+      if (group) postsQuery = postsQuery.eq('category', group);
+      const { data: rawPosts, error: postsError } = await postsQuery.order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(100);
 
@@ -114,7 +120,7 @@ export default function Community() {
           user_id: userData.user.id,
           title: makeTitle(trimmed),
           content: trimmed,
-          category: 'Fråga',
+          category: group || 'Fråga',
         });
 
       if (error) throw error;
@@ -196,8 +202,9 @@ export default function Community() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 animate-fade-in pb-8">
+      {group && <p className="text-sm">Gruppens inlägg är synliga i communityt. <Link className="underline" to="/app/community">Visa alla inlägg</Link></p>}
       <PageHeader
-        title="Community"
+        title={group || "Community"}
         emoji="🤝"
         subtitle="Dela tips, frågor och erfarenheter med andra hönsägare. "
         actions={(

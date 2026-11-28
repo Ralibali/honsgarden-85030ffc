@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "site": "honsgarden",
+  "slug": "foder-till-hons-guide",
+  "previous_sha256": "0f031997e619d2654de774bb196e4e77e3a39566b31c73ea3992daa6e914004b",
+  "exported_at": "2026-11-28T12:17:13.478Z",
+  "reason": "Rättar rådet att ge hushållsmatrester och ersätter generella tillskottsdoser med praktiska råd om foderetikett, vatten, förvaring och egna inköp.",
+  "author": "Hönsgården",
+  "reviewed_by": "Codex",
+  "quality_checked_at": "2026-11-28T12:17:13.478Z",
+  "source_urls": [
+    "https://jordbruksverket.se/djur/lantbruksdjur-och-hastar/fjaderfan/skotsel-och-stallmiljo"
+  ],
+  "previous": {
+    "excerpt": "En komplett guide om höns-foder – helfoder, proteinbehov, tillskott och vad höns inte får äta.",
+    "meta_description": "Vad är rätt foder till dina höns? Lär dig om helfoder, proteinbehov, tillskott, snäckskal och vad höns INTE ska äta.",
+    "meta_title": "Vad Ska Höns Äta? Foderguide 2026 | Hönsgården",
+    "tags": [
+      "foder",
+      "näring",
+      "hönsmat",
+      "foderkostnad",
+      "snäckskal"
+    ],
+    "title": "Vad ska höns äta? – Komplett foderguide för hobbyuppfödare"
+  },
+  "next": {
+    "excerpt": "Så väljer och förvarar du foder, håller koll på vatten och räknar på kostnaden. Särskilt om matavfall från hushållskök och vad du kan säga till hönsvakten.",
+    "meta_description": "Välj foder till din flock, läs säckens märkning och räkna på kostnaden. Så gäller reglerna för matavfall från hushållskök när du har höns.",
+    "meta_title": "Vad ska höns äta? Foder och regler för matavfall | Hönsgården",
+    "tags": [
+      "foder",
+      "näring",
+      "hönsmat",
+      "foderkostnad",
+      "snäckskal"
+    ],
+    "title": "Vad ska höns äta? Foder, vatten och matavfall"
+  }
+}

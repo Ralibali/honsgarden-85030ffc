@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
+import CarePassManager from '@/components/farm/CarePassManager';
 import { FamilyMembers } from '@/components/FamilyMembers';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -456,6 +457,7 @@ export default function SettingsPage() {
 
       {/* Family members */}
       <FamilyMembers />
+      <CarePassManager />
 
       {/* Appearance */}
       <Card className="border-border/50 shadow-sm">

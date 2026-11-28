@@ -13,6 +13,7 @@ export interface FeedPurchase {
   date: string;
   amount_kg?: number | null;
   cost?: number | null;
+  created_at?: string | null;
   feed_category?: string | null;
   feed_type?: string | null;
   brand?: string | null;
@@ -112,11 +113,12 @@ export function computeFeedForecast(
   purchases: FeedPurchase[],
   eggs: FeedEggRow[],
   todayIso: string,
+  weighing?: {day: string; kg: number; measured_at: string} | null,
 ): FeedForecast {
   if (!isIsoDay(todayIso)) return { ...EMPTY };
 
   const valid = purchases.filter((p) => isIsoDay(p.date) && p.date <= todayIso);
-  if (valid.length === 0) return { ...EMPTY };
+
 
   // ---- Förbrukningstakt (endast huvudfoder med vikt) ----
   const candidates = valid.filter((p) => positive(p.amount_kg) > 0 && !isSupplementPurchase(p));
@@ -152,6 +154,20 @@ export function computeFeedForecast(
         result.stale = kgLeft === 0 && sinceLast > Math.max(averageInterval * 2, averageInterval + 21);
         result.confidence = dates.length >= 3 ? 'ok' : 'low';
       }
+    }
+  }
+
+  if (weighing && isIsoDay(weighing.day) && weighing.day <= todayIso && Number.isFinite(weighing.kg) && weighing.kg >= 0) {
+    const days = daysBetweenIso(weighing.day, todayIso) ?? 0;
+    const added = candidates.filter(p => p.date > weighing.day || (p.date === weighing.day && p.created_at && Date.parse(p.created_at) > Date.parse(weighing.measured_at)))
+      .reduce((sum,p) => sum + positive(p.amount_kg), 0);
+    const remaining = Math.max(0, weighing.kg + added - days * (result.kgPerDay ?? 0));
+    result.kgLeft = result.kgPerDay || days === 0 ? Math.round(remaining * 10) / 10 : null;
+    if (result.kgPerDay) {
+      result.daysLeft = Math.floor(remaining / result.kgPerDay);
+      result.runOutDate = addDaysIso(todayIso, result.daysLeft);
+      const lastEvidence = result.lastPurchaseDate && result.lastPurchaseDate > weighing.day ? result.lastPurchaseDate : weighing.day;
+      result.stale = remaining === 0 && (daysBetweenIso(lastEvidence, todayIso) ?? 0) > 30;
     }
   }
 

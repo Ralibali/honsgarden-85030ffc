@@ -46,7 +46,7 @@ const KNOWLEDGE_BASE = `
 - Kalkgrit eller annan lämplig kalciumkälla ska finnas enligt fodertillverkarens rekommendationer.
 - Friskt vatten ska alltid finnas tillgängligt och behovet ökar i värme.
 - Godis och tillskott får inte tränga undan ett balanserat helfoder.
-- Ge aldrig mögligt foder och kontrollera alltid aktuella svenska regler för matrester och animaliska biprodukter.
+- Fjäderfän får inte utfodras med matavfall från hushållskök, restauranger eller storkök, även vegetabiliska köksrester omfattas. Hänvisa till Jordbruksverkets Skötsel och stallmiljö för fjäderfän. Ge aldrig mögligt foder.
 
 ### ÅRSTIDER
 - **Vår**: Produktionen ökar ofta med ljuset. Genomför grundlig rengöring och kontrollera skadedjur.

@@ -9,6 +9,7 @@
 export const HEN_TYPES = {
   HEN: 'hen',
   PULLET: 'pullet',
+  CHICK: 'chick',
   ROOSTER: 'rooster',
 } as const;
 
@@ -54,6 +55,7 @@ export function isPulletReadyToLay(h: HenLike): boolean {
 /** Etikett att visa på höns-kort. */
 export function henTypeLabel(t?: string | null): string {
   switch (t) {
+    case 'chick': return 'Kyckling';
     case HEN_TYPES.ROOSTER: return 'Tupp';
     case HEN_TYPES.PULLET: return 'Unghöna';
     default: return 'Höna';
@@ -62,6 +64,7 @@ export function henTypeLabel(t?: string | null): string {
 
 export function henTypeEmoji(t?: string | null): string {
   switch (t) {
+    case 'chick': return '🐣';
     case HEN_TYPES.ROOSTER: return '🐓';
     case HEN_TYPES.PULLET: return '🐣';
     default: return '🐔';

@@ -34,6 +34,12 @@ export function normalizeQuestion(text: string): string {
 
 export const AGDA_QUICK_ANSWERS: AgdaQuickAnswer[] = [
   {
+    id: 'kitchen_waste',
+    phrases: ['matrester','matavfall','köksavfall','köksrester','rester från köket','överbliven pasta','överblivet ris'],
+    answer: 'Höns får inte utfodras med matavfall från hushållskök, restauranger eller storkök. Det gäller även rester av ris, pasta och grönsaker från köket. Använd foder avsett för din flock.',
+    link: {href:'https://jordbruksverket.se/djur/lantbruksdjur-och-hastar/fjaderfan/skotsel-och-stallmiljo',label:'Jordbruksverkets vägledning'},
+  },
+  {
     id: 'eggs_per_hen',
     phrases: ['hur manga agg', 'hur mycket agger', 'agg per dag', 'agg per vecka', 'hur ofta varper'],
     answer: 'En värphöna i hobbys flock lägger i snitt cirka 4–6 ägg per vecka under värpsäsongen – alltså ungefär ett ägg varannan dag. Ras, ålder, årstid och foder spelar stor roll, och på vintern är det normalt att värpningen sjunker eller pausar helt.',

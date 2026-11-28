@@ -143,13 +143,13 @@ export function createDemoStore(): DemoStore {
   const hatchings: DemoHatching[] = [
     {
       id: demoId('hatch'), user_id: DEMO_USER, start_date: dateKey(29),
-      expected_hatch_date: dateKey(8), egg_count: 12, hatched_count: 9,
+      expected_hatch_date: dateKey(8), egg_count: 12, hatched_count: 9, outcome_date: dateKey(8), outcome_session_id: null,
       status: 'completed', notes: '9 av 12 kläckta – 4 tuppar, 5 hönor',
       created_at: iso(29), updated_at: iso(8),
     },
     {
       id: demoId('hatch'), user_id: DEMO_USER, start_date: dateKey(8),
-      expected_hatch_date: dateKey(-13), egg_count: 10, hatched_count: null,
+      expected_hatch_date: dateKey(-13), egg_count: 10, hatched_count: null, outcome_date: null, outcome_session_id: null,
       status: 'incubating', notes: 'Maran-ägg från Doris linje',
       created_at: iso(8), updated_at: iso(1),
     },

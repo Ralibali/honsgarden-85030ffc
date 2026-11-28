@@ -31,6 +31,7 @@ function normalizeSale(row: any): EggSale {
     amount: Number(row.amount || 0),
     paid: !!row.paid,
     date: row.sale_date || row.date,
+    sourceBookingId: row.source_booking_id ?? undefined,
     note: row.note || undefined,
   };
 }

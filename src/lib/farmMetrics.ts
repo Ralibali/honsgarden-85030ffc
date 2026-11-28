@@ -1,6 +1,6 @@
 /** Active female birds; roosters and inactive birds are never counted as hens. */
 export function isActiveHen(hen: { is_active?: boolean | null; hen_type?: string | null }): boolean {
-  return hen.is_active === true && hen.hen_type !== 'rooster';
+  return hen.is_active === true && hen.hen_type !== 'rooster' && hen.hen_type !== 'chick';
 }
 
 /** Productivity uses adult laying hens, while the flock total includes pullets. */

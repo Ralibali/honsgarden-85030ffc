@@ -196,6 +196,9 @@ const eggLabels: Record<string, { label: string; color: string }> = {
   peak: { label: 'Topp', color: 'bg-primary/35 text-primary font-bold' },
 };
 
+import { Link } from 'react-router-dom';
+import FarmPrograms from '@/components/farm/FarmPrograms';
+
 export default function SeasonalCalendar() {
   const currentMonth = new Date().getMonth();
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
@@ -211,6 +214,8 @@ export default function SeasonalCalendar() {
     >
       <PageHeader title="Säsongskalender" emoji="🍂" subtitle="Tips och påminnelser för varje månad – anpassat för svenska hönsägare" />
 
+      <Link className="block underline" to="/app/helglista">Min helglista för höns och odling</Link>
+      <FarmPrograms />
       {/* Year overview grid */}
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
         {months.map((month, i) => {

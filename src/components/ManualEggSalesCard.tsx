@@ -46,6 +46,10 @@ export default function ManualEggSalesCard() {
     return { total, unpaid, eggsSold };
   }, [sales]);
 
+  function refreshTotals() {
+    for (const key of ['egg-basket','transactions','finance']) void qc.invalidateQueries({queryKey:[key]});
+  }
+
   function resetForm() {
     setCustomer('');
     setEggs('');
@@ -83,6 +87,7 @@ export default function ManualEggSalesCard() {
         note: note.trim().slice(0, 500) || undefined,
       });
       qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => [newSale, ...prev]);
+      refreshTotals();
       toast({ title: 'Försäljning sparad' });
       resetForm();
       setOpen(false);
@@ -97,6 +102,7 @@ export default function ManualEggSalesCard() {
     try {
       const updated = await updateSyncedEggSale(sale.id, { paid: !sale.paid });
       qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => prev.map((s) => (s.id === sale.id ? updated : s)));
+      refreshTotals();
     } catch (err: any) {
       toast({ title: 'Kunde inte uppdatera', description: err?.message, variant: 'destructive' });
     }
@@ -107,6 +113,7 @@ export default function ManualEggSalesCard() {
     try {
       await deleteSyncedEggSale(sale.id);
       qc.setQueryData<EggSale[]>(['egg-sales-journal'], (prev = []) => prev.filter((s) => s.id !== sale.id));
+      refreshTotals();
       toast({ title: 'Försäljning borttagen' });
     } catch (err: any) {
       toast({ title: 'Kunde inte ta bort', description: err?.message, variant: 'destructive' });
@@ -240,7 +247,7 @@ export default function ManualEggSalesCard() {
                     {sale.note && <p className="text-xs text-muted-foreground mt-0.5 truncate">{sale.note}</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
+                    {sale.sourceBookingId ? <span className="text-xs">Från bokning · {sale.paid ? 'Betalt' : 'Obetalt'}</span> : <><button
                       onClick={() => togglePaid(sale)}
                       className={`text-[11px] px-2 py-1 rounded-full border ${sale.paid ? 'bg-primary/10 text-primary border-primary/20' : 'bg-warning/10 text-warning border-warning/20'}`}
                     >
@@ -248,7 +255,7 @@ export default function ManualEggSalesCard() {
                     </button>
                     <Button size="icon" variant="ghost" onClick={() => remove(sale)} aria-label="Ta bort">
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </Button></> }
                   </div>
                 </div>
               ))}

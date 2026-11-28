@@ -237,7 +237,7 @@ export default function Hens() {
   const shownHens = matchingHens.slice(0, visibleHenCount);
   const roosters = filteredHens.filter(isRooster);
   const pullets = filteredHens.filter(isPullet);
-  const layingHens = filteredHens.filter((h) => !isRooster(h) && !isPullet(h));
+  const layingHens = filteredHens.filter((h) => h.hen_type !== 'chick' && !isRooster(h) && !isPullet(h));
 
   const getFlockMemberCount = (flockId: string) => filteredHens.filter((h) => h.flock_id === flockId).length;
 
@@ -257,6 +257,7 @@ export default function Hens() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in">
       {/* Header */}
+      <a className="inline-block text-sm text-primary underline" href="/verktyg/flockplanerare">Mina flockplaner</a>
       <PageHeader
         title={selectedFlock ? (flocks).find((f) => f.id === selectedFlock)?.name || 'Flock' : 'Mina Hönor'}
         emoji="🐔"
@@ -650,7 +651,8 @@ export default function Hens() {
                   <p className="text-[10px] text-muted-foreground/70 mt-2 italic leading-relaxed">{hen.notes}</p>
                 )}
 
-                {!isPullet(hen) && !isRooster(hen) && (
+                {hen.hen_type === 'chick' && <div className="mt-3 flex flex-wrap gap-2" onClick={e=>e.stopPropagation()}>{[['pullet','Unghöna'],['rooster','Tupp']].map(([type,label])=><Button variant="outline" size="sm" key={type} onClick={()=>updateHenMutation.mutate({id:hen.id,data:{hen_type:type}})}>{label}</Button>)}</div>}
+                {hen.hen_type !== 'chick' && !isPullet(hen) && !isRooster(hen) && (
                   <div
                     className="mt-3 pt-2.5 border-t border-border/40"
                     onClick={(e) => e.stopPropagation()}

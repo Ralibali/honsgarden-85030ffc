@@ -42,7 +42,7 @@ export default function Login() {
   });
 
   const selectedPlan = ['free', 'plus_monthly', 'plus_annual'].includes(searchParams.get('plan') || '') ? searchParams.get('plan') : null;
-  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : '/app';
+  const nextPath = selectedPlan && selectedPlan !== 'free' ? `/app/premium?plan=${selectedPlan}&trial=7d` : searchParams.get('next') === 'flockplan' ? '/verktyg/flockplanerare' : searchParams.get('next') === 'honspass' ? '/honspass' : '/app';
   const initialMode = searchParams.get('mode');
   // Valideras mot tillåtna AnalyticsSource-värden – aldrig fritext till analytics.
   const signupSource = parseAnalyticsSource(searchParams.get('source'));

@@ -103,7 +103,11 @@ function QuickEggLog({ henId, henName }: { henId: string; henName: string }) {
   );
 }
 
+import HenHandoff from '@/components/hen/HenHandoff';
+import { useAuth } from '@/hooks/useAuth';
+
 export default function HenProfile() {
+  const {user} = useAuth();
   const { henId } = useParams<{ henId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -707,6 +711,7 @@ export default function HenProfile() {
 
 
 
+      {user?.id === hen.user_id && <HenHandoff henId={hen.id}/>}
       <Dialog open={shareOpen} onOpenChange={setShareOpen}>
         <DialogContent className="sm:max-w-sm rounded-2xl">
           <DialogHeader>

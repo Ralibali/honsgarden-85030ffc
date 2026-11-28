@@ -1,3 +1,5 @@
+import type { FarmToolsFunctions, FarmToolsTables } from './farmTools';
+
 export type Json =
   | string
   | number
@@ -13,7 +15,7 @@ export type Database = {
     PostgrestVersion: "14.1"
   }
   public: {
-    Tables: {
+    Tables: FarmToolsTables & {
       achievement_rewards: {
         Row: {
           achievement_id: string
@@ -2341,6 +2343,8 @@ export type Database = {
       }
       hatchings: {
         Row: {
+          outcome_session_id: string | null
+          outcome_date: string | null
           created_at: string
           egg_count: number
           expected_hatch_date: string | null
@@ -4836,6 +4840,8 @@ export type Database = {
       }
       transactions: {
         Row: {
+          source_egg_sale_id?: string | null
+          source_feed_receipt_id?: string | null
           amount: number
           category: string | null
           created_at: string
@@ -5140,7 +5146,7 @@ export type Database = {
         Relationships: []
       }
     }
-    Functions: {
+    Functions: FarmToolsFunctions & {
       accept_waitlist_offer: { Args: { p_token: string }; Returns: Json }
       active_native_push_tokens: {
         Args: { p_token?: string; p_user_ids: string[] }

@@ -58,6 +58,11 @@ const About = lazyWithRetry(() => import("./pages/About"));
 const EggCalculator = lazyWithRetry(() => import("./pages/EggCalculator"));
 const StartCostCalculator = lazyWithRetry(() => import("./pages/StartCostCalculator"));
 const AggReglerVagvisare = lazyWithRetry(() => import("./pages/AggReglerVagvisare"));
+const ReceiveHenPass = lazyWithRetry(() => import("./pages/ReceiveHenPass"));
+const CoopDrawing = lazyWithRetry(() => import("./pages/CoopDrawing"));
+const WeekendList = lazyWithRetry(() => import("./pages/WeekendList"));
+const CarePass = lazyWithRetry(() => import("./pages/CarePass"));
+const FlockPlanner = lazyWithRetry(() => import("./pages/FlockPlanner"));
 const HatchCalculator = lazyWithRetry(() => import("./pages/HatchCalculator"));
 const AcceptInvite = lazyWithRetry(() => import("./pages/AcceptInvite"));
 const Agda = lazyWithRetry(() => import("./pages/Agda"));
@@ -189,6 +194,10 @@ const AppRoutes = () => (
         <Route path="/integritet" element={<Integritet />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/om-oss" element={<About />} />
+        <Route path="/honspass" element={<ReceiveHenPass />} />
+        <Route path="/verktyg/honshusritare" element={<CoopDrawing />} />
+        <Route path="/honsvakt" element={<CarePass />} />
+        <Route path="/verktyg/flockplanerare" element={<FlockPlanner />} />
         <Route path="/verktyg/aggkalkylator" element={<EggCalculator />} />
         <Route path="/verktyg/vad-kostar-hons" element={<StartCostCalculator />} />
         <Route path="/verktyg/aggregler-vagvisare" element={<AggReglerVagvisare />} />
@@ -255,6 +264,7 @@ const AppRoutes = () => (
           <Route path="smart-report" element={<Navigate to="/app/rapporter?tab=smart" replace />} />
           <Route path="agda" element={<Agda />} />
           <Route path="import" element={<Import />} />
+          <Route path="helglista" element={<WeekendList />} />
           <Route path="calendar" element={<SeasonalCalendar />} />
           <Route path="news" element={<News />} />
           <Route path="weather" element={<Weather />} />

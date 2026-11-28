@@ -345,6 +345,8 @@ const STATIC_PAGES = [
   { path: '/verktyg/aggkalkylator', route: 'verktyg/aggkalkylator', title: 'Äggkalkylator – Räkna äggproduktion & foderkostnad | Hönsgården', description: 'Räkna ut din äggproduktion, foderkostnad per ägg och vinst per höna. Gratis kalkylator för svenska hönsägare.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/verktyg/aggregler-vagvisare', route: 'verktyg/aggregler-vagvisare', title: 'Äggregler-vägvisaren – vilka regler gäller för din äggförsäljning? | Hönsgården', description: 'Svara på två frågor och få en personlig checklista: producentkod, äggmärkning, länsstyrelseregistrering, salmonellajournal och kommunens krav – för din flockstorlek och dina försäljningskanaler.', ogImage: '/blog-images/eggs-basket.jpg', priority: '0.85', changefreq: 'monthly' },
   // Same title/description as src/pages/StartCostCalculator.tsx useSeo.
+  { path: '/verktyg/flockplanerare', route: 'verktyg/flockplanerare', title: 'Planera din första hönsflock | Hönsgården', description: 'Jämför raser, räkna på startbudgeten och spara din första flock.', ogImage: '/og-image.jpg', priority: '0.8', changefreq: 'monthly' },
+  { path: '/verktyg/honshusritare', route: 'verktyg/honshusritare', title: 'Rita ditt hönshus | Hönsgården', description: 'Planera hönshuset skalenligt och beräkna golvyta, väggyta och inredning.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.8', changefreq: 'monthly' },
   { path: '/verktyg/vad-kostar-hons', route: 'verktyg/vad-kostar-hons', title: 'Vad kostar det att skaffa höns? Räkna ut startkostnaden | Hönsgården', description: 'Vad kostar höns, hönshus, stängsel och foder? Räkna ut din startkostnad och den årliga driften på en minut. Gratis kalkylator, inget konto krävs.', ogImage: '/blog-images/chicken-coop.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/verktyg/klackningskalkylator', route: 'verktyg/klackningskalkylator', title: 'Kläckningskalkylator – när kläcks äggen? | Hönsgården', description: 'Räkna ut kläckdatum för hönsägg. Ange när ruvningen startade och få datum för lysning, sista vändningsdagen och beräknad kläckdag. Gratis verktyg utan konto.', ogImage: '/blog-images/baby-chicks.jpg', priority: '0.85', changefreq: 'monthly' },
   { path: '/karta', route: 'karta', title: 'Hönskarta – hitta säljare av färska ägg nära dig | Hönsgården', description: 'Interaktiv karta över svenska hönsägare som säljer färska ägg. Hitta säljare i din närhet, se öppettider och boka direkt.', ogImage: '/og-image.jpg', priority: '0.85', changefreq: 'weekly' },
@@ -458,6 +460,9 @@ function buildStaticPage(template, page, { posts = [] } = {}) {
       <a class="underline text-primary" href="${escapeHtml(page.sample)}">Öppna gratis smakprov (PDF)</a>
       <noscript><p class="mt-6">Aktivera JavaScript för fullständig produktinformation och köp när produkten är tillgänglig.</p></noscript>
     </main>`);
+  }
+  if (page.path === '/verktyg/flockplanerare' || page.path === '/verktyg/honshusritare') {
+    return injectTopicBody(withHead, `<main id="main-content"><h1>${escapeHtml(page.title.split(' | ')[0])}</h1><p>${escapeHtml(page.description)}</p><p><a href="/honsraser/sussex">Om Sussex</a> · <a href="/honsraser/orpington">Om Orpington</a> · <a href="/verktyg/vad-kostar-hons">Räkna på startkostnaden</a></p></main>`);
   }
   if (page.path === '/') {
     return injectTopicBody(withHead, renderHomeTopicBody());

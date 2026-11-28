@@ -113,6 +113,22 @@
       "destination": "/index.html"
     },
     {
+      "source": "/honsvakt",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/honspass",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verktyg/honshusritare",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/verktyg/flockplanerare",
+      "destination": "/index.html"
+    },
+    {
       "source": "/verktyg/aggkalkylator",
       "destination": "/index.html"
     },

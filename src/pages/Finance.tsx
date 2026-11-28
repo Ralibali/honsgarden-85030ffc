@@ -9,7 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/hooks/use-toast';
@@ -349,7 +349,7 @@ export default function Finance() {
                         <span className={`stat-number text-sm sm:text-base shrink-0 ${t.type === 'income' ? 'text-success' : 'text-destructive'}`}>
                           {t.type === 'income' ? '+' : '-'}{Math.abs(t.amount)} kr
                         </span>
-                        <Button
+                        {t.source_feed_receipt_id || t.source_egg_sale_id ? <Link className="text-xs underline" to={t.source_feed_receipt_id ? '/app/feed' : '/app/egg-sales'}>{t.source_feed_receipt_id ? 'Foderkvitto' : 'Försäljning'}</Link> : <Button
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 sm:h-7 sm:w-7 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
@@ -357,7 +357,7 @@ export default function Finance() {
                           onClick={() => deleteMutation.mutate(t.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        </Button>}
                       </div>
                     </div>
                   ))}

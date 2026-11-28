@@ -4,7 +4,7 @@
  */
 
 /** Path-prefix som aldrig ska ge events (interna/admin-vyer). */
-const EXCLUDED_PATH_PREFIXES = ['/app/admin', '/auth', '/bestallning'] as const;
+const EXCLUDED_PATH_PREFIXES = ['/app/admin', '/auth', '/bestallning', '/honsvakt', '/honspass', '/helglista'] as const;
 
 /** Tillåtna plan-värden (låg kardinalitet). */
 export type AnalyticsPlan = 'free' | 'plus';
@@ -105,6 +105,8 @@ export type AnalyticsOutboundPage =
  * Håll properties låga och icke-identifierande.
  */
 export type AnalyticsEventMap = {
+  'Flock Plan Saved': { stage: 'device' | 'account' };
+  'Flock Plan Arrived': Record<string, never>;
   'Blog Offer Shown': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant };
   'Blog Offer Clicked': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant; action: 'product' | 'sample' };
   'Blog Offer Dismissed': { product: import('./blogOffers').BlogOfferProduct; variant: import('./blogOffers').BlogOfferVariant };

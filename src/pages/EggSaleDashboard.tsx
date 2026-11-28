@@ -166,7 +166,7 @@ function BookingsBoard({ listing }: { listing: Row }) {
     },
     onSuccess: () => {
       setSelected(new Set());
-      void qc.invalidateQueries({predicate:query=>['dash-bookings','dash-stats-bookings','agda-pro-bookings','egg-sales-overview-bookings'].includes(String(query.queryKey[0]))});
+      void qc.invalidateQueries({predicate:query=>['dash-bookings','dash-stats-bookings','agda-pro-bookings','egg-sales-overview-bookings','egg-basket','egg-sales-journal','transactions','public-basket-packs'].includes(String(query.queryKey[0]))});
       toast({ title: 'Bokningarna är uppdaterade' });
     },
     onError: (error: Error) => toast({ title: 'Kunde inte uppdatera', description: error.message, variant: 'destructive' }),
